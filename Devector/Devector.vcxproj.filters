@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="devectorApp.cpp" />
+    <ClCompile Include="..\SharedSource\3rdParty\sqlite3\shell.c">
+      <Filter>SharedSource\3rdParty\sqlite3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\3rdParty\sqlite3\sqlite3.c">
+      <Filter>SharedSource\3rdParty\sqlite3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\ui\imGuiApp.cpp">
+      <Filter>SharedSource\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\ui\imGuiUtils.cpp">
+      <Filter>SharedSource\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\utils\jsonUtils.cpp">
+      <Filter>SharedSource\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\utils\utils.cpp">
+      <Filter>SharedSource\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\utils\argsParser.cpp">
+      <Filter>SharedSource\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\ui\baseWindow.cpp">
+      <Filter>SharedSource\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\utils\stringUtils.cpp">
+      <Filter>SharedSource\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="consts.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui.cpp">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_demo.cpp">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_draw.cpp">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_tables.cpp">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_widgets.cpp">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="devectorApp.h" />
+    <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3.h">
+      <Filter>SharedSource\3rdParty\sqlite3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3ext.h">
+      <Filter>SharedSource\3rdParty\sqlite3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\ui\imGuiUtils.h">
+      <Filter>SharedSource\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\ui\imGuiApp.h">
+      <Filter>SharedSource\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\utils\jsonUtils.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\utils\utils.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\utils\argsParser.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\ui\baseWindow.h">
+      <Filter>SharedSource\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\utils\globals.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\utils\stringUtils.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\imconfig.h">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\imgui.h">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\imgui_internal.h">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_glfw.h">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_opengl3_loader.h">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="SharedSource">
+      <UniqueIdentifier>{cb12fcba-4c9d-4bc6-a131-cbd1911178e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\3rdParty">
+      <UniqueIdentifier>{731ef5be-41e8-43c3-8455-be759cc8c2fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\3rdParty\json">
+      <UniqueIdentifier>{d63a61a7-4a5d-4aa2-9473-3b706b2162a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\3rdParty\sqlite3">
+      <UniqueIdentifier>{5f9506fd-ab86-4977-809b-0b260f8cb092}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\3rdParty\doubleToStr">
+      <UniqueIdentifier>{4bbd35c5-450f-44a5-bdb3-6f42cdbfbff9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\ui">
+      <UniqueIdentifier>{82b2260f-9d10-4c68-840b-414ab5b5efd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\utils">
+      <UniqueIdentifier>{a9cbf551-7f08-4fb8-8931-2dbd805d1178}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\3rdParty\imgui">
+      <UniqueIdentifier>{659ce8a3-5b90-4677-ba4b-71c334f756c9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\SharedSource\3rdParty\imgui\misc\debuggers\imgui.natstepfilter">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\SharedSource\3rdParty\imgui\misc\debuggers\imgui.natvis">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </Natvis>
+  </ItemGroup>
+</Project>
