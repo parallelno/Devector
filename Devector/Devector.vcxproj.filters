@@ -9,12 +9,6 @@
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\sqlite3.c">
       <Filter>SharedSource\3rdParty\sqlite3</Filter>
     </ClCompile>
-    <ClCompile Include="..\SharedSource\ui\imGuiApp.cpp">
-      <Filter>SharedSource\ui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SharedSource\ui\imGuiUtils.cpp">
-      <Filter>SharedSource\ui</Filter>
-    </ClCompile>
     <ClCompile Include="..\SharedSource\utils\jsonUtils.cpp">
       <Filter>SharedSource\utils</Filter>
     </ClCompile>
@@ -23,9 +17,6 @@
     </ClCompile>
     <ClCompile Include="..\SharedSource\utils\argsParser.cpp">
       <Filter>SharedSource\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SharedSource\ui\baseWindow.cpp">
-      <Filter>SharedSource\ui</Filter>
     </ClCompile>
     <ClCompile Include="..\SharedSource\utils\stringUtils.cpp">
       <Filter>SharedSource\utils</Filter>
@@ -54,6 +45,21 @@
     <ClCompile Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_opengl3.cpp">
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\SharedSource\ui\imGuiApp.cpp">
+      <Filter>SharedSource\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\ui\imGuiUtils.cpp">
+      <Filter>SharedSource\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\ui\baseWindow.cpp">
+      <Filter>SharedSource\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\ui\disasmWindow.cpp">
+      <Filter>SharedSource\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\ui\hardwareStatsWindow.cpp">
+      <Filter>SharedSource\ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="devectorApp.h" />
@@ -63,12 +69,6 @@
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3ext.h">
       <Filter>SharedSource\3rdParty\sqlite3</Filter>
     </ClInclude>
-    <ClInclude Include="..\SharedSource\ui\imGuiUtils.h">
-      <Filter>SharedSource\ui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\ui\imGuiApp.h">
-      <Filter>SharedSource\ui</Filter>
-    </ClInclude>
     <ClInclude Include="..\SharedSource\utils\jsonUtils.h">
       <Filter>SharedSource\utils</Filter>
     </ClInclude>
@@ -77,9 +77,6 @@
     </ClInclude>
     <ClInclude Include="..\SharedSource\utils\argsParser.h">
       <Filter>SharedSource\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\ui\baseWindow.h">
-      <Filter>SharedSource\ui</Filter>
     </ClInclude>
     <ClInclude Include="..\SharedSource\utils\globals.h">
       <Filter>SharedSource\utils</Filter>
@@ -104,6 +101,27 @@
     </ClInclude>
     <ClInclude Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_opengl3_loader.h">
       <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\utils\result.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\utils\status.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\ui\imGuiUtils.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\ui\imGuiApp.h">
+      <Filter>SharedSource\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\ui\baseWindow.h">
+      <Filter>SharedSource\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\ui\disasmWindow.h">
+      <Filter>SharedSource\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\ui\hardwareStatsWindow.h">
+      <Filter>SharedSource\ui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

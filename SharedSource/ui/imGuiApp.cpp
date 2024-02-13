@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <string>
 
-bool ImGuiApp::Inited() const 
+bool ImGuiApp::Inited() const
 {
     return m_status == AppStatus::inited;
 }
@@ -120,14 +120,14 @@ ImGuiApp::~ImGuiApp()
     glfwTerminate();
 }
 
-void ImGuiApp::glfw_error_callback(int error, const char* description)
+void ImGuiApp::glfw_error_callback(int _error, const char* _description)
 {
-    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+    fprintf(stderr, "Glfw Error %d: %s\n", _error, _description);
 }
 
 void ImGuiApp::Run()
 {
-    while (!glfwWindowShouldClose(m_window))
+    while (!glfwWindowShouldClose(m_window) && !m_close_req)
     {
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -141,9 +141,33 @@ void ImGuiApp::Run()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::DockSpaceOverViewport();
+        
+        //ImGui::DockSpaceOverViewport();
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        //if (true)
+        {
+            const ImGuiViewport* viewport = ImGui::GetMainViewport();
+            ImGui::SetNextWindowPos(viewport->WorkPos);
+            ImGui::SetNextWindowSize(viewport->WorkSize);
+            ImGui::SetNextWindowViewport(viewport->ID);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+            window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+        }
+        static bool open = true;
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::Begin("MainWindow", &open, window_flags);
+        ImGui::PopStyleVar();
+
+        // Create a DockSpace node where any window can be docked
+        ImGuiID dockspace_id = ImGui::GetID("MainWindowDockSpace");
+        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
 
         Update();
+        
+        ImGui::End();
+        ImGui::PopStyleVar(2);
 
         // Rendering
         ImGui::Render();

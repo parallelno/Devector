@@ -1,8 +1,8 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #pragma once
-#ifndef BOT_GLOBALS_H
-#define BOT_GLOBALS_H
+#ifndef DEV_GLOBALS_H
+#define DEV_GLOBALS_H
 
 #include <map>
 #include <tuple>
@@ -24,4 +24,4 @@ namespace dev
 
 } // namespace dev
 
-#endif // !BOT_GLOBALS_H
+#endif // !DEV_GLOBALS_H

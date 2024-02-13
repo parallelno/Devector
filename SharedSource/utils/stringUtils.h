@@ -1,6 +1,6 @@
 #pragma once
-#ifndef BOT_STRING_UTILS_H
-#define BOT_STRING_UTILS_H
+#ifndef DEV_STRING_UTILS_H
+#define DEV_STRING_UTILS_H
 #include <string>
 #include <vector>
 
@@ -17,4 +17,4 @@ namespace dev
 	const std::wstring StrToStrW(const std::string& _s);
 	const std::string StrWToStr(const std::wstring& _s);
 }
-#endif // !BOT_STRING_UTILS_H
+#endif // !DEV_STRING_UTILS_H

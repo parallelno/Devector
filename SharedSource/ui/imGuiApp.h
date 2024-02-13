@@ -22,7 +22,7 @@ public:
         opengl_init_failed
     };
 
-    ImGuiApp(const std::string& title = "New Window", int width = 1280, int m_heigth = 720);
+    ImGuiApp(const std::string& _title = "New Window", int _width = 1280, int _heigth = 720);
 	~ImGuiApp();
 
     void Run();
@@ -35,8 +35,10 @@ public:
     std::string m_title;
     ImVec4 m_backColor = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
     AppStatus m_status = AppStatus::not_inited;
+    bool m_close_req = false;
+
 private:
-    static void glfw_error_callback(int error, const char* description);
+    static void glfw_error_callback(int _error, const char* _description);
     GLFWwindow* m_window = nullptr;
     ImGuiIO* m_io = nullptr;
 };

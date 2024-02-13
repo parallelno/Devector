@@ -1,31 +1,232 @@
 #include "devectorApp.h"
 #include "utils/utils.h"
-#include "ui/imGuiUtils.h"
 #include "utils/jsonUtils.h"
+#include "ui/imGuiUtils.h"
 
+#include <vector>
 #include <string>
-#include <iostream>
 #include <chrono>
 #include <filesystem>
+#include <Windows.h>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <utils/stringUtils.h>
 
-dev::DevectorApp::DevectorApp(const nlohmann::json& _settingsJ,
+dev::DevectorApp::DevectorApp(
+	const std::string& _stringPath, nlohmann::json _settingsJ,
 	const int _mainWindowWidth, const int _mainWindowHeight)
 	:
-	ImGuiApp(APP_NAME, _mainWindowWidth, _mainWindowHeight)
+	ImGuiApp(APP_NAME, _mainWindowWidth, _mainWindowHeight),
+	m_settingsJ(_settingsJ),
+	m_stringPath(_stringPath)
 {
-	SettingsInit(_settingsJ);
-
+	SettingsInit();
 	WindowsInit();
 }
 
 void dev::DevectorApp::WindowsInit()
 {
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>();
+	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(m_fontItalic);
 }
 
-void dev::DevectorApp::SettingsInit(const nlohmann::json& _settingsJ)
+void dev::DevectorApp::SettingsInit()
 {
+	LoadFonts();
+	AppStyleInit();
+	RecentFilesInit();
+}
+
+void dev::DevectorApp::LoadFonts()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	//io.Fonts->AddFontDefault();
+
+	auto fontCodePath = dev::GetJsonString(m_settingsJ, "fontPath", false);
+	auto fontCodeSize = dev::GetJsonDouble(m_settingsJ, "fontSize", false);
+
+	if (!fontCodePath.empty() && dev::IsFileExist(fontCodePath))
+	{
+		m_font = io.Fonts->AddFontFromFileTTF(fontCodePath.c_str(), fontCodeSize);
+	}
+
+	auto fontCommentPath = dev::GetJsonString(m_settingsJ, "fontItalicPath", false, "");
+	auto fontCommentSize = dev::GetJsonDouble(m_settingsJ, "fontItalicSize", false);
+
+	if (!fontCommentPath.empty() && dev::IsFileExist(fontCommentPath))
+	{
+		m_fontItalic = io.Fonts->AddFontFromFileTTF(fontCommentPath.c_str(), fontCommentSize);
+	}
+}
+
+void dev::DevectorApp::AppStyleInit()
+{
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.FrameBorderSize = 1.0f;
+
+	ImVec4* colors = ImGui::GetStyle().Colors;
+	colors[ImGuiCol_Text] = ImVec4(0.83f, 0.83f, 0.83f, 1.00f);
+	colors[ImGuiCol_TextDisabled] = ImVec4(0.52f, 0.52f, 0.52f, 1.00f);
+	colors[ImGuiCol_WindowBg] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+	colors[ImGuiCol_ChildBg] = ImVec4(0.09f, 0.09f, 0.09f, 0.12f);
+	colors[ImGuiCol_PopupBg] = ImVec4(0.13f, 0.13f, 0.13f, 1.00f);
+	colors[ImGuiCol_Border] = ImVec4(0.24f, 0.24f, 0.24f, 0.25f);
+	colors[ImGuiCol_BorderShadow] = ImVec4(0.08f, 0.07f, 0.07f, 0.11f);
+	colors[ImGuiCol_FrameBg] = ImVec4(0.21f, 0.21f, 0.21f, 1.00f);
+	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.13f, 0.45f, 0.80f, 0.52f);
+	colors[ImGuiCol_FrameBgActive] = ImVec4(0.00f, 0.50f, 0.83f, 0.63f);
+	colors[ImGuiCol_TitleBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+	colors[ImGuiCol_MenuBarBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.24f);
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.49f, 0.49f, 0.49f, 0.45f);
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.46f, 0.46f, 0.46f, 0.61f);
+	colors[ImGuiCol_CheckMark] = ImVec4(0.25f, 0.57f, 0.82f, 1.00f);
+	colors[ImGuiCol_SliderGrab] = ImVec4(0.13f, 0.43f, 0.78f, 0.55f);
+	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.14f, 0.56f, 0.97f, 0.83f);
+	colors[ImGuiCol_Button] = ImVec4(0.22f, 0.56f, 1.00f, 0.69f);
+	colors[ImGuiCol_ButtonHovered] = ImVec4(0.05f, 0.37f, 0.74f, 1.00f);
+	colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
+	colors[ImGuiCol_Header] = ImVec4(0.08f, 0.35f, 0.70f, 0.69f);
+	colors[ImGuiCol_HeaderHovered] = ImVec4(0.00f, 0.31f, 0.70f, 0.64f);
+	colors[ImGuiCol_HeaderActive] = ImVec4(0.08f, 0.35f, 0.60f, 1.00f);
+	colors[ImGuiCol_Separator] = ImVec4(0.53f, 0.55f, 0.75f, 0.11f);
+	colors[ImGuiCol_SeparatorHovered] = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
+	colors[ImGuiCol_SeparatorActive] = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
+	colors[ImGuiCol_ResizeGrip] = ImVec4(0.30f, 0.35f, 0.41f, 0.20f);
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
+	colors[ImGuiCol_Tab] = ImVec4(0.27f, 0.29f, 0.31f, 0.86f);
+	colors[ImGuiCol_TabHovered] = ImVec4(0.07f, 0.36f, 0.71f, 0.80f);
+	colors[ImGuiCol_TabActive] = ImVec4(0.09f, 0.35f, 0.66f, 1.00f);
+	colors[ImGuiCol_TabUnfocused] = ImVec4(0.07f, 0.10f, 0.15f, 0.97f);
+	colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.14f, 0.26f, 0.42f, 1.00f);
+	colors[ImGuiCol_DockingPreview] = ImVec4(0.45f, 0.44f, 0.53f, 0.32f);
+	colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.09f, 0.09f, 0.09f, 1.00f);
+	colors[ImGuiCol_PlotLines] = ImVec4(0.53f, 0.53f, 0.53f, 1.00f);
+	colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.53f, 0.69f, 0.84f, 1.00f);
+	colors[ImGuiCol_PlotHistogram] = ImVec4(0.15f, 0.40f, 0.93f, 0.66f);
+	colors[ImGuiCol_PlotHistogramHovered] = ImVec4(0.45f, 0.54f, 0.73f, 1.00f);
+	colors[ImGuiCol_TableHeaderBg] = ImVec4(0.20f, 0.20f, 0.21f, 1.00f);
+	colors[ImGuiCol_TableBorderStrong] = ImVec4(0.24f, 0.24f, 0.24f, 0.82f);
+	colors[ImGuiCol_TableBorderLight] = ImVec4(0.23f, 0.24f, 0.25f, 1.00f);
+	colors[ImGuiCol_TableRowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.35f, 0.34f, 0.40f, 0.11f);
+	colors[ImGuiCol_TextSelectedBg] = ImVec4(0.02f, 0.41f, 0.87f, 0.84f);
+	colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+	colors[ImGuiCol_NavHighlight] = ImVec4(0.04f, 0.43f, 0.88f, 0.76f);
+	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+
+
+}
+
+// Function to open a file dialog
+bool OpenFileDialog(WCHAR* filePath, int size)
+{
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFile = filePath;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = size;
+	ofn.lpstrFilter = L"All Files\0*.*\0";
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+	// Display the open file dialog
+	if (GetOpenFileName(&ofn) == TRUE)
+		return true; // User selected a file
+	else
+		return false; // User cancelled or an error occurred
 }
 
 void dev::DevectorApp::Update()
 {
+	MainMenuUpdate();
+	m_hardwareStatsWindowP->Update();
+	m_disasmWindowP->Update();
+}
+
+
+void dev::DevectorApp::MainMenuUpdate()
+{
+	if (ImGui::BeginMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Open", "Ctrl+O"))
+			{
+				WCHAR filePath[MAX_PATH];
+
+				// Open the file dialog
+				if (OpenFileDialog(filePath, MAX_PATH))
+				{
+					auto fileSize = dev::GetFileSize(filePath);
+					// TODO: fix 65536 to a const literal
+					if (fileSize > 65536)
+					{
+						// TODO: fix it
+						ShowPopup("Warning", "File is too big");
+					}
+					else 
+					{
+						auto data = LoadFile(filePath);
+						if (data)
+						{
+							m_recentFilePaths.insert(filePath);
+							RecentFilesStore();
+						}
+					}
+				}
+			}
+			if (ImGui::BeginMenu("Recent Files"))
+			{
+				for (const auto& filePath : m_recentFilePaths)
+				{
+					if (ImGui::MenuItem(dev::StrWToStr(filePath).c_str()))
+					{
+						auto data = LoadFile(filePath);
+					}
+				}
+				ImGui::EndMenu();
+			}
+
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Quit", "Alt+F4")) { m_close_req = true; }
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Tools"))
+		{
+			ImGui::MenuItem("Debugger", NULL, &m_hardwareStatsWindowShow);
+			ImGui::MenuItem("Memory Map", NULL, &m_memoryMapWindowShow);
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
+	}
+}
+
+void dev::DevectorApp::RecentFilesInit()
+{
+	auto recentFiles = dev::GetJsonObject(m_settingsJ, "recentFiles", false);
+	for (const auto& filePaths : recentFiles)
+	{
+		m_recentFilePaths.insert(dev::StrToStrW(filePaths));
+	}
+}
+
+void dev::DevectorApp::RecentFilesStore()
+{
+	nlohmann::json recentFiles;
+	for (const auto& recentFilePath : m_recentFilePaths)
+	{
+		recentFiles.push_back(dev::StrWToStr(recentFilePath));
+	}
+	m_settingsJ["recentFiles"] = recentFiles;
+	SaveJson(m_stringPath, m_settingsJ);
 }

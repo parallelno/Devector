@@ -3,7 +3,7 @@
 #define BOT_STATUS_H
 #include <atomic>
 
-namespace bot
+namespace dev
 {
 	template <class T>
 	class Status

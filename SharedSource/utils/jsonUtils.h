@@ -28,6 +28,7 @@ case EmunType::Val:
 
 	auto LoadJson(const std::string& _path)
 		->nlohmann::json;
+	void SaveJson(const std::string& _path, const nlohmann::json& _json);
 
 	void JsonParsingExit(const std::string& _fieldName);
 	void JsonParsingTypeMissmatchExit(
@@ -79,7 +80,6 @@ case EmunType::Val:
 		const std::string& _fieldName,
 		const bool _exit = true)
 		-> nlohmann::json;
-
 
 } // namespace dev
 #endif // !JSON_UTILS_H

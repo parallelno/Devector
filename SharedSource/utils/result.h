@@ -5,24 +5,24 @@
 #include <string>
 #include "utils/globals.h"
 
-namespace bot
+namespace dev
 {
 	template<class T>
 	class Result
 	{
 		std::optional<T> m_result;
-		bot::ErrCode m_error = bot::NO_ERRORS;
+		dev::ErrCode m_error = dev::NO_ERRORS;
 
 	public:
 		Result()
-			: m_error(bot::ERROR_UNSPECIFIED)
+			: m_error(dev::ERROR_UNSPECIFIED)
 		{}
 		Result(const ErrCode _error)
 			:
 			m_error(_error)
 		{}
 		Result(T&& _res,
-			const bot::ErrCode _error = bot::NO_ERRORS)
+			const dev::ErrCode _error = dev::NO_ERRORS)
 			:
 			m_result(std::move(_res)),
 			m_error(_error)
@@ -43,16 +43,16 @@ namespace bot
 			return m_result.has_value();
 		}
 		inline auto Error() const
-			->const bot::ErrCode
+			->const dev::ErrCode
 		{
 			return m_error;
 		}
 
-		inline bool operator==(const bot::ErrCode _err) const
+		inline bool operator==(const dev::ErrCode _err) const
 		{
 			return m_error == _err;
 		}
-		inline bool operator!=(const bot::ErrCode _err) const
+		inline bool operator!=(const dev::ErrCode _err) const
 		{
 			return m_error != _err;
 		}

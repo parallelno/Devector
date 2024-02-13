@@ -1,8 +1,8 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #pragma once
-#ifndef BOT_UTILS_H
-#define BOT_UTILS_H
+#ifndef DEV_UTILS_H
+#define DEV_UTILS_H
 
 #include <chrono>
 #include <format>
@@ -10,10 +10,13 @@
 #include <mutex>
 
 #include "utils/globals.h"
+#include "utils/result.h"
+
 #include <string>
 #include <vector>
 #include <functional>
 #include <filesystem>
+#include <Windows.h>
 
 namespace dev 
 {
@@ -86,7 +89,7 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		logMutex.unlock();
 	}
 
-	void RunApp(const std::string& dir, const std::string& appName);
+	void RunApp(const std::wstring& dir, const std::wstring& appName);
 	void ThreadSleep(double seconds);
 
 	template <typename T>
@@ -158,6 +161,13 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	// FILES
 	//
 	//--------------------------------------------------------------
+	inline bool IsFileExist(const std::wstring& _path)
+	{
+		if (std::filesystem::exists(_path)) {
+			return true;
+		}
+		return false;
+	}
 	inline bool IsFileExist(const std::string& _path)
 	{
 		if (std::filesystem::exists(_path)) {
@@ -165,33 +175,13 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		}
 		return false;
 	}
-	auto LoadTextFile(const std::string& path) 
+	auto LoadTextFile(const std::wstring& path) 
 		->std::vector<std::string>;
-	void DeleteFiles(const std::string& folder, const std::string& mask = "*");
-	auto GetAllFilesPaths(const std::string& _dir, const std::string& _prefix = "")
-		->const std::vector<std::string>;
-	auto GetStockNameFromTickDataPath(const std::string& _path)
-		->const std::string;
-	inline auto GetTickDataFileName(const std::string& _dateStr)
-		->const std::string
-	{
-		return _dateStr + DB_FILENAME_POSTFIX;
-	}
-	inline auto GetTickDataPath(const std::string& _dir, const std::string& _dateStr)
-		->const std::string
-	{
-		return _dir + "\\" + _dateStr + DB_FILENAME_POSTFIX;
-	}
-	inline auto GetTradingReportFileName(const std::string& stockName)
-		->const std::string
-	{
-		return stockName + DB_FILENAME_POSTFIX;
-	}
-	inline auto GetTradingReportPath(const std::string& _stockName, const std::string& _dir)
-		->const std::string
-	{
-		return _dir + GetTradingReportFileName(_stockName);
-	}
+	auto LoadFile(const std::wstring& path)
+		->dev::Result<std::vector<uint8_t>>;
+	void DeleteFiles(const std::wstring& folder, const std::wstring& mask = L"*");
 
+	// Function to get the size of a file
+	size_t GetFileSize(const std::wstring& filename);
 } // namespace dev
-#endif //!BOT_UTILS_H
+#endif //!DEV_UTILS_H

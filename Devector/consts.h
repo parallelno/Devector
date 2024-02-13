@@ -4,7 +4,7 @@
 
 namespace dev
 {
-constexpr int MAIN_WINDOW_W = 800;
-constexpr int MAIN_WINDOW_H = 600;
+	constexpr static int MAIN_WINDOW_W = 800;
+	constexpr static int MAIN_WINDOW_H = 600;
 }
 #endif // !CONSTS_H

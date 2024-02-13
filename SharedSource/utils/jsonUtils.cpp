@@ -6,11 +6,17 @@
 
 auto dev::LoadJson(const std::string& _path) -> nlohmann::json
 {
-	std::ifstream tradingServerSettingsFile(_path);
+	std::ifstream file(_path);
 	nlohmann::json json;
-	tradingServerSettingsFile >> json;
+	file >> json;
 
 	return json;
+}
+
+void dev::SaveJson(const std::string& _path, const nlohmann::json& _json)
+{
+	std::ofstream file(_path);
+	file << std::setw(4) << _json << std::endl;
 }
 
 void dev::JsonParsingExit(const std::string& _fieldName)
