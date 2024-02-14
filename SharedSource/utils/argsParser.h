@@ -1,8 +1,8 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #pragma once
-#ifndef ARGS_PARSER_H
-#define ARGS_PARSER_H
+#ifndef DEV_ARGS_PARSER_H
+#define DEV_ARGS_PARSER_H
 
 #include <map>
 #include <string>
@@ -78,4 +78,4 @@ namespace dev
 	};
 
 } // namespace dev
-#endif // !ARGS_PARSER_H
+#endif // !DEV_ARGS_PARSER_H

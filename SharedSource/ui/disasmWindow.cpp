@@ -1,6 +1,7 @@
-#include "disasmWindow.h"
-#include "utils\stringUtils.h"
 #include <format>
+
+#include "DisasmWindow.h"
+#include "Utils\StringUtils.h"
 
 dev::DisasmWindow::DisasmWindow(ImFont* fontComment)
     :
@@ -22,7 +23,7 @@ void dev::DisasmWindow::DrawSearch()
 {
     ImGui::PushItemWidth(-100);
     ImGui::InputTextWithHint("##empty 1", "0x100", search_txt, IM_ARRAYSIZE(search_txt));
-    ImGui::SameLine(); dev::HelpMarker(
+    ImGui::SameLine(); dev::DrawHelpMarker(
         "Search by a hexadecimal address in the format of 0x100 or 100,\n"
         "or by a case-sensitive label name.");
     ImGui::PopItemWidth();
@@ -67,13 +68,17 @@ void dev::DisasmWindow::DrawDisassembly(const char* disasm[])
 
     if (ImGui::BeginTable("##disassembly", 1, tbl_flags | ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY)) // (labels) or (comment) or (brk, addr, code, stats, consts)
     {
-        for (int row_idx = 0; row_idx < DISASM_LINES_MAX; row_idx++)
+        ImGuiListClipper clipper;
+        clipper.Begin(DISASM_LINES_MAX + 10000);
+        while (clipper.Step())
+            for (int row_idx = clipper.DisplayStart; row_idx < clipper.DisplayEnd; row_idx++)
+        //for (int row_idx = 0; row_idx < DISASM_LINES_MAX+10000; row_idx++)
         {
             //if (isDisasmTableOutOfWindow()) break;
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
 
-            int line_idx = (row_idx + scroll_line_offset) % DISASM_LINES_VISIBLE_MAX;
+            int line_idx = row_idx % DISASM_LINES_VISIBLE_MAX;
 
             // Parse the line into tokens
             auto line_splited = dev::Split(disasm[line_idx], '\t');

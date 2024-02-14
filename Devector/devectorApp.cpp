@@ -1,8 +1,3 @@
-#include "devectorApp.h"
-#include "utils/utils.h"
-#include "utils/jsonUtils.h"
-#include "ui/imGuiUtils.h"
-
 #include <vector>
 #include <string>
 #include <chrono>
@@ -11,7 +6,12 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#include <utils/stringUtils.h>
+
+#include "DevectorApp.h"
+#include "Utils/Utils.h"
+#include "Utils/JsonUtils.h"
+#include "Utils/ImGuiUtils.h"
+#include <Utils/StringUtils.h>
 
 dev::DevectorApp::DevectorApp(
 	const std::string& _stringPath, nlohmann::json _settingsJ,
@@ -171,7 +171,7 @@ void dev::DevectorApp::MainMenuUpdate()
 					if (fileSize > 65536)
 					{
 						// TODO: fix it
-						ShowPopup("Warning", "File is too big");
+						DrawPopup("Warning", "File is too big");
 					}
 					else 
 					{

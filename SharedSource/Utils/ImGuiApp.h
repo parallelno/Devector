@@ -1,6 +1,8 @@
 #pragma once
-#include "imgui_impl_glfw.h"
+#ifndef DEV_IMGUI_APP_H
+#define DEV_IMGUI_APP_H
 
+#include "imgui_impl_glfw.h"
 #include <stdio.h>
 #include <string>
 
@@ -42,3 +44,4 @@ private:
     GLFWwindow* m_window = nullptr;
     ImGuiIO* m_io = nullptr;
 };
+#endif // !DEV_IMGUI_APP_H

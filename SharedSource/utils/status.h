@@ -1,6 +1,7 @@
 #pragma once
-#ifndef BOT_STATUS_H
-#define BOT_STATUS_H
+#ifndef DEV_STATUS_H
+#define DEV_STATUS_H
+
 #include <atomic>
 
 namespace dev
@@ -41,5 +42,5 @@ namespace dev
 	};
 }
 
-#endif // !BOT_STATUS_H
+#endif // !DEV_STATUS_H
 

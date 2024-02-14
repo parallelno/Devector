@@ -1,9 +1,11 @@
 #pragma once
-#ifndef BOT_RESULT_H
-#define BOT_RESULT_H
+#ifndef DEV_RESULT_H
+#define DEV_RESULT_H
+
 #include <optional>
 #include <string>
-#include "utils/globals.h"
+
+#include "Utils/Globals.h"
 
 namespace dev
 {
@@ -86,4 +88,4 @@ namespace dev
 	};
 }
 
-#endif // !BOT_RESULT_H
+#endif // !DEV_RESULT_H

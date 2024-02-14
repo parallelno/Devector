@@ -1,5 +1,3 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #pragma once
 #ifndef DEV_UTILS_H
 #define DEV_UTILS_H
@@ -8,15 +6,14 @@
 #include <format>
 #include <iostream>
 #include <mutex>
-
-#include "utils/globals.h"
-#include "utils/result.h"
-
 #include <string>
 #include <vector>
 #include <functional>
 #include <filesystem>
 #include <Windows.h>
+
+#include "Utils/Globals.h"
+#include "Utils/Result.h"
 
 namespace dev 
 {

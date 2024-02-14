@@ -6,13 +6,11 @@
 // - Getting Started      https://dearimgui.com/getting-started
 // - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
 // - Introduction, links and more at the top of imgui.cpp
-
+#include <stdio.h>
+#include <string>
 #include "imGuiApp.h"
 #include "imgui_impl_opengl3.h"
 #include "GLFW/glfw3.h" // Will drag system OpenGL headers
-
-#include <stdio.h>
-#include <string>
 
 bool ImGuiApp::Inited() const
 {

@@ -1,11 +1,12 @@
 #pragma once
-#ifndef DISASM_WINDOW_H
-#define DISASM_WINDOW_H
+#ifndef DEV_DISASM_WINDOW_H
+#define DEV_DISASM_WINDOW_H
 
-#include "utils/globals.h"
-#include "ui/imGuiUtils.h"
-#include "ui/baseWindow.h"
 #include <mutex>
+
+#include "Utils/Globals.h"
+#include "Utils/ImGuiUtils.h"
+#include "Utils/BaseWindow.h"
 
 namespace dev
 {
@@ -230,4 +231,4 @@ namespace dev
 
 };
 
-#endif // !DISASM_WINDOW_H
+#endif // !DEV_DISASM_WINDOW_H

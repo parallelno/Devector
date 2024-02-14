@@ -1,5 +1,6 @@
-#include "hardwareStatsWindow.h"
 #include <format>
+
+#include "HardwareStatsWindow.h"
 
 dev::HardwareStatsWindow::HardwareStatsWindow()
 {}
@@ -36,7 +37,7 @@ void dev::HardwareStatsWindow::DrawGlobalStats()
 
 		dev::UpdatePropertyPrintStat("P&L / Fee");
 		
-		DrawSelectableText(avgRealizedWinLossR);
+		DrawTextSelectable(avgRealizedWinLossR);
 
 		dev::UpdatePropertyPrintStat("Realized / Unrealized");
 		ImGui::Text("$%.2f / $%.2f",

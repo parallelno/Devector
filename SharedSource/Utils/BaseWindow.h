@@ -1,6 +1,6 @@
 #pragma once
-#ifndef BASE_WINDOW_H
-#define BASE_WINDOW_H
+#ifndef DEV_BASE_WINDOW_H
+#define DEV_BASE_WINDOW_H
 
 namespace dev
 {
@@ -15,5 +15,5 @@ namespace dev
 		void SetVisibility(const bool _visible);
 	};
 }
-#endif // !BASE_WINDOW_H
+#endif // !DEV_BASE_WINDOW_H
 

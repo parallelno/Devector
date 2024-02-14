@@ -1,11 +1,12 @@
 #pragma once
-#ifndef HARDWARE_STATS_WINDOW_H
-#define HARDWARE_STATS_WINDOW_H
+#ifndef DEV_HARDWARE_STATS_WINDOW_H
+#define DEV_HARDWARE_STATS_WINDOW_H
 
-#include "utils/globals.h"
-#include "ui/imGuiUtils.h"
-#include "ui/baseWindow.h"
 #include <mutex>
+
+#include "Utils/Globals.h"
+#include "Utils/ImGuiUtils.h"
+#include "Utils/BaseWindow.h"
 
 namespace dev
 {
@@ -22,4 +23,4 @@ namespace dev
 
 };
 
-#endif // !HARDWARE_STATS_WINDOW_H
+#endif // !DEV_HARDWARE_STATS_WINDOW_H

@@ -1,4 +1,4 @@
-#include "baseWindow.h"
+#include "BaseWindow.h"
 
 void dev::BaseWindow::Close()
 {

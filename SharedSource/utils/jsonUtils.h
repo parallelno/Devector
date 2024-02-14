@@ -1,8 +1,6 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #pragma once
-#ifndef JSON_UTILS_H
-#define JSON_UTILS_H
+#ifndef DEV_JSON_UTILS_H
+#define DEV_JSON_UTILS_H
 
 #include "json.hpp"
 
@@ -82,4 +80,4 @@ case EmunType::Val:
 		-> nlohmann::json;
 
 } // namespace dev
-#endif // !JSON_UTILS_H
+#endif // !DEV_JSON_UTILS_H

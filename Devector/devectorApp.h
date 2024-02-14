@@ -1,14 +1,13 @@
 #pragma once
-#ifndef DEVECTORAPP_H
-#define DEVECTORAPP_H
+#ifndef DEV_DEVECTORAPP_H
+#define DEV_DEVECTORAPP_H
 
-#include "utils/status.h"
-#include "utils/jsonUtils.h"
+#include "Utils/Status.h"
+#include "Utils/JsonUtils.h"
+#include "Utils/ImGuiApp.h"
+#include "UI/HardwareStatsWindow.h"
+#include "UI/DisasmWindow.h"
 
-#include "ui/imGuiApp.h"
-
-#include "ui/hardwareStatsWindow.h"
-#include "ui/disasmWindow.h"
 #include <unordered_set>
 #include <thread>
 #include <mutex>

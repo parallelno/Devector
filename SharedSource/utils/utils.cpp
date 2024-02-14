@@ -1,13 +1,10 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
-
-#include "utils.h"
-#include "utils/globals.h"
-#include "utils/stringUtils.h"
-#include "utils/result.h"
-
 #include <cstdarg>
 #include <fstream>
+
+#include "Utils/Utils.h"
+#include "Utils/Globals.h"
+#include "Utils/StringUtils.h"
+#include "Utils/Result.h"
 
 void dev::RunApp(const std::wstring& _dir, const std::wstring& _appName) 
 {

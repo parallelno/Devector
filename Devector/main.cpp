@@ -1,10 +1,10 @@
-#include "utils/argsParser.h"
-#include "utils/globals.h"
-#include "utils/utils.h"
-#include "utils/stringUtils.h"
-#include "utils/jsonUtils.h"
-#include "devectorApp.h"
-#include "consts.h"
+#include "Utils/ArgsParser.h"
+#include "Utils/Globals.h"
+#include "Utils/Utils.h"
+#include "Utils/StringUtils.h"
+#include "Utils/JsonUtils.h"
+#include "Utils/Consts.h"
+#include "DevectorApp.h"
 
 int main(int argc, char** argv)
 {
