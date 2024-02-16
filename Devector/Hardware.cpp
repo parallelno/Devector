@@ -34,23 +34,28 @@ void dev::Hardware::LoadRom(const std::wstring& _path)
     Log("file loaded: %f", _path);
 }
 
-// rasterizes the frame. For realtime emulation it should be called by the 50.08 Hz (3000000/59904) timer
-void dev::Hardware::ExecuteFrame()
-{
-    do
-    {
-        ExecuteInstruction();
-    } while (!display.T50HZ);
-}
-
-void dev::Hardware::ExecuteInstruction()
-{
-}
-
 void dev::Hardware::Init()
 {
     m_memory.Init();
     m_cpu.Init();
     m_display.Init();
     m_debugger.Init();
+}
+
+// rasterizes the frame. For realtime emulation it should be called by the 50.08 Hz (3000000/59904) timer
+void dev::Hardware::ExecuteFrame()
+{
+    do
+    {
+        ExecuteInstruction();
+    } while (!m_display.T50HZ);
+}
+
+void dev::Hardware::ExecuteInstruction()
+{
+    do
+    {
+        m_display.rasterize();
+        m_cpu.execute_machine_cycle(m_display.T50HZ);
+    } while (m_cpu.machine_cycle != I8080::INSTR_EXECUTED);
 }

@@ -30,11 +30,15 @@ namespace dev
 		uint8_t m_mappingModeRam;
 		uint32_t m_mappingPageRam;
 
+		void Init();
+		void Load(const std::vector<uint8_t>& _data);
+
 		auto GetByte(uint32_t _addr, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM) -> uint8_t;
 		void SetByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM);
 
-		void Init();
-		void Load(const std::vector<uint8_t>& _data);
+		int GetWord(uint32_t _addr, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM);
+		int Length();
+		uint32_t GetGlobalAddr(uint32_t _addr, Memory::AddrSpace _addr_space);
 
 	};
 }

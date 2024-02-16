@@ -506,7 +506,7 @@ void dev::I8080::SetHL(uint16_t val)
 //
 ////////////////////////////////////////////////////////////////////////////
 
-static constexpr bool parity_table[]
+static constexpr bool parityTable[]
 {
 	true, false, false, true, false, true, true, false, false, true, true, false, true, false, false, true,
 	false, true, true, false, true, false, false, true, true, false, false, true, false, true, true, false,
@@ -528,7 +528,7 @@ static constexpr bool parity_table[]
 // returns the parity of a uint8_t: 0 if a number of set bits of `val` is odd, else 1
 bool dev::I8080::GetParity(uint8_t _val)
 {
-	return parity_table[_val];
+	return parityTable[_val];
 }
 // determines if there was a carry between bit 'bit_no' and 'bit_no - 1' during the calculation of 'a + b + cy'.
 bool dev::I8080::GetCarry(int _bit_no, uint8_t _a, uint8_t _b, bool _cy)
