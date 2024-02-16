@@ -10,6 +10,7 @@
 #include "IO.h"
 #include "Display.h"
 #include "Debugger.h"
+#include "Utils/Utils.h"
 
 namespace dev 
 {
@@ -24,7 +25,7 @@ namespace dev
 
         Hardware();
 
-        void LoadRom(std::string path);
+        void LoadRom(const std::wstring& _path);
 		// rasterizes the frame. For realtime emulation it should be called by the 50.08 Hz (3000000/59904) timer
 		void ExecuteFrame();
 		void ExecuteInstruction();

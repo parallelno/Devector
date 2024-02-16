@@ -65,26 +65,6 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 
 		logMutex.unlock();
 	}
-	
-	// NY time
-	template <typename... Args>
-	constexpr void LogNY(const bool announce, 
-		const std::string& _fmt, Args&&... args)
-	{
-		logMutex.lock();
-		
-		if (announce) std::cout << "__________________________________________________________________________________________\n";
-
-		using namespace std::chrono;
-		std::cout << "NY time " <<
-			floor<seconds>(zoned_time("America/New_York", system_clock::now()).get_local_time()) <<
-			"  " <<
-			std::vformat(_fmt, std::make_format_args(args...)) <<
-			std::endl;
-
-		if (announce) std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n";
-		logMutex.unlock();
-	}
 
 	void RunApp(const std::wstring& dir, const std::wstring& appName);
 	void ThreadSleep(double seconds);
@@ -174,11 +154,12 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	}
 	auto LoadTextFile(const std::wstring& path) 
 		->std::vector<std::string>;
+
 	auto LoadFile(const std::wstring& path)
 		->dev::Result<std::vector<uint8_t>>;
+
 	void DeleteFiles(const std::wstring& folder, const std::wstring& mask = L"*");
 
-	// Function to get the size of a file
 	size_t GetFileSize(const std::wstring& filename);
 } // namespace dev
 #endif //!DEV_UTILS_H
