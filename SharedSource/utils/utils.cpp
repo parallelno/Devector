@@ -35,7 +35,7 @@ auto dev::LoadTextFile(const std::wstring& path)
 }
 
 auto dev::LoadFile(const std::wstring& path)
--> dev::Result<std::vector<uint8_t>>
+-> Result<std::vector<uint8_t>>
 {
 	if (!IsFileExist(path)) {
 		return {};

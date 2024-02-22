@@ -18,7 +18,7 @@ namespace dev
 		static constexpr uint32_t RAMDISK_MAX = 1;
 
 		static constexpr uint32_t GLOBAL_MEMORY_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAMDISK_MAX;
-		int8_t m_memory[GLOBAL_MEMORY_LEN];
+		int8_t m_data[GLOBAL_MEMORY_LEN];
 
 		enum AddrSpace
 		{
@@ -33,12 +33,12 @@ namespace dev
 		void Init();
 		void Load(const std::vector<uint8_t>& _data);
 
-		auto GetByte(uint32_t _addr, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM) -> uint8_t;
+		auto GetByte(uint32_t _addr, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM) const -> uint8_t;
 		void SetByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM);
 
-		int GetWord(uint32_t _addr, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM);
+		int GetWord(uint32_t _addr, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM) const;
 		int Length();
-		uint32_t GetGlobalAddr(uint32_t _addr, Memory::AddrSpace _addr_space);
+		uint32_t GetGlobalAddr(uint32_t _addr, Memory::AddrSpace _addr_space) const;
 
 	};
 }

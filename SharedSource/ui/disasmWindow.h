@@ -10,6 +10,9 @@
 
 namespace dev
 {
+	static constexpr int DEFAULT_WINDOW_W = 600;
+	static constexpr int DEFAULT_WINDOW_H = 800;
+
 	// disasm background colors
 	const ImU32 DISASM_TBL_BG_COLOR_BRK = dev::IM_U32(0x353636FF);
 	const ImU32 DISASM_TBL_BG_COLOR_ADDR = dev::IM_U32(0x353636FF);

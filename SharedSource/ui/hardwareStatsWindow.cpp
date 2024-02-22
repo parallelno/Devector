@@ -3,10 +3,14 @@
 #include "HardwareStatsWindow.h"
 
 dev::HardwareStatsWindow::HardwareStatsWindow()
+	:
+	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H)
 {}
 
 void dev::HardwareStatsWindow::Update()
 {
+	BaseWindow::Update();
+
 	static bool open = true;
 	ImGui::Begin("Hardware Stats", &open, ImGuiWindowFlags_NoCollapse);
 

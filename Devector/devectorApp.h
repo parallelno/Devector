@@ -7,6 +7,8 @@
 #include "Utils/ImGuiApp.h"
 #include "UI/HardwareStatsWindow.h"
 #include "UI/DisasmWindow.h"
+#include "UI/DisplayWindow.h"
+#include "Hardware.h"
 
 #include <unordered_set>
 #include <thread>
@@ -26,8 +28,11 @@ namespace dev
 		ImFont* m_font = nullptr;
 		ImFont* m_fontItalic = nullptr;
 
+		std::unique_ptr <dev::Hardware> m_hardware;
+
 		std::unique_ptr <dev::HardwareStatsWindow> m_hardwareStatsWindowP;
 		std::unique_ptr <dev::DisasmWindow> m_disasmWindowP;
+		std::unique_ptr <dev::DisplayWindow>m_displayWindowP;
 
 		bool m_hardwareStatsWindowShow = true;
 		bool m_disasmWindowShow = true;

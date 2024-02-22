@@ -5,11 +5,14 @@
 
 dev::DisasmWindow::DisasmWindow(ImFont* fontComment)
     :
+    BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H),
     fontComment(fontComment)
 {}
 
 void dev::DisasmWindow::Update()
 {
+    BaseWindow::Update();
+
 	static bool open = true;
 	ImGui::Begin("Disasm", &open, ImGuiWindowFlags_NoCollapse);
 

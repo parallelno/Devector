@@ -71,6 +71,7 @@ namespace dev
 			DebugMemStatsFunc _debugMemStats);
 
 		void Init();
+		void ExecuteMachineCycle(bool _T50HZ);
 
 	private:
 		MemoryReadFunc MemoryRead;
@@ -79,11 +80,10 @@ namespace dev
 		OutputFunc Output;
 		DebugMemStatsFunc DebugMemStats;
 
-		static constexpr uint8_t INSTRUCTION_MAX = 0x100;
+		static constexpr int INSTRUCTION_MAX = 0x100;
 		using InstructionAction = void(*)();
 		InstructionAction m_actions[INSTRUCTION_MAX];
 
-		void ExecuteMachineCycle(bool _T50HZ);
 		void Decode();
 
 		////////////////////////////////////////////////////////////////////////////
@@ -103,14 +103,14 @@ namespace dev
 		//
 		////////////////////////////////////////////////////////////////////////////
 
-		uint8_t GetFlags();
-		uint16_t GetAF();
+		uint8_t GetFlags() const;
+		uint16_t GetAF() const;
 		void SetFlags(uint8_t _psw);
-		uint16_t GetBC();
+		uint16_t GetBC() const;
 		void SetBC(uint16_t _val);
-		uint16_t GetDE();
+		uint16_t GetDE() const;
 		void SetDE(uint16_t _val);
-		uint16_t GetHL();
+		uint16_t GetHL() const;
 		void SetHL(uint16_t _val);
 
 		////////////////////////////////////////////////////////////////////////////
@@ -177,8 +177,8 @@ namespace dev
 		void RST(uint8_t _addr);
 		void RET();
 		void RETCond(bool _condition);
-		void IN();
-		void OUT();
+		void IN_();
+		void OUT_();
 
 	};
 }

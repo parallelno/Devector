@@ -11,6 +11,7 @@
 #include "Display.h"
 #include "Debugger.h"
 #include "Utils/Utils.h"
+#include "Utils/Result.h"
 
 namespace dev 
 {
@@ -25,7 +26,8 @@ namespace dev
 
         Hardware();
 
-        void LoadRom(const std::wstring& _path);
+        auto LoadRom(const std::wstring& _path) 
+			-> Result<std::vector<uint8_t>>;
 		// rasterizes the frame. For realtime emulation it should be called by the 50.08 Hz (3000000/59904) timer
 		void ExecuteFrame();
 		void ExecuteInstruction();

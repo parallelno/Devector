@@ -1,4 +1,5 @@
 #include "Hardware.h"
+#include "Utils/StringUtils.h"
 
 dev::Hardware::Hardware()
     :
@@ -14,24 +15,26 @@ dev::Hardware::Hardware()
     m_display(m_memory)
 {}
 
-void dev::Hardware::LoadRom(const std::wstring& _path)
+auto dev::Hardware::LoadRom(const std::wstring& _path)
+-> Result<std::vector<uint8_t>>
 {
     auto fileSize = GetFileSize(_path);
     if (fileSize > Memory::MEMORY_MAIN_LEN){
         // TODO: communicate the fail state
-        return;
+        return {};
     }
 
     auto result = dev::LoadFile(_path);
 
     if (!result || result->empty()){
         // TODO: communicate the fail state
-        return;
+        return {};
     }
 
     Init();
     m_memory.Load(*result);
-    Log("file loaded: %f", _path);
+    Log("file loaded: {}", dev::StrWToStr(_path));
+    return result;
 }
 
 void dev::Hardware::Init()
@@ -55,7 +58,7 @@ void dev::Hardware::ExecuteInstruction()
 {
     do
     {
-        m_display.rasterize();
-        m_cpu.execute_machine_cycle(m_display.T50HZ);
-    } while (m_cpu.machine_cycle != I8080::INSTR_EXECUTED);
+        m_display.Rasterize();
+        m_cpu.ExecuteMachineCycle(m_display.T50HZ);
+    } while (m_cpu.m_machineCycle != I8080::INSTR_EXECUTED);
 }

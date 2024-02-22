@@ -17,6 +17,8 @@ namespace dev
 		};
 
 		void MemStats(uint32_t _addr, MemAccess _memAccess, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+
+		void Init();
 	};
 }
 #endif // !DEV_DEBUGGER_H

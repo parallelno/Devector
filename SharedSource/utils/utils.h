@@ -87,19 +87,10 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	static void Exit(
 		const std::string& _errStr,
 		dev::ErrCode _err,
-		SendEmergencyMsgT _sendEmergencyMsg = nullptr,
-		const bool _timezoneNY = false)
+		SendEmergencyMsgT _sendEmergencyMsg = nullptr)
 	{
-		if (_timezoneNY)
-		{
-			dev::LogNY(true, "EXIT. err code: {}, msg: {}",
+		dev::Log("EXIT. err code: {}, msg: {}",
 				_err, _errStr);
-		}
-		else
-		{
-			dev::Log("EXIT. err code: {}, msg: {}",
-				_err, _errStr);
-		}
 
 		if (_sendEmergencyMsg) _sendEmergencyMsg(_errStr);
 		

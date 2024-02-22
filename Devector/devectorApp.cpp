@@ -27,8 +27,10 @@ dev::DevectorApp::DevectorApp(
 
 void dev::DevectorApp::WindowsInit()
 {
+	m_hardware = std::make_unique < dev::Hardware>();
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>();
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(m_fontItalic);
+	m_displayWindowP = std::make_unique<dev::DisplayWindow>(m_hardware->m_display);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -44,7 +46,7 @@ void dev::DevectorApp::LoadFonts()
 	//io.Fonts->AddFontDefault();
 
 	auto fontCodePath = dev::GetJsonString(m_settingsJ, "fontPath", false);
-	auto fontCodeSize = dev::GetJsonDouble(m_settingsJ, "fontSize", false);
+	auto fontCodeSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false);
 
 	if (!fontCodePath.empty() && dev::IsFileExist(fontCodePath))
 	{
@@ -52,7 +54,7 @@ void dev::DevectorApp::LoadFonts()
 	}
 
 	auto fontCommentPath = dev::GetJsonString(m_settingsJ, "fontItalicPath", false, "");
-	auto fontCommentSize = dev::GetJsonDouble(m_settingsJ, "fontItalicSize", false);
+	auto fontCommentSize = (float)dev::GetJsonDouble(m_settingsJ, "fontItalicSize", false);
 
 	if (!fontCommentPath.empty() && dev::IsFileExist(fontCommentPath))
 	{
@@ -150,6 +152,7 @@ void dev::DevectorApp::Update()
 	MainMenuUpdate();
 	m_hardwareStatsWindowP->Update();
 	m_disasmWindowP->Update();
+	m_displayWindowP->Update();
 }
 
 
@@ -167,16 +170,15 @@ void dev::DevectorApp::MainMenuUpdate()
 				if (OpenFileDialog(filePath, MAX_PATH))
 				{
 					auto fileSize = dev::GetFileSize(filePath);
-					// TODO: fix 65536 to a const literal
-					if (fileSize > 65536)
+					if (fileSize > Memory::MEMORY_MAIN_LEN)
 					{
-						// TODO: fix it
+						// TODO: the popup window does not apper. fix it
 						DrawPopup("Warning", "File is too big");
 					}
 					else 
 					{
-						auto data = LoadFile(filePath);
-						if (data)
+						auto result = m_hardware->LoadRom(filePath);
+						if (result && !result->empty())
 						{
 							m_recentFilePaths.insert(filePath);
 							RecentFilesStore();

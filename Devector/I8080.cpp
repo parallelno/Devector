@@ -368,8 +368,8 @@ void dev::I8080::Decode()
 		case 0xF7: RST(0x30); break; // RST 6
 		case 0xFF: RST(0x38); break; // RST 7
 
-		case 0xDB: IN(); break; // IN
-		case 0xD3: OUT(); break; // OUT
+		case 0xDB: IN_(); break; // IN
+		case 0xD3: OUT_(); break; // OUT
 
 		case 0xF3: m_INTE = false; break; // DI
 		case 0xFB: m_INTE = true; m_eiPending = true; break; // EI
@@ -408,19 +408,19 @@ uint8_t dev::I8080::ReadInstrMovePC()
 	return op_code;
 }
 
-uint8_t dev::I8080::ReadByte(uint32_t _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM)
+uint8_t dev::I8080::ReadByte(uint32_t _addr, Memory::AddrSpace _addrSpace)
 {
 	DebugMemStats(_addr, Debugger::MemAccess::READ, _addrSpace);
 	return MemoryRead(_addr, _addrSpace);
 }
 
-void dev::I8080::WriteByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM)
+void dev::I8080::WriteByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace)
 {
 	MemoryWrite(_addr, _value, _addrSpace);
 	DebugMemStats(_addr, Debugger::MemAccess::WRITE, _addrSpace);
 }
 
-uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM)
+uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)
 {
 	auto result = ReadByte(m_pc, _addrSpace);
 	m_pc++;
@@ -434,7 +434,7 @@ uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace = Memory::AddrSp
 //
 ////////////////////////////////////////////////////////////////////////////
 
-uint8_t dev::I8080::GetFlags()
+uint8_t dev::I8080::GetFlags() const
 {
 	int psw = 0;
 	psw |= m_flagS ? 1 << 7 : 0;
@@ -449,7 +449,7 @@ uint8_t dev::I8080::GetFlags()
 	return (uint8_t)psw;
 }
 
-uint16_t dev::I8080::GetAF()
+uint16_t dev::I8080::GetAF() const
 {
 	return (uint16_t)(m_a << 8 | GetFlags());
 }
@@ -467,7 +467,7 @@ void dev::I8080::SetFlags(uint8_t psw)
 	m_flagUnused5 = false;
 }
 
-uint16_t dev::I8080::GetBC() 
+uint16_t dev::I8080::GetBC() const
 { 
 	return (m_b << 8) | m_c; 
 }
@@ -478,7 +478,7 @@ void dev::I8080::SetBC(uint16_t val)
 	m_c = (uint8_t)(val & 0xFF);
 }
 
-uint16_t dev::I8080::GetDE()
+uint16_t dev::I8080::GetDE() const
 {
 	return (uint16_t)((m_d << 8) | m_e);
 }
@@ -489,7 +489,7 @@ void dev::I8080::SetDE(uint16_t val)
 	m_e = (uint8_t)(val & 0xFF);
 }
 
-uint16_t dev::I8080::GetHL()
+uint16_t dev::I8080::GetHL() const
 {
 	return (uint16_t)((m_h << 8) | m_l);
 }
@@ -988,7 +988,7 @@ void dev::I8080::INXSP()
 	if (m_machineCycle == 0)
 	{
 		m_Z = (uint8_t)(m_sp + 1);
-		m_W = (uint8_t)(m_Z == 0 ? m_sp >> 8 + 1 : m_sp >> 8);
+		m_W = (uint8_t)(m_Z == 0 ? (m_sp >> 8) + 1 : m_sp >> 8);
 	}
 	else if (m_machineCycle == 1)
 	{
@@ -1015,7 +1015,7 @@ void dev::I8080::DCXSP()
 	if (m_machineCycle == 0)
 	{
 		m_Z = (uint8_t)(m_sp - 1);
-		m_W = (uint8_t)(m_Z == 0xff ? m_sp >> 8 - 1 : m_sp >> 8);
+		m_W = (uint8_t)(m_Z == 0xff ? (m_sp >> 8) - 1 : m_sp >> 8);
 	}
 	else if (m_machineCycle == 1)
 	{
@@ -1222,7 +1222,7 @@ void dev::I8080::CPI()
 	}
 }
 
-void dev::I8080::JMP(bool _condition = true)
+void dev::I8080::JMP(bool _condition)
 {
 	if (m_machineCycle == 1)
 	{
@@ -1247,7 +1247,7 @@ void dev::I8080::PCHL()
 }
 
 // pushes the current pc to the stack, then jumps to an address
-void dev::I8080::CALL(bool _condition = true)
+void dev::I8080::CALL(bool _condition)
 {
 	if (m_machineCycle == 0)
 	{
@@ -1346,7 +1346,7 @@ void dev::I8080::RETCond(bool _condition)
 	}
 }
 
-void dev::I8080::IN()
+void dev::I8080::IN_()
 {
 	if (m_machineCycle == 1)
 	{
@@ -1356,7 +1356,7 @@ void dev::I8080::IN()
 	}
 }
 
-void dev::I8080::OUT()
+void dev::I8080::OUT_()
 {
 	if (m_machineCycle == 1)
 	{

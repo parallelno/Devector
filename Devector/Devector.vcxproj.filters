@@ -63,6 +63,9 @@
     <ClCompile Include="IO.cpp" />
     <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Memory.cpp" />
+    <ClCompile Include="..\SharedSource\UI\DisplayWindow.cpp">
+      <Filter>SharedSource\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -135,6 +138,9 @@
     <ClInclude Include="IO.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Memory.h" />
+    <ClInclude Include="..\SharedSource\UI\DisplayWindow.h">
+      <Filter>SharedSource\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="SharedSource">
