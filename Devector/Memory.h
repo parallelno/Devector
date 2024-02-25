@@ -33,12 +33,12 @@ namespace dev
 		void Init();
 		void Load(const std::vector<uint8_t>& _data);
 
-		auto GetByte(uint32_t _addr, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM) const -> uint8_t;
-		void SetByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM);
+		auto GetByte(uint32_t _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const -> uint8_t;
+		void SetByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 
-		int GetWord(uint32_t _addr, Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM) const;
+		int GetWord(uint32_t _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const;
 		int Length();
-		uint32_t GetGlobalAddr(uint32_t _addr, Memory::AddrSpace _addr_space) const;
+		uint32_t GetGlobalAddr(uint32_t _addr, Memory::AddrSpace _addrSpace) const;
 
 	};
 }

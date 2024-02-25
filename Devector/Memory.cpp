@@ -15,14 +15,17 @@ void dev::Memory::Load(const std::vector<uint8_t>& _data)
     std::copy(_data.begin(), _data.end(), m_data);
 }
 
-auto dev::Memory::GetByte(uint32_t _addr, AddrSpace _addr_space) const
+auto dev::Memory::GetByte(uint32_t _addr, AddrSpace _addrSpace) const
 -> uint8_t
 {
-    return 0;
+    _addr = GetGlobalAddr(_addr, _addrSpace);
+    return m_data[_addr];
 }
 
-void dev::Memory::SetByte(uint32_t _addr, uint8_t _value, AddrSpace _addr_space)
+void dev::Memory::SetByte(uint32_t _addr, uint8_t _value, AddrSpace _addrSpace)
 {
+    _addr = GetGlobalAddr(_addr, _addrSpace);
+    m_data[_addr] = _value;
 }
 
 int dev::Memory::GetWord(uint32_t _addr, AddrSpace _addrSpace) const

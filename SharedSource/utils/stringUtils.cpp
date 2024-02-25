@@ -58,3 +58,32 @@ auto dev::StrWToStr(const std::wstring& ws)
 	const std::string s(ws.begin(), ws.end());
 	return s;
 }
+
+const char* dev::BoolToStrC(const bool _val, bool _text)
+{
+	if (_text) 
+	{
+		static const char* false_s = "False";
+		static const char* true_s = "True";
+		return _val ? true_s : false_s;
+	}
+
+	static const char* false_s0 = "0";
+	static const char* true_s0 = "1";
+	return _val ? true_s0 : false_s0;
+}
+
+auto dev::BoolToStr(const bool _val, bool _text)
+-> const std::string
+{
+	if (_text)
+	{
+		static const std::string false_s = "False";
+		static const std::string true_s = "True";
+		return _val ? true_s : false_s;
+	}
+
+	static const std::string false_s0 = "0";
+	static const std::string true_s0 = "1";
+	return _val ? true_s0 : false_s0;
+}

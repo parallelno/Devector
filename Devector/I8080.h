@@ -102,7 +102,7 @@ namespace dev
 		// Register helpers
 		//
 		////////////////////////////////////////////////////////////////////////////
-
+	public:
 		uint8_t GetFlags() const;
 		uint16_t GetAF() const;
 		void SetFlags(uint8_t _psw);
@@ -112,7 +112,7 @@ namespace dev
 		void SetDE(uint16_t _val);
 		uint16_t GetHL() const;
 		void SetHL(uint16_t _val);
-
+	private:
 		////////////////////////////////////////////////////////////////////////////
 		//
 		// Instruction helpers

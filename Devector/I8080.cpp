@@ -444,8 +444,8 @@ uint8_t dev::I8080::GetFlags() const
 	psw |= m_flagC ? 1 << 0 : 0;
 
 	psw |= m_flagUnused1 ? 1 << 1 : 0;
-	psw |= m_flagUnused3 ? 1 << 1 : 0;
-	psw |= m_flagUnused5 ? 1 << 1 : 0;
+	psw |= m_flagUnused3 ? 1 << 3 : 0;
+	psw |= m_flagUnused5 ? 1 << 5 : 0;
 	return (uint8_t)psw;
 }
 

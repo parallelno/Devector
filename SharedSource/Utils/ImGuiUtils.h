@@ -23,11 +23,11 @@ namespace dev
 #define DEV_COL32_A_SHIFT    0
 
 	// Make the UI compact because there are so many fields
-	void PushStyleCompact();
+	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);
 	void PopStyleCompact();
 	void UpdatePropertyPrintStat(const char* _parameterName);
 
-	void DrawTextSelectable(const std::string& _text);
+	void DrawTextSelectable(const char* _label, const std::string& _text);
 	//void DrawTextSelectableColored(const ImVec4& col, const std::string& _text); 
 	template <typename... Args>
 	void DrawTextSelectableColored(const ImVec4& col, const std::string& _fmt, Args&&... args)
@@ -58,6 +58,8 @@ namespace dev
 	}
 	void DrawHelpMarker(const char* _text);
 	void DrawPopup(const char* _title, const char* _text);
+
+	bool TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 
 	static constexpr ImVec4 IM_VEC4(const uint32_t col)
 	{

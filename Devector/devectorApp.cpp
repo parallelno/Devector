@@ -28,7 +28,7 @@ dev::DevectorApp::DevectorApp(
 void dev::DevectorApp::WindowsInit()
 {
 	m_hardware = std::make_unique < dev::Hardware>();
-	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>();
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardware);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(m_fontItalic);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(m_hardware->m_display);
 }
