@@ -20,10 +20,16 @@ void dev::HardwareStatsWindow::Update()
 	ImGui::End();
 }
 
-void dev::HardwareStatsWindow::DrawProperty1(const std::string& _value, const ImVec2& _aligment)
+void dev::HardwareStatsWindow::DrawProperty1(const std::string& _name, const std::string& _value, const ImVec2& _aligment)
 {
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
+	
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name.c_str(), _aligment);
+	ImGui::PopStyleColor();
+
+	ImGui::SameLine();
 	TextAligned(_value.c_str(), _aligment);
 }
 
@@ -31,7 +37,11 @@ void dev::HardwareStatsWindow::DrawProperty2(const std::string& _name, const std
 {
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
+	
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
 	TextAligned(_name.c_str(), { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
 	ImGui::TableNextColumn();
 	TextAligned(_value.c_str(), { 0.0f, 0.5f });
 }
@@ -50,17 +60,19 @@ void dev::HardwareStatsWindow::DrawRegs()
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_Resizable | 
+		ImGuiTableFlags_NoPadInnerX |
 		ImGuiTableFlags_ContextMenuInBody;
 
-	if (ImGui::BeginTable("regs", 1, flags))
+	if (ImGui::BeginTable("regs", 2, flags))
 	{
-		DrawProperty1(std::format("AF {:04x}", m_hardware.m_cpu.GetAF()));
-		DrawProperty1(std::format("BC {:04x}", m_hardware.m_cpu.GetBC()));
-		DrawProperty1(std::format("DE {:04x}", m_hardware.m_cpu.GetDE()));
-		DrawProperty1(std::format("HL {:04x}", m_hardware.m_cpu.GetHL()));
-		DrawProperty1(std::format("SP {:04x}", m_hardware.m_cpu.m_sp));
-		DrawProperty1(std::format("PC {:04x}", m_hardware.m_cpu.m_pc));
+		ImGui::TableSetupColumn("regsNames", ImGuiTableColumnFlags_WidthFixed, 30);
+
+		DrawProperty2("AF", std::format("{:04X}", m_hardware.m_cpu.GetAF()));
+		DrawProperty2("BC", std::format("{:04X}", m_hardware.m_cpu.GetBC()));
+		DrawProperty2("DE", std::format("{:04X}", m_hardware.m_cpu.GetDE()));
+		DrawProperty2("HL", std::format("{:04X}", m_hardware.m_cpu.GetHL()));
+		DrawProperty2("SP", std::format("{:04X}", m_hardware.m_cpu.m_sp));
+		DrawProperty2("PC", std::format("{:04X}", m_hardware.m_cpu.m_pc));
 
 		ImGui::EndTable();
 	}
@@ -71,20 +83,22 @@ void dev::HardwareStatsWindow::DrawFlags()
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_Resizable | 
+		ImGuiTableFlags_NoPadInnerX |
 		ImGuiTableFlags_ContextMenuInBody;
 
-	if (ImGui::BeginTable("flags", 1, flags))
+	if (ImGui::BeginTable("flags", 2, flags))
 	{		
-		DrawProperty1("C " + dev::BoolToStr(m_hardware.m_cpu.m_flagC));
-		DrawProperty1("Z " + dev::BoolToStr(m_hardware.m_cpu.m_flagZ));
-		DrawProperty1("P " + dev::BoolToStr(m_hardware.m_cpu.m_flagP));
-		DrawProperty1("S " + dev::BoolToStr(m_hardware.m_cpu.m_flagS));
-		DrawProperty1("AC " + dev::BoolToStr(m_hardware.m_cpu.m_flagAC));
-		ImGui::TableNextRow();ImGui::TableNextColumn(); ImGui::SeparatorText("");
-		DrawProperty1("INTE " + dev::BoolToStr(m_hardware.m_cpu.m_INTE));
-		DrawProperty1("IFF " + dev::BoolToStr(m_hardware.m_cpu.m_IFF));
-		DrawProperty1("HLTA " + dev::BoolToStr(m_hardware.m_cpu.m_HLTA));
+		ImGui::TableSetupColumn("flagsNames", ImGuiTableColumnFlags_WidthFixed, 45);
+
+		DrawProperty2("C", dev::BoolToStr(m_hardware.m_cpu.m_flagC));
+		DrawProperty2("Z", dev::BoolToStr(m_hardware.m_cpu.m_flagZ));
+		DrawProperty2("P", dev::BoolToStr(m_hardware.m_cpu.m_flagP));
+		DrawProperty2("S", dev::BoolToStr(m_hardware.m_cpu.m_flagS));
+		DrawProperty2("AC", dev::BoolToStr(m_hardware.m_cpu.m_flagAC));
+		DrawSeparator2("");
+		DrawProperty2("INTE", dev::BoolToStr(m_hardware.m_cpu.m_INTE));
+		DrawProperty2("IFF", dev::BoolToStr(m_hardware.m_cpu.m_IFF));
+		DrawProperty2("HLTA", dev::BoolToStr(m_hardware.m_cpu.m_HLTA));
 
 		ImGui::EndTable();
 	}
@@ -95,11 +109,13 @@ void dev::HardwareStatsWindow::DrawStack()
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_Resizable | 
+		ImGuiTableFlags_NoPadInnerX |
 		ImGuiTableFlags_ContextMenuInBody;
 
-	if (ImGui::BeginTable("stack", 1, flags))
+	if (ImGui::BeginTable("stack", 2, flags))
 	{
+		ImGui::TableSetupColumn("stackAddrs", ImGuiTableColumnFlags_WidthFixed, 30);
+
 		// Stack
 		auto addrN6 = m_hardware.m_memory.GetWord(m_hardware.m_cpu.m_sp - 8, Memory::AddrSpace::STACK);
 		auto addrN4 = m_hardware.m_memory.GetWord(m_hardware.m_cpu.m_sp - 6, Memory::AddrSpace::STACK);
@@ -109,13 +125,13 @@ void dev::HardwareStatsWindow::DrawStack()
 		auto addrP4 = m_hardware.m_memory.GetWord(m_hardware.m_cpu.m_sp + 2, Memory::AddrSpace::STACK);
 		auto addrP6 = m_hardware.m_memory.GetWord(m_hardware.m_cpu.m_sp + 4, Memory::AddrSpace::STACK);
 		
-		DrawProperty1(std::format("-6 {:04}", addrN6));
-		DrawProperty1(std::format("-4 {:04}", addrN4));
-		DrawProperty1(std::format("-2 {:04}", addrN2));
-		DrawProperty1(std::format("SP {:04}", addr0));
-		DrawProperty1(std::format("+2 {:04}", addrP2));
-		DrawProperty1(std::format("+4 {:04}", addrP4));
-		DrawProperty1(std::format("+6 {:04}", addrP6));
+		DrawProperty2("-6", std::format("{:04X}", addrN6));
+		DrawProperty2("-4", std::format("{:04X}", addrN4));
+		DrawProperty2("-2", std::format("{:04X}", addrN2));
+		DrawProperty2("SP", std::format("{:04X}", addr0));
+		DrawProperty2("+2", std::format("{:04X}", addrP2));
+		DrawProperty2("+4", std::format("{:04X}", addrP4));
+		DrawProperty2("+6", std::format("{:04X}", addrP6));
 
 		ImGui::EndTable();
 	}
@@ -126,6 +142,7 @@ void dev::HardwareStatsWindow::DrawHardware()
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchSame |
+		ImGuiTableFlags_NoPadInnerX |
 		ImGuiTableFlags_ContextMenuInBody;
 
 	if (ImGui::BeginTable("hardware", 2, flags))
@@ -173,8 +190,8 @@ void dev::HardwareStatsWindow::DrawStats()
 		ImGuiTableFlags_ContextMenuInBody;
 	if (ImGui::BeginTable("Hardware Stats", 4, flags))
 	{
-		ImGui::TableSetupColumn("Regs", ImGuiTableColumnFlags_WidthFixed, 75);
-		ImGui::TableSetupColumn("Flags", ImGuiTableColumnFlags_WidthFixed, 75);
+		ImGui::TableSetupColumn("Regs", ImGuiTableColumnFlags_WidthFixed, 80);
+		ImGui::TableSetupColumn("Flags", ImGuiTableColumnFlags_WidthFixed, 70);
 		ImGui::TableSetupColumn("Stack", ImGuiTableColumnFlags_WidthFixed, 80);
 		ImGui::TableSetupColumn("Hardware", ImGuiTableColumnFlags_WidthStretch);
 		ImGui::TableHeadersRow();

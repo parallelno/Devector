@@ -29,7 +29,7 @@ void dev::DevectorApp::WindowsInit()
 {
 	m_hardware = std::make_unique < dev::Hardware>();
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardware);
-	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(m_fontItalic);
+	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardware, m_fontItalic);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(m_hardware->m_display);
 }
 
@@ -180,9 +180,11 @@ void dev::DevectorApp::MainMenuUpdate()
 						auto result = m_hardware->LoadRom(filePath);
 						if (result && !result->empty())
 						{
-							m_recentFilePaths.insert(filePath);
+							RecentFilesAdd(filePath);
 							RecentFilesStore();
 						}
+						// TODO: temp. update disasm
+						m_disasmWindowP->UpdateDisasm();
 					}
 				}
 			}
@@ -192,8 +194,11 @@ void dev::DevectorApp::MainMenuUpdate()
 				{
 					if (ImGui::MenuItem(dev::StrWToStr(filePath).c_str()))
 					{
-						auto data = LoadFile(filePath);
+						m_hardware->LoadRom(filePath);
 					}
+					// TODO: temp. update disasm
+					m_disasmWindowP->UpdateDisasm();
+
 				}
 				ImGui::EndMenu();
 			}
@@ -218,7 +223,7 @@ void dev::DevectorApp::RecentFilesInit()
 	auto recentFiles = dev::GetJsonObject(m_settingsJ, "recentFiles", false);
 	for (const auto& filePaths : recentFiles)
 	{
-		m_recentFilePaths.insert(dev::StrToStrW(filePaths));
+		m_recentFilePaths.push_back(dev::StrToStrW(filePaths));
 	}
 }
 
@@ -231,4 +236,18 @@ void dev::DevectorApp::RecentFilesStore()
 	}
 	m_settingsJ["recentFiles"] = recentFiles;
 	SaveJson(m_stringPath, m_settingsJ);
+}
+
+void dev::DevectorApp::RecentFilesAdd(const std::wstring& _filePath)
+{
+	// remove if it contains
+	m_recentFilePaths.remove(_filePath);
+
+	// add a new one
+	m_recentFilePaths.push_front(_filePath);
+	// check the amount
+	if (m_recentFilePaths.size() > RECENT_FILES_MAX)
+	{
+		m_recentFilePaths.pop_back();
+	}
 }

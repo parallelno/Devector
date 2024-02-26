@@ -12,7 +12,7 @@ void dev::Memory::Init()
 
 void dev::Memory::Load(const std::vector<uint8_t>& _data)
 {
-    std::copy(_data.begin(), _data.end(), m_data);
+    std::copy(_data.begin(), _data.end(), m_data + ROM_LOAD_ADDR);
 }
 
 auto dev::Memory::GetByte(uint32_t _addr, AddrSpace _addrSpace) const
@@ -28,13 +28,10 @@ void dev::Memory::SetByte(uint32_t _addr, uint8_t _value, AddrSpace _addrSpace)
     m_data[_addr] = _value;
 }
 
-int dev::Memory::GetWord(uint32_t _addr, AddrSpace _addrSpace) const
+auto dev::Memory::GetWord(uint32_t _addr, AddrSpace _addrSpace) const
+-> uint16_t
 {
-    auto addr0 = GetGlobalAddr(_addr, _addrSpace);
-    auto addr1 = GetGlobalAddr(_addr + 1, _addrSpace);
-    auto lb = m_data[addr0];
-    auto hb = m_data[addr1];
-    return hb << 8 | lb;
+    return GetByte(_addr+1, _addrSpace) << 8 | GetByte(_addr, _addrSpace);
 }
 
 int dev::Memory::Length()

@@ -10,7 +10,6 @@
 #include "UI/DisplayWindow.h"
 #include "Hardware.h"
 
-#include <unordered_set>
 #include <thread>
 #include <mutex>
 #include <string>
@@ -21,7 +20,8 @@ namespace dev
 	{
 		const std::string APP_NAME = "Devector";
 		const std::string FONT_CODE_PATH_DEFAULT = "Devector";
-		
+		static constexpr int RECENT_FILES_MAX = 10;
+
 		nlohmann::json m_settingsJ;
 		const std::string m_stringPath;
 
@@ -38,7 +38,7 @@ namespace dev
 		bool m_disasmWindowShow = true;
 		bool m_memoryMapWindowShow = true;
 
-		std::unordered_set<std::wstring> m_recentFilePaths;
+		std::list<std::wstring> m_recentFilePaths;
 
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ,
@@ -51,6 +51,7 @@ namespace dev
 		void SettingsInit();
 		void RecentFilesInit();
 		void RecentFilesStore();
+		void RecentFilesAdd(const std::wstring& _filePath);
 		void LoadFonts();
 		void AppStyleInit();
 		void MainMenuUpdate();

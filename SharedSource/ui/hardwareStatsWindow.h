@@ -23,7 +23,7 @@ namespace dev
 		void DrawFlags();
 		void DrawStack();
 		void DrawHardware();
-		void DrawProperty1(const std::string& _value, const ImVec2& _aligment = { 1.0f, 0.5f });
+		void DrawProperty1(const std::string& _name, const std::string& _value, const ImVec2& _aligment = { 1.0f, 0.5f });
 		void DrawProperty2(const std::string& _name, const std::string& _value);
 		void DrawSeparator2(const std::string& _text);
 

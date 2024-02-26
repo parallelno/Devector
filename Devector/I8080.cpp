@@ -4,14 +4,12 @@ dev::I8080::I8080(
 	MemoryReadFunc _memoryRead, 
 	MemoryWriteFunc _memoryWrite, 
 	InputFunc _input, 
-	OutputFunc _output, 
-	DebugMemStatsFunc _debugMemStats)
+	OutputFunc _output)
 	:
 	MemoryRead(_memoryRead),
 	MemoryWrite(_memoryWrite),
 	Input(_input),
-	Output(_output),
-	DebugMemStats(_debugMemStats)
+	Output(_output)
 {
 	m_flagUnused1 = true;
 	m_flagUnused3 = false;
@@ -402,22 +400,25 @@ void dev::I8080::Decode()
 
 uint8_t dev::I8080::ReadInstrMovePC()
 {
-	DebugMemStats(m_pc, Debugger::MemAccess::RUN, Memory::AddrSpace::RAM);
 	uint8_t op_code = MemoryRead(m_pc, Memory::AddrSpace::RAM);
 	m_pc++;
+	DebugOnRead(m_pc, Memory::AddrSpace::RAM, op_code, true);
+
 	return op_code;
 }
 
 uint8_t dev::I8080::ReadByte(uint32_t _addr, Memory::AddrSpace _addrSpace)
 {
-	DebugMemStats(_addr, Debugger::MemAccess::READ, _addrSpace);
-	return MemoryRead(_addr, _addrSpace);
+	auto val = MemoryRead(_addr, _addrSpace);
+	DebugOnRead(m_pc, _addrSpace, val, false);
+
+	return val;
 }
 
 void dev::I8080::WriteByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace)
 {
 	MemoryWrite(_addr, _value, _addrSpace);
-	DebugMemStats(_addr, Debugger::MemAccess::WRITE, _addrSpace);
+	DebugOnWrite(m_pc, _addrSpace, _value);
 }
 
 uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)

@@ -3,10 +3,11 @@
 #include "DisasmWindow.h"
 #include "Utils\StringUtils.h"
 
-dev::DisasmWindow::DisasmWindow(ImFont* fontComment)
+dev::DisasmWindow::DisasmWindow(dev::Hardware& _hardware, ImFont* fontComment)
     :
     BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H),
-    fontComment(fontComment)
+    m_hardware(_hardware),
+    m_fontComment(fontComment)
 {}
 
 void dev::DisasmWindow::Update()
@@ -16,16 +17,40 @@ void dev::DisasmWindow::Update()
 	static bool open = true;
 	ImGui::Begin("Disasm", &open, ImGuiWindowFlags_NoCollapse);
 
+    DrawDebugControls();
 	DrawSearch();
 	DrawCode();
 
 	ImGui::End();
 }
 
+void dev::DisasmWindow::DrawDebugControls()
+{
+    if (ImGui::Button("Step"))
+    {
+
+    }
+    ImGui::SameLine(); 
+    if (ImGui::Button("Step 100"))
+    {
+
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Step Frame"))
+    {
+
+    }
+}
+
+void dev::DisasmWindow::UpdateDisasm()
+{
+    //m_disasm = m_hardware.m_debugger.GetDisasm();
+}
+
 void dev::DisasmWindow::DrawSearch()
 {
     ImGui::PushItemWidth(-100);
-    ImGui::InputTextWithHint("##empty 1", "0x100", search_txt, IM_ARRAYSIZE(search_txt));
+    ImGui::InputTextWithHint("##empty 1", "0x100", m_searchText, IM_ARRAYSIZE(m_searchText));
     ImGui::SameLine(); dev::DrawHelpMarker(
         "Search by a hexadecimal address in the format of 0x100 or 100,\n"
         "or by a case-sensitive label name.");
@@ -58,8 +83,10 @@ static auto isLastLine()
     return remainingSpace <= 0;
 }
 
-void dev::DisasmWindow::DrawDisassembly(const char* disasm[])
+void dev::DisasmWindow::DrawDisassembly()
 {
+    if (m_disasm.empty()) return;
+
     static int item_current_idx = 0;
 
     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
@@ -84,20 +111,20 @@ void dev::DisasmWindow::DrawDisassembly(const char* disasm[])
             int line_idx = row_idx % DISASM_LINES_VISIBLE_MAX;
 
             // Parse the line into tokens
-            auto line_splited = dev::Split(disasm[line_idx], '\t');
+            auto line_splited = dev::Split(m_disasm[line_idx], '\t');
 
             // draw a comment
             if (line_splited[0][0] == ';')
             {
                 if (ImGui::BeginTable("##comment", 3, tbl_flags)) // brk, addr, comment
                 {
-                    if (fontComment) {
-                        ImGui::PushFont(fontComment);
+                    if (m_fontComment) {
+                        ImGui::PushFont(m_fontComment);
                     }
                     PushStyleCompact();
 
-                    ImGui::TableSetupColumn("Brk", ImGuiTableColumnFlags_WidthFixed, brk_w);
-                    ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, addr_w);
+                    ImGui::TableSetupColumn("Brk", ImGuiTableColumnFlags_WidthFixed, BRK_W);
+                    ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, ADDR_W);
                     ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthStretch);
 
                     ImGui::TableNextRow();
@@ -122,7 +149,7 @@ void dev::DisasmWindow::DrawDisassembly(const char* disasm[])
 
                     PopStyleCompact();
                     // Revert to the default font
-                    if (fontComment) {
+                    if (m_fontComment) {
                         ImGui::PopFont();
                     }
                     ImGui::EndTable();
@@ -135,8 +162,8 @@ void dev::DisasmWindow::DrawDisassembly(const char* disasm[])
                 {
                     PushStyleCompact();
 
-                    ImGui::TableSetupColumn("Brk", ImGuiTableColumnFlags_WidthFixed, brk_w);
-                    ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, addr_w);
+                    ImGui::TableSetupColumn("Brk", ImGuiTableColumnFlags_WidthFixed, BRK_W);
+                    ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, ADDR_W);
                     ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthStretch);
 
                     ImGui::TableNextRow();
@@ -191,10 +218,10 @@ void dev::DisasmWindow::DrawDisassembly(const char* disasm[])
                 {
                     PushStyleCompact();
 
-                    ImGui::TableSetupColumn("Brk", ImGuiTableColumnFlags_WidthFixed, brk_w);
-                    ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, addr_w);
+                    ImGui::TableSetupColumn("Brk", ImGuiTableColumnFlags_WidthFixed, BRK_W);
+                    ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, ADDR_W);
                     ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthStretch);
-                    ImGui::TableSetupColumn("stats", ImGuiTableColumnFlags_WidthFixed, stats_w);
+                    ImGui::TableSetupColumn("stats", ImGuiTableColumnFlags_WidthFixed, STATS_W);
                     ImGui::TableSetupColumn("consts");
 
                     ImGui::TableNextRow();
@@ -306,5 +333,5 @@ void dev::DisasmWindow::DrawDisassembly(const char* disasm[])
 
 void dev::DisasmWindow::DrawCode() 
 {
-    DrawDisassembly(disasm);
+    DrawDisassembly();
 }

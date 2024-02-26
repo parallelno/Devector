@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <functional>
 
 namespace dev
 {
@@ -36,7 +37,7 @@ namespace dev
 		auto GetByte(uint32_t _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const -> uint8_t;
 		void SetByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 
-		int GetWord(uint32_t _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const;
+		auto GetWord(uint32_t _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const -> uint16_t;
 		int Length();
 		uint32_t GetGlobalAddr(uint32_t _addr, Memory::AddrSpace _addrSpace) const;
 

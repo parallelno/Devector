@@ -17,7 +17,6 @@
 #include <functional>
 
 #include "Memory.h"
-#include "Debugger.h"
 
 namespace dev 
 {
@@ -60,29 +59,31 @@ namespace dev
 		using MemoryWriteFunc = std::function <void (uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace)>;
 		using InputFunc = std::function <uint8_t (uint8_t _port)>;
 		using OutputFunc = std::function <void (uint8_t _port, uint8_t _value)>;
-		using DebugMemStatsFunc = std::function<void(uint32_t _addr, Debugger::MemAccess _memAccess, Memory::AddrSpace _addrSpace)>;
+		using DebugOnReadFunc = std::function<void(const uint32_t _addr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _is_opcode)>;
+		using DebugOnWriteFunc = std::function<void(const uint32_t _addr, Memory::AddrSpace _addrSpace, const uint8_t _val)>;
 
 		I8080() = delete;
 		I8080(
 			MemoryReadFunc _memoryRead,
 			MemoryWriteFunc _memoryWrite,
 			InputFunc _input,
-			OutputFunc _output,
-			DebugMemStatsFunc _debugMemStats);
+			OutputFunc _output);
 
 		void Init();
 		void ExecuteMachineCycle(bool _T50HZ);
+
+		DebugOnReadFunc DebugOnRead;
+		DebugOnWriteFunc DebugOnWrite;
 
 	private:
 		MemoryReadFunc MemoryRead;
 		MemoryWriteFunc MemoryWrite;
 		InputFunc Input;
 		OutputFunc Output;
-		DebugMemStatsFunc DebugMemStats;
 
-		static constexpr int INSTRUCTION_MAX = 0x100;
-		using InstructionAction = void(*)();
-		InstructionAction m_actions[INSTRUCTION_MAX];
+		//static constexpr int INSTRUCTION_MAX = 0x100;
+		//using InstructionAction = void(*)();
+		//InstructionAction m_actions[INSTRUCTION_MAX];
 
 		void Decode();
 

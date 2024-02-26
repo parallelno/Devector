@@ -5,14 +5,13 @@ dev::Hardware::Hardware()
     :
     m_memory(),
     m_io(),
-    m_debugger(),
     m_cpu(
         std::bind(&Memory::GetByte, &m_memory, std::placeholders::_1, std::placeholders::_2),
         std::bind(&Memory::SetByte, &m_memory, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
         std::bind(&IO::PortIn, &m_io, std::placeholders::_1),
-        std::bind(&IO::PortOut, &m_io, std::placeholders::_1, std::placeholders::_2),
-        std::bind(&Debugger::MemStats, &m_debugger, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
-    m_display(m_memory)
+        std::bind(&IO::PortOut, &m_io, std::placeholders::_1, std::placeholders::_2)),
+    m_display(m_memory),
+    m_debugger(m_cpu, m_memory)
 {}
 
 auto dev::Hardware::LoadRom(const std::wstring& _path)
