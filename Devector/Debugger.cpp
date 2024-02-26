@@ -117,7 +117,7 @@ static size_t cmd[3];
 #define CMD_OP_H cmd[2]
 #define MAX_DATA_CHR_LEN 11
 
-auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h, const int _cmd_len_min)
+auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h)
 -> const std::string
 {
 	CMD_OPCODE = _opcode;
@@ -137,12 +137,6 @@ auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _d
 		auto data_w = ((uint16_t)_data_h << 8) + _data_l;
 		out << " " << std::setw(sizeof(uint16_t) * 2) << std::setfill('0');
 		out << std::uppercase << std::hex << static_cast<int>(data_w);
-	}
-
-	auto i = out.str().size();
-	for (; i < _cmd_len_min; i++)
-	{
-		out << " ";
 	}
 
 	return out.str();
@@ -191,17 +185,21 @@ inline uint8_t get_opcode_type(const uint8_t _opcode)
 auto dev::Debugger::get_disasm_db_line(const uint32_t _addr, const uint8_t _data) const
 ->const std::string
 {
+	/*
 	std::stringstream out;
 
+	
 	out << "0x";
 	out << std::setw(sizeof(uint16_t) * 2) << std::setfill('0');
 	out << std::uppercase << std::hex << static_cast<int>(_addr) << ":";
 
+	
 	// print data in a format " %02X"
 	out << " ";
 	out << std::setw(sizeof(uint8_t) * 2) << std::setfill('0');
 	out << std::uppercase << std::hex << static_cast<int>(_data);
 
+	
 	// add whitespaces at the end of data
 	for (int i = 3; i < MAX_DATA_CHR_LEN; i++)
 	{
@@ -213,6 +211,8 @@ auto dev::Debugger::get_disasm_db_line(const uint32_t _addr, const uint8_t _data
 	out << std::uppercase << std::hex << static_cast<int>(_data);
 
 	return out.str();
+		*/
+	return std::format("0x{:04X}\tDB 0x{:02X}\t", _addr, _data);
 }
 
 auto dev::Debugger::get_disasm_line(const uint32_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
@@ -223,6 +223,7 @@ auto dev::Debugger::get_disasm_line(const uint32_t _addr, const uint8_t _opcode,
 	CMD_OP_H = _data_h;
 
 	auto cmd_len = cmd_lens[_opcode];
+	/*
 	std::stringstream out;
 
 	out << "0x";
@@ -247,6 +248,8 @@ auto dev::Debugger::get_disasm_line(const uint32_t _addr, const uint8_t _opcode,
 	out << get_mnemonic(_opcode, _data_l, _data_h, 13);
 
 	return out.str();
+	*/
+	return std::format("0x{:04X}\t{}\t", _addr, get_mnemonic(_opcode, _data_l, _data_h));
 }
 
 size_t dev::Debugger::get_addr(const uint32_t _end_addr, const size_t _before_addr_lines) const
@@ -286,10 +289,10 @@ size_t dev::Debugger::get_addr(const uint32_t _end_addr, const size_t _before_ad
 	return _end_addr;
 }
 
-auto dev::Debugger::get_disasm(const uint32_t _addr, const size_t _lines, const size_t _before_addr_lines) const
-->std::string
+auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const size_t _before_addr_lines) const
+->std::vector<std::string>
 {
-	std::string out;
+	std::vector<std::string> out;
 	if (_lines == 0) return out;
 
 
@@ -311,33 +314,37 @@ auto dev::Debugger::get_disasm(const uint32_t _addr, const size_t _lines, const 
 
 			for (int i = 0; i < _before_addr_lines; i++)
 			{
+				std::string line_s;
+
 				if (addr == pc)
 				{
-					out += ">";
+					//line_s += ">";
 				}
 				else
 				{
-					out += " ";
+					//line_s += " ";
 				}
 				auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-				out += get_disasm_db_line(addr, db);
+				line_s += get_disasm_db_line(addr, db);
 
 				size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
 				std::string runsS = std::to_string(mem_runs[globalAddr]);
 				std::string readsS = std::to_string(mem_reads[globalAddr]);
 				std::string writesS = std::to_string(mem_writes[globalAddr]);
-				std::string runsS_readsS_writesS = " (" + runsS + "," + readsS + "," + writesS + ")";
-				out += runsS_readsS_writesS;
+				std::string runsS_readsS_writesS = runsS + "," + readsS + "," + writesS + "\t";
+				line_s += runsS_readsS_writesS;
 
 				if (labels.find(addr & 0xffff) != labels.end())
 				{
-					out += " " + labels.at(addr & 0xffff);
+					line_s += labels.at(addr & 0xffff);
 				}
-
+				/*
 				if (lines > 0 || i != _before_addr_lines - 1)
 				{
 					out += "\n";
 				}
+				*/
+				out.push_back(line_s);
 
 				addr = (addr + 1) & 0xffff;
 			}
@@ -346,30 +353,37 @@ auto dev::Debugger::get_disasm(const uint32_t _addr, const size_t _lines, const 
 
 	for (int i = 0; i < lines; i++)
 	{
+		std::string line_s;
+
 		if (addr == pc)
 		{
-			out += ">";
+			//line_s += ">";
 		}
 		else
 		{
-			out += " ";
+			//line_s += " ";
+		}
+
+		if (addr == 0x100)
+		{
+			int a = 1;
 		}
 
 		auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
 		auto data_l = m_memory.GetByte(addr + 1, Memory::AddrSpace::RAM);
 		auto data_h = m_memory.GetByte(addr + 2, Memory::AddrSpace::RAM);
-		out += get_disasm_line(addr, opcode, data_l, data_h);
+		line_s += get_disasm_line(addr, opcode, data_l, data_h);
 
 		size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
 		std::string runsS = std::to_string(mem_runs[globalAddr]);
 		std::string readsS = std::to_string(mem_reads[globalAddr]);
 		std::string writesS = std::to_string(mem_writes[globalAddr]);
-		std::string runsS_readsS_writesS = "(" + runsS + "," + readsS + "," + writesS + ")";
-		out += runsS_readsS_writesS;
+		std::string runsS_readsS_writesS = runsS + "," + readsS + "," + writesS + "\t";
+		line_s += runsS_readsS_writesS;
 
 		if (labels.find(addr & 0xffff) != labels.end())
 		{
-			out += " " + labels.at(addr & 0xffff);
+			line_s += labels.at(addr & 0xffff);
 		}
 
 		if (get_cmd_len(opcode) == 3 || opcode == OPCODE_PCHL)
@@ -386,34 +400,21 @@ auto dev::Debugger::get_disasm(const uint32_t _addr, const size_t _lines, const 
 
 			if (labels.find(label_addr) != labels.end())
 			{
-				out += " (" + labels.at(label_addr) + ")";
+				line_s += " (" + labels.at(label_addr) + ")";
 			}
 		}
-
+		/*
 		if (i != lines - 1)
 		{
 			out += "\n";
 		}
+		*/
+		out.push_back(line_s);
 
 		addr = (addr + get_cmd_len(opcode)) & 0xffff;
 	}
 	return out;
 }
-/*
-void dev::Debugger::reset()
-{
-	std::fill(mem_runs, mem_runs + GLOBAL_MEM_SIZE, 0);
-	std::fill(mem_reads, mem_reads + GLOBAL_MEM_SIZE, 0);
-	std::fill(mem_writes, mem_writes + GLOBAL_MEM_SIZE, 0);
-
-	for (size_t i = 0; i < TRACE_LOG_SIZE; i++)
-	{
-		trace_log[i].clear();
-	}
-	trace_log_idx = 0;
-	trace_log_idx_view_offset = 0;
-}
-*/
 
 void dev::Debugger::add_breakpoint(const uint32_t _addr, const bool _active, const Memory::AddrSpace _addr_space)
 {
@@ -559,7 +560,7 @@ auto dev::Debugger::TraceLog::to_str() const
 	out << std::setw(5) << std::setfill('0');
 	out << std::uppercase << std::hex << static_cast<int>(global_addr) << ": ";
 
-	out << get_mnemonic(opcode, data_l, data_h, 13);
+	out << get_mnemonic(opcode, data_l, data_h);
 
 	return out.str();
 }

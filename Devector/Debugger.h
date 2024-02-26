@@ -110,7 +110,7 @@ namespace dev
 		void Read(const uint32_t _global_addr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _is_opcode);
 		void Write(const uint32_t _global_addr, Memory::AddrSpace _addrSpace, const uint8_t _val);
 
-		auto get_disasm(const uint32_t _addr, const size_t _lines, const size_t _before_addr_lines) const->std::string;
+		auto GetDisasm(const uint32_t _addr, const size_t _lines, const size_t _before_addr_lines) const->std::vector<std::string>;
 
 		void add_breakpoint(const uint32_t _addr, const bool _active = true, const Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM);
 		void del_breakpoint(const uint32_t _addr, const Memory::AddrSpace _addr_space = Memory::AddrSpace::RAM);
@@ -159,7 +159,7 @@ namespace dev
 		std::map<size_t, std::string> labels;
 
 		I8080& m_cpu;
-		Memory m_memory;
+		Memory& m_memory;
 
 		std::mutex breakpoints_mutex;
 		std::mutex watchpoints_mutex;

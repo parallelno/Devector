@@ -183,7 +183,6 @@ void dev::DevectorApp::MainMenuUpdate()
 							RecentFilesAdd(filePath);
 							RecentFilesStore();
 						}
-						// TODO: temp. update disasm
 						m_disasmWindowP->UpdateDisasm();
 					}
 				}
@@ -195,10 +194,8 @@ void dev::DevectorApp::MainMenuUpdate()
 					if (ImGui::MenuItem(dev::StrWToStr(filePath).c_str()))
 					{
 						m_hardware->LoadRom(filePath);
+						m_disasmWindowP->UpdateDisasm();
 					}
-					// TODO: temp. update disasm
-					m_disasmWindowP->UpdateDisasm();
-
 				}
 				ImGui::EndMenu();
 			}

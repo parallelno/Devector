@@ -41,8 +41,8 @@ namespace dev
 		static constexpr float COMMAND_W = 120.0f;
 		static constexpr float STATS_W = 100.0f;
 
-		static constexpr int DISASM_LINES_VISIBLE_MAX = 30;
-		static constexpr int DISASM_LINES_MAX = 17 * 10;
+		//static constexpr int DISASM_LINES_VISIBLE_MAX = 30;
+		//static constexpr int DISASM_LINES_MAX = 17 * 10;
 		
 		Hardware& m_hardware;
 		ImFont* m_fontComment = nullptr;
@@ -51,9 +51,9 @@ namespace dev
 
 		char m_searchText[255] = "";
 
-		std::vector<std::string> m_disasm;
-		/*
-		const char* disasm[DISASM_LINES_MAX] = {
+		std::vector<std::string> m_disasm 
+		
+			= {
 			"first_label:\t(minor_label1, minor_label2)",
 			"; Some comment",
 			"0xFFFF\tADD H\t1, 10, 99\t",
@@ -225,7 +225,6 @@ namespace dev
 			"@loop:\t(func_draw_something2 func_draw_something3)",
 			"0xFE0D\tLAST b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
 		};
-		*/
 		
 		void DrawDebugControls();
 		void DrawSearch();

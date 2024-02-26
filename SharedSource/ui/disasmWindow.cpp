@@ -28,23 +28,24 @@ void dev::DisasmWindow::DrawDebugControls()
 {
     if (ImGui::Button("Step"))
     {
-
+        UpdateDisasm();
     }
     ImGui::SameLine(); 
     if (ImGui::Button("Step 100"))
     {
-
+        UpdateDisasm();
     }
     ImGui::SameLine();
     if (ImGui::Button("Step Frame"))
     {
-
+        UpdateDisasm();
     }
 }
 
 void dev::DisasmWindow::UpdateDisasm()
 {
-    //m_disasm = m_hardware.m_debugger.GetDisasm();
+    auto addr = m_hardware.m_cpu.m_sp;
+    m_disasm = m_hardware.m_debugger.GetDisasm(addr, 1000, 6);
 }
 
 void dev::DisasmWindow::DrawSearch()
@@ -99,7 +100,7 @@ void dev::DisasmWindow::DrawDisassembly()
     if (ImGui::BeginTable("##disassembly", 1, tbl_flags | ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY)) // (labels) or (comment) or (brk, addr, code, stats, consts)
     {
         ImGuiListClipper clipper;
-        clipper.Begin(DISASM_LINES_MAX + 10000);
+        clipper.Begin(m_disasm.size());
         while (clipper.Step())
             for (int row_idx = clipper.DisplayStart; row_idx < clipper.DisplayEnd; row_idx++)
         //for (int row_idx = 0; row_idx < DISASM_LINES_MAX+10000; row_idx++)
@@ -108,7 +109,7 @@ void dev::DisasmWindow::DrawDisassembly()
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
 
-            int line_idx = row_idx % DISASM_LINES_VISIBLE_MAX;
+            int line_idx = row_idx;//% DISASM_LINES_VISIBLE_MAX;
 
             // Parse the line into tokens
             auto line_splited = dev::Split(m_disasm[line_idx], '\t');
