@@ -271,7 +271,6 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 
 				if (m_labels.contains(addr & 0xffff))
 				{
-					//lineS += m_labels.at(addr & 0xffff);
 					out.push_back(m_labels.at(addr & 0xffff));
 				}
 
@@ -300,7 +299,6 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 
 		if (m_labels.contains(addr & 0xffff))
 		{
-			//lineS += m_labels.at(addr & 0xffff);
 			out.push_back(m_labels.at(addr & 0xffff));
 		}
 
@@ -329,6 +327,20 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 	return out;
 }
 
+bool IsConstLabel(const char* _s)
+{
+	// Iterate through each character in the string
+	while (*_s != '\0') {
+		// Check if the character is uppercase or underscore
+		if (!(std::isupper(*_s) || *_s == '_' || (*_s >= '0' && *_s <= '9'))) {
+			return false; // Not all characters are capital letters or underscores
+		}
+		++_s; // Move to the next character
+	}
+	return true; // All characters are capital letters or underscores
+}
+
+
 void dev::Debugger::LoadLabels(const std::wstring& _path)
 {
 	// load labels
@@ -337,36 +349,71 @@ void dev::Debugger::LoadLabels(const std::wstring& _path)
 
 	char* labels_c(reinterpret_cast<char*>(result->data()));
 	
-	char* context = nullptr; // for strtok_s
+	char* labelValPairContext = nullptr; // for strtok_s
 	
-	char* label_c = strtok_s(labels_c, " $\n", &context);
-	char* addr_c = strtok_s(nullptr, " $\n", &context);
+	char* label_c = strtok_s(labels_c, " $\n", &labelValPairContext);
+	char* addr_c = strtok_s(nullptr, " $\n", &labelValPairContext);
 
 	m_labels.clear();
+	m_consts.clear();
+	m_externalLabels.clear();
 	
 	int addr = 0;
 	char* end;
+
+	char* labelContext = nullptr; // for strtok_s
 
 	while (label_c != nullptr)
 	{
 		if (label_c == nullptr || addr_c == nullptr) break;
 
+		char* labelBeforePeriod_c = strtok_s(label_c, " .&\n", &labelContext);
+
 		addr = strtol(addr_c, &end, 16);
 
-		if (addr)
+
+		if (std::string(label_c) == "ram_disk_mode")
 		{
-			auto it = m_labels.find(addr);
-			if (it == m_labels.end())
+			int temp = 1;
+		}
+
+		// check if it is a CONSTANT_NAME
+		if (IsConstLabel(labelBeforePeriod_c))
+		{
+			if (!m_consts.contains(addr))
 			{
-				m_labels[addr] = label_c;
+				m_consts[addr] = label_c;
 			}
 			else
 			{
-				m_labels[addr] += ", " + std::string(label_c);
+				m_consts[addr] += ", " + std::string(label_c);
 			}
 		}
-		label_c = strtok_s(nullptr, " $\n", &context);
-		addr_c = strtok_s(nullptr, " $\n", &context);
+		// check if it is an __external_label
+		else if (strlen(label_c) >= 2 && label_c[0] == '_' && label_c[1] == '_')
+		{
+			if (!m_externalLabels.contains(addr))
+			{
+				m_externalLabels[addr] = std::string(label_c) + ":\t";
+			}
+			else
+			{
+				m_externalLabels[addr] += std::string(label_c) + ", ";
+			}
+		}
+		else
+		{
+			if (!m_labels.contains(addr))
+			{
+				m_labels[addr] = std::string(label_c) + ":\t";
+			}
+			else
+			{
+				m_labels[addr] += std::string(label_c) + ", ";
+			}
+		}
+		label_c = strtok_s(nullptr, " $\n", &labelValPairContext);
+		addr_c = strtok_s(nullptr, " $\n", &labelValPairContext);
 	}
 }
 
@@ -415,9 +462,9 @@ auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const si
 
 			const size_t operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
 
-			if (m_labels.find(operand_addr) != m_labels.end())
+			if (m_consts.contains(operand_addr))
 			{
-				lineS += "(" + m_labels.at(operand_addr) + ")";
+				lineS += m_consts.at(operand_addr);
 			}
 			if (line != 0)
 			{

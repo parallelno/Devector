@@ -122,7 +122,12 @@ namespace dev
 		size_t m_traceLogIdx = 0;
 		int m_traceLogIdxViewOffset = 0;
 
+		// labels names combined by their associated addr
 		std::map<size_t, std::string> m_labels;
+		// labels used as constants combined by their associated addr
+		std::map<size_t, std::string> m_consts;
+		// labels with a prefix "__" called externals and used in the code libraries in the ram-disk. they're combined by their associated addr
+		std::map<size_t, std::string> m_externalLabels;
 
 		I8080& m_cpu;
 		Memory& m_memory;

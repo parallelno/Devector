@@ -44,18 +44,18 @@ auto dev::Split(const std::string& _s, char _delim)
 	return result;
 }
 
-auto dev::StrToStrW(const std::string& s)
+auto dev::StrToStrW(const std::string& _s)
 -> const std::wstring
 {
 	std::wstringstream cls;
-	cls << s.c_str();
+	cls << _s.c_str();
 	return cls.str();
 }
 
-auto dev::StrWToStr(const std::wstring& ws)
+auto dev::StrWToStr(const std::wstring& _ws)
 -> const std::string
 {
-	const std::string s(ws.begin(), ws.end());
+	const std::string s(_ws.begin(), _ws.end());
 	return s;
 }
 
@@ -87,3 +87,4 @@ auto dev::BoolToStr(const bool _val, bool _text)
 	static const std::string true_s0 = "1";
 	return _val ? true_s0 : false_s0;
 }
+

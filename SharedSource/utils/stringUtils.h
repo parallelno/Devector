@@ -15,9 +15,9 @@ namespace dev
 	auto Split(const std::string& _s, char _delim)
 		->std::vector<std::string>;
 
-	const std::wstring StrToStrW(const std::string& _s);
-	const std::string StrWToStr(const std::wstring& _s);
-	const char* BoolToStrC(const bool _val, bool _text = false);
+	auto StrToStrW(const std::string& _s) -> const std::wstring;
+	auto StrWToStr(const std::wstring& _s) -> const std::string;
+	auto BoolToStrC(const bool _val, bool _text = false) -> const char*;
 	auto BoolToStr(const bool _val, bool _text = false) -> const std::string;
 }
 #endif // !DEV_STRING_UTILS_H
