@@ -5,12 +5,14 @@
 #include <sstream>
 #include <cstring>
 #include <vector>
+#include "Utils/StringUtils.h"
+#include "Utils/Utils.h"
 
 dev::Debugger::Debugger(I8080& _cpu, Memory& _memory)
     : 
 	m_cpu(_cpu),
 	m_memory(_memory),
-    m_WpBreak(false),
+    m_wpBreak(false),
 	m_traceLog()
 {
     Init();
@@ -48,7 +50,7 @@ void dev::Debugger::Read(
     }
     else {
         m_memReads[globalAddr]++;
-        m_WpBreak |= CheckWatchpoint(Watchpoint::Access::R, globalAddr, _val);
+        m_wpBreak |= CheckWatchpoint(Watchpoint::Access::R, globalAddr, _val);
     }
 }
 
@@ -56,7 +58,7 @@ void dev::Debugger::Write(const uint32_t _addr, Memory::AddrSpace _addrSpace, co
 {
     auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
     m_memWrites[globalAddr]++;
-    m_WpBreak |= CheckWatchpoint(Watchpoint::Access::W, globalAddr, _val);
+    m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, globalAddr, _val);
 }
 
 
@@ -267,9 +269,10 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 				std::string runsReadsWritesS = runsS + "," + readsS + "," + writesS + "\t";
 				lineS += runsReadsWritesS;
 
-				if (m_labels.find(addr & 0xffff) != m_labels.end())
+				if (m_labels.contains(addr & 0xffff))
 				{
-					lineS += m_labels.at(addr & 0xffff);
+					//lineS += m_labels.at(addr & 0xffff);
+					out.push_back(m_labels.at(addr & 0xffff));
 				}
 
 				out.push_back(lineS);
@@ -295,9 +298,10 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 		std::string runsReadsWritesS = runsS + "," + readsS + "," + writesS + "\t";
 		lineS += runsReadsWritesS;
 
-		if (m_labels.find(addr & 0xffff) != m_labels.end())
+		if (m_labels.contains(addr & 0xffff))
 		{
-			lineS += m_labels.at(addr & 0xffff);
+			//lineS += m_labels.at(addr & 0xffff);
+			out.push_back(m_labels.at(addr & 0xffff));
 		}
 
 		if (GetCmdLen(opcode) == 3 || opcode == OPCODE_PCHL)
@@ -312,9 +316,9 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 				labelAddr = dataH << 8 | dataL;
 			}
 
-			if (m_labels.find(labelAddr) != m_labels.end())
+			if (m_labels.contains(labelAddr))
 			{
-				lineS += " (" + m_labels.at(labelAddr) + ")";
+				lineS += m_labels.at(labelAddr);
 			}
 		}
 
@@ -325,41 +329,46 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 	return out;
 }
 
-
-
-/*
-void dev::Debugger::set_labels(const char* _labels_c)
+void dev::Debugger::LoadLabels(const std::wstring& _path)
 {
-	labels.clear();
-	char* labels_c = strdup(_labels_c);
+	// load labels
+	auto result = dev::LoadFile(_path);
+	if (!result) return;
 
-	char* label_c = strtok(labels_c, " $\n");
-	char* addr_c = strtok(nullptr, " $\n");
+	char* labels_c(reinterpret_cast<char*>(result->data()));
+	
+	char* context = nullptr; // for strtok_s
+	
+	char* label_c = strtok_s(labels_c, " $\n", &context);
+	char* addr_c = strtok_s(nullptr, " $\n", &context);
 
+	m_labels.clear();
+	
 	int addr = 0;
+	char* end;
 
 	while (label_c != nullptr)
 	{
 		if (label_c == nullptr || addr_c == nullptr) break;
-		if (utils::str2int(&addr, addr_c, 16) == utils::STR2INT_SUCCESS)
+
+		addr = strtol(addr_c, &end, 16);
+
+		if (addr)
 		{
-			auto it = labels.find(addr);
-			if (it == labels.end())
+			auto it = m_labels.find(addr);
+			if (it == m_labels.end())
 			{
-				labels[addr] = label_c;
+				m_labels[addr] = label_c;
 			}
 			else
 			{
-				labels[addr] += ", " + std::string(label_c);
+				m_labels[addr] += ", " + std::string(label_c);
 			}
 		}
-		label_c = strtok(nullptr, " $\n");
-		addr_c = strtok(nullptr, " $\n");
+		label_c = strtok_s(nullptr, " $\n", &context);
+		addr_c = strtok_s(nullptr, " $\n", &context);
 	}
-
-	free(labels_c);
 }
-*/
 
 //////////////////////////////////////////////////////////////
 //
@@ -448,12 +457,12 @@ void dev::Debugger::TraceLogUpdate(const uint32_t _globalAddr, const uint8_t _va
 	}
 }
 
-auto dev::Debugger::TraceLogNextLine(const int _idx_offset, const bool _reverse, const size_t _filter) const
+auto dev::Debugger::TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const
 ->int
 {
 	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
 
-	size_t idx = m_traceLogIdx + _idx_offset;
+	size_t idx = m_traceLogIdx + _idxOffset;
 	size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
 
 	int dir = _reverse ? -1 : 1;
@@ -478,7 +487,7 @@ auto dev::Debugger::TraceLogNextLine(const int _idx_offset, const bool _reverse,
 		}
 	}
 
-	return _idx_offset; // fails to reach the next line
+	return _idxOffset; // fails to reach the next line
 }
 
 auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const
@@ -530,9 +539,9 @@ void dev::Debugger::TraceLog::Clear()
 
 bool dev::Debugger::CheckBreak()
 {
-	if (m_WpBreak)
+	if (m_wpBreak)
 	{
-		m_WpBreak = false;
+		m_wpBreak = false;
 		PrintWatchpoints();
 		ResetWatchpoints();
 		return true;

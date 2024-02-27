@@ -100,7 +100,7 @@ void dev::DisasmWindow::DrawDisassembly()
     if (ImGui::BeginTable("##disassembly", 1, tbl_flags | ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY)) // (labels) or (comment) or (brk, addr, code, stats, consts)
     {
         ImGuiListClipper clipper;
-        clipper.Begin(m_disasm.size());
+        clipper.Begin((int)m_disasm.size());
         while (clipper.Step())
             for (int row_idx = clipper.DisplayStart; row_idx < clipper.DisplayEnd; row_idx++)
         //for (int row_idx = 0; row_idx < DISASM_LINES_MAX+10000; row_idx++)

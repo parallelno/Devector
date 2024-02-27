@@ -143,14 +143,18 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		}
 		return false;
 	}
-	auto LoadTextFile(const std::wstring& path) 
+	auto LoadTextFile(const std::wstring& _path) 
 		->std::vector<std::string>;
 
-	auto LoadFile(const std::wstring& path)
+	auto LoadFile(const std::wstring& _path)
 		->dev::Result<std::vector<uint8_t>>;
 
-	void DeleteFiles(const std::wstring& folder, const std::wstring& mask = L"*");
+	void DeleteFiles(const std::wstring& _dir, const std::wstring& _mask = L"*");
 
-	size_t GetFileSize(const std::wstring& filename);
+	size_t GetFileSize(const std::wstring& _path);
+	
+	auto GetDir(const std::wstring& _path)
+		-> std::wstring;
+
 } // namespace dev
 #endif //!DEV_UTILS_H

@@ -89,7 +89,7 @@ namespace dev
 		bool CheckBreak();
 
 		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> std::string;
-		//void set_labels(const char* _labels_c);
+		void LoadLabels(const std::wstring& _path);
 
 	private:
 		auto GetDisasmLine(const uint32_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string;
@@ -100,8 +100,8 @@ namespace dev
 		void WatchpointsErase(const uint32_t _globalAddr);
 
 		void TraceLogUpdate(const uint32_t _globalAddr, const uint8_t _val);
-		auto TraceLogNextLine(const int _idx_offset, const bool _reverse, const size_t _filter) const ->int;
-		auto TraceLogNearestForwardLine(const size_t _idx_offset, const size_t _filter) const ->int;
+		auto TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const ->int;
+		auto TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const ->int;
 
 		uint64_t m_memRuns[Memory::GLOBAL_MEMORY_LEN];
 		uint64_t m_memReads[Memory::GLOBAL_MEMORY_LEN];
@@ -131,7 +131,7 @@ namespace dev
 		std::mutex m_watchpointsMutex;
 		std::map<size_t, Breakpoint> m_breakpoints;
 		Watchpoints m_watchpoints;
-		bool m_WpBreak;
+		bool m_wpBreak;
 	};
 }
 #endif // !DEV_DEBUGGER_H

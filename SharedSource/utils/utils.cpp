@@ -21,32 +21,32 @@ void dev::ThreadSleep(double _seconds)
 	std::this_thread::sleep_for(std::chrono::milliseconds((long long)(_seconds * 1000.0)));
 }
 
-auto dev::LoadTextFile(const std::wstring& path)
+auto dev::LoadTextFile(const std::wstring& _path)
 -> std::vector<std::string>
 {	
-	if (!IsFileExist(path)) {
+	if (!IsFileExist(_path)) {
 		return {};
 	}
-	std::ifstream ifs(path);
+	std::ifstream ifs(_path);
 	std::string fileStr = std::string(std::istreambuf_iterator<char>(ifs),
 		std::istreambuf_iterator<char>());
 
 	return dev::Split(fileStr, '\n');
 }
 
-auto dev::LoadFile(const std::wstring& path)
+auto dev::LoadFile(const std::wstring& _path)
 -> Result<std::vector<uint8_t>>
 {
-	if (!IsFileExist(path)) {
+	if (!IsFileExist(_path)) {
 		return {};
 	}
 
 	// Open the file in binary mode
-	std::ifstream file(path, std::ios::binary);
+	std::ifstream file(_path, std::ios::binary);
 
 	// Check if the file is opened successfully
 	if (!file.is_open()) {
-		std::wcerr << L"Failed to open file: " << path << std::endl;
+		std::wcerr << L"Failed to open file: " << _path << std::endl;
 		return false;
 	}
 
@@ -61,8 +61,15 @@ void dev::DeleteFiles(const std::wstring& _dir, const std::wstring& _mask)
 	system(dev::StrWToStr(command).c_str());
 }
 
-size_t dev::GetFileSize(const std::wstring& filename)
+size_t dev::GetFileSize(const std::wstring& _path)
 {
-	std::filesystem::path p{ filename };
+	std::filesystem::path p{ _path };
 	return std::filesystem::file_size(p);
+}
+
+auto dev::GetDir(const std::wstring& _path)
+->std::wstring
+{
+	std::filesystem::path p{ _path };
+	return p.parent_path().wstring();
 }

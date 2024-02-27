@@ -21,6 +21,7 @@ namespace dev
 		const std::string APP_NAME = "Devector";
 		const std::string FONT_CODE_PATH_DEFAULT = "Devector";
 		static constexpr int RECENT_FILES_MAX = 10;
+		const std::string LABELS_FILENAME = "debug.txt";
 
 		nlohmann::json m_settingsJ;
 		const std::string m_stringPath;
@@ -51,10 +52,11 @@ namespace dev
 		void SettingsInit();
 		void RecentFilesInit();
 		void RecentFilesStore();
-		void RecentFilesAdd(const std::wstring& _filePath);
+		void RecentFilesUpdate(const std::wstring& _filePath);
 		void LoadFonts();
 		void AppStyleInit();
 		void MainMenuUpdate();
+		void LoadRom(const std::wstring& _filePath);
 	};
 
 }

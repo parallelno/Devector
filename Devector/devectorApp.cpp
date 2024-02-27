@@ -155,6 +155,24 @@ void dev::DevectorApp::Update()
 	m_displayWindowP->Update();
 }
 
+void dev::DevectorApp::LoadRom(const std::wstring& _path)
+{
+	m_hardware->LoadRom(_path);
+
+	auto labelsFilename = dev::StrToStrW(dev::GetJsonString(m_settingsJ, "labelsFilename", false, LABELS_FILENAME));
+	auto labelsDir = dev::GetDir(_path);
+	auto labelsPath = labelsDir + L"\\" + labelsFilename;
+
+	if (dev::IsFileExist(labelsPath))
+	{
+		m_hardware->m_debugger.LoadLabels(labelsPath);
+	}
+
+	m_disasmWindowP->UpdateDisasm();
+	//TODO: fix it
+	//RecentFilesUpdate(_path);
+	RecentFilesStore();
+}
 
 void dev::DevectorApp::MainMenuUpdate()
 {
@@ -164,12 +182,12 @@ void dev::DevectorApp::MainMenuUpdate()
 		{
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
-				WCHAR filePath[MAX_PATH];
+				WCHAR path[MAX_PATH];
 
 				// Open the file dialog
-				if (OpenFileDialog(filePath, MAX_PATH))
+				if (OpenFileDialog(path, MAX_PATH))
 				{
-					auto fileSize = dev::GetFileSize(filePath);
+					auto fileSize = dev::GetFileSize(path);
 					if (fileSize > Memory::MEMORY_MAIN_LEN)
 					{
 						// TODO: the popup window does not apper. fix it
@@ -177,24 +195,17 @@ void dev::DevectorApp::MainMenuUpdate()
 					}
 					else 
 					{
-						auto result = m_hardware->LoadRom(filePath);
-						if (result && !result->empty())
-						{
-							RecentFilesAdd(filePath);
-							RecentFilesStore();
-						}
-						m_disasmWindowP->UpdateDisasm();
+						LoadRom(path);
 					}
 				}
 			}
 			if (ImGui::BeginMenu("Recent Files"))
 			{
-				for (const auto& filePath : m_recentFilePaths)
+				for (const auto& path : m_recentFilePaths)
 				{
-					if (ImGui::MenuItem(dev::StrWToStr(filePath).c_str()))
+					if (ImGui::MenuItem(dev::StrWToStr(path).c_str()))
 					{
-						m_hardware->LoadRom(filePath);
-						m_disasmWindowP->UpdateDisasm();
+						LoadRom(path);
 					}
 				}
 				ImGui::EndMenu();
@@ -235,13 +246,16 @@ void dev::DevectorApp::RecentFilesStore()
 	SaveJson(m_stringPath, m_settingsJ);
 }
 
-void dev::DevectorApp::RecentFilesAdd(const std::wstring& _filePath)
+void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path)
 {
+	// make a copy
+	auto path{ _path };
+
 	// remove if it contains
-	m_recentFilePaths.remove(_filePath);
+	m_recentFilePaths.remove(_path);
 
 	// add a new one
-	m_recentFilePaths.push_front(_filePath);
+	m_recentFilePaths.push_front({ path });
 	// check the amount
 	if (m_recentFilePaths.size() > RECENT_FILES_MAX)
 	{

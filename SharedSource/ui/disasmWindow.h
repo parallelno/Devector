@@ -53,6 +53,7 @@ namespace dev
 
 		std::vector<std::string> m_disasm 
 		
+		// TODO: make m_disasm empty
 			= {
 			"first_label:\t(minor_label1, minor_label2)",
 			"; Some comment",
