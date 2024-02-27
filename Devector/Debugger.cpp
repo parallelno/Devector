@@ -10,24 +10,24 @@ dev::Debugger::Debugger(I8080& _cpu, Memory& _memory)
     : 
 	m_cpu(_cpu),
 	m_memory(_memory),
-    wp_break(false),
-	trace_log()
+    m_WpBreak(false),
+	m_traceLog()
 {
     Init();
 }
 
 void dev::Debugger::Init()
 {
-    std::fill(mem_runs, mem_runs + std::size(mem_runs), 0);
-    std::fill(mem_reads, mem_reads + std::size(mem_reads), 0);
-    std::fill(mem_writes, mem_writes + std::size(mem_writes), 0);
+    std::fill(m_memRuns, m_memRuns + std::size(m_memRuns), 0);
+    std::fill(m_memReads, m_memReads + std::size(m_memReads), 0);
+    std::fill(m_memWrites, m_memWrites + std::size(m_memWrites), 0);
 
 	for (size_t i = 0; i < TRACE_LOG_SIZE; i++)
 	{
-		trace_log[i].clear();
+		m_traceLog[i].Clear();
 	}
-	trace_log_idx = 0;
-	trace_log_idx_view_offset = 0;
+	m_traceLogIdx = 0;
+	m_traceLogIdxViewOffset = 0;
 
 	if (!m_cpu.DebugOnRead) {
 		m_cpu.DebugOnRead = std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
@@ -38,54 +38,61 @@ void dev::Debugger::Init()
 }
 
 void dev::Debugger::Read(
-    const uint32_t _addr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _is_opcode)
+    const uint32_t _addr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode)
 {
     auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
 
-    if (_is_opcode) {
-        mem_runs[globalAddr]++;
-        trace_log_update(globalAddr, _val);
+    if (_isOpcode) {
+        m_memRuns[globalAddr]++;
+        TraceLogUpdate(globalAddr, _val);
     }
     else {
-        mem_reads[globalAddr]++;
-        wp_break |= check_watchpoint(Watchpoint::Access::R, globalAddr, _val);
+        m_memReads[globalAddr]++;
+        m_WpBreak |= CheckWatchpoint(Watchpoint::Access::R, globalAddr, _val);
     }
 }
 
 void dev::Debugger::Write(const uint32_t _addr, Memory::AddrSpace _addrSpace, const uint8_t _val)
 {
     auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
-    mem_writes[globalAddr]++;
-    wp_break |= check_watchpoint(Watchpoint::Access::W, globalAddr, _val);
+    m_memWrites[globalAddr]++;
+    m_WpBreak |= CheckWatchpoint(Watchpoint::Access::W, globalAddr, _val);
 }
 
 
+//////////////////////////////////////////////////////////////
+//
+// Disasm
+//
+//////////////////////////////////////////////////////////////
+
 static const char* mnemonics[0x100] =
 {
-	"NOP",   "LXI B,",  "STAX B", "INX B",  "INR B", "DCR B", "MVI B,", "RLC", "DB 08", "DAD B",  "LDAX B", "DCX B",  "INR C", "DCR C", "MVI C,", "RRC",
-	"DB 10", "LXI D,",  "STAX D", "INX D",  "INR D", "DCR D", "MVI D,", "RAL", "DB 18", "DAD D",  "LDAX D", "DCX D",  "INR E", "DCR E", "MVI E,", "RAR",
-	"DB 20", "LXI H,",  "SHLD",   "INX H",  "INR H", "DCR H", "MVI H,", "DAA", "DB 28", "DAD H",  "LHLD",   "DCX H",  "INR L", "DCR L", "MVI L,", "CMA",
-	"DB 30", "LXI SP,", "STA",    "INX SP", "INR M", "DCR M", "MVI M,", "STC", "DB 38", "DAD SP", "LDA",    "DCX SP", "INR A", "DCR A", "MVI A,", "CMC",
+	"NOP",	   "LXI B",  "STAX B", "INX B",  "INR B", "DCR B", "MVI B", "RLC", "DB 0x08", "DAD B",  "LDAX B", "DCX B",  "INR C", "DCR C", "MVI C", "RRC",
+	"DB 0x10", "LXI D",  "STAX D", "INX D",  "INR D", "DCR D", "MVI D", "RAL", "DB 0x18", "DAD D",  "LDAX D", "DCX D",  "INR E", "DCR E", "MVI E", "RAR",
+	"DB 0x20", "LXI H",  "SHLD",   "INX H",  "INR H", "DCR H", "MVI H", "DAA", "DB 0x28", "DAD H",  "LHLD",   "DCX H",  "INR L", "DCR L", "MVI L", "CMA",
+	"DB 0x30", "LXI SP", "STA",    "INX SP", "INR M", "DCR M", "MVI M", "STC", "DB 0x38", "DAD SP", "LDA",    "DCX SP", "INR A", "DCR A", "MVI A", "CMC",
 
-	"MOV B, B", "MOV B, C", "MOV B, D", "MOV B, E", "MOV B, H", "MOV B, L", "MOV B, M", "MOV B, A", "MOV C, B", "MOV C, C", "MOV C, D", "MOV C, E", "MOV C, H", "MOV C, L", "MOV C, M", "MOV C, A",
-	"MOV D, B", "MOV D, C", "MOV D, D", "MOV D, E", "MOV D, H", "MOV D, L", "MOV D, M", "MOV D, A", "MOV E, B", "MOV E, C", "MOV E, D", "MOV E, E", "MOV E, H", "MOV E, L", "MOV E, M", "MOV E, A",
-	"MOV H, B", "MOV H, C", "MOV H, D", "MOV H, E", "MOV H, H", "MOV H, L", "MOV H, M", "MOV H, A", "MOV L, B", "MOV L, C", "MOV L, D", "MOV L, E", "MOV L, H", "MOV L, L", "MOV L, M", "MOV L, A",
-	"MOV M, B", "MOV M, C", "MOV M, D", "MOV M, E", "MOV M, H", "MOV M, L", "HLT",      "MOV M, A", "MOV A, B", "MOV A, C", "MOV A, D", "MOV A, E", "MOV A, H", "MOV A, L", "MOV A, M", "MOV A, A",
+	"MOV B B", "MOV B C", "MOV B D", "MOV B E", "MOV B H", "MOV B L", "MOV B M", "MOV B A", "MOV C B", "MOV C C", "MOV C D", "MOV C E", "MOV C H", "MOV C L", "MOV C M", "MOV C A",
+	"MOV D B", "MOV D C", "MOV D D", "MOV D E", "MOV D H", "MOV D L", "MOV D M", "MOV D A", "MOV E B", "MOV E C", "MOV E D", "MOV E E", "MOV E H", "MOV E L", "MOV E M", "MOV E A",
+	"MOV H B", "MOV H C", "MOV H D", "MOV H E", "MOV H H", "MOV H L", "MOV H M", "MOV H A", "MOV L B", "MOV L C", "MOV L D", "MOV L E", "MOV L H", "MOV L L", "MOV L M", "MOV L A",
+	"MOV M B", "MOV M C", "MOV M D", "MOV M E", "MOV M H", "MOV M L", "HLT",     "MOV M A", "MOV A B", "MOV A C", "MOV A D", "MOV A E", "MOV A H", "MOV A L", "MOV A M", "MOV A A",
 
 	"ADD B", "ADD C", "ADD D", "ADD E", "ADD H", "ADD L", "ADD M", "ADD A", "ADC B", "ADC C", "ADC D", "ADC E", "ADC H", "ADC L", "ADC M", "ADC A",
 	"SUB B", "SUB C", "SUB D", "SUB E", "SUB H", "SUB L", "SUB M", "SUB A", "SBB B", "SBB C", "SBB D", "SBB E", "SBB H", "SBB L", "SBB M", "SBB A",
 	"ANA B", "ANA C", "ANA D", "ANA E", "ANA H", "ANA L", "ANA M", "ANA A", "XRA B", "XRA C", "XRA D", "XRA E", "XRA H", "XRA L", "XRA M", "XRA A",
 	"ORA B", "ORA C", "ORA D", "ORA E", "ORA H", "ORA L", "ORA M", "ORA A", "CMP B", "CMP C", "CMP D", "CMP E", "CMP H", "CMP L", "CMP M", "CMP A",
 
-	"RNZ", "POP B",   "JNZ", "JMP",  "CNZ", "PUSH B",   "ADI", "RST 0", "RZ",  "RET",    "JZ",  "DB CB",  "CZ",  "CALL",  "ACI", "RST 1",
-	"RNC", "POP D",   "JNC", "OUT",  "CNC", "PUSH D",   "SUI", "RST 2", "RC",  "DB D9",  "JC",  "IN",     "CC",  "DB DD", "SBI", "RST 3",
-	"RPO", "POP H",   "JPO", "XTHL", "CPO", "PUSH H",   "ANI", "RST 4", "RPE", "PCHL",   "JPE", "XCHG",   "CPE", "DB ED", "XRI", "RST 5",
-	"RP",  "POP PSW", "JP",  "DI",   "CP",  "PUSH PSW", "ORI", "RST 6", "RM",  "SPHL",   "JM",  "EI",     "CM",  "DB FD", "CPI", "RST 7"
+	"RNZ", "POP B",   "JNZ", "JMP",  "CNZ", "PUSH B",   "ADI", "RST 0x0", "RZ",  "RET",     "JZ",  "DB 0xCB", "CZ",  "CALL",    "ACI", "RST 0x1",
+	"RNC", "POP D",   "JNC", "OUT",  "CNC", "PUSH D",   "SUI", "RST 0x2", "RC",  "DB 0xD9", "JC",  "IN",      "CC",  "DB 0xDD", "SBI", "RST 0x3",
+	"RPO", "POP H",   "JPO", "XTHL", "CPO", "PUSH H",   "ANI", "RST 0x4", "RPE", "PCHL",    "JPE", "XCHG",    "CPE", "DB 0xED", "XRI", "RST 0x5",
+	"RP",  "POP PSW", "JP",  "DI",   "CP",  "PUSH PSW", "ORI", "RST 0x6", "RM",  "SPHL",    "JM",  "EI",      "CM",  "DB 0xFD", "CPI", "RST 0x7"
 };
 
-
+// define the maximum number of bytes in a command
 #define CMD_BYTES_MAX 3
 
+// array containing lengths of commands, indexed by opcode
 static const uint8_t cmd_lens[0x100] =
 {
 	1,3,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
@@ -106,40 +113,28 @@ static const uint8_t cmd_lens[0x100] =
 	1,1,3,1,3,1,2,1,1,1,3,1,3,1,2,1
 };
 
-auto dev::Debugger::get_cmd_len(const uint8_t _addr) const -> const size_t
+// returns the instruction length in bytes
+auto dev::Debugger::GetCmdLen(const uint8_t _addr) const -> const size_t
 {
 	return cmd_lens[_addr];
 }
 
-static size_t cmd[3];
-#define CMD_OPCODE cmd[0]
-#define CMD_OP_L cmd[1]
-#define CMD_OP_H cmd[2]
-#define MAX_DATA_CHR_LEN 11
-
-auto get_mnemonic(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h)
+// returns the mnemonic for an instruction
+auto GetMnemonic(const uint8_t _opcode, const uint8_t _dataL, const uint8_t _dataH)
 -> const std::string
 {
-	CMD_OPCODE = _opcode;
-	CMD_OP_L = _data_l;
-	CMD_OP_H = _data_h;
-
-	std::stringstream out;
-	out << mnemonics[_opcode];
+	std::string out(mnemonics[_opcode]);
 
 	if (cmd_lens[_opcode] == 2)
 	{
-		out << " " << std::setw(sizeof(uint8_t) * 2) << std::setfill('0');
-		out << std::uppercase << std::hex << static_cast<int>(_data_l);
+		out += std::format(" 0x{:02X}", _dataL);
 	}
 	else if (cmd_lens[_opcode] == 3)
 	{
-		auto data_w = ((uint16_t)_data_h << 8) + _data_l;
-		out << " " << std::setw(sizeof(uint16_t) * 2) << std::setfill('0');
-		out << std::uppercase << std::hex << static_cast<int>(data_w);
+		auto dataW = _dataH << 8 | _dataL;
+		out += std::format(" 0x{:04X}", dataW);
 	}
-
-	return out.str();
+	return out;
 }
 
 // 0 - call
@@ -175,6 +170,7 @@ static const uint8_t opcode_types[0x100] =
 
 #define OPCODE_TYPE_MAX 7
 
+// returns the type of an instruction
 inline uint8_t get_opcode_type(const uint8_t _opcode)
 {
 	return opcode_types[_opcode];
@@ -182,103 +178,48 @@ inline uint8_t get_opcode_type(const uint8_t _opcode)
 
 #define OPCODE_PCHL 0xE9
 
-auto dev::Debugger::get_disasm_db_line(const uint32_t _addr, const uint8_t _data) const
+// disassembles a data byte
+auto dev::Debugger::GetDisasmLineDb(const uint32_t _addr, const uint8_t _data) const
 ->const std::string
 {
-	/*
-	std::stringstream out;
-
-	
-	out << "0x";
-	out << std::setw(sizeof(uint16_t) * 2) << std::setfill('0');
-	out << std::uppercase << std::hex << static_cast<int>(_addr) << ":";
-
-	
-	// print data in a format " %02X"
-	out << " ";
-	out << std::setw(sizeof(uint8_t) * 2) << std::setfill('0');
-	out << std::uppercase << std::hex << static_cast<int>(_data);
-
-	
-	// add whitespaces at the end of data
-	for (int i = 3; i < MAX_DATA_CHR_LEN; i++)
-	{
-		out << " ";
-	}
-
-	out << "DB ";
-	out << std::setw(sizeof(uint8_t) * 2) << std::setfill('0');
-	out << std::uppercase << std::hex << static_cast<int>(_data);
-
-	return out.str();
-		*/
 	return std::format("0x{:04X}\tDB 0x{:02X}\t", _addr, _data);
 }
 
-auto dev::Debugger::get_disasm_line(const uint32_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const
+// disassembles an instruction
+auto dev::Debugger::GetDisasmLine(const uint32_t _addr, const uint8_t _opcode, const uint8_t _dataL, const uint8_t _dataH) const
 ->const std::string
 {
-	CMD_OPCODE = _opcode;
-	CMD_OP_L = _data_l;
-	CMD_OP_H = _data_h;
-
-	auto cmd_len = cmd_lens[_opcode];
-	/*
-	std::stringstream out;
-
-	out << "0x";
-	out << std::setw(sizeof(uint16_t) * 2) << std::setfill('0');
-	out << std::uppercase << std::hex << static_cast<int>(_addr) << ":";
-
-	// print data in a format " %02X %02X %02X "
-	int i = 0;
-	for (; i < cmd_len; i++)
-	{
-		out << " ";
-		out << std::setw(sizeof(uint8_t) * 2) << std::setfill('0');
-		out << std::uppercase << std::hex << static_cast<int>(cmd[i]);
-	}
-	// add whitespaces at the end of data
-	i *= 3; // every byte takes three chars " %02X"
-	for (; i < MAX_DATA_CHR_LEN; i++)
-	{
-		out << " ";
-	}
-
-	out << get_mnemonic(_opcode, _data_l, _data_h, 13);
-
-	return out.str();
-	*/
-	return std::format("0x{:04X}\t{}\t", _addr, get_mnemonic(_opcode, _data_l, _data_h));
+	return std::format("0x{:04X}\t{}\t", _addr, GetMnemonic(_opcode, _dataL, _dataH));
 }
 
-size_t dev::Debugger::get_addr(const uint32_t _end_addr, const size_t _before_addr_lines) const
+// calculates the start address for a range of instructions before a given address
+size_t dev::Debugger::GetAddr(const uint32_t _endAddr, const size_t _beforeAddrLines) const
 {
-	if (_before_addr_lines == 0) return _end_addr;
+	if (_beforeAddrLines == 0) return _endAddr;
 
-	size_t start_addr = (_end_addr - _before_addr_lines * CMD_BYTES_MAX) & 0xffff;
+	size_t start_addr = (_endAddr - _beforeAddrLines * CMD_BYTES_MAX) & 0xffff;
 #define MAX_ATTEMPTS 41
 
 	int lines = 0;
-	int addr_diff_max = (int)_before_addr_lines * CMD_BYTES_MAX + 1;
+	int addr_diff_max = (int)_beforeAddrLines * CMD_BYTES_MAX + 1;
 	size_t addr = start_addr & 0xffff;
 
-	for (int attempt = MAX_ATTEMPTS; attempt > 0 && lines != _before_addr_lines; attempt--)
+	for (int attempt = MAX_ATTEMPTS; attempt > 0 && lines != _beforeAddrLines; attempt--)
 	{
 		addr = start_addr & 0xffff;
 		int addr_diff = addr_diff_max;
 		lines = 0;
 
-		while (addr_diff > 0 && addr != _end_addr)
+		while (addr_diff > 0 && addr != _endAddr)
 		{
 			auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-			auto cmd_len = get_cmd_len(opcode);
+			auto cmd_len = GetCmdLen(opcode);
 			addr = (addr + cmd_len) & 0xffff;
 			addr_diff -= cmd_len;
 			lines++;
 		}
 
-		if (addr == _end_addr && lines == _before_addr_lines)
+		if (addr == _endAddr && lines == _beforeAddrLines)
 		{
 			return start_addr;
 		}
@@ -286,10 +227,10 @@ size_t dev::Debugger::get_addr(const uint32_t _end_addr, const size_t _before_ad
 		start_addr++;
 		addr_diff_max--;
 	}
-	return _end_addr;
+	return _endAddr;
 }
 
-auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const size_t _before_addr_lines) const
+auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const size_t _beforeAddrLines) const
 ->std::vector<std::string>
 {
 	std::vector<std::string> out;
@@ -300,51 +241,38 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 	auto pc = m_cpu.m_pc;
 	int lines = _lines;
 
-	if (_before_addr_lines > 0)
+	if (_beforeAddrLines > 0)
 	{
-		// find new addr that's _before_addr_lines commands ahead of _addr
-		addr = get_addr(_addr & 0xffff, _before_addr_lines) & 0xffff;
+		// calculate a new address that precedes the specified 'addr' by the before_addr_lines number of command lines.
+		addr = GetAddr(_addr & 0xffff, _beforeAddrLines) & 0xffff;
 
-		// if it fails to find an addr, we assume a data is ahead
+		// If it fails to find an new addr, we assume a data blob is ahead
 		if (addr == _addr)
 		{
-			addr = (addr - _before_addr_lines) & 0xffff;
+			addr = (addr - _beforeAddrLines) & 0xffff;
 
-			lines = _lines - _before_addr_lines;
+			lines = _lines - _beforeAddrLines;
 
-			for (int i = 0; i < _before_addr_lines; i++)
+			for (int i = 0; i < _beforeAddrLines; i++)
 			{
-				std::string line_s;
+				std::string lineS;
 
-				if (addr == pc)
-				{
-					//line_s += ">";
-				}
-				else
-				{
-					//line_s += " ";
-				}
 				auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-				line_s += get_disasm_db_line(addr, db);
+				lineS += GetDisasmLineDb(addr, db);
 
 				size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
-				std::string runsS = std::to_string(mem_runs[globalAddr]);
-				std::string readsS = std::to_string(mem_reads[globalAddr]);
-				std::string writesS = std::to_string(mem_writes[globalAddr]);
-				std::string runsS_readsS_writesS = runsS + "," + readsS + "," + writesS + "\t";
-				line_s += runsS_readsS_writesS;
+				std::string runsS = std::to_string(m_memRuns[globalAddr]);
+				std::string readsS = std::to_string(m_memReads[globalAddr]);
+				std::string writesS = std::to_string(m_memWrites[globalAddr]);
+				std::string runsReadsWritesS = runsS + "," + readsS + "," + writesS + "\t";
+				lineS += runsReadsWritesS;
 
-				if (labels.find(addr & 0xffff) != labels.end())
+				if (m_labels.find(addr & 0xffff) != m_labels.end())
 				{
-					line_s += labels.at(addr & 0xffff);
+					lineS += m_labels.at(addr & 0xffff);
 				}
-				/*
-				if (lines > 0 || i != _before_addr_lines - 1)
-				{
-					out += "\n";
-				}
-				*/
-				out.push_back(line_s);
+
+				out.push_back(lineS);
 
 				addr = (addr + 1) & 0xffff;
 			}
@@ -353,349 +281,52 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 
 	for (int i = 0; i < lines; i++)
 	{
-		std::string line_s;
-
-		if (addr == pc)
-		{
-			//line_s += ">";
-		}
-		else
-		{
-			//line_s += " ";
-		}
-
-		if (addr == 0x100)
-		{
-			int a = 1;
-		}
+		std::string lineS;
 
 		auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-		auto data_l = m_memory.GetByte(addr + 1, Memory::AddrSpace::RAM);
-		auto data_h = m_memory.GetByte(addr + 2, Memory::AddrSpace::RAM);
-		line_s += get_disasm_line(addr, opcode, data_l, data_h);
+		auto dataL = m_memory.GetByte(addr + 1, Memory::AddrSpace::RAM);
+		auto dataH = m_memory.GetByte(addr + 2, Memory::AddrSpace::RAM);
+		lineS += GetDisasmLine(addr, opcode, dataL, dataH);
 
 		size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
-		std::string runsS = std::to_string(mem_runs[globalAddr]);
-		std::string readsS = std::to_string(mem_reads[globalAddr]);
-		std::string writesS = std::to_string(mem_writes[globalAddr]);
-		std::string runsS_readsS_writesS = runsS + "," + readsS + "," + writesS + "\t";
-		line_s += runsS_readsS_writesS;
+		std::string runsS = std::to_string(m_memRuns[globalAddr]);
+		std::string readsS = std::to_string(m_memReads[globalAddr]);
+		std::string writesS = std::to_string(m_memWrites[globalAddr]);
+		std::string runsReadsWritesS = runsS + "," + readsS + "," + writesS + "\t";
+		lineS += runsReadsWritesS;
 
-		if (labels.find(addr & 0xffff) != labels.end())
+		if (m_labels.find(addr & 0xffff) != m_labels.end())
 		{
-			line_s += labels.at(addr & 0xffff);
+			lineS += m_labels.at(addr & 0xffff);
 		}
 
-		if (get_cmd_len(opcode) == 3 || opcode == OPCODE_PCHL)
+		if (GetCmdLen(opcode) == 3 || opcode == OPCODE_PCHL)
 		{
-			int label_addr = 0;
+			int labelAddr = 0;
 			if (opcode == OPCODE_PCHL)
 			{
-				label_addr = m_cpu.GetHL();
+				labelAddr = m_cpu.GetHL();
 			}
 			else
 			{
-				label_addr = data_h << 8 | data_l;
+				labelAddr = dataH << 8 | dataL;
 			}
 
-			if (labels.find(label_addr) != labels.end())
+			if (m_labels.find(labelAddr) != m_labels.end())
 			{
-				line_s += " (" + labels.at(label_addr) + ")";
+				lineS += " (" + m_labels.at(labelAddr) + ")";
 			}
 		}
-		/*
-		if (i != lines - 1)
-		{
-			out += "\n";
-		}
-		*/
-		out.push_back(line_s);
 
-		addr = (addr + get_cmd_len(opcode)) & 0xffff;
+		out.push_back(lineS);
+
+		addr = (addr + GetCmdLen(opcode)) & 0xffff;
 	}
 	return out;
 }
 
-void dev::Debugger::add_breakpoint(const uint32_t _addr, const bool _active, const Memory::AddrSpace _addr_space)
-{
-	auto global_addr = m_memory.GetGlobalAddr(_addr, _addr_space);
 
-	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
-	auto bp = breakpoints.find(global_addr);
-	if (bp != breakpoints.end())
-	{
-		breakpoints.erase(bp);
-	}
 
-	breakpoints.emplace(global_addr, std::move(Breakpoint(global_addr, _active)));
-}
-
-void dev::Debugger::del_breakpoint(const uint32_t _addr, const Memory::AddrSpace _addr_space)
-{
-	auto global_addr = m_memory.GetGlobalAddr(_addr, _addr_space);
-
-	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
-	auto bp = breakpoints.find(global_addr);
-	if (bp != breakpoints.end())
-	{
-		breakpoints.erase(bp);
-	}
-}
-
-auto dev::Debugger::watchpoints_find(const uint32_t global_addr)
-->Watchpoints::iterator
-{
-	return std::find_if(watchpoints.begin(), watchpoints.end(), [global_addr](Watchpoint& w) {return w.check_addr(global_addr);});
-}
-
-void dev::Debugger::watchpoints_erase(const uint32_t global_addr)
-{
-	watchpoints.erase(std::remove_if(watchpoints.begin(), watchpoints.end(), [global_addr](Watchpoint const& _w)
-		{
-			return _w.get_global_addr() == global_addr;
-		}), watchpoints.end());
-
-}
-
-void dev::Debugger::add_watchpoint(
-	const Watchpoint::Access _access, const uint32_t _addr, const Watchpoint::Condition _cond,
-	const uint16_t _value, const size_t _value_size, const bool _active, const Memory::AddrSpace _addr_space)
-{
-	auto global_addr = m_memory.GetGlobalAddr(_addr, _addr_space);
-
-	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
-	watchpoints.emplace_back(std::move(Watchpoint(_access, global_addr, _cond, _value, _value_size, _active)));
-}
-
-void dev::Debugger::del_watchpoint(const uint32_t _addr, const Memory::AddrSpace _addr_space)
-{
-	auto global_addr = m_memory.GetGlobalAddr(_addr, _addr_space);
-
-	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
-	watchpoints_erase(global_addr);
-}
-
-bool dev::Debugger::check_breakpoints(const uint32_t _global_addr)
-{
-	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
-	auto bp = breakpoints.find(_global_addr);
-	if (bp == breakpoints.end()) return false;
-	return bp->second.check();
-}
-
-bool dev::Debugger::check_watchpoint(const Watchpoint::Access _access, const uint32_t _global_addr, const uint8_t _value)
-{
-	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
-	auto wp = watchpoints_find(_global_addr);
-	if (wp == watchpoints.end()) return false;
-
-	auto out = wp->check(_access, _global_addr, _value);
-
-	if (out) {
-		auto data = m_memory.GetWord(_global_addr, Memory::AddrSpace::RAM);
-		std::printf("wp break = true. addr: 0x%05x, word: 0x%02x \n", _global_addr, data);
-	}
-	return out;
-}
-
-void dev::Debugger::reset_watchpoints()
-{
-	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
-	for (auto& watchpoint : watchpoints)
-	{
-		watchpoint.reset();
-	}
-}
-
-bool dev::Debugger::check_break()
-{
-	if (wp_break)
-	{
-		wp_break = false;
-		print_watchpoints();
-		reset_watchpoints();
-		return true;
-	}
-
-	auto pc = m_cpu.m_pc;
-	auto global_addr = m_memory.GetGlobalAddr(pc, Memory::AddrSpace::RAM);
-
-	auto break_ = check_breakpoints(global_addr);
-
-	if (break_) print_watchpoints();
-
-	return break_;
-}
-
-void dev::Debugger::trace_log_update(const uint32_t _global_addr, const uint8_t _val)
-{
-	auto last_global_addr = trace_log[trace_log_idx].global_addr;
-	auto last_opcode = trace_log[trace_log_idx].opcode;
-
-	trace_log_idx = (trace_log_idx - 1) % TRACE_LOG_SIZE;
-	trace_log[trace_log_idx].global_addr = _global_addr;
-	trace_log[trace_log_idx].opcode = _val;
-	trace_log[trace_log_idx].data_l = m_memory.GetByte(_global_addr + 1, Memory::AddrSpace::RAM);
-	trace_log[trace_log_idx].data_h = m_memory.GetByte(_global_addr + 2, Memory::AddrSpace::RAM);
-
-	if (_val == OPCODE_PCHL)
-	{
-		uint16_t pc = m_cpu.GetHL();
-		trace_log[trace_log_idx].data_l = pc & 0xff;
-		trace_log[trace_log_idx].data_h = pc >> 8 & 0xff;
-	}
-	else
-	{
-		trace_log[trace_log_idx].data_l = m_memory.GetByte(_global_addr + 1, Memory::AddrSpace::RAM);
-		trace_log[trace_log_idx].data_h = m_memory.GetByte(_global_addr + 2, Memory::AddrSpace::RAM);
-	}
-}
-
-auto dev::Debugger::TraceLog::to_str() const
-->std::string
-{
-	std::stringstream out;
-
-	out << "0x";
-	out << std::setw(5) << std::setfill('0');
-	out << std::uppercase << std::hex << static_cast<int>(global_addr) << ": ";
-
-	out << get_mnemonic(opcode, data_l, data_h);
-
-	return out.str();
-}
-
-void dev::Debugger::TraceLog::clear()
-{
-	global_addr = -1;
-	opcode = 0;
-	data_l = 0;
-	data_h = 0;
-}
-
-auto dev::Debugger::trace_log_next_line(const int _idx_offset, const bool _reverse, const size_t _filter) const
-->int
-{
-	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
-
-	size_t idx = trace_log_idx + _idx_offset;
-	size_t idx_last = trace_log_idx + TRACE_LOG_SIZE - 1;
-
-	int dir = _reverse ? -1 : 1;
-	// for a forward scrolling we need to go to the second line if we were not exactly at the filtered line
-	bool forward_second_search = false;
-	size_t first_line_idx = idx;
-
-	for (; idx >= trace_log_idx && idx <= idx_last; idx += dir)
-	{
-		if (get_opcode_type(trace_log[idx % TRACE_LOG_SIZE].opcode) <= filter)
-		{
-			if ((!_reverse && !forward_second_search) ||
-				(_reverse && idx == first_line_idx && !forward_second_search))
-			{
-				forward_second_search = true;
-				continue;
-			}
-			else
-			{
-				return idx - trace_log_idx;
-			}
-		}
-	}
-
-	return _idx_offset; // fails to reach the next line
-}
-
-auto dev::Debugger::trace_log_nearest_forward_line(const size_t _idx, const size_t _filter) const
-->int
-{
-	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
-
-	size_t idx = _idx;
-	size_t idx_last = trace_log_idx + TRACE_LOG_SIZE - 1;
-
-	for (; idx >= trace_log_idx && idx <= idx_last; idx++)
-	{
-		if (get_opcode_type(trace_log[idx % TRACE_LOG_SIZE].opcode) <= filter)
-		{
-			return idx;
-		}
-	}
-
-	return _idx; // fails to reach the nearest line
-}
-
-auto dev::Debugger::get_trace_log(const int _offset, const size_t _lines, const size_t _filter)
-->std::string
-{
-	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
-	size_t offset = _offset < 0 ? -_offset : _offset;
-
-	std::string out;
-
-	for (int i = 0; i < offset; i++)
-	{
-		trace_log_idx_view_offset = trace_log_next_line(trace_log_idx_view_offset, _offset < 0, filter);
-	}
-
-	size_t idx = trace_log_idx + trace_log_idx_view_offset;
-	size_t idx_last = trace_log_idx + TRACE_LOG_SIZE - 1;
-	size_t line = 0;
-
-	size_t first_line_idx = trace_log_nearest_forward_line(trace_log_idx, filter);
-
-	for (; idx <= idx_last && line < _lines; idx++)
-	{
-		if (trace_log[idx % TRACE_LOG_SIZE].global_addr < 0) break;
-
-		if (get_opcode_type(trace_log[idx % TRACE_LOG_SIZE].opcode) <= filter)
-		{
-			std::string line_s;
-
-			if (idx == first_line_idx)
-			{
-				line_s += ">";
-			}
-			else
-			{
-				line_s += " ";
-			}
-			line_s += trace_log[idx % TRACE_LOG_SIZE].to_str();
-
-			const size_t operand_addr = trace_log[idx % TRACE_LOG_SIZE].data_h << 8 | trace_log[idx % TRACE_LOG_SIZE].data_l;
-
-			if (labels.find(operand_addr) != labels.end())
-			{
-				line_s += "(" + labels.at(operand_addr) + ")";
-			}
-			if (line != 0)
-			{
-				line_s += "\n";
-			}
-
-			out = line_s + out;
-
-			line++;
-		}
-	}
-
-	return out;
-}
-/*
-auto dev::Debugger::get_global_addr(size_t _addr, const AddrSpace _addr_space) const
--> const size_t
-{
-	if (_addr_space != AddrSpace::GLOBAL)
-	{
-		bool stack_space = _addr_space == AddrSpace::STACK ? true : false;
-		_addr = memoryP->bigram_select(_addr & 0xffff, stack_space);
-	}
-	else {
-		_addr = _addr % Memory::GLOBAL_MEMORY_LEN;
-	}
-	return _addr;
-}
-*/
 /*
 void dev::Debugger::set_labels(const char* _labels_c)
 {
@@ -729,71 +360,363 @@ void dev::Debugger::set_labels(const char* _labels_c)
 	free(labels_c);
 }
 */
-void dev::Debugger::print_breakpoints()
+
+//////////////////////////////////////////////////////////////
+//
+// Tracelog
+//
+//////////////////////////////////////////////////////////////
+
+auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const size_t _filter)
+->std::string
+{
+	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
+	size_t offset = _offset < 0 ? -_offset : _offset;
+
+	std::string out;
+
+	for (int i = 0; i < offset; i++)
+	{
+		m_traceLogIdxViewOffset = TraceLogNextLine(m_traceLogIdxViewOffset, _offset < 0, filter);
+	}
+
+	size_t idx = m_traceLogIdx + m_traceLogIdxViewOffset;
+	size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
+	size_t line = 0;
+
+	size_t first_line_idx = TraceLogNearestForwardLine(m_traceLogIdx, filter);
+
+	for (; idx <= idx_last && line < _lines; idx++)
+	{
+		if (m_traceLog[idx % TRACE_LOG_SIZE].m_globalAddr < 0) break;
+
+		if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
+		{
+			std::string lineS;
+
+			if (idx == first_line_idx)
+			{
+				lineS += ">";
+			}
+			else
+			{
+				lineS += " ";
+			}
+			lineS += m_traceLog[idx % TRACE_LOG_SIZE].ToStr();
+
+			const size_t operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
+
+			if (m_labels.find(operand_addr) != m_labels.end())
+			{
+				lineS += "(" + m_labels.at(operand_addr) + ")";
+			}
+			if (line != 0)
+			{
+				lineS += "\n";
+			}
+
+			out = lineS + out;
+
+			line++;
+		}
+	}
+
+	return out;
+}
+
+void dev::Debugger::TraceLogUpdate(const uint32_t _globalAddr, const uint8_t _val)
+{
+	auto last_global_addr = m_traceLog[m_traceLogIdx].m_globalAddr;
+	auto last_opcode = m_traceLog[m_traceLogIdx].m_opcode;
+
+	m_traceLogIdx = (m_traceLogIdx - 1) % TRACE_LOG_SIZE;
+	m_traceLog[m_traceLogIdx].m_globalAddr = _globalAddr;
+	m_traceLog[m_traceLogIdx].m_opcode = _val;
+	m_traceLog[m_traceLogIdx].m_dataL = m_memory.GetByte(_globalAddr + 1, Memory::AddrSpace::RAM);
+	m_traceLog[m_traceLogIdx].m_dataH = m_memory.GetByte(_globalAddr + 2, Memory::AddrSpace::RAM);
+
+	if (_val == OPCODE_PCHL)
+	{
+		uint16_t pc = m_cpu.GetHL();
+		m_traceLog[m_traceLogIdx].m_dataL = pc & 0xff;
+		m_traceLog[m_traceLogIdx].m_dataH = pc >> 8 & 0xff;
+	}
+	else
+	{
+		m_traceLog[m_traceLogIdx].m_dataL = m_memory.GetByte(_globalAddr + 1, Memory::AddrSpace::RAM);
+		m_traceLog[m_traceLogIdx].m_dataH = m_memory.GetByte(_globalAddr + 2, Memory::AddrSpace::RAM);
+	}
+}
+
+auto dev::Debugger::TraceLogNextLine(const int _idx_offset, const bool _reverse, const size_t _filter) const
+->int
+{
+	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
+
+	size_t idx = m_traceLogIdx + _idx_offset;
+	size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
+
+	int dir = _reverse ? -1 : 1;
+	// for a forward scrolling we need to go to the second line if we were not exactly at the filtered line
+	bool forward_second_search = false;
+	size_t first_line_idx = idx;
+
+	for (; idx >= m_traceLogIdx && idx <= idx_last; idx += dir)
+	{
+		if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
+		{
+			if ((!_reverse && !forward_second_search) ||
+				(_reverse && idx == first_line_idx && !forward_second_search))
+			{
+				forward_second_search = true;
+				continue;
+			}
+			else
+			{
+				return idx - m_traceLogIdx;
+			}
+		}
+	}
+
+	return _idx_offset; // fails to reach the next line
+}
+
+auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const
+->int
+{
+	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
+
+	size_t idx = _idx;
+	size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
+
+	for (; idx >= m_traceLogIdx && idx <= idx_last; idx++)
+	{
+		if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
+		{
+			return idx;
+		}
+	}
+
+	return _idx; // fails to reach the nearest line
+}
+
+auto dev::Debugger::TraceLog::ToStr() const
+->std::string
+{
+	std::stringstream out;
+
+	out << "0x";
+	out << std::setw(5) << std::setfill('0');
+	out << std::uppercase << std::hex << static_cast<int>(m_globalAddr) << ": ";
+
+	out << GetMnemonic(m_opcode, m_dataL, m_dataH);
+
+	return out.str();
+}
+
+void dev::Debugger::TraceLog::Clear()
+{
+	m_globalAddr = -1;
+	m_opcode = 0;
+	m_dataL = 0;
+	m_dataH = 0;
+}
+
+//////////////////////////////////////////////////////////////
+//
+// Debug flow
+//
+//////////////////////////////////////////////////////////////
+
+bool dev::Debugger::CheckBreak()
+{
+	if (m_WpBreak)
+	{
+		m_WpBreak = false;
+		PrintWatchpoints();
+		ResetWatchpoints();
+		return true;
+	}
+
+	auto pc = m_cpu.m_pc;
+	auto globalAddr = m_memory.GetGlobalAddr(pc, Memory::AddrSpace::RAM);
+
+	auto break_ = CheckBreakpoints(globalAddr);
+
+	if (break_) PrintWatchpoints();
+
+	return break_;
+}
+
+//////////////////////////////////////////////////////////////
+//
+// Breakpoints
+//
+//////////////////////////////////////////////////////////////
+
+void dev::Debugger::AddBreakpoint(const uint32_t _addr, const bool _active, const Memory::AddrSpace _addrSpace)
+{
+	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
+
+	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+	auto bp = m_breakpoints.find(globalAddr);
+	if (bp != m_breakpoints.end())
+	{
+		m_breakpoints.erase(bp);
+	}
+
+	m_breakpoints.emplace(globalAddr, std::move(Breakpoint(globalAddr, _active)));
+}
+
+void dev::Debugger::DelBreakpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace)
+{
+	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
+
+	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+	auto bp = m_breakpoints.find(globalAddr);
+	if (bp != m_breakpoints.end())
+	{
+		m_breakpoints.erase(bp);
+	}
+}
+
+bool dev::Debugger::CheckBreakpoints(const uint32_t _globalAddr)
+{
+	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+	auto bp = m_breakpoints.find(_globalAddr);
+	if (bp == m_breakpoints.end()) return false;
+	return bp->second.Check();
+}
+
+void dev::Debugger::PrintBreakpoints()
 {
 	std::printf("breakpoints:\n");
-	std::lock_guard<std::mutex> mlock(breakpoints_mutex);
-	for (const auto& [addr, bp] : breakpoints)
+	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+	for (const auto& [addr, bp] : m_breakpoints)
 	{
-		bp.print();
+		bp.Print();
 	}
 }
 
-void dev::Debugger::print_watchpoints()
+auto dev::Debugger::Breakpoint::IsActive() const
+->const bool
+{
+	return m_active;
+}
+auto dev::Debugger::Breakpoint::Check() const
+->const bool
+{
+	return m_active;
+}
+
+void dev::Debugger::Breakpoint::Print() const
+{
+	std::printf("0x%06x, active: %d \n", m_globalAddr, m_active);
+}
+
+//////////////////////////////////////////////////////////////
+//
+// Watchpoint
+//
+//////////////////////////////////////////////////////////////
+
+void dev::Debugger::AddWatchpoint(
+	const Watchpoint::Access _access, const uint32_t _addr, const Watchpoint::Condition _cond,
+	const uint16_t _value, const size_t _value_size, const bool _active, const Memory::AddrSpace _addrSpace)
+{
+	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
+
+	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
+	m_watchpoints.emplace_back(std::move(Watchpoint(_access, globalAddr, _cond, _value, _value_size, _active)));
+}
+
+void dev::Debugger::DelWatchpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace)
+{
+	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
+
+	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
+	WatchpointsErase(globalAddr);
+}
+
+bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const uint32_t _globalAddr, const uint8_t _value)
+{
+	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
+	auto wp = WatchpointsFind(_globalAddr);
+	if (wp == m_watchpoints.end()) return false;
+
+	auto out = wp->Check(_access, _globalAddr, _value);
+
+	if (out) {
+		auto data = m_memory.GetWord(_globalAddr, Memory::AddrSpace::RAM);
+		std::printf("wp break = true. addr: 0x%05x, word: 0x%02x \n", _globalAddr, data);
+	}
+	return out;
+}
+
+void dev::Debugger::ResetWatchpoints()
+{
+	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
+	for (auto& watchpoint : m_watchpoints)
+	{
+		watchpoint.Reset();
+	}
+}
+
+void dev::Debugger::PrintWatchpoints()
 {
 	std::printf("watchpoints:\n");
-	std::lock_guard<std::mutex> mlock(watchpoints_mutex);
-	for (const auto& wp : watchpoints)
+	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
+	for (const auto& wp : m_watchpoints)
 	{
-		wp.print();
+		wp.Print();
 	}
 }
 
-auto dev::Debugger::Breakpoint::is_active() const
-->const bool
+auto dev::Debugger::WatchpointsFind(const uint32_t _globalAddr)
+->Watchpoints::iterator
 {
-	return active;
-}
-auto dev::Debugger::Breakpoint::check() const
-->const bool
-{
-	return active;
+	return std::find_if(m_watchpoints.begin(), m_watchpoints.end(), [_globalAddr](Watchpoint& w) {return w.CheckAddr(_globalAddr);});
 }
 
-void dev::Debugger::Breakpoint::print() const
+void dev::Debugger::WatchpointsErase(const uint32_t _globalAddr)
 {
-	std::printf("0x%06x, active: %d \n", global_addr, active);
+	m_watchpoints.erase(std::remove_if(m_watchpoints.begin(), m_watchpoints.end(), [_globalAddr](Watchpoint const& _w)
+		{
+			return _w.GetGlobalAddr() == _globalAddr;
+		}), m_watchpoints.end());
+
 }
 
-auto dev::Debugger::Watchpoint::is_active() const
+
+auto dev::Debugger::Watchpoint::IsActive() const
 ->const bool
 {
-	return active;
+	return m_active;
 }
 
-auto dev::Debugger::Watchpoint::check(const Watchpoint::Access _access, const uint32_t _global_addr, const uint8_t _value)
+auto dev::Debugger::Watchpoint::Check(const Watchpoint::Access _access, const uint32_t _globalAddr, const uint8_t _value)
 ->const bool
 {
-	if (!active) return false;
-	if (access != Access::RW && access != _access) return false;
+	if (!m_active) return false;
+	if (m_access != Access::RW && m_access != _access) return false;
 
-	if (break_l && (value_size == VAL_BYTE_SIZE || break_h)) return true;
+	if (m_breakL && (m_valueSize == VAL_BYTE_SIZE || m_breakH)) return true;
 
 	bool* break_p;
 	uint8_t value_byte;
 
-	if (_global_addr == global_addr)
+	if (_globalAddr == m_globalAddr)
 	{
-		break_p = &break_l;
-		value_byte = value & 0xff;
+		break_p = &m_breakL;
+		value_byte = m_value & 0xff;
 	}
 	else
 	{
-		break_p = &break_h;
-		value_byte = value >> 8 & 0xff;
+		break_p = &m_breakH;
+		value_byte = m_value >> 8 & 0xff;
 	}
 
-	switch (cond)
+	switch (m_cond)
 	{
 	case Condition::ANY:
 		*break_p = true;
@@ -820,28 +743,28 @@ auto dev::Debugger::Watchpoint::check(const Watchpoint::Access _access, const ui
 		return false;
 	};
 
-	return break_l && (value_size == VAL_BYTE_SIZE || break_h);
+	return m_breakL && (m_valueSize == VAL_BYTE_SIZE || m_breakH);
 }
 
-auto dev::Debugger::Watchpoint::get_global_addr() const
+auto dev::Debugger::Watchpoint::GetGlobalAddr() const
 -> const size_t
 {
-	return global_addr;
+	return m_globalAddr;
 }
 
-auto dev::Debugger::Watchpoint::check_addr(const uint32_t _global_addr) const
+auto dev::Debugger::Watchpoint::CheckAddr(const uint32_t _globalAddr) const
 -> const bool
 {
-	return _global_addr == global_addr || (_global_addr == global_addr + 1 && value_size == VAL_WORD_SIZE);
+	return _globalAddr == m_globalAddr || (_globalAddr == m_globalAddr + 1 && m_valueSize == VAL_WORD_SIZE);
 }
 
-void dev::Debugger::Watchpoint::reset()
+void dev::Debugger::Watchpoint::Reset()
 {
-	break_l = false;
-	break_h = false;
+	m_breakL = false;
+	m_breakH = false;
 }
 
-void dev::Debugger::Watchpoint::print() const
+void dev::Debugger::Watchpoint::Print() const
 {
-	std::printf("0x%05x, access: %s, cond: %s, value: 0x%04x, value_size: %d, active: %d \n", global_addr, access_s[static_cast<size_t>(access)], conditions_s[static_cast<size_t>(cond)], value, value_size, active);
+	std::printf("0x%05x, access: %s, cond: %s, value: 0x%04x, value_size: %d, active: %d \n", m_globalAddr, access_s[static_cast<size_t>(m_access)], conditions_s[static_cast<size_t>(m_cond)], m_value, m_valueSize, m_active);
 }
