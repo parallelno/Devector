@@ -215,7 +215,10 @@ void dev::DisasmWindow::DrawDisassembly()
             }
             else
             {
-                if (ImGui::BeginTable("##code", 5, tbl_flags)) // brk, addr, code, stats, consts
+                if (ImGui::BeginTable("##code", 5, 
+
+                    ImGuiTableFlags_Resizable
+                    )) // brk, addr, code, stats, consts
                 {
                     PushStyleCompact();
 

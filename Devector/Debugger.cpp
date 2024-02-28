@@ -271,7 +271,7 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 
 				if (m_labels.contains(addr & 0xffff))
 				{
-					out.push_back(m_labels.at(addr & 0xffff));
+					out.push_back(GetDisasmLabels(addr & 0xffff));
 				}
 
 				out.push_back(lineS);
@@ -299,25 +299,22 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 
 		if (m_labels.contains(addr & 0xffff))
 		{
-			out.push_back(m_labels.at(addr & 0xffff));
+			out.push_back(GetDisasmLabels((uint16_t)addr));
 		}
 
 		if (GetCmdLen(opcode) == 3 || opcode == OPCODE_PCHL)
 		{
-			int labelAddr = 0;
+			int operand_addr = 0;
 			if (opcode == OPCODE_PCHL)
 			{
-				labelAddr = m_cpu.GetHL();
+				operand_addr = m_cpu.GetHL();
 			}
 			else
 			{
-				labelAddr = dataH << 8 | dataL;
+				operand_addr = dataH << 8 | dataL;
 			}
 
-			if (m_labels.contains(labelAddr))
-			{
-				lineS += m_labels.at(labelAddr);
-			}
+			lineS += LabelsToStr(operand_addr & 0xffff, LABEL_TYPE_ALL);
 		}
 
 		out.push_back(lineS);
@@ -339,7 +336,6 @@ bool IsConstLabel(const char* _s)
 	}
 	return true; // All characters are capital letters or underscores
 }
-
 
 void dev::Debugger::LoadLabels(const std::wstring& _path)
 {
@@ -382,11 +378,11 @@ void dev::Debugger::LoadLabels(const std::wstring& _path)
 		{
 			if (!m_consts.contains(addr))
 			{
-				m_consts[addr] = label_c;
+				m_consts.emplace(addr, AddrLabels{ std::string(label_c) });
 			}
 			else
 			{
-				m_consts[addr] += ", " + std::string(label_c);
+				m_consts[addr].push_back(label_c);
 			}
 		}
 		// check if it is an __external_label
@@ -394,22 +390,22 @@ void dev::Debugger::LoadLabels(const std::wstring& _path)
 		{
 			if (!m_externalLabels.contains(addr))
 			{
-				m_externalLabels[addr] = std::string(label_c) + ":\t";
+				m_externalLabels.emplace(addr, AddrLabels{ std::string(label_c) });
 			}
 			else
 			{
-				m_externalLabels[addr] += std::string(label_c) + ", ";
+				m_externalLabels[addr].push_back(label_c);
 			}
 		}
 		else
 		{
 			if (!m_labels.contains(addr))
 			{
-				m_labels[addr] = std::string(label_c) + ":\t";
+				m_labels.emplace(addr, AddrLabels{ std::string(label_c) });
 			}
 			else
 			{
-				m_labels[addr] += std::string(label_c) + ", ";
+				m_labels[addr].push_back(label_c);
 			}
 		}
 		label_c = strtok_s(nullptr, " $\n", &labelValPairContext);
@@ -462,10 +458,7 @@ auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const si
 
 			const size_t operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
 
-			if (m_consts.contains(operand_addr))
-			{
-				lineS += m_consts.at(operand_addr);
-			}
+			lineS += LabelsToStr(operand_addr & 0xffff, LABEL_TYPE_ALL);
 			if (line != 0)
 			{
 				lineS += "\n";
@@ -823,4 +816,65 @@ void dev::Debugger::Watchpoint::Reset()
 void dev::Debugger::Watchpoint::Print() const
 {
 	std::printf("0x%05x, access: %s, cond: %s, value: 0x%04x, value_size: %d, active: %d \n", m_globalAddr, access_s[static_cast<size_t>(m_access)], conditions_s[static_cast<size_t>(m_cond)], m_value, m_valueSize, m_active);
+}
+
+//////////////////////////////////////////////////////////////
+//
+// Utils
+//
+//////////////////////////////////////////////////////////////
+
+auto dev::Debugger::GetDisasmLabels(uint16_t _addr) const
+-> const std::string
+{
+	std::string out;
+
+	if (m_labels.contains(_addr))
+	{
+		int i = 0;
+		for (const auto& label : m_labels.at(_addr))
+		{
+			out += label;
+			if (i == 0)
+			{
+				out += ":\t";
+			}
+			else
+			{
+				out += ", ";
+			}
+			i++;
+		}
+	}
+	return out;
+}
+
+auto dev::Debugger::LabelsToStr(uint16_t _addr, int _labelTypes) const
+-> const std::string
+{
+	std::string out;
+
+	if (_labelTypes & LABEL_TYPE_LABEL && m_labels.contains(_addr))
+	{
+		for (const auto& label : m_labels.at(_addr))
+		{
+			out += label + ", ";
+		}
+	}
+	if (_labelTypes & LABEL_TYPE_CONST && m_consts.contains(_addr))
+	{
+		for (const auto& label : m_consts.at(_addr))
+		{
+			out += label + ", ";
+		}
+	}
+	if (_labelTypes & LABEL_TYPE_EXTERNAL && m_externalLabels.contains(_addr))
+	{
+		for (const auto& label : m_externalLabels.at(_addr))
+		{
+			out += label + ", ";
+		}
+	}
+
+	return out;
 }

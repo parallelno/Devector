@@ -103,6 +103,14 @@ namespace dev
 		auto TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const ->int;
 		auto TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const ->int;
 
+		static constexpr int LABEL_TYPE_LABEL		= 1 << 0;
+		static constexpr int LABEL_TYPE_CONST		= 1 << 1;
+		static constexpr int LABEL_TYPE_EXTERNAL	= 1 << 2;
+		static constexpr int LABEL_TYPE_ALL			= LABEL_TYPE_LABEL | LABEL_TYPE_CONST | LABEL_TYPE_EXTERNAL;
+
+		auto LabelsToStr(uint16_t _addr, int _labelTypes) const -> const std::string;
+		auto GetDisasmLabels(uint16_t _addr) const -> const std::string;
+
 		uint64_t m_memRuns[Memory::GLOBAL_MEMORY_LEN];
 		uint64_t m_memReads[Memory::GLOBAL_MEMORY_LEN];
 		uint64_t m_memWrites[Memory::GLOBAL_MEMORY_LEN];
@@ -122,12 +130,14 @@ namespace dev
 		size_t m_traceLogIdx = 0;
 		int m_traceLogIdxViewOffset = 0;
 
+		using AddrLabels = std::vector<std::string>;
+		using Labels = std::map<size_t, AddrLabels>;
 		// labels names combined by their associated addr
-		std::map<size_t, std::string> m_labels;
+		Labels m_labels;
 		// labels used as constants combined by their associated addr
-		std::map<size_t, std::string> m_consts;
+		Labels m_consts;
 		// labels with a prefix "__" called externals and used in the code libraries in the ram-disk. they're combined by their associated addr
-		std::map<size_t, std::string> m_externalLabels;
+		Labels m_externalLabels;
 
 		I8080& m_cpu;
 		Memory& m_memory;
