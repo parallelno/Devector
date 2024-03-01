@@ -38,6 +38,7 @@ namespace dev
 		// Set column widths
 		static constexpr float BRK_W = 20;
 		static constexpr float ADDR_W = 50.0f;
+		static constexpr float CODE_W = 200.0f;
 		static constexpr float COMMAND_W = 120.0f;
 		static constexpr float STATS_W = 100.0f;
 
@@ -51,8 +52,8 @@ namespace dev
 
 		char m_searchText[255] = "";
 
-		std::vector<std::string> m_disasm 
-		
+		std::vector<std::string> m_disasm;
+		/*
 		// TODO: make m_disasm empty
 			= {
 			"first_label:\t(minor_label1, minor_label2)",
@@ -226,7 +227,7 @@ namespace dev
 			"@loop:\t(func_draw_something2 func_draw_something3)",
 			"0xFE0D\tLAST b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
 		};
-		
+		*/
 		void DrawDebugControls();
 		void DrawSearch();
 		void DrawCode();

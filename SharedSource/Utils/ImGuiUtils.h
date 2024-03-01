@@ -26,6 +26,9 @@ namespace dev
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);
 	void PopStyleCompact();
 	void UpdatePropertyPrintStat(const char* _parameterName);
+	void ColumnClippingEnable();
+	void ColumnClippingDisable();
+
 
 	void DrawTextSelectable(const char* _label, const std::string& _text);
 	//void DrawTextSelectableColored(const ImVec4& col, const std::string& _text); 

@@ -24,6 +24,22 @@ void dev::UpdatePropertyPrintStat(const char* _parameterName)
 	ImGui::TableSetColumnIndex(1);
 }
 
+#define DISASM_LINE_MAX 20
+void dev::ColumnClippingEnable()
+{
+	ImGui::PushClipRect(
+		ImGui::GetCursorScreenPos(), 
+		ImVec2(
+			ImGui::GetCursorScreenPos().x + ImGui::GetColumnWidth(), 
+			ImGui::GetCursorScreenPos().y + DISASM_LINE_MAX
+		), true);
+}
+
+void dev::ColumnClippingDisable()
+{
+	ImGui::PopClipRect();
+}
+
 void dev::DrawTextSelectable(const char* _label, const std::string& _text)
 {
 	ImVec2 text_size = ImGui::CalcTextSize(_text.c_str(), _text.c_str() + _text.size());

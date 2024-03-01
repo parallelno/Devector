@@ -70,6 +70,28 @@ void dev::Debugger::Write(const uint32_t _addr, Memory::AddrSpace _addrSpace, co
 
 static const char* mnemonics[0x100] =
 {
+	"nop",	   "lxi b",  "stax b", "inx b",  "inr b", "dcr b", "mvi b", "rlc", "db 0x08", "dad b",  "ldax b", "dcx b",  "inr c", "dcr c", "mvi c", "rrc",
+	"db 0x10", "lxi d",  "stax d", "inx d",  "inr d", "dcr d", "mvi d", "ral", "db 0x18", "dad d",  "ldax d", "dcx d",  "inr e", "dcr e", "mvi e", "rar",
+	"db 0x20", "lxi h",  "shld",   "inx h",  "inr h", "dcr h", "mvi h", "daa", "db 0x28", "dad h",  "lhld",   "dcx h",  "inr l", "dcr l", "mvi l", "cma",
+	"db 0x30", "lxi sp", "sta",    "inx sp", "inr m", "dcr m", "mvi m", "stc", "db 0x38", "dad sp", "lda",    "dcx sp", "inr a", "dcr a", "mvi a", "cmc",
+
+	"mov b b", "mov b c", "mov b d", "mov b e", "mov b h", "mov b l", "mov b m", "mov b a", "mov c b", "mov c c", "mov c d", "mov c e", "mov c h", "mov c l", "mov c m", "mov c a",
+	"mov d b", "mov d c", "mov d d", "mov d e", "mov d h", "mov d l", "mov d m", "mov d a", "mov e b", "mov e c", "mov e d", "mov e e", "mov e h", "mov e l", "mov e m", "mov e a",
+	"mov h b", "mov h c", "mov h d", "mov h e", "mov h h", "mov h l", "mov h m", "mov h a", "mov l b", "mov l c", "mov l d", "mov l e", "mov l h", "mov l l", "mov l m", "mov l a",
+	"mov m b", "mov m c", "mov m d", "mov m e", "mov m h", "mov m l", "hlt",     "mov m a", "mov a b", "mov a c", "mov a d", "mov a e", "mov a h", "mov a l", "mov a m", "mov a a",
+
+	"add b", "add c", "add d", "add e", "add h", "add l", "add m", "add a", "adc b", "adc c", "adc d", "adc e", "adc h", "adc l", "adc m", "adc a",
+	"sub b", "sub c", "sub d", "sub e", "sub h", "sub l", "sub m", "sub a", "sbb b", "sbb c", "sbb d", "sbb e", "sbb h", "sbb l", "sbb m", "sbb a",
+	"ana b", "ana c", "ana d", "ana e", "ana h", "ana l", "ana m", "ana a", "xra b", "xra c", "xra d", "xra e", "xra h", "xra l", "xra m", "xra a",
+	"ora b", "ora c", "ora d", "ora e", "ora h", "ora l", "ora m", "ora a", "cmp b", "cmp c", "cmp d", "cmp e", "cmp h", "cmp l", "cmp m", "cmp a",
+
+	"rnz", "pop b",   "jnz", "jmp",  "cnz", "push b",   "adi", "rst 0x0", "rz",  "ret",     "jz",  "db 0xCB", "cz",  "call",    "aci", "rst 0x1",
+	"rnc", "pop d",   "jnc", "out",  "cnc", "push d",   "sui", "rst 0x2", "rc",  "db 0xD9", "jc",  "in",      "cc",  "db 0xDD", "sbi", "rst 0x3",
+	"rpo", "pop h",   "jpo", "xthl", "cpo", "push h",   "ani", "rst 0x4", "rpe", "pchl",    "jpe", "xchg",    "cpe", "db 0xED", "xri", "rst 0x5",
+	"rp",  "pop PSW", "jp",  "di",   "cp",  "push PSW", "ori", "rst 0x6", "rm",  "sphl",    "jm",  "ei",      "cm",  "db 0xFD", "cpi", "rst 0x7"
+};
+
+/*
 	"NOP",	   "LXI B",  "STAX B", "INX B",  "INR B", "DCR B", "MVI B", "RLC", "DB 0x08", "DAD B",  "LDAX B", "DCX B",  "INR C", "DCR C", "MVI C", "RRC",
 	"DB 0x10", "LXI D",  "STAX D", "INX D",  "INR D", "DCR D", "MVI D", "RAL", "DB 0x18", "DAD D",  "LDAX D", "DCX D",  "INR E", "DCR E", "MVI E", "RAR",
 	"DB 0x20", "LXI H",  "SHLD",   "INX H",  "INR H", "DCR H", "MVI H", "DAA", "DB 0x28", "DAD H",  "LHLD",   "DCX H",  "INR L", "DCR L", "MVI L", "CMA",
@@ -89,7 +111,7 @@ static const char* mnemonics[0x100] =
 	"RNC", "POP D",   "JNC", "OUT",  "CNC", "PUSH D",   "SUI", "RST 0x2", "RC",  "DB 0xD9", "JC",  "IN",      "CC",  "DB 0xDD", "SBI", "RST 0x3",
 	"RPO", "POP H",   "JPO", "XTHL", "CPO", "PUSH H",   "ANI", "RST 0x4", "RPE", "PCHL",    "JPE", "XCHG",    "CPE", "DB 0xED", "XRI", "RST 0x5",
 	"RP",  "POP PSW", "JP",  "DI",   "CP",  "PUSH PSW", "ORI", "RST 0x6", "RM",  "SPHL",    "JM",  "EI",      "CM",  "DB 0xFD", "CPI", "RST 0x7"
-};
+*/
 
 // define the maximum number of bytes in a command
 #define CMD_BYTES_MAX 3
@@ -297,24 +319,18 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 		std::string runsReadsWritesS = runsS + "," + readsS + "," + writesS + "\t";
 		lineS += runsReadsWritesS;
 
-		if (m_labels.contains(addr & 0xffff))
+		if (m_labels.contains(addr))
 		{
 			out.push_back(GetDisasmLabels((uint16_t)addr));
 		}
 
-		if (GetCmdLen(opcode) == 3 || opcode == OPCODE_PCHL)
+		if (GetCmdLen(opcode) == 2)
 		{
-			int operand_addr = 0;
-			if (opcode == OPCODE_PCHL)
-			{
-				operand_addr = m_cpu.GetHL();
-			}
-			else
-			{
-				operand_addr = dataH << 8 | dataL;
-			}
-
-			lineS += LabelsToStr(operand_addr & 0xffff, LABEL_TYPE_ALL);
+			lineS += LabelsToStr(dataL, LABEL_TYPE_CONST);
+		}
+		else if (GetCmdLen(opcode) == 3)
+		{
+			lineS += LabelsToStr(dataH << 8 | dataL, LABEL_TYPE_ALL);
 		}
 
 		out.push_back(lineS);
@@ -361,18 +377,17 @@ void dev::Debugger::LoadLabels(const std::wstring& _path)
 
 	while (label_c != nullptr)
 	{
-		if (label_c == nullptr || addr_c == nullptr) break;
+		if (addr_c == nullptr) break;
 
 		char* labelBeforePeriod_c = strtok_s(label_c, " .&\n", &labelContext);
 
 		addr = strtol(addr_c, &end, 16);
-
-
-		if (std::string(label_c) == "ram_disk_mode")
+		/*
+		if (std::string(label_c) == "main_start")
 		{
 			int temp = 1;
 		}
-
+		*/
 		// check if it is a CONSTANT_NAME
 		if (IsConstLabel(labelBeforePeriod_c))
 		{
