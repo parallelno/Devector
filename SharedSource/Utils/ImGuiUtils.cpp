@@ -24,14 +24,15 @@ void dev::UpdatePropertyPrintStat(const char* _parameterName)
 	ImGui::TableSetColumnIndex(1);
 }
 
-#define DISASM_LINE_MAX 20
-void dev::ColumnClippingEnable()
+void dev::ColumnClippingEnable(const float _dpiScale)
 {
+	ImGuiContext& g = *GImGui;
+
 	ImGui::PushClipRect(
-		ImGui::GetCursorScreenPos(), 
+		ImGui::GetCursorScreenPos(),
 		ImVec2(
-			ImGui::GetCursorScreenPos().x + ImGui::GetColumnWidth(), 
-			ImGui::GetCursorScreenPos().y + DISASM_LINE_MAX
+			ImGui::GetCursorScreenPos().x + ImGui::GetColumnWidth(),
+			ImGui::GetCursorScreenPos().y + g.FontSize * _dpiScale
 		), true);
 }
 
@@ -168,4 +169,49 @@ bool dev::TextAligned(const char* _text, const ImVec2& _aligment)
 
 
 	ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, _text, NULL, &label_size, _aligment, &bb);
+}
+
+// a little bullet aligned to the typical tree node.
+void dev::DrawCircle(const ImU32 _color)
+{
+	ImGuiWindow* window = ImGui::GetCurrentWindow();
+	if (window->SkipItems)
+		return;
+
+	ImGuiContext& g = *GImGui;
+	const ImGuiStyle& style = g.Style;
+
+	const ImVec2 total_size = ImVec2(g.FontSize * 0.5f, g.FontSize);  // Empty text doesn't add padding
+	ImVec2 pos = window->DC.CursorPos;
+	pos.y += window->DC.CurrLineTextBaseOffset;
+	ImGui::ItemSize(total_size, 0.0f);
+
+	const ImRect bb(pos, pos + total_size);
+	if (!ImGui::ItemAdd(bb, 0))
+		return;
+
+	// Render
+	ImGui::RenderBullet(window->DrawList, bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f), _color);
+}
+
+void dev::DrawArrow(const ImU32 _color, const ImGuiDir _dir, const bool _itemHasSize)
+{
+	ImGuiWindow* window = ImGui::GetCurrentWindow();
+	if (window->SkipItems)
+		return;
+
+	ImGuiContext& g = *GImGui;
+	const ImGuiStyle& style = g.Style;
+
+	const ImVec2 total_size = ImVec2(g.FontSize *.1f, g.FontSize);  // Empty text doesn't add padding
+	ImVec2 pos = window->DC.CursorPos;
+	pos.y += window->DC.CurrLineTextBaseOffset;
+	
+	if(_itemHasSize) ImGui::ItemSize(total_size, 0.0f);
+
+	const ImRect bb(pos, pos + total_size);
+	if (!ImGui::ItemAdd(bb, 0))
+		return;
+
+	ImGui::RenderArrow(window->DrawList, bb.Min + ImVec2(style.FramePadding.x, 0.0f), _color, _dir);
 }

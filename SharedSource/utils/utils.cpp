@@ -1,5 +1,8 @@
 #include <cstdarg>
 #include <fstream>
+#include <Windows.h>
+//#include <ShellScalingApi.h>
+#include <iostream>
 
 #include "Utils/Utils.h"
 #include "Utils/Globals.h"

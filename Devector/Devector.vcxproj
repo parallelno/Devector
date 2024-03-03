@@ -109,11 +109,11 @@
     <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\shell.c" />
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\sqlite3.c" />
+    <ClCompile Include="..\SharedSource\UI\BaseWindow.cpp" />
     <ClCompile Include="..\SharedSource\ui\DisasmWindow.cpp" />
     <ClCompile Include="..\SharedSource\UI\DisplayWindow.cpp" />
     <ClCompile Include="..\SharedSource\ui\HardwareStatsWindow.cpp" />
     <ClCompile Include="..\SharedSource\utils\ArgsParser.cpp" />
-    <ClCompile Include="..\SharedSource\Utils\BaseWindow.cpp" />
     <ClCompile Include="..\SharedSource\Utils\ImGuiApp.cpp" />
     <ClCompile Include="..\SharedSource\Utils\ImGuiUtils.cpp" />
     <ClCompile Include="..\SharedSource\utils\JsonUtils.cpp" />
@@ -137,11 +137,11 @@
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imgui_internal.h" />
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3.h" />
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3ext.h" />
+    <ClInclude Include="..\SharedSource\UI\BaseWindow.h" />
     <ClInclude Include="..\SharedSource\ui\DisasmWindow.h" />
     <ClInclude Include="..\SharedSource\UI\DisplayWindow.h" />
     <ClInclude Include="..\SharedSource\ui\HardwareStatsWindow.h" />
     <ClInclude Include="..\SharedSource\utils\ArgsParser.h" />
-    <ClInclude Include="..\SharedSource\Utils\BaseWindow.h" />
     <ClInclude Include="..\SharedSource\Utils\Consts.h" />
     <ClInclude Include="..\SharedSource\utils\Globals.h" />
     <ClInclude Include="..\SharedSource\Utils\ImGuiApp.h" />

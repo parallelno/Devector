@@ -56,14 +56,14 @@
     <ClCompile Include="..\SharedSource\Utils\ImGuiUtils.cpp">
       <Filter>SharedSource\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\SharedSource\Utils\BaseWindow.cpp">
-      <Filter>SharedSource\Utils</Filter>
-    </ClCompile>
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="IO.cpp" />
     <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="..\SharedSource\UI\DisplayWindow.cpp">
+      <Filter>SharedSource\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\UI\BaseWindow.cpp">
       <Filter>SharedSource\UI</Filter>
     </ClCompile>
   </ItemGroup>
@@ -131,14 +131,14 @@
     <ClInclude Include="..\SharedSource\Utils\Consts.h">
       <Filter>SharedSource\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\SharedSource\Utils\BaseWindow.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
     <ClInclude Include="Display.h" />
     <ClInclude Include="IO.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="..\SharedSource\UI\DisplayWindow.h">
+      <Filter>SharedSource\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\UI\BaseWindow.h">
       <Filter>SharedSource\UI</Filter>
     </ClInclude>
   </ItemGroup>

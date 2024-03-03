@@ -7,7 +7,7 @@
 
 #include "Utils/Globals.h"
 #include "Utils/ImGuiUtils.h"
-#include "Utils/BaseWindow.h"
+#include "Ui/BaseWindow.h"
 
 #include "..\Devector\Hardware.h"
 
@@ -32,6 +32,9 @@ namespace dev
 	const ImVec4 DISASM_TBL_COLOR_NUMBER = dev::IM_VEC4(0xD4D4D4FF);
 	const ImVec4 DISASM_TBL_COLOR_REG = dev::IM_VEC4(0x1ECF44FF);
 	const ImVec4 DISASM_TBL_COLOR_CONST = dev::IM_VEC4(0x8BE0E9FF);
+	// disasm icons colors
+	const ImU32 DISASM_TBL_COLOR_BREAKPOINT = dev::IM_U32(0xFF2828C0);
+	const ImU32 DISASM_TBL_COLOR_PC = dev::IM_U32(0x88F038FF);
 
 	class DisasmWindow : public BaseWindow
 	{	
@@ -235,7 +238,7 @@ namespace dev
 
 	public:
 
-		DisasmWindow(Hardware& _hardware, ImFont* fontComment = nullptr);
+		DisasmWindow(Hardware& _hardware, ImFont* fontComment, const float const* _fontSizeP, const float const* _dpiScaleP);
 		void Update();
 		void UpdateDisasm();
 	};

@@ -2,7 +2,6 @@
 #include <string>
 #include <chrono>
 #include <filesystem>
-#include <Windows.h>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -17,8 +16,7 @@ dev::DevectorApp::DevectorApp(
 	const std::string& _stringPath, nlohmann::json _settingsJ,
 	const int _mainWindowWidth, const int _mainWindowHeight)
 	:
-	ImGuiApp(APP_NAME, _mainWindowWidth, _mainWindowHeight),
-	m_settingsJ(_settingsJ),
+	ImGuiApp(_settingsJ, APP_NAME, _mainWindowWidth, _mainWindowHeight),
 	m_stringPath(_stringPath)
 {
 	SettingsInit();
@@ -28,38 +26,16 @@ dev::DevectorApp::DevectorApp(
 void dev::DevectorApp::WindowsInit()
 {
 	m_hardware = std::make_unique < dev::Hardware>();
-	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardware);
-	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardware, m_fontItalic);
-	m_displayWindowP = std::make_unique<dev::DisplayWindow>(m_hardware->m_display);
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardware, &m_fontSize, &m_dpiScale);
+	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardware, m_fontItalic, &m_fontSize, &m_dpiScale);
+	m_displayWindowP = std::make_unique<dev::DisplayWindow>(m_hardware->m_display, &m_fontSize, &m_dpiScale);
 }
 
 void dev::DevectorApp::SettingsInit()
 {
-	LoadFonts();
+	Request(REQ::LOAD_FONT);
 	AppStyleInit();
 	RecentFilesInit();
-}
-
-void dev::DevectorApp::LoadFonts()
-{
-	ImGuiIO& io = ImGui::GetIO();
-	//io.Fonts->AddFontDefault();
-
-	auto fontCodePath = dev::GetJsonString(m_settingsJ, "fontPath", false);
-	auto fontCodeSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false);
-
-	if (!fontCodePath.empty() && dev::IsFileExist(fontCodePath))
-	{
-		m_font = io.Fonts->AddFontFromFileTTF(fontCodePath.c_str(), fontCodeSize);
-	}
-
-	auto fontCommentPath = dev::GetJsonString(m_settingsJ, "fontItalicPath", false, "");
-	auto fontCommentSize = (float)dev::GetJsonDouble(m_settingsJ, "fontItalicSize", false);
-
-	if (!fontCommentPath.empty() && dev::IsFileExist(fontCommentPath))
-	{
-		m_fontItalic = io.Fonts->AddFontFromFileTTF(fontCommentPath.c_str(), fontCommentSize);
-	}
 }
 
 void dev::DevectorApp::AppStyleInit()

@@ -3,9 +3,11 @@
 #include "DisasmWindow.h"
 #include "Utils\StringUtils.h"
 
-dev::DisasmWindow::DisasmWindow(dev::Hardware& _hardware, ImFont* fontComment)
+dev::DisasmWindow::DisasmWindow(
+        dev::Hardware& _hardware, ImFont* fontComment, 
+        const float const* _fontSize, const float const* _dpiScale)
     :
-    BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H),
+    BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
     m_hardware(_hardware),
     m_fontComment(fontComment)
 {}
@@ -28,23 +30,30 @@ void dev::DisasmWindow::DrawDebugControls()
 {
     if (ImGui::Button("Step"))
     {
+        m_hardware.ExecuteInstruction();
         UpdateDisasm();
     }
-    ImGui::SameLine(); 
-    if (ImGui::Button("Step 100"))
+    ImGui::SameLine();
+    if (ImGui::Button("Step 0x100"))
     {
+        for (int i = 0; i < 0x100; i++)
+        {
+            m_hardware.ExecuteInstruction();
+        }
+
         UpdateDisasm();
     }
     ImGui::SameLine();
     if (ImGui::Button("Step Frame"))
     {
+        m_hardware.ExecuteFrame();
         UpdateDisasm();
     }
 }
 
 void dev::DisasmWindow::UpdateDisasm()
 {
-    auto addr = m_hardware.m_cpu.m_sp;
+    auto addr = m_hardware.m_cpu.m_pc;
     m_disasm = m_hardware.m_debugger.GetDisasm(addr, 1000, 6);
 }
 
@@ -105,7 +114,7 @@ void dev::DisasmWindow::DrawDisassembly()
         ImGuiTableFlags_NoClip |
         ImGuiTableFlags_NoBordersInBodyUntilResize |
         ImGuiTableFlags_Resizable
-    )) // (labels) or (comment) or (brk, addr, code, stats, consts)
+    ))
     {
         ImGui::TableSetupColumn("Brk", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, BRK_W);
         ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, ADDR_W);
@@ -129,17 +138,36 @@ void dev::DisasmWindow::DrawDisassembly()
                 bool isCode = line_splited[0][0] == '0';
 
                 // the breakpoints and the execution cursor column
+                char id_s[32];
+                sprintf_s(id_s, "##%04d", line_idx);
+
                 ImGui::TableNextColumn();
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_BRK);
                 const bool is_selected = (item_current_idx == line_idx);
-                if (ImGui::Selectable("", is_selected, ImGuiSelectableFlags_SpanAllColumns))
+                if (ImGui::Selectable(id_s, is_selected, ImGuiSelectableFlags_SpanAllColumns))
                 {
                     item_current_idx = line_idx;
                 }
 
+                // draw breakpoints
+                ImGui::SameLine();
+                dev::DrawCircle(DISASM_TBL_COLOR_BREAKPOINT);
+                // draw program counter icon
+                if (isCode)
+                { 
+                    int addr = std::stoi(line_splited[0], nullptr, 16);
+                    if (addr == m_hardware.m_cpu.m_pc)
+                    {
+                        ImGui::SameLine();
+                        dev::DrawArrow(DISASM_TBL_COLOR_PC);
+                    }
+                }
+
+
+
                 // the addr column
                 ImGui::TableNextColumn();
-                ColumnClippingEnable();
+                ColumnClippingEnable(*m_dpiScaleP);
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
                 if (isCode) { 
                     ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, line_splited[0].c_str());
@@ -199,7 +227,7 @@ void dev::DisasmWindow::DrawDisassembly()
                     ImGui::TableNextColumn();
 
                     // enable clipping
-                    ColumnClippingEnable();
+                    ColumnClippingEnable(*m_dpiScaleP);
 
                     auto cmd_splitted = dev::Split(line_splited[1], ' ');
                     int i = 0;
@@ -251,7 +279,7 @@ void dev::DisasmWindow::DrawDisassembly()
 
                     // the stats column
                     ImGui::TableNextColumn();
-                    ColumnClippingEnable();
+                    ColumnClippingEnable(*m_dpiScaleP);
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DISASM_TBL_BG_COLOR_ADDR));
                     ImGui::TextColored(DISASM_TBL_COLOR_ADDR, line_splited[2].c_str());
                     ColumnClippingDisable();

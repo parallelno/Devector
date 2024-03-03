@@ -12,16 +12,37 @@
 #include "imgui_impl_opengl3.h"
 #include "GLFW/glfw3.h" // Will drag system OpenGL headers
 
-bool ImGuiApp::Inited() const
+#include "Utils/Utils.h"
+
+bool dev::ImGuiApp::Inited() const
 {
     return m_status == AppStatus::inited;
 }
 
-ImGuiApp::ImGuiApp(const std::string& _title, int _width, int _heigth) :
+void dev::ImGuiApp::AutoUpdate()
+{
+    for (; !m_close_req; dev::ThreadSleep(AUTO_UPDATE_COOLDOWN))
+    {
+        if (m_hWndMain) {
+            auto currendDpiScale = GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT;
+            bool isDpiUpdated = m_dpiScale != currendDpiScale;
+            if (m_req == static_cast<int32_t>(REQ::NONE) && isDpiUpdated)
+            {
+                Request(REQ::LOAD_FONT);
+            }
+        }
+    }
+}
+
+dev::ImGuiApp::ImGuiApp(
+        nlohmann::json _settingsJ, const std::string& _title, int _width, int _heigth) :
     m_title(_title),
     m_width(_width),
-    m_heigth(_heigth)
+    m_heigth(_heigth),
+    m_settingsJ(_settingsJ)
 {
+    m_autoUpdateThread = std::thread(&ImGuiApp::AutoUpdate, this);
+
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) {
@@ -104,10 +125,17 @@ ImGuiApp::ImGuiApp(const std::string& _title, int _width, int _heigth) :
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
+
+    m_hWndMain = GetActiveWindow();
 }
 
-ImGuiApp::~ImGuiApp()
+dev::ImGuiApp::~ImGuiApp()
 {
+    //if (m_autoUpdateThread.joinable()) m_autoUpdateThread.join();
+
+    m_close_req = true;
+    m_autoUpdateThread.join();
+
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -118,15 +146,16 @@ ImGuiApp::~ImGuiApp()
     glfwTerminate();
 }
 
-void ImGuiApp::glfw_error_callback(int _error, const char* _description)
+void dev::ImGuiApp::glfw_error_callback(int _error, const char* _description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", _error, _description);
 }
 
-void ImGuiApp::Run()
+void dev::ImGuiApp::Run()
 {
     while (!glfwWindowShouldClose(m_window) && !m_close_req)
     {
+
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
@@ -137,6 +166,9 @@ void ImGuiApp::Run()
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
+
+        RequestHandler();
+
         ImGui::NewFrame();
 
         
@@ -189,4 +221,47 @@ void ImGuiApp::Run()
 
         glfwSwapBuffers(m_window);
     }
+}
+
+void dev::ImGuiApp::Request(const REQ _req)
+{
+    m_req = static_cast<int32_t>(_req);
+}
+
+void dev::ImGuiApp::RequestHandler()
+{
+    if (m_req == static_cast<int32_t>(REQ::LOAD_FONT))
+    {
+        LoadFonts();
+        m_req = static_cast<int32_t>(REQ::NONE);
+    }
+}
+
+void dev::ImGuiApp::LoadFonts()
+{
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->Clear();
+
+    //io.Fonts->AddFontDefault(); // adds a default ImGui font.
+
+    m_dpiScale = GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT;
+
+    auto fontCodePath = dev::GetJsonString(m_settingsJ, "fontPath", false);
+    m_fontSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false) * m_dpiScale;
+
+    if (!fontCodePath.empty() && dev::IsFileExist(fontCodePath))
+    {
+        m_font = io.Fonts->AddFontFromFileTTF(fontCodePath.c_str(), m_fontSize);
+    }
+
+    auto fontCommentPath = dev::GetJsonString(m_settingsJ, "fontItalicPath", false, "");
+    auto fontCommentSize = (float)dev::GetJsonDouble(m_settingsJ, "fontItalicSize", false);
+
+    if (!fontCommentPath.empty() && dev::IsFileExist(fontCommentPath))
+    {
+        m_fontItalic = io.Fonts->AddFontFromFileTTF(fontCommentPath.c_str(), fontCommentSize);
+    }
+
+    ImGui_ImplOpenGL3_CreateFontsTexture();
 }

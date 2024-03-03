@@ -1,9 +1,10 @@
 #include "DisplayWindow.h"
 #include <gl/GL.h>
 
-dev::DisplayWindow::DisplayWindow(Display& _display)
+dev::DisplayWindow::DisplayWindow(Display& _display, 
+        const float const* _fontSizeP, const float const* _dpiScaleP)
 	:
-	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H),
+	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_display(_display)
 {
     CreateFrameBuffer(m_display.m_data, m_display.FRAME_W, m_display.FRAME_H);

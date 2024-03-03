@@ -4,7 +4,7 @@
 
 #include "Utils/Globals.h"
 #include "Utils/ImGuiUtils.h"
-#include "Utils/BaseWindow.h"
+#include "Ui/BaseWindow.h"
 #include "../Devector/Hardware.h"
 
 namespace dev
@@ -28,7 +28,8 @@ namespace dev
 		void DrawSeparator2(const std::string& _text);
 
 	public:
-		HardwareStatsWindow(Hardware& _hardware);
+		HardwareStatsWindow(Hardware& _hardware,
+			const float const* _fontSizeP, const float const* _dpiScaleP);
 		
 		void Update();
 

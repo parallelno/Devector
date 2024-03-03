@@ -10,9 +10,15 @@ namespace dev
 		int m_defaultW;
 		int m_defaultH;
 
+	protected:
+		const float* const m_fontSizeP = nullptr;
+		const float* const m_dpiScaleP = nullptr;
+
 	public:
-		BaseWindow(const int _defaultW = 256, const int _defaultH = 256) :
-			m_defaultW(_defaultW), m_defaultH(_defaultH) {};
+		BaseWindow(const int _defaultW, const int _defaultH, const float const* _fontSizeP, const  float const* _dpiScaleP)
+			:
+			m_defaultW(_defaultW), m_defaultH(_defaultH), m_fontSizeP(_fontSizeP), m_dpiScaleP(_dpiScaleP)
+		{};
 
 		void Update();
 		void Close();

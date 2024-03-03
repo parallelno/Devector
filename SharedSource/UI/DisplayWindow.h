@@ -6,7 +6,7 @@
 #include <vector>
 #include "Utils/Globals.h"
 #include "Utils/ImGuiUtils.h"
-#include "Utils/BaseWindow.h"
+#include "Ui/BaseWindow.h"
 #include "Utils/Result.h"
 #include "../Devector/Display.h"
 
@@ -26,7 +26,7 @@ namespace dev
 		void UpdateFrameBuffer();
 
 	public:
-		DisplayWindow(Display& _display);
+		DisplayWindow(Display& _display, const float const* _fontSizeP, const float const* _dpiScaleP);
 		void Update();
 	};
 

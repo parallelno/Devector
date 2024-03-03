@@ -2,9 +2,10 @@
 #include "HardwareStatsWindow.h"
 #include "Utils\StringUtils.h"
 
-dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware)
+dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware, 
+		const float const* _fontSizeP, const float const* _dpiScaleP)
 	:
-	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H),
+	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware)
 {}
 

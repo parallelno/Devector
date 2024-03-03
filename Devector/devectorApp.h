@@ -13,6 +13,7 @@
 #include <thread>
 #include <mutex>
 #include <string>
+#include <atomic>
 
 namespace dev
 {
@@ -23,11 +24,7 @@ namespace dev
 		static constexpr int RECENT_FILES_MAX = 10;
 		const std::string LABELS_FILENAME = "debug.txt";
 
-		nlohmann::json m_settingsJ;
 		const std::string m_stringPath;
-
-		ImFont* m_font = nullptr;
-		ImFont* m_fontItalic = nullptr;
 
 		std::unique_ptr <dev::Hardware> m_hardware;
 
@@ -53,10 +50,10 @@ namespace dev
 		void RecentFilesInit();
 		void RecentFilesStore();
 		void RecentFilesUpdate(const std::wstring& _filePath);
-		void LoadFonts();
 		void AppStyleInit();
 		void MainMenuUpdate();
 		void LoadRom(const std::wstring& _filePath);
+
 	};
 
 }

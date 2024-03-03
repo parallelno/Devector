@@ -26,7 +26,7 @@ namespace dev
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);
 	void PopStyleCompact();
 	void UpdatePropertyPrintStat(const char* _parameterName);
-	void ColumnClippingEnable();
+	void ColumnClippingEnable(const float m_dpiScale = 1.0f);
 	void ColumnClippingDisable();
 
 
@@ -61,6 +61,8 @@ namespace dev
 	}
 	void DrawHelpMarker(const char* _text);
 	void DrawPopup(const char* _title, const char* _text);
+	void DrawCircle(const ImU32 _color);
+	void DrawArrow(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, const bool _itemHasSize = true);
 
 	bool TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 
@@ -72,6 +74,7 @@ namespace dev
 			((col & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT) / 255.0f,
 			((col & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT) / 255.0f);
 	}
+	// 0xRRGGBBAA
 	static constexpr ImU32 IM_U32(const uint32_t col)
 	{
 		return
