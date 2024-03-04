@@ -281,7 +281,8 @@ void dev::DisasmWindow::DrawDisassembly()
                     ImGui::TableNextColumn();
                     ColumnClippingEnable(*m_dpiScaleP);
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DISASM_TBL_BG_COLOR_ADDR));
-                    ImGui::TextColored(DISASM_TBL_COLOR_ADDR, line_splited[2].c_str());
+                    auto* statsColor = (line_splited[2] == "0,0,0") ? &DISASM_TBL_COLOR_ZERO_STATS  : &DISASM_TBL_COLOR_ADDR;
+                    ImGui::TextColored(*statsColor, line_splited[2].c_str());
                     ColumnClippingDisable();
 
                     // the consts column

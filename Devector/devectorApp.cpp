@@ -135,14 +135,11 @@ void dev::DevectorApp::LoadRom(const std::wstring& _path)
 {
 	m_hardware->LoadRom(_path);
 
-	auto labelsFilename = dev::StrToStrW(dev::GetJsonString(m_settingsJ, "labelsFilename", false, LABELS_FILENAME));
+	auto labelsFilenamePostfix = dev::StrToStrW(dev::GetJsonString(m_settingsJ, "labelsFilenamePostfix", false, LABELS_FILENAME));
 	auto labelsDir = dev::GetDir(_path);
-	auto labelsPath = labelsDir + L"\\" + labelsFilename;
+	auto labelsPath = labelsDir + L"\\" + dev::GetFilename(_path) + labelsFilenamePostfix;
 
-	if (dev::IsFileExist(labelsPath))
-	{
-		m_hardware->m_debugger.LoadLabels(labelsPath);
-	}
+	m_hardware->m_debugger.LoadLabels(labelsPath);
 
 	m_disasmWindowP->UpdateDisasm();
 	//TODO: fix it

@@ -90,6 +90,7 @@ namespace dev
 
 		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> std::string;
 		void LoadLabels(const std::wstring& _path);
+		void ResetLabels();
 
 	private:
 		auto GetDisasmLine(const uint32_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string;

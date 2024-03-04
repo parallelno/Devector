@@ -76,3 +76,10 @@ auto dev::GetDir(const std::wstring& _path)
 	std::filesystem::path p{ _path };
 	return p.parent_path().wstring();
 }
+
+auto dev::GetFilename(const std::wstring& _path)
+->std::wstring
+{
+	std::filesystem::path p{ _path };
+	return p.stem().wstring();
+}

@@ -401,16 +401,15 @@ void dev::I8080::Decode()
 uint8_t dev::I8080::ReadInstrMovePC()
 {
 	uint8_t op_code = MemoryRead(m_pc, Memory::AddrSpace::RAM);
-	m_pc++;
 	DebugOnRead(m_pc, Memory::AddrSpace::RAM, op_code, true);
-
+	m_pc++;
 	return op_code;
 }
 
 uint8_t dev::I8080::ReadByte(uint32_t _addr, Memory::AddrSpace _addrSpace)
 {
 	auto val = MemoryRead(_addr, _addrSpace);
-	DebugOnRead(m_pc, _addrSpace, val, false);
+	DebugOnRead(_addr, _addrSpace, val, false);
 
 	return val;
 }
@@ -418,7 +417,7 @@ uint8_t dev::I8080::ReadByte(uint32_t _addr, Memory::AddrSpace _addrSpace)
 void dev::I8080::WriteByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace)
 {
 	MemoryWrite(_addr, _value, _addrSpace);
-	DebugOnWrite(m_pc, _addrSpace, _value);
+	DebugOnWrite(_addr, _addrSpace, _value);
 }
 
 uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)

@@ -355,6 +355,10 @@ bool IsConstLabel(const char* _s)
 
 void dev::Debugger::LoadLabels(const std::wstring& _path)
 {
+	ResetLabels();
+
+	if (!dev::IsFileExist(_path)) return;
+
 	// load labels
 	auto result = dev::LoadFile(_path);
 	if (!result) return;
@@ -365,10 +369,6 @@ void dev::Debugger::LoadLabels(const std::wstring& _path)
 	
 	char* label_c = strtok_s(labels_c, " $\n", &labelValPairContext);
 	char* addr_c = strtok_s(nullptr, " $\n", &labelValPairContext);
-
-	m_labels.clear();
-	m_consts.clear();
-	m_externalLabels.clear();
 	
 	int addr = 0;
 	char* end;
@@ -426,6 +426,13 @@ void dev::Debugger::LoadLabels(const std::wstring& _path)
 		label_c = strtok_s(nullptr, " $\n", &labelValPairContext);
 		addr_c = strtok_s(nullptr, " $\n", &labelValPairContext);
 	}
+}
+
+void dev::Debugger::ResetLabels()
+{
+	m_labels.clear();
+	m_consts.clear();
+	m_externalLabels.clear();
 }
 
 //////////////////////////////////////////////////////////////

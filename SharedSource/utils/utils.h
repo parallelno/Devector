@@ -155,6 +155,8 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	
 	auto GetDir(const std::wstring& _path)
 		-> std::wstring;
+	auto GetFilename(const std::wstring& _path)
+		->std::wstring;
 
 } // namespace dev
 #endif //!DEV_UTILS_H
