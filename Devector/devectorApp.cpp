@@ -25,10 +25,10 @@ dev::DevectorApp::DevectorApp(
 
 void dev::DevectorApp::WindowsInit()
 {
-	m_hardware = std::make_unique < dev::Hardware>();
-	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardware, &m_fontSize, &m_dpiScale);
-	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardware, m_fontItalic, &m_fontSize, &m_dpiScale);
-	m_displayWindowP = std::make_unique<dev::DisplayWindow>(m_hardware->m_display, &m_fontSize, &m_dpiScale);
+	m_hardwareP = std::make_unique < dev::Hardware>();
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
+	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, m_fontItalic, &m_fontSize, &m_dpiScale);
+	m_displayWindowP = std::make_unique<dev::DisplayWindow>(m_hardwareP->m_display, &m_fontSize, &m_dpiScale);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -133,15 +133,15 @@ void dev::DevectorApp::Update()
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)
 {
-	m_hardware->LoadRom(_path);
+	m_hardwareP->LoadRom(_path);
 
 	auto labelsFilenamePostfix = dev::StrToStrW(dev::GetJsonString(m_settingsJ, "labelsFilenamePostfix", false, LABELS_FILENAME));
 	auto labelsDir = dev::GetDir(_path);
 	auto labelsPath = labelsDir + L"\\" + dev::GetFilename(_path) + labelsFilenamePostfix;
 
-	m_hardware->m_debugger.LoadLabels(labelsPath);
+	m_hardwareP->m_debugger.LoadLabels(labelsPath);
 
-	m_disasmWindowP->UpdateDisasm();
+	m_disasmWindowP->UpdateDisasm(m_hardwareP->m_cpu.m_pc);
 	//TODO: fix it
 	//RecentFilesUpdate(_path);
 	RecentFilesStore();

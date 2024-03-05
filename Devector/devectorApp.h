@@ -26,7 +26,7 @@ namespace dev
 
 		const std::string m_stringPath;
 
-		std::unique_ptr <dev::Hardware> m_hardware;
+		std::unique_ptr <dev::Hardware> m_hardwareP;
 
 		std::unique_ptr <dev::HardwareStatsWindow> m_hardwareStatsWindowP;
 		std::unique_ptr <dev::DisasmWindow> m_disasmWindowP;

@@ -37,6 +37,8 @@ namespace dev
 	const ImU32 DISASM_TBL_COLOR_BREAKPOINT = dev::IM_U32(0xFF2828C0);
 	const ImU32 DISASM_TBL_COLOR_PC = dev::IM_U32(0x88F038FF);
 
+	static constexpr float DISASM_TBL_BREAKPOINT_SIZE = 0.35f;
+
 	class DisasmWindow : public BaseWindow
 	{	
 		// Set column widths
@@ -46,202 +48,23 @@ namespace dev
 		static constexpr float COMMAND_W = 120.0f;
 		static constexpr float STATS_W = 100.0f;
 
-		//static constexpr int DISASM_LINES_VISIBLE_MAX = 30;
-		//static constexpr int DISASM_LINES_MAX = 17 * 10;
+		static constexpr int DISASM_LINES_PRIOR = 6;
 		
 		Hardware& m_hardware;
 		ImFont* m_fontComment = nullptr;
-
-		int m_scrollLineOffset = 0;
-
 		char m_searchText[255] = "";
+		Debugger::Disasm m_disasm;
 
-		std::vector<std::string> m_disasm;
-		/*
-		// TODO: make m_disasm empty
-			= {
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tMVI b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tMVI b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tMVI b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tMVI b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tMVI b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tMVI b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tMVI b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tMVI b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tMVI b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-			"first_label:\t(minor_label1, minor_label2)",
-			"; Some comment",
-			"0xFFFF\tADD H\t1, 10, 99\t",
-			"@local_label:",
-			"0x0000\tMOV A C\t1, 10, 99\tSPR_H",
-			"0x0002\tORA E\t1, 1, 9\t",
-			"0x0003\tLXI SP STACK_ADDR=0xFFFF\t0, 0, 0\t",
-			"0x0004\tCALL draw_sprite=0x0150\t0, 0, 0\t",
-			"0x0005\tDB WEAPON_MIN=0x20\t0, 0, 9\t",
-			"0x0100\tPUSH B\t11, 0, 9\t",
-			"; bla-bla-bla",
-			"0x010A\tRET\t1, 0, 0\t",
-			"func_start:\t(some_label)",
-			"; comment 1"
-			"0x1456\tSHLD HERO_POS=0x3241\t1, 10, 99\t",
-			"@loop:\t(func_draw_something2 func_draw_something3)",
-			"0xFE0D\tLAST b SOME_CONST=0x99\t1, 10, 99\tOTHER_SPR_H",
-		};
-		*/
 		void DrawDebugControls();
 		void DrawSearch();
-		void DrawCode();
 		void DrawDisassembly();
+		bool IsDisasmTableOutOfWindow();
 
 	public:
 
 		DisasmWindow(Hardware& _hardware, ImFont* fontComment, const float const* _fontSizeP, const float const* _dpiScaleP);
 		void Update();
-		void UpdateDisasm();
+		void UpdateDisasm(const uint32_t _addr, const size_t _beforeAddrLines = DISASM_LINES_PRIOR);
 	};
 
 };

@@ -6,6 +6,7 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <format>
 
 #include "I8080.h"
 #include "Memory.h"
@@ -64,7 +65,47 @@ namespace dev
 			bool m_breakL;
 			bool m_breakH;
 		};
+
 		using Watchpoints = std::vector<Watchpoint>;
+
+		struct DisasmLine 
+		{
+			enum class Type {
+				COMMENT,
+				LABELS,
+				CODE
+			};
+
+			Type type;
+			uint16_t addr;
+			std::string addrS;
+			std::string str; // labels, comments, code
+			std::string consts; // labels that are assiciated with arguments of an operation
+			std::string stats;
+			uint64_t runs;
+			uint64_t reads;
+			uint64_t writes;
+
+			DisasmLine(Type _type, uint16_t _addr, std::string _str, uint64_t _runs = UINT64_MAX, uint64_t _reads = UINT64_MAX, uint64_t _writes = UINT64_MAX, std::string _consts = "")
+				: type(_type), addr(_addr), str(_str), runs(_runs), reads(_reads), writes(_writes), consts(_consts)
+			{
+				if (type == Type::CODE) {
+					addrS = std::format("0x{:04X}", _addr);
+				}
+				if (runs != UINT64_MAX)
+				{
+					std::string runsS = std::to_string(runs);
+					std::string readsS = std::to_string(reads);
+					std::string writesS = std::to_string(writes);
+					stats = runsS + "," + readsS + "," + writesS;
+				}
+			};
+			DisasmLine()
+				: type(Type::CODE), addr(0), str(), stats(), runs(), reads(), writes(), consts()
+			{};
+		};
+		using Disasm = std::vector<DisasmLine>;
+
 		static const constexpr size_t TRACE_LOG_SIZE = 100000;
 
 		Debugger(I8080& _cpu, Memory& _memory);
@@ -73,7 +114,7 @@ namespace dev
 		void Read(const uint32_t _globalAddr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode);
 		void Write(const uint32_t _globalAddr, Memory::AddrSpace _addrSpace, const uint8_t _val);
 
-		auto GetDisasm(const uint32_t _addr, const size_t _lines, const size_t _beforeAddrLines) const->std::vector<std::string>;
+		auto GetDisasm(const uint32_t _addr, const size_t _lines, const size_t _beforeAddrLines) const->Disasm;
 
 		void AddBreakpoint(const uint32_t _addr, const bool _active = true, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		void DelBreakpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
@@ -93,8 +134,8 @@ namespace dev
 		void ResetLabels();
 
 	private:
-		auto GetDisasmLine(const uint32_t _addr, const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string;
-		auto GetDisasmLineDb(const uint32_t _addr, const uint8_t _data) const ->const std::string;
+		auto GetDisasmLine(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string;
+		auto GetDisasmLineDb(const uint8_t _data) const ->const std::string;
 		auto GetCmdLen(const uint8_t _addr) const -> const size_t;
 		auto GetAddr(const uint32_t _endAddr, const size_t _beforeAddrLines) const->size_t;
 		auto WatchpointsFind(const uint32_t _globalAddr) -> Watchpoints::iterator;

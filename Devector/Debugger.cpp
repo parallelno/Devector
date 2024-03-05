@@ -1,5 +1,4 @@
 #include "Debugger.h"
-#include <format>
 #include <string>
 #include <iomanip>
 #include <sstream>
@@ -203,17 +202,17 @@ inline uint8_t get_opcode_type(const uint8_t _opcode)
 #define OPCODE_PCHL 0xE9
 
 // disassembles a data byte
-auto dev::Debugger::GetDisasmLineDb(const uint32_t _addr, const uint8_t _data) const
+auto dev::Debugger::GetDisasmLineDb(const uint8_t _data) const
 ->const std::string
 {
-	return std::format("0x{:04X}\tDB 0x{:02X}\t", _addr, _data);
+	return std::format("DB 0x{:02X}", _data);
 }
 
 // disassembles an instruction
-auto dev::Debugger::GetDisasmLine(const uint32_t _addr, const uint8_t _opcode, const uint8_t _dataL, const uint8_t _dataH) const
+auto dev::Debugger::GetDisasmLine(const uint8_t _opcode, const uint8_t _dataL, const uint8_t _dataH) const
 ->const std::string
 {
-	return std::format("0x{:04X}\t{}\t", _addr, GetMnemonic(_opcode, _dataL, _dataH));
+	return GetMnemonic(_opcode, _dataL, _dataH);
 }
 
 // calculates the start address for a range of instructions before a given address
@@ -255,9 +254,9 @@ size_t dev::Debugger::GetAddr(const uint32_t _endAddr, const size_t _beforeAddrL
 }
 
 auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const size_t _beforeAddrLines) const
-->std::vector<std::string>
+->Disasm
 {
-	std::vector<std::string> out;
+	Disasm out;
 	if (_lines == 0) return out;
 
 
@@ -279,24 +278,16 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 
 			for (int i = 0; i < _beforeAddrLines; i++)
 			{
-				std::string lineS;
-
-				auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-				lineS += GetDisasmLineDb(addr, db);
-
-				size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
-				std::string runsS = std::to_string(m_memRuns[globalAddr]);
-				std::string readsS = std::to_string(m_memReads[globalAddr]);
-				std::string writesS = std::to_string(m_memWrites[globalAddr]);
-				std::string runsReadsWritesS = runsS + "," + readsS + "," + writesS + "\t";
-				lineS += runsReadsWritesS;
-
 				if (m_labels.contains(addr & 0xffff))
 				{
-					out.push_back(GetDisasmLabels(addr & 0xffff));
+					DisasmLine disasmLine(DisasmLine::Type::LABELS, (uint16_t)addr, GetDisasmLabels((uint16_t)addr));
+					out.emplace_back(std::move(disasmLine));
 				}
+				size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
+				auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
 
-				out.push_back(lineS);
+				DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr]);
+				out.emplace_back(lineS);
 
 				addr = (addr + 1) & 0xffff;
 			}
@@ -305,35 +296,31 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 
 	for (int i = 0; i < lines; i++)
 	{
-		std::string lineS;
-
 		auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
 		auto dataL = m_memory.GetByte(addr + 1, Memory::AddrSpace::RAM);
 		auto dataH = m_memory.GetByte(addr + 2, Memory::AddrSpace::RAM);
-		lineS += GetDisasmLine(addr, opcode, dataL, dataH);
-
-		size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
-		std::string runsS = std::to_string(m_memRuns[globalAddr]);
-		std::string readsS = std::to_string(m_memReads[globalAddr]);
-		std::string writesS = std::to_string(m_memWrites[globalAddr]);
-		std::string runsReadsWritesS = runsS + "," + readsS + "," + writesS + "\t";
-		lineS += runsReadsWritesS;
 
 		if (m_labels.contains(addr))
 		{
-			out.push_back(GetDisasmLabels((uint16_t)addr));
+			DisasmLine disasmLine(DisasmLine::Type::LABELS, addr, GetDisasmLabels((uint16_t)addr));
+			out.emplace_back(std::move(disasmLine));
 		}
 
+		std::string consts;
 		if (GetCmdLen(opcode) == 2)
 		{
-			lineS += LabelsToStr(dataL, LABEL_TYPE_CONST);
+			consts = LabelsToStr(dataL, LABEL_TYPE_CONST);
 		}
 		else if (GetCmdLen(opcode) == 3)
 		{
-			lineS += LabelsToStr(dataH << 8 | dataL, LABEL_TYPE_ALL);
+			consts = LabelsToStr(dataH << 8 | dataL, LABEL_TYPE_ALL);
 		}
 
-		out.push_back(lineS);
+		size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
+		auto disasmS = GetDisasmLine(opcode, dataL, dataH);
+
+		DisasmLine lineS(DisasmLine::Type::CODE, addr, disasmS, m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], consts);
+		out.emplace_back(lineS);
 
 		addr = (addr + GetCmdLen(opcode)) & 0xffff;
 	}

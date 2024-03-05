@@ -172,7 +172,7 @@ bool dev::TextAligned(const char* _text, const ImVec2& _aligment)
 }
 
 // a little bullet aligned to the typical tree node.
-void dev::DrawCircle(const ImU32 _color)
+void dev::DrawCircle(const ImU32 _color, const float _scale, const float _dpiScale)
 {
 	ImGuiWindow* window = ImGui::GetCurrentWindow();
 	if (window->SkipItems)
@@ -181,7 +181,7 @@ void dev::DrawCircle(const ImU32 _color)
 	ImGuiContext& g = *GImGui;
 	const ImGuiStyle& style = g.Style;
 
-	const ImVec2 total_size = ImVec2(g.FontSize * 0.5f, g.FontSize);  // Empty text doesn't add padding
+	const ImVec2 total_size = ImVec2(g.FontSize * 0.70f, g.FontSize);  // Empty text doesn't add padding
 	ImVec2 pos = window->DC.CursorPos;
 	pos.y += window->DC.CurrLineTextBaseOffset;
 	ImGui::ItemSize(total_size, 0.0f);
@@ -191,7 +191,8 @@ void dev::DrawCircle(const ImU32 _color)
 		return;
 
 	// Render
-	ImGui::RenderBullet(window->DrawList, bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f), _color);
+	auto circlePos = bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
+	window->DrawList->AddCircleFilled(circlePos, window->DrawList->_Data->FontSize * _scale * _dpiScale, _color, 8);
 }
 
 void dev::DrawArrow(const ImU32 _color, const ImGuiDir _dir, const bool _itemHasSize)

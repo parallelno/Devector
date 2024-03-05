@@ -21,7 +21,7 @@ void dev::DisasmWindow::Update()
 
     DrawDebugControls();
 	DrawSearch();
-	DrawCode();
+    DrawDisassembly();
 
 	ImGui::End();
 }
@@ -31,7 +31,7 @@ void dev::DisasmWindow::DrawDebugControls()
     if (ImGui::Button("Step"))
     {
         m_hardware.ExecuteInstruction();
-        UpdateDisasm();
+        UpdateDisasm(m_hardware.m_cpu.m_pc);
     }
     ImGui::SameLine();
     if (ImGui::Button("Step 0x100"))
@@ -41,20 +41,20 @@ void dev::DisasmWindow::DrawDebugControls()
             m_hardware.ExecuteInstruction();
         }
 
-        UpdateDisasm();
+        UpdateDisasm(m_hardware.m_cpu.m_pc);
     }
     ImGui::SameLine();
     if (ImGui::Button("Step Frame"))
     {
         m_hardware.ExecuteFrame();
-        UpdateDisasm();
+        UpdateDisasm(m_hardware.m_cpu.m_pc);
     }
 }
 
-void dev::DisasmWindow::UpdateDisasm()
+void dev::DisasmWindow::UpdateDisasm(const uint32_t _addr, const size_t _beforeAddrLines)
 {
-    auto addr = m_hardware.m_cpu.m_pc;
-    m_disasm = m_hardware.m_debugger.GetDisasm(addr, 1000, 6);
+    // TODO: request meaningful amount disasmm lines, not a 100!
+    m_disasm = m_hardware.m_debugger.GetDisasm(_addr, 80, _beforeAddrLines);
 }
 
 void dev::DisasmWindow::DrawSearch()
@@ -68,36 +68,30 @@ void dev::DisasmWindow::DrawSearch()
 }
 
 // Make the UI compact because there are so many fields
-static void PushStyleCompact()
+void PushStyleCompact()
 {
     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 3 });
 }
-static void PopStyleCompact()
+void PopStyleCompact()
 {
     ImGui::PopStyleVar(2);
 }
 
-static auto isDisasmTableOutOfWindow()
+bool dev::DisasmWindow::IsDisasmTableOutOfWindow()
 {
     ImVec2 cursorPos = ImGui::GetCursorPos();
-    float remainingSpace = ImGui::GetWindowSize().y - cursorPos.y - 40.0f;
+    float remainingSpace = ImGui::GetWindowSize().y - cursorPos.y - *m_fontSizeP * 1.0f;
 
     return remainingSpace < 0;
-}
-
-static auto isLastLine()
-{
-    ImVec2 cursorPos = ImGui::GetCursorPos();
-    float remainingSpace = ImGui::GetWindowSize().y - cursorPos.y - 40.0f - ImGui::GetTextLineHeightWithSpacing() - 1.0f;
-
-    return remainingSpace <= 0;
 }
 
 void dev::DisasmWindow::DrawDisassembly()
 {
     if (m_disasm.empty()) return;
 
+    //m_reqDisasmUpdatem = ReqDisasmUpdate::NONE;
     static int item_current_idx = 0;
+    int scrollDirection = 0;
 
     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
@@ -122,20 +116,27 @@ void dev::DisasmWindow::DrawDisassembly()
         ImGui::TableSetupColumn("stats", ImGuiTableColumnFlags_WidthFixed, STATS_W);
         ImGui::TableSetupColumn("consts");
 
+        /*
         ImGuiListClipper clipper;
         clipper.Begin((int)m_disasm.size());
         while (clipper.Step())
             for (int row_idx = clipper.DisplayStart; row_idx < clipper.DisplayEnd; row_idx++)
+        */
+
+        for (int line_idx = 0; line_idx < 200; line_idx++)
             {
-                //if (isDisasmTableOutOfWindow()) break;
+                // TODO: fix it. replace with fixed amount of lines and without a need to check the end of the window
+                if (IsDisasmTableOutOfWindow()) break;
+
                 ImGui::TableNextRow();
 
-                int line_idx = row_idx;//% DISASM_LINES_VISIBLE_MAX;
-                // Parse the line into tokens
-                auto line_splited = dev::Split(m_disasm[line_idx], '\t');
+                if (line_idx >= m_disasm.size()) break;
 
-                bool isComment = line_splited[0][0] == ';';
-                bool isCode = line_splited[0][0] == '0';
+                auto& line = m_disasm[line_idx];
+
+                bool isComment = line.type == Debugger::DisasmLine::Type::COMMENT;
+                bool isCode = line.type == Debugger::DisasmLine::Type::CODE;
+                int addr = line.addr;
 
                 // the breakpoints and the execution cursor column
                 char id_s[32];
@@ -151,26 +152,21 @@ void dev::DisasmWindow::DrawDisassembly()
 
                 // draw breakpoints
                 ImGui::SameLine();
-                dev::DrawCircle(DISASM_TBL_COLOR_BREAKPOINT);
+                dev::DrawCircle(DISASM_TBL_COLOR_BREAKPOINT, DISASM_TBL_BREAKPOINT_SIZE, *m_dpiScaleP);
                 // draw program counter icon
-                if (isCode)
+                if (isCode && addr == m_hardware.m_cpu.m_pc)
                 { 
-                    int addr = std::stoi(line_splited[0], nullptr, 16);
-                    if (addr == m_hardware.m_cpu.m_pc)
-                    {
-                        ImGui::SameLine();
-                        dev::DrawArrow(DISASM_TBL_COLOR_PC);
-                    }
+                    ImGui::SameLine();
+                    dev::DrawArrow(DISASM_TBL_COLOR_PC);
                 }
-
 
 
                 // the addr column
                 ImGui::TableNextColumn();
-                ColumnClippingEnable(*m_dpiScaleP);
+                ColumnClippingEnable(*m_dpiScaleP); // enable clipping
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
                 if (isCode) { 
-                    ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, line_splited[0].c_str());
+                    ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, line.addrS.c_str());
                 }
                 ColumnClippingDisable();
 
@@ -184,7 +180,7 @@ void dev::DisasmWindow::DrawDisassembly()
 
                     // the code column
                     ImGui::TableNextColumn();
-                    ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, line_splited[0].c_str());
+                    ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, line.str.c_str());
 
                     // Revert to the default font
                     if (m_fontComment) {
@@ -195,6 +191,7 @@ void dev::DisasmWindow::DrawDisassembly()
                 // draw labels
                 else if (!isCode)
                 {
+                    auto line_splited = dev::Split(line.str, '\t');
                     // the code column
                     ImGui::TableNextColumn();
                     int i = 0;
@@ -225,11 +222,8 @@ void dev::DisasmWindow::DrawDisassembly()
                 else
                 {
                     ImGui::TableNextColumn();
-
-                    // enable clipping
-                    ColumnClippingEnable(*m_dpiScaleP);
-
-                    auto cmd_splitted = dev::Split(line_splited[1], ' ');
+                    ColumnClippingEnable(*m_dpiScaleP); // enable clipping
+                    auto cmd_splitted = dev::Split(line.str, ' ');
                     int i = 0;
                     for (const auto& cmd_parts : cmd_splitted)
                     {
@@ -279,30 +273,43 @@ void dev::DisasmWindow::DrawDisassembly()
 
                     // the stats column
                     ImGui::TableNextColumn();
-                    ColumnClippingEnable(*m_dpiScaleP);
+                    ColumnClippingEnable(*m_dpiScaleP); // enable clipping
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DISASM_TBL_BG_COLOR_ADDR));
-                    auto* statsColor = (line_splited[2] == "0,0,0") ? &DISASM_TBL_COLOR_ZERO_STATS  : &DISASM_TBL_COLOR_ADDR;
-                    ImGui::TextColored(*statsColor, line_splited[2].c_str());
+                    auto* statsColor = (line.runs == 0 && line.reads == 0 && line.writes == 0) ? &DISASM_TBL_COLOR_ZERO_STATS : &DISASM_TBL_COLOR_ADDR;
+                    ImGui::TextColored(*statsColor, line.stats.c_str());
                     ColumnClippingDisable();
 
                     // the consts column
                     ImGui::TableNextColumn();
-                    if (line_splited.size() >= 4)
+                    if (isCode)
                     {
-                        ImGui::TextColored(DISASM_TBL_COLOR_ADDR, line_splited[3].c_str());
+                        ImGui::TextColored(DISASM_TBL_COLOR_ADDR, line.consts.c_str());
                     }
 
                 }
             }
        
         ImGui::EndTable();
-
         PopStyleCompact();
     }
     ImGui::PopStyleVar(2);
-}
 
-void dev::DisasmWindow::DrawCode() 
-{
-    DrawDisassembly();
+    // check the keys
+    if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
+    {
+        if (m_disasm.size() >= 2) UpdateDisasm(m_disasm[0].addr, 1);
+    }
+    else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
+    {
+        if (m_disasm.size() >= 2) UpdateDisasm(m_disasm[1].addr, 0);
+    }
+
+    if (ImGui::GetIO().MouseWheel > 0.0f)
+    {
+        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, 3);
+    }
+    else if (ImGui::GetIO().MouseWheel < 0.0f)
+    {
+        if (m_disasm.size() >= 4) UpdateDisasm(m_disasm[3].addr, 0);
+    }
 }

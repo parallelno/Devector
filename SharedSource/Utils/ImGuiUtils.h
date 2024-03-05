@@ -61,7 +61,7 @@ namespace dev
 	}
 	void DrawHelpMarker(const char* _text);
 	void DrawPopup(const char* _title, const char* _text);
-	void DrawCircle(const ImU32 _color);
+	void DrawCircle(const ImU32 _color, const float _scale = 0.4f, const float _dpiScale = 1.0f);
 	void DrawArrow(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, const bool _itemHasSize = true);
 
 	bool TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
