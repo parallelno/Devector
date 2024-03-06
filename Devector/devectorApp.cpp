@@ -29,6 +29,8 @@ void dev::DevectorApp::WindowsInit()
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, m_fontItalic, &m_fontSize, &m_dpiScale);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(m_hardwareP->m_display, &m_fontSize, &m_dpiScale);
+	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
+	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -129,6 +131,8 @@ void dev::DevectorApp::Update()
 	m_hardwareStatsWindowP->Update();
 	m_disasmWindowP->Update();
 	m_displayWindowP->Update();
+	m_breakpointsWindowP->Update();
+	m_watchpointsWindowP->Update();
 }
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)

@@ -8,6 +8,8 @@
 #include "UI/HardwareStatsWindow.h"
 #include "UI/DisasmWindow.h"
 #include "UI/DisplayWindow.h"
+#include "UI/BreakpointsWindow.h"
+#include "UI/WatchpointsWindow.h"
 #include "Hardware.h"
 
 #include <thread>
@@ -31,6 +33,8 @@ namespace dev
 		std::unique_ptr <dev::HardwareStatsWindow> m_hardwareStatsWindowP;
 		std::unique_ptr <dev::DisasmWindow> m_disasmWindowP;
 		std::unique_ptr <dev::DisplayWindow>m_displayWindowP;
+		std::unique_ptr <dev::BreakpointsWindow>m_breakpointsWindowP;
+		std::unique_ptr <dev::WatchpointsWindow>m_watchpointsWindowP;
 
 		bool m_hardwareStatsWindowShow = true;
 		bool m_disasmWindowShow = true;

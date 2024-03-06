@@ -66,6 +66,12 @@
     <ClCompile Include="..\SharedSource\UI\BaseWindow.cpp">
       <Filter>SharedSource\UI</Filter>
     </ClCompile>
+    <ClCompile Include="..\SharedSource\UI\BreakpointsWindow.cpp">
+      <Filter>SharedSource\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\UI\WatchpointsWindow.cpp">
+      <Filter>SharedSource\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -139,6 +145,12 @@
       <Filter>SharedSource\UI</Filter>
     </ClInclude>
     <ClInclude Include="..\SharedSource\UI\BaseWindow.h">
+      <Filter>SharedSource\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\UI\BreakpointsWindow.h">
+      <Filter>SharedSource\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\UI\WatchpointsWindow.h">
       <Filter>SharedSource\UI</Filter>
     </ClInclude>
   </ItemGroup>

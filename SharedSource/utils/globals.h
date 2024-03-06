@@ -12,15 +12,11 @@
 
 namespace dev
 {
-#define DB_FILENAME_POSTFIX ".db"
 	using ErrCode = int;
 
 	constexpr static ErrCode NO_ERRORS = 0;
 	constexpr static ErrCode ERROR_UNSPECIFIED = 1;
 	constexpr static ErrCode ERROR_NO_FILES = 2;
-
-	using Paths = std::map<std::string, std::string>;
-	using Sizes = std::vector<size_t>;
 
 } // namespace dev
 

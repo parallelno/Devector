@@ -17,27 +17,24 @@ namespace dev
 	static constexpr int DEFAULT_WINDOW_H = 800;
 
 	// disasm background colors
-	const ImU32 DISASM_TBL_BG_COLOR_BRK = dev::IM_U32(0x353636FF);
-	const ImU32 DISASM_TBL_BG_COLOR_ADDR = dev::IM_U32(0x353636FF);
-	//const ImU32 DISASM_TBL_BG_COLOR_LABELS = dev::IM_U32(0x282828FF);
-	//const ImU32 DISASM_TBL_BG_COLOR_COMMENT = dev::IM_U32(0x383838FF);
+	constexpr ImU32 DISASM_TBL_BG_COLOR_BRK = dev::IM_U32(0x353636FF);
+	constexpr ImU32 DISASM_TBL_BG_COLOR_ADDR = dev::IM_U32(0x353636FF);
+	//constexpr ImU32 DISASM_TBL_BG_COLOR_LABELS = dev::IM_U32(0x282828FF);
+	//constexpr ImU32 DISASM_TBL_BG_COLOR_COMMENT = dev::IM_U32(0x383838FF);
 
 	// disasm text colors
-	const ImVec4 DISASM_TBL_COLOR_COMMENT = dev::IM_VEC4(0x909090FF);
-	const ImVec4 DISASM_TBL_COLOR_LABEL_GLOBAL = dev::IM_VEC4(0xD0C443FF);
-	const ImVec4 DISASM_TBL_COLOR_LABEL_LOCAL = dev::IM_VEC4(0xA8742FFF);
-	const ImVec4 DISASM_TBL_COLOR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
-	const ImVec4 DISASM_TBL_COLOR_ADDR = dev::IM_VEC4(0x909090FF);
-	const ImVec4 DISASM_TBL_COLOR_ZERO_STATS = dev::IM_VEC4(0x606060FF);
-	const ImVec4 DISASM_TBL_COLOR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
-	const ImVec4 DISASM_TBL_COLOR_NUMBER = dev::IM_VEC4(0xD4D4D4FF);
-	const ImVec4 DISASM_TBL_COLOR_REG = dev::IM_VEC4(0x1ECF44FF);
-	const ImVec4 DISASM_TBL_COLOR_CONST = dev::IM_VEC4(0x8BE0E9FF);
+	constexpr ImVec4 DISASM_TBL_COLOR_COMMENT = dev::IM_VEC4(0x909090FF);
+	constexpr ImVec4 DISASM_TBL_COLOR_LABEL_GLOBAL = dev::IM_VEC4(0xD0C443FF);
+	constexpr ImVec4 DISASM_TBL_COLOR_LABEL_LOCAL = dev::IM_VEC4(0xA8742FFF);
+	constexpr ImVec4 DISASM_TBL_COLOR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
+	constexpr ImVec4 DISASM_TBL_COLOR_ADDR = dev::IM_VEC4(0x909090FF);
+	constexpr ImVec4 DISASM_TBL_COLOR_ZERO_STATS = dev::IM_VEC4(0x606060FF);
+	constexpr ImVec4 DISASM_TBL_COLOR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
+	constexpr ImVec4 DISASM_TBL_COLOR_NUMBER = dev::IM_VEC4(0xD4D4D4FF);
+	constexpr ImVec4 DISASM_TBL_COLOR_REG = dev::IM_VEC4(0x1ECF44FF);
+	constexpr ImVec4 DISASM_TBL_COLOR_CONST = dev::IM_VEC4(0x8BE0E9FF);
 	// disasm icons colors
-	const ImU32 DISASM_TBL_COLOR_BREAKPOINT = dev::IM_U32(0xFF2828C0);
-	const ImU32 DISASM_TBL_COLOR_PC = dev::IM_U32(0x88F038FF);
-
-	static constexpr float DISASM_TBL_BREAKPOINT_SIZE = 0.35f;
+	constexpr ImU32 DISASM_TBL_COLOR_PC = dev::IM_U32(0x88F038FF);
 
 	class DisasmWindow : public BaseWindow
 	{	
@@ -48,7 +45,7 @@ namespace dev
 		static constexpr float COMMAND_W = 120.0f;
 		static constexpr float STATS_W = 100.0f;
 
-		static constexpr int DISASM_LINES_PRIOR = 6;
+		static constexpr int DISASM_INSTRUCTION_OFFSET = -6;
 		
 		Hardware& m_hardware;
 		ImFont* m_fontComment = nullptr;
@@ -64,7 +61,7 @@ namespace dev
 
 		DisasmWindow(Hardware& _hardware, ImFont* fontComment, const float const* _fontSizeP, const float const* _dpiScaleP);
 		void Update();
-		void UpdateDisasm(const uint32_t _addr, const size_t _beforeAddrLines = DISASM_LINES_PRIOR);
+		void UpdateDisasm(const uint32_t _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET);
 	};
 
 };

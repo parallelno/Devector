@@ -113,7 +113,7 @@ static const char* mnemonics[0x100] =
 */
 
 // define the maximum number of bytes in a command
-#define CMD_BYTES_MAX 3
+#define CMD_LEN_MAX 3
 
 // array containing lengths of commands, indexed by opcode
 static const uint8_t cmd_lens[0x100] =
@@ -137,7 +137,7 @@ static const uint8_t cmd_lens[0x100] =
 };
 
 // returns the instruction length in bytes
-auto dev::Debugger::GetCmdLen(const uint8_t _addr) const -> const size_t
+auto dev::Debugger::GetCmdLen(const uint8_t _addr) const -> const uint8_t
 {
 	return cmd_lens[_addr];
 }
@@ -215,82 +215,104 @@ auto dev::Debugger::GetDisasmLine(const uint8_t _opcode, const uint8_t _dataL, c
 	return GetMnemonic(_opcode, _dataL, _dataH);
 }
 
-// calculates the start address for a range of instructions before a given address
-size_t dev::Debugger::GetAddr(const uint32_t _endAddr, const size_t _beforeAddrLines) const
+// shifts the addr by _instructionsOffset instruction counter
+// if _instructionsOffset=3, it returns the addr of a third instruction after _addr, and vice versa
+#define MAX_ATTEMPTS 41 // max attemts to find an addr of an instruction before _addr 
+uint16_t dev::Debugger::GetAddr(const uint16_t _addr, const int _instructionOffset) const
 {
-	if (_beforeAddrLines == 0) return _endAddr;
+	uint16_t instructions = _instructionOffset > 0 ? _instructionOffset : -_instructionOffset;
 
-	size_t start_addr = (_endAddr - _beforeAddrLines * CMD_BYTES_MAX) & 0xffff;
-#define MAX_ATTEMPTS 41
-
-	int lines = 0;
-	int addr_diff_max = (int)_beforeAddrLines * CMD_BYTES_MAX + 1;
-	size_t addr = start_addr & 0xffff;
-
-	for (int attempt = MAX_ATTEMPTS; attempt > 0 && lines != _beforeAddrLines; attempt--)
+	if (_instructionOffset > 0)
 	{
-		addr = start_addr & 0xffff;
-		int addr_diff = addr_diff_max;
-		lines = 0;
-
-		while (addr_diff > 0 && addr != _endAddr)
+		uint16_t addr = _addr;
+		for (int i = 0; i < instructions; i++)
 		{
 			auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-			auto cmd_len = GetCmdLen(opcode);
-			addr = (addr + cmd_len) & 0xffff;
-			addr_diff -= cmd_len;
-			lines++;
+			auto cmdLen = GetCmdLen(opcode);
+			addr = addr + cmdLen;
 		}
-
-		if (addr == _endAddr && lines == _beforeAddrLines)
-		{
-			return start_addr;
-		}
-
-		start_addr++;
-		addr_diff_max--;
+		return addr;
 	}
-	return _endAddr;
+	else if (_instructionOffset < 0)
+	{
+		std::vector<uint16_t> possibleDisasmStartAddrs;
+
+		int disasmStartAddr = _addr - instructions * CMD_LEN_MAX;
+
+		for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++)
+		{
+			int addr = disasmStartAddr;
+			int currentInstruction = 0;
+
+			while (addr < _addr && currentInstruction < instructions)
+			{
+				auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
+				auto cmdLen = GetCmdLen(opcode);
+				addr = addr + cmdLen;
+				currentInstruction++;
+			}
+
+			// if we reached the _addr address with counted instructions equals instructions
+			if (addr == _addr && currentInstruction == instructions)
+			{
+				possibleDisasmStartAddrs.push_back(disasmStartAddr);
+			}
+			disasmStartAddr++;
+
+			// return _addr if it fails to find a seaquence legal instructons
+			if (disasmStartAddr + instructions > _addr)
+			{
+				break;
+			}
+		}
+		if (possibleDisasmStartAddrs.empty()) return _addr;
+
+		// get the best result basing on the execution counter
+		for (const auto& possibleDisasmStartAddr : possibleDisasmStartAddrs)
+		{
+			if (m_memRuns[possibleDisasmStartAddr] > 0) return possibleDisasmStartAddr;
+		}
+		return possibleDisasmStartAddrs[0];
+	}
+
+	return _addr;
 }
 
-auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const size_t _beforeAddrLines) const
+// _instructionsOffset defines the start address of the disasm. 
+// -5 means the start address is 5 instructions prior the _addr, and vise versa.
+auto dev::Debugger::GetDisasm(const uint16_t _addr, const size_t _lines, const int _instructionOffset) const
 ->Disasm
 {
 	Disasm out;
 	if (_lines == 0) return out;
 
+	auto instructionsOffset = _instructionOffset > 0 ? _instructionOffset : -_instructionOffset;
 
-	uint32_t addr = _addr;
-	auto pc = m_cpu.m_pc;
-	int lines = _lines;
+	int lines = (int)_lines;
 
-	if (_beforeAddrLines > 0)
+	// calculate a new address that precedes the specified 'addr' by the instructionsOffset
+	uint16_t addr = GetAddr((uint16_t)_addr, _instructionOffset);
+
+	if (_instructionOffset < 0 && addr == _addr)
 	{
-		// calculate a new address that precedes the specified 'addr' by the before_addr_lines number of command lines.
-		addr = GetAddr(_addr & 0xffff, _beforeAddrLines) & 0xffff;
+		// it failed to find an new addr, we assume a data blob is ahead
+		addr -= instructionsOffset;
+		lines -= instructionsOffset;
 
-		// If it fails to find an new addr, we assume a data blob is ahead
-		if (addr == _addr)
+		for (int i = 0; i < instructionsOffset; i++)
 		{
-			addr = (addr - _beforeAddrLines) & 0xffff;
-
-			lines = _lines - _beforeAddrLines;
-
-			for (int i = 0; i < _beforeAddrLines; i++)
+			if (m_labels.contains(addr))
 			{
-				if (m_labels.contains(addr & 0xffff))
-				{
-					DisasmLine disasmLine(DisasmLine::Type::LABELS, (uint16_t)addr, GetDisasmLabels((uint16_t)addr));
-					out.emplace_back(std::move(disasmLine));
-				}
-				size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
-				auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-
-				DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr]);
-				out.emplace_back(lineS);
-
-				addr = (addr + 1) & 0xffff;
+				DisasmLine disasmLine(DisasmLine::Type::LABELS, addr, GetDisasmLabels(addr));
+				out.emplace_back(std::move(disasmLine));
 			}
+			size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
+			auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
+
+			DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr]);
+			out.emplace_back(lineS);
+
+			addr++;
 		}
 	}
 
@@ -302,7 +324,7 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 
 		if (m_labels.contains(addr))
 		{
-			DisasmLine disasmLine(DisasmLine::Type::LABELS, addr, GetDisasmLabels((uint16_t)addr));
+			DisasmLine disasmLine(DisasmLine::Type::LABELS, addr, GetDisasmLabels(addr));
 			out.emplace_back(std::move(disasmLine));
 		}
 
@@ -322,7 +344,7 @@ auto dev::Debugger::GetDisasm(const uint32_t _addr, const size_t _lines, const s
 		DisasmLine lineS(DisasmLine::Type::CODE, addr, disasmS, m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], consts);
 		out.emplace_back(lineS);
 
-		addr = (addr + GetCmdLen(opcode)) & 0xffff;
+		addr = addr + GetCmdLen(opcode);
 	}
 	return out;
 }
@@ -531,7 +553,7 @@ auto dev::Debugger::TraceLogNextLine(const int _idxOffset, const bool _reverse, 
 			}
 			else
 			{
-				return idx - m_traceLogIdx;
+				return (int)(idx - m_traceLogIdx);
 			}
 		}
 	}
@@ -551,11 +573,11 @@ auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _
 	{
 		if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
 		{
-			return idx;
+			return (int)idx;
 		}
 	}
 
-	return _idx; // fails to reach the nearest line
+	return (int)_idx; // fails to reach the nearest line
 }
 
 auto dev::Debugger::TraceLog::ToStr() const

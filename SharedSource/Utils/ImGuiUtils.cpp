@@ -171,8 +171,7 @@ bool dev::TextAligned(const char* _text, const ImVec2& _aligment)
 	ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, _text, NULL, &label_size, _aligment, &bb);
 }
 
-// a little bullet aligned to the typical tree node.
-void dev::DrawCircle(const ImU32 _color, const float _scale, const float _dpiScale)
+void dev::DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir, const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
 {
 	ImGuiWindow* window = ImGui::GetCurrentWindow();
 	if (window->SkipItems)
@@ -181,38 +180,52 @@ void dev::DrawCircle(const ImU32 _color, const float _scale, const float _dpiSca
 	ImGuiContext& g = *GImGui;
 	const ImGuiStyle& style = g.Style;
 
-	const ImVec2 total_size = ImVec2(g.FontSize * 0.70f, g.FontSize);  // Empty text doesn't add padding
+	const auto totalSize = ImVec2{g.FontSize, g.FontSize};
 	ImVec2 pos = window->DC.CursorPos;
+	pos.x += _posXOffset * g.FontSize;
 	pos.y += window->DC.CurrLineTextBaseOffset;
-	ImGui::ItemSize(total_size, 0.0f);
+	ImGui::ItemSize(_itemHasSize ? totalSize : ImVec2{}, 0.0f);
+	const ImRect bb(pos, pos + totalSize);
 
-	const ImRect bb(pos, pos + total_size);
 	if (!ImGui::ItemAdd(bb, 0))
 		return;
-
+	
 	// Render
-	auto circlePos = bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
-	window->DrawList->AddCircleFilled(circlePos, window->DrawList->_Data->FontSize * _scale * _dpiScale, _color, 8);
+	auto drawPos = bb.Min + ImVec2(style.FramePadding.x, 0.0f);
+	ImGui::RenderArrow(window->DrawList, drawPos, _color, _dir);
 }
 
-void dev::DrawArrow(const ImU32 _color, const ImGuiDir _dir, const bool _itemHasSize)
+void dev::DrawBreakpoint(const bool _isSet, const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
 {
-	ImGuiWindow* window = ImGui::GetCurrentWindow();
-	if (window->SkipItems)
-		return;
+    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    if (window->SkipItems)
+        return;
 
-	ImGuiContext& g = *GImGui;
-	const ImGuiStyle& style = g.Style;
+	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT = dev::IM_U32(0xFF2828C0);
+	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT_HOVER = dev::IM_U32(0xFF5538FF);
+	static constexpr float DISASM_TBL_BREAKPOINT_SIZE = 0.35f;
+	static constexpr float DISASM_TBL_BREAKPOINT_SIZE_HOVERED = 0.40f;
 
-	const ImVec2 total_size = ImVec2(g.FontSize *.1f, g.FontSize);  // Empty text doesn't add padding
+	ImU32 color = _isSet ? DISASM_TBL_COLOR_BREAKPOINT : DISASM_TBL_COLOR_BREAKPOINT_HOVER;
+	float scale = _isSet ? DISASM_TBL_BREAKPOINT_SIZE : DISASM_TBL_BREAKPOINT_SIZE_HOVERED;
+
+    ImGuiContext& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
+
+    const ImVec2 totalSize = ImVec2(g.FontSize, g.FontSize);
 	ImVec2 pos = window->DC.CursorPos;
-	pos.y += window->DC.CurrLineTextBaseOffset;
-	
-	if(_itemHasSize) ImGui::ItemSize(total_size, 0.0f);
+	pos.x += _posXOffset * g.FontSize;
+    pos.y += window->DC.CurrLineTextBaseOffset;
+    const ImRect bb(pos, pos + totalSize);
 
-	const ImRect bb(pos, pos + total_size);
-	if (!ImGui::ItemAdd(bb, 0))
-		return;
+    if (!_isSet && !ImGui::IsMouseHoveringRect(bb.Min, bb.Max)) return;
 
-	ImGui::RenderArrow(window->DrawList, bb.Min + ImVec2(style.FramePadding.x, 0.0f), _color, _dir);
+	ImGui::ItemSize(_itemHasSize ? totalSize : ImVec2{}, 0.0f);
+
+    if (!ImGui::ItemAdd(bb, 0))
+        return;
+
+    // Render
+    auto drawPos = bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
+    window->DrawList->AddCircleFilled(drawPos, g.FontSize * scale * _dpiScale, color, 8);
 }

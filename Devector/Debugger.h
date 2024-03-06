@@ -114,7 +114,7 @@ namespace dev
 		void Read(const uint32_t _globalAddr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode);
 		void Write(const uint32_t _globalAddr, Memory::AddrSpace _addrSpace, const uint8_t _val);
 
-		auto GetDisasm(const uint32_t _addr, const size_t _lines, const size_t _beforeAddrLines) const->Disasm;
+		auto GetDisasm(const uint16_t _addr, const size_t _lines, const int _instructionOffset) const->Disasm;
 
 		void AddBreakpoint(const uint32_t _addr, const bool _active = true, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		void DelBreakpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
@@ -136,8 +136,8 @@ namespace dev
 	private:
 		auto GetDisasmLine(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string;
 		auto GetDisasmLineDb(const uint8_t _data) const ->const std::string;
-		auto GetCmdLen(const uint8_t _addr) const -> const size_t;
-		auto GetAddr(const uint32_t _endAddr, const size_t _beforeAddrLines) const->size_t;
+		auto GetCmdLen(const uint8_t _addr) const -> const uint8_t;
+		auto GetAddr(const uint16_t _endAddr, const int _instructionOffset) const->uint16_t;
 		auto WatchpointsFind(const uint32_t _globalAddr) -> Watchpoints::iterator;
 		void WatchpointsErase(const uint32_t _globalAddr);
 

@@ -51,10 +51,10 @@ void dev::DisasmWindow::DrawDebugControls()
     }
 }
 
-void dev::DisasmWindow::UpdateDisasm(const uint32_t _addr, const size_t _beforeAddrLines)
+void dev::DisasmWindow::UpdateDisasm(const uint32_t _addr, const int _instructionsOffset)
 {
     // TODO: request meaningful amount disasmm lines, not a 100!
-    m_disasm = m_hardware.m_debugger.GetDisasm(_addr, 80, _beforeAddrLines);
+    m_disasm = m_hardware.m_debugger.GetDisasm(_addr, 80, _instructionsOffset);
 }
 
 void dev::DisasmWindow::DrawSearch()
@@ -139,26 +139,28 @@ void dev::DisasmWindow::DrawDisassembly()
                 int addr = line.addr;
 
                 // the breakpoints and the execution cursor column
-                char id_s[32];
-                sprintf_s(id_s, "##%04d", line_idx);
+                char disasmLineId_s[32];
+                sprintf_s(disasmLineId_s, "##disasmLineId%04d", line_idx);
 
                 ImGui::TableNextColumn();
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_BRK);
                 const bool is_selected = (item_current_idx == line_idx);
-                if (ImGui::Selectable(id_s, is_selected, ImGuiSelectableFlags_SpanAllColumns))
+                if (ImGui::Selectable(disasmLineId_s, is_selected, ImGuiSelectableFlags_SpanAllColumns))
                 {
                     item_current_idx = line_idx;
                 }
 
                 // draw breakpoints
                 ImGui::SameLine();
-                dev::DrawCircle(DISASM_TBL_COLOR_BREAKPOINT, DISASM_TBL_BREAKPOINT_SIZE, *m_dpiScaleP);
+                dev::DrawBreakpoint(true, *m_dpiScaleP);
+
                 // draw program counter icon
                 if (isCode && addr == m_hardware.m_cpu.m_pc)
-                { 
+                {
                     ImGui::SameLine();
-                    dev::DrawArrow(DISASM_TBL_COLOR_PC);
+                    dev::DrawProgramCounter(DISASM_TBL_COLOR_PC, ImGuiDir_Right, *m_dpiScaleP);
                 }
+
 
 
                 // the addr column
@@ -297,19 +299,19 @@ void dev::DisasmWindow::DrawDisassembly()
     // check the keys
     if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
     {
-        if (m_disasm.size() >= 2) UpdateDisasm(m_disasm[0].addr, 1);
+        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, -1);
     }
     else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
     {
-        if (m_disasm.size() >= 2) UpdateDisasm(m_disasm[1].addr, 0);
+        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, 1);
     }
 
     if (ImGui::GetIO().MouseWheel > 0.0f)
     {
-        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, 3);
+        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, -2);
     }
     else if (ImGui::GetIO().MouseWheel < 0.0f)
     {
-        if (m_disasm.size() >= 4) UpdateDisasm(m_disasm[3].addr, 0);
+        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, 2);
     }
 }

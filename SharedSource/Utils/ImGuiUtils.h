@@ -22,6 +22,24 @@ namespace dev
 #define DEV_COL32_B_SHIFT    8
 #define DEV_COL32_A_SHIFT    0
 
+	static constexpr ImVec4 IM_VEC4(const uint32_t col)
+	{
+		return ImVec4(
+			((col & DEV_COL32_R_MASK) >> DEV_COL32_R_SHIFT) / 255.0f,
+			((col & DEV_COL32_G_MASK) >> DEV_COL32_G_SHIFT) / 255.0f,
+			((col & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT) / 255.0f,
+			((col & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT) / 255.0f);
+	}
+	// 0xRRGGBBAA
+	static constexpr ImU32 IM_U32(const uint32_t col)
+	{
+		return
+			(col & DEV_COL32_R_MASK) >> DEV_COL32_R_SHIFT << 0 |
+			(col & DEV_COL32_G_MASK) >> DEV_COL32_G_SHIFT << 8 |
+			(col & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT << 16 |
+			(col & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT << 24;
+	}
+
 	// Make the UI compact because there are so many fields
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);
 	void PopStyleCompact();
@@ -61,28 +79,10 @@ namespace dev
 	}
 	void DrawHelpMarker(const char* _text);
 	void DrawPopup(const char* _title, const char* _text);
-	void DrawCircle(const ImU32 _color, const float _scale = 0.4f, const float _dpiScale = 1.0f);
-	void DrawArrow(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, const bool _itemHasSize = true);
+	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
+	void DrawBreakpoint(const bool _isSet, const float _dpiScale, const float _posXOffset = -0.2f, const bool _itemHasSize = false);
 
 	bool TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
-
-	static constexpr ImVec4 IM_VEC4(const uint32_t col)
-	{
-		return ImVec4(
-			((col & DEV_COL32_R_MASK) >> DEV_COL32_R_SHIFT) / 255.0f,
-			((col & DEV_COL32_G_MASK) >> DEV_COL32_G_SHIFT) / 255.0f,
-			((col & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT) / 255.0f,
-			((col & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT) / 255.0f);
-	}
-	// 0xRRGGBBAA
-	static constexpr ImU32 IM_U32(const uint32_t col)
-	{
-		return
-			(col & DEV_COL32_R_MASK) >> DEV_COL32_R_SHIFT << 0 |
-			(col & DEV_COL32_G_MASK) >> DEV_COL32_G_SHIFT << 8 |
-			(col & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT << 16 |
-			(col & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT << 24;
-	}
 }
 
 #endif // !DEV_IMGUI_UTILS_H
