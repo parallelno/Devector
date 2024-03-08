@@ -2,6 +2,7 @@
 
 #include "..\3rdParty\imgui\imgui_internal.h"
 #include "..\3rdParty\imgui\imgui.h"
+#include "..\3rdParty\imgui\misc\cpp\imgui_stdlib.h"
 
 // Make the UI compact because there are so many fields
 void dev::PushStyleCompact(const float _paddingMulX, const float _paddingMulY)
@@ -228,4 +229,52 @@ void dev::DrawBreakpoint(const bool _isSet, const float _dpiScale, const float _
     // Render
     auto drawPos = bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
     window->DrawList->AddCircleFilled(drawPos, g.FontSize * scale * _dpiScale, color, 8);
+}
+/*
+void dev::HardwareStatsWindow::DrawProperty1(const std::string& _name, const std::string& _value, const ImVec2& _aligment)
+{
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name.c_str(), _aligment);
+	ImGui::PopStyleColor();
+
+	ImGui::SameLine();
+	TextAligned(_value.c_str(), _aligment);
+}
+*/
+void dev::DrawProperty2(const std::string& _name, const std::string& _value)
+{
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name.c_str(), { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
+	ImGui::TableNextColumn();
+	TextAligned(_value.c_str(), { 0.0f, 0.5f });
+}
+
+void dev::DrawSeparator2(const std::string& _text)
+{
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+	ImGui::SeparatorText(_text.c_str());
+	ImGui::TableNextColumn();
+	ImGui::SeparatorText("");
+}
+
+void dev::DrawPropertyEditable2(const std::string& _name, std::string* _value)
+{
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name.c_str(), { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
+	ImGui::TableNextColumn();
+	ImGui::InputText("", _value);
 }

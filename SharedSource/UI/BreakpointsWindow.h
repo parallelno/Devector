@@ -17,6 +17,7 @@ namespace dev
 		Hardware& m_hardware;
 
 		void DrawTable();
+		void DrawContextMenu(const char* _itemID);
 /*
 		void DrawStats();
 		void DrawRegs();
@@ -33,6 +34,7 @@ namespace dev
 
 		void Update();
 
+		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.5f, 0.5f });
 	};
 
 };

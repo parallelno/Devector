@@ -72,6 +72,11 @@
     <ClCompile Include="..\SharedSource\UI\WatchpointsWindow.cpp">
       <Filter>SharedSource\UI</Filter>
     </ClCompile>
+    <ClCompile Include="Breakpoint.cpp" />
+    <ClCompile Include="Watchpoint.cpp" />
+    <ClCompile Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.cpp">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -152,6 +157,11 @@
     </ClInclude>
     <ClInclude Include="..\SharedSource\UI\WatchpointsWindow.h">
       <Filter>SharedSource\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Breakpoint.h" />
+    <ClInclude Include="Watchpoint.h" />
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.h">
+      <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

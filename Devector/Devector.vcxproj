@@ -107,6 +107,7 @@
     <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\shell.c" />
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\sqlite3.c" />
     <ClCompile Include="..\SharedSource\UI\BaseWindow.cpp" />
@@ -121,6 +122,7 @@
     <ClCompile Include="..\SharedSource\utils\JsonUtils.cpp" />
     <ClCompile Include="..\SharedSource\utils\StringUtils.cpp" />
     <ClCompile Include="..\SharedSource\utils\Utils.cpp" />
+    <ClCompile Include="Breakpoint.cpp" />
     <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="Hardware.cpp" />
@@ -129,6 +131,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="DevectorApp.cpp" />
     <ClCompile Include="Memory.cpp" />
+    <ClCompile Include="Watchpoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_glfw.h" />
@@ -137,6 +140,7 @@
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imconfig.h" />
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imgui.h" />
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.h" />
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3.h" />
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3ext.h" />
     <ClInclude Include="..\SharedSource\UI\BaseWindow.h" />
@@ -155,6 +159,7 @@
     <ClInclude Include="..\SharedSource\utils\Status.h" />
     <ClInclude Include="..\SharedSource\utils\StringUtils.h" />
     <ClInclude Include="..\SharedSource\utils\Utils.h" />
+    <ClInclude Include="Breakpoint.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="DevectorApp.h" />
     <ClInclude Include="Display.h" />
@@ -162,6 +167,7 @@
     <ClInclude Include="I8080.h" />
     <ClInclude Include="IO.h" />
     <ClInclude Include="Memory.h" />
+    <ClInclude Include="Watchpoint.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SharedSource\3rdParty\imgui\misc\debuggers\imgui.natstepfilter" />

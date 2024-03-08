@@ -280,7 +280,7 @@ uint16_t dev::Debugger::GetAddr(const uint16_t _addr, const int _instructionOffs
 
 // _instructionsOffset defines the start address of the disasm. 
 // -5 means the start address is 5 instructions prior the _addr, and vise versa.
-auto dev::Debugger::GetDisasm(const uint16_t _addr, const size_t _lines, const int _instructionOffset) const
+auto dev::Debugger::GetDisasm(const uint16_t _addr, const size_t _lines, const int _instructionOffset)
 ->Disasm
 {
 	Disasm out;
@@ -308,8 +308,8 @@ auto dev::Debugger::GetDisasm(const uint16_t _addr, const size_t _lines, const i
 			}
 			size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
 			auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-
-			DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr]);
+			auto breakpointStatus = GetBreakpointStatus(globalAddr);
+			DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], "", breakpointStatus);
 			out.emplace_back(lineS);
 
 			addr++;
@@ -340,8 +340,8 @@ auto dev::Debugger::GetDisasm(const uint16_t _addr, const size_t _lines, const i
 
 		size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
 		auto disasmS = GetDisasmLine(opcode, dataL, dataH);
-
-		DisasmLine lineS(DisasmLine::Type::CODE, addr, disasmS, m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], consts);
+		auto breakpointStatus = GetBreakpointStatus(globalAddr);
+		DisasmLine lineS(DisasmLine::Type::CODE, addr, disasmS, m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], consts, breakpointStatus);
 		out.emplace_back(lineS);
 
 		addr = addr + GetCmdLen(opcode);
@@ -634,7 +634,7 @@ bool dev::Debugger::CheckBreak()
 //
 //////////////////////////////////////////////////////////////
 
-void dev::Debugger::AddBreakpoint(const uint32_t _addr, const bool _active, const Memory::AddrSpace _addrSpace)
+void dev::Debugger::AddBreakpoint(const uint32_t _addr, const Breakpoint::Status _active, const Memory::AddrSpace _addrSpace)
 {
 	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
 
@@ -665,7 +665,7 @@ bool dev::Debugger::CheckBreakpoints(const uint32_t _globalAddr)
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 	auto bp = m_breakpoints.find(_globalAddr);
 	if (bp == m_breakpoints.end()) return false;
-	return bp->second.Check();
+	return bp->second.CheckStatus();
 }
 
 void dev::Debugger::PrintBreakpoints()
@@ -678,20 +678,24 @@ void dev::Debugger::PrintBreakpoints()
 	}
 }
 
-auto dev::Debugger::Breakpoint::IsActive() const
-->const bool
+auto dev::Debugger::GetBreakpoints() -> const Breakpoints
 {
-	return m_active;
-}
-auto dev::Debugger::Breakpoint::Check() const
-->const bool
-{
-	return m_active;
+	Breakpoints out;
+	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+	for (const auto& [addr, bp] : m_breakpoints)
+	{
+		out.insert({ addr, bp });
+	}
+	return out;
 }
 
-void dev::Debugger::Breakpoint::Print() const
+auto dev::Debugger::GetBreakpointStatus(const uint32_t _globalAddr)
+-> const Breakpoint::Status
 {
-	std::printf("0x%06x, active: %d \n", m_globalAddr, m_active);
+	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+	auto bp = m_breakpoints.find(_globalAddr);
+
+	return bp == m_breakpoints.end() ? Breakpoint::Status::NONE : bp->second.GetStatus();
 }
 
 //////////////////////////////////////////////////////////////
@@ -767,86 +771,15 @@ void dev::Debugger::WatchpointsErase(const uint32_t _globalAddr)
 
 }
 
-
-auto dev::Debugger::Watchpoint::IsActive() const
-->const bool
+auto dev::Debugger::GetWatchpoints() -> const Watchpoints
 {
-	return m_active;
-}
-
-auto dev::Debugger::Watchpoint::Check(const Watchpoint::Access _access, const uint32_t _globalAddr, const uint8_t _value)
-->const bool
-{
-	if (!m_active) return false;
-	if (m_access != Access::RW && m_access != _access) return false;
-
-	if (m_breakL && (m_valueSize == VAL_BYTE_SIZE || m_breakH)) return true;
-
-	bool* break_p;
-	uint8_t value_byte;
-
-	if (_globalAddr == m_globalAddr)
+	Watchpoints out;
+	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+	for (const auto& wp : m_watchpoints)
 	{
-		break_p = &m_breakL;
-		value_byte = m_value & 0xff;
+		out.push_back(wp);
 	}
-	else
-	{
-		break_p = &m_breakH;
-		value_byte = m_value >> 8 & 0xff;
-	}
-
-	switch (m_cond)
-	{
-	case Condition::ANY:
-		*break_p = true;
-		break;
-	case Condition::EQU:
-		*break_p = _value == value_byte;
-		break;
-	case Condition::LESS:
-		*break_p = _value < value_byte;
-		break;
-	case Condition::GREATER:
-		*break_p = _value > value_byte;
-		break;
-	case Condition::LESS_EQU:
-		*break_p = _value <= value_byte;
-		break;
-	case Condition::GREATER_EQU:
-		*break_p = _value >= value_byte;
-		break;
-	case Condition::NOT_EQU:
-		*break_p = _value != value_byte;
-		break;
-	default:
-		return false;
-	};
-
-	return m_breakL && (m_valueSize == VAL_BYTE_SIZE || m_breakH);
-}
-
-auto dev::Debugger::Watchpoint::GetGlobalAddr() const
--> const size_t
-{
-	return m_globalAddr;
-}
-
-auto dev::Debugger::Watchpoint::CheckAddr(const uint32_t _globalAddr) const
--> const bool
-{
-	return _globalAddr == m_globalAddr || (_globalAddr == m_globalAddr + 1 && m_valueSize == VAL_WORD_SIZE);
-}
-
-void dev::Debugger::Watchpoint::Reset()
-{
-	m_breakL = false;
-	m_breakH = false;
-}
-
-void dev::Debugger::Watchpoint::Print() const
-{
-	std::printf("0x%05x, access: %s, cond: %s, value: 0x%04x, value_size: %d, active: %d \n", m_globalAddr, access_s[static_cast<size_t>(m_access)], conditions_s[static_cast<size_t>(m_cond)], m_value, m_valueSize, m_active);
+	return out;
 }
 
 //////////////////////////////////////////////////////////////

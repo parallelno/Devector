@@ -21,41 +21,6 @@ void dev::HardwareStatsWindow::Update()
 	ImGui::End();
 }
 
-void dev::HardwareStatsWindow::DrawProperty1(const std::string& _name, const std::string& _value, const ImVec2& _aligment)
-{
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-	
-	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name.c_str(), _aligment);
-	ImGui::PopStyleColor();
-
-	ImGui::SameLine();
-	TextAligned(_value.c_str(), _aligment);
-}
-
-void dev::HardwareStatsWindow::DrawProperty2(const std::string& _name, const std::string& _value)
-{
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-	
-	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name.c_str(), { 1.0f, 0.5f });
-	ImGui::PopStyleColor();
-
-	ImGui::TableNextColumn();
-	TextAligned(_value.c_str(), { 0.0f, 0.5f });
-}
-
-void dev::HardwareStatsWindow::DrawSeparator2(const std::string& _text)
-{
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-	ImGui::SeparatorText(_text.c_str());
-	ImGui::TableNextColumn();
-	ImGui::SeparatorText("");
-}
-
 void dev::HardwareStatsWindow::DrawRegs()
 {
 	static ImGuiTableFlags flags =
@@ -126,8 +91,8 @@ void dev::HardwareStatsWindow::DrawStack()
 		auto addrP4 = m_hardware.m_memory.GetWord(m_hardware.m_cpu.m_sp + 2, Memory::AddrSpace::STACK);
 		auto addrP6 = m_hardware.m_memory.GetWord(m_hardware.m_cpu.m_sp + 4, Memory::AddrSpace::STACK);
 		
-		DrawProperty2("-6", std::format("{:04X}", addrN6));
 		DrawProperty2("-4", std::format("{:04X}", addrN4));
+		DrawProperty2("-6", std::format("{:04X}", addrN6));
 		DrawProperty2("-2", std::format("{:04X}", addrN2));
 		DrawProperty2("SP", std::format("{:04X}", addr0));
 		DrawProperty2("+2", std::format("{:04X}", addrP2));

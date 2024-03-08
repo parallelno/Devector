@@ -10,63 +10,15 @@
 
 #include "I8080.h"
 #include "Memory.h"
+#include "Breakpoint.h"
+#include "Watchpoint.h"
 
 namespace dev
 {
 	class Debugger
 	{
 	public:
-		class Breakpoint
-		{
-		public:
-
-			Breakpoint(const uint32_t _globalAddr, const bool _active = true)
-				: m_globalAddr(_globalAddr), m_active(_active)
-			{}
-			auto Check() const -> const bool;
-			auto IsActive() const -> const bool;
-			void Print() const;
-
-		private:
-			uint32_t m_globalAddr;
-			bool m_active;
-		};
-
-		class Watchpoint
-		{
-		public:
-			enum class Access : size_t { R = 0, W, RW, COUNT };
-			static constexpr const char* access_s[] = { "R-", "-W", "RW" };
-			static constexpr size_t VAL_BYTE_SIZE = sizeof(uint8_t);
-			static constexpr size_t VAL_WORD_SIZE = sizeof(uint16_t);
-			static constexpr size_t VAL_MAX_SIZE = VAL_WORD_SIZE;
-
-			enum class Condition : size_t { ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU, COUNT };
-			static constexpr const char* conditions_s[] = { "ANY", "==", "<", ">", "<=", ">=", "!=" };
-
-			Watchpoint(const Access _access, const uint32_t _globalAddr, const Condition _cond, const uint16_t _value, const size_t _valueSize = VAL_BYTE_SIZE, const bool _active = true)
-				: m_access(static_cast<Watchpoint::Access>((size_t)_access % (size_t)Access::COUNT)), m_globalAddr(_globalAddr), m_cond(static_cast<Debugger::Watchpoint::Condition>((size_t)_cond& (size_t)Condition::COUNT)),
-				m_value(_value & 0xffff), m_valueSize(_valueSize), m_active(_active), m_breakL(false), m_breakH(false)
-			{}
-			auto Check(const Watchpoint::Access _access, const uint32_t _globalAddr, const uint8_t _value) -> const bool;
-			auto IsActive() const -> const bool;
-			auto GetGlobalAddr() const -> const size_t;
-			auto CheckAddr(const uint32_t _globalAddr) const -> const bool;
-			void Reset();
-			void Print() const;
-
-		private:
-			Access m_access;
-			uint32_t m_globalAddr;
-			Condition m_cond;
-			uint16_t m_value;
-			size_t m_valueSize;
-			bool m_active;
-			bool m_breakL;
-			bool m_breakH;
-		};
-
-		using Watchpoints = std::vector<Watchpoint>;
+		static const constexpr size_t TRACE_LOG_SIZE = 100000;
 
 		struct DisasmLine 
 		{
@@ -85,9 +37,10 @@ namespace dev
 			uint64_t runs;
 			uint64_t reads;
 			uint64_t writes;
+			const Breakpoint::Status breakpointStatus;
 
-			DisasmLine(Type _type, uint16_t _addr, std::string _str, uint64_t _runs = UINT64_MAX, uint64_t _reads = UINT64_MAX, uint64_t _writes = UINT64_MAX, std::string _consts = "")
-				: type(_type), addr(_addr), str(_str), runs(_runs), reads(_reads), writes(_writes), consts(_consts)
+			DisasmLine(Type _type, uint16_t _addr, std::string _str, uint64_t _runs = UINT64_MAX, uint64_t _reads = UINT64_MAX, uint64_t _writes = UINT64_MAX, std::string _consts = "", const Breakpoint::Status _breakpointStatus = Breakpoint::Status::NONE)
+				: type(_type), addr(_addr), str(_str), runs(_runs), reads(_reads), writes(_writes), consts(_consts), breakpointStatus(_breakpointStatus)
 			{
 				if (type == Type::CODE) {
 					addrS = std::format("0x{:04X}", _addr);
@@ -101,12 +54,12 @@ namespace dev
 				}
 			};
 			DisasmLine()
-				: type(Type::CODE), addr(0), str(), stats(), runs(), reads(), writes(), consts()
+				: type(Type::CODE), addr(0), str(), stats(), runs(), reads(), writes(), consts(), breakpointStatus(Breakpoint::Status::NONE)
 			{};
 		};
 		using Disasm = std::vector<DisasmLine>;
-
-		static const constexpr size_t TRACE_LOG_SIZE = 100000;
+		using Watchpoints = std::vector<Watchpoint>;
+		using Breakpoints = std::map<size_t, Breakpoint>;
 
 		Debugger(I8080& _cpu, Memory& _memory);
 		void Init();
@@ -114,18 +67,21 @@ namespace dev
 		void Read(const uint32_t _globalAddr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode);
 		void Write(const uint32_t _globalAddr, Memory::AddrSpace _addrSpace, const uint8_t _val);
 
-		auto GetDisasm(const uint16_t _addr, const size_t _lines, const int _instructionOffset) const->Disasm;
+		auto GetDisasm(const uint16_t _addr, const size_t _lines, const int _instructionOffset) ->Disasm;
 
-		void AddBreakpoint(const uint32_t _addr, const bool _active = true, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		void AddBreakpoint(const uint32_t _addr, const Breakpoint::Status _active = Breakpoint::Status::ENABLED, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		void DelBreakpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		bool CheckBreakpoints(const uint32_t _globalAddr);
 		void PrintBreakpoints();
+		auto GetBreakpoints() -> const Breakpoints;
+		auto GetBreakpointStatus(const uint32_t _globalAddr) -> const Breakpoint::Status;
 
 		void AddWatchpoint(const Watchpoint::Access _access, const uint32_t _addr, const Watchpoint::Condition _cond, const uint16_t _value, const size_t _valueSize = 1, const bool _active = true, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		void DelWatchpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		bool CheckWatchpoint(const Watchpoint::Access _access, const uint32_t _globalAddr, const uint8_t _value);
 		void ResetWatchpoints();
 		void PrintWatchpoints();
+		auto GetWatchpoints() -> const Watchpoints;
 
 		bool CheckBreak();
 
@@ -186,7 +142,7 @@ namespace dev
 
 		std::mutex m_breakpointsMutex;
 		std::mutex m_watchpointsMutex;
-		std::map<size_t, Breakpoint> m_breakpoints;
+		Breakpoints m_breakpoints;
 		Watchpoints m_watchpoints;
 		bool m_wpBreak;
 	};
