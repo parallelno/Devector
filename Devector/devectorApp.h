@@ -2,6 +2,7 @@
 #ifndef DEV_DEVECTORAPP_H
 #define DEV_DEVECTORAPP_H
 
+#include "Types.h"
 #include "Utils/Status.h"
 #include "Utils/JsonUtils.h"
 #include "Utils/ImGuiApp.h"

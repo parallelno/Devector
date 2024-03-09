@@ -59,9 +59,9 @@ namespace dev
 
 	public:
 
-		DisasmWindow(Hardware& _hardware, ImFont* fontComment, const float const* _fontSizeP, const float const* _dpiScaleP);
+		DisasmWindow(Hardware& _hardware, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP);
 		void Update();
-		void UpdateDisasm(const uint32_t _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET);
+		void UpdateDisasm(const GlobalAddr _globalAddr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET);
 	};
 
 };

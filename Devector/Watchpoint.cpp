@@ -13,7 +13,7 @@ auto dev::Watchpoint::IsActive() const
 	return m_active;
 }
 
-auto dev::Watchpoint::Check(const Access _access, const uint32_t _globalAddr, const uint8_t _value)
+auto dev::Watchpoint::Check(const Access _access, const GlobalAddr _globalAddr, const uint8_t _value)
 ->const bool
 {
 	if (!m_active) return false;
@@ -71,10 +71,10 @@ auto dev::Watchpoint::GetGlobalAddr() const
 	return m_globalAddr;
 }
 
-auto dev::Watchpoint::CheckAddr(const uint32_t _globalAddr) const
+auto dev::Watchpoint::CheckAddr(const GlobalAddr _globalAddr) const
 -> const bool
 {
-	return _globalAddr == m_globalAddr || (_globalAddr == m_globalAddr + 1 && m_valueSize == VAL_WORD_SIZE);
+	return (_globalAddr == m_globalAddr) || ((_globalAddr == m_globalAddr + 1) && (m_valueSize == VAL_WORD_SIZE));
 }
 
 void dev::Watchpoint::Reset()
@@ -85,7 +85,7 @@ void dev::Watchpoint::Reset()
 
 void dev::Watchpoint::Print() const
 {
-	std::printf("0x%05x, access: %s, cond: %s, value: 0x%04x, value_size: %d, active: %d \n", 
+	std::printf("0x%05x, access: %s, cond: %s, value: 0x%04x, value_size: %zd, active: %d \n", 
 		m_globalAddr, 
 		access_s[static_cast<size_t>(m_access)], 
 		conditions_s[static_cast<size_t>(m_cond)], 

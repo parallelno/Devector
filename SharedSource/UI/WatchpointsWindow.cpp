@@ -3,7 +3,7 @@
 #include "Utils\StringUtils.h"
 
 dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
-	const float const* _fontSizeP, const float const* _dpiScaleP)
+	const float* const _fontSizeP, const float* const _dpiScaleP)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware)

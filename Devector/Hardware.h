@@ -5,6 +5,7 @@
 #include <mutex>
 #include <string>
 
+#include "Types.h"
 #include "I8080.h"
 #include "Memory.h"
 #include "IO.h"

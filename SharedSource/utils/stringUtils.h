@@ -19,5 +19,6 @@ namespace dev
 	auto StrWToStr(const std::wstring& _s) -> const std::string;
 	auto BoolToStrC(const bool _val, bool _text = false) -> const char*;
 	auto BoolToStr(const bool _val, bool _text = false) -> const std::string;
+	auto StrHexToInt(const char* _str) -> int;
 }
 #endif // !DEV_STRING_UTILS_H

@@ -5,7 +5,7 @@
 
 dev::DisasmWindow::DisasmWindow(
         dev::Hardware& _hardware, ImFont* fontComment, 
-        const float const* _fontSize, const float const* _dpiScale)
+        const float* const _fontSize, const float* const _dpiScale)
     :
     BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
     m_hardware(_hardware),
@@ -51,10 +51,10 @@ void dev::DisasmWindow::DrawDebugControls()
     }
 }
 
-void dev::DisasmWindow::UpdateDisasm(const uint32_t _addr, const int _instructionsOffset)
+void dev::DisasmWindow::UpdateDisasm(const GlobalAddr _globalAddr, const int _instructionsOffset)
 {
     // TODO: request meaningful amount disasmm lines, not a 100!
-    m_disasm = m_hardware.m_debugger.GetDisasm(_addr, 80, _instructionsOffset);
+    m_disasm = m_hardware.m_debugger.GetDisasm(_globalAddr, 80, _instructionsOffset);
 }
 
 void dev::DisasmWindow::DrawSearch()

@@ -1,4 +1,4 @@
-#include "Utils/ImGuiUtils.h"
+#include "ImGuiUtils.h"
 
 #include "..\3rdParty\imgui\imgui_internal.h"
 #include "..\3rdParty\imgui\imgui.h"
@@ -143,15 +143,15 @@ void dev::DrawPopup(const char* _title, const char* _text)
 	}
 }
 
-static inline ImVec2  operator+(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
-static inline ImVec2  operator-(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
+static inline ImVec2 operator+(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
+static inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
 
-bool dev::TextAligned(const char* _text, const ImVec2& _aligment)
+void dev::TextAligned(const char* _text, const ImVec2& _aligment)
 {
 	const ImVec2 size_arg = ImVec2(-FLT_MIN, 0.0f);
 
 	auto window = ImGui::GetCurrentWindow();
-	if (window->SkipItems) return false;
+	if (window->SkipItems) return;
 
 	ImGuiContext& g = *GImGui;
 	ImGuiStyle& style = g.Style;
@@ -166,7 +166,7 @@ bool dev::TextAligned(const char* _text, const ImVec2& _aligment)
 	const ImRect bb(pos, pos + size);
 	ImGui::ItemSize(size, style.FramePadding.y);
 
-	if (!ImGui::ItemAdd(bb, id)) return false;
+	if (!ImGui::ItemAdd(bb, id)) return;
 
 
 	ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, _text, NULL, &label_size, _aligment, &bb);
@@ -266,15 +266,29 @@ void dev::DrawSeparator2(const std::string& _text)
 	ImGui::SeparatorText("");
 }
 
-void dev::DrawPropertyEditable2(const std::string& _name, std::string* _value)
+void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, const char* _hint)
 {
-	ImGui::TableNextRow();
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
 	ImGui::TableNextColumn();
 
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name.c_str(), { 1.0f, 0.5f });
+	TextAligned(_name, { 1.0f, 0.5f });
 	ImGui::PopStyleColor();
 
 	ImGui::TableNextColumn();
-	ImGui::InputText("", _value);
+	ImGui::InputTextWithHint(_label, _hint, _value);
+}
+
+
+void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val)
+{
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name, { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
+	ImGui::TableNextColumn();
+	ImGui::Checkbox(_label, _val);
 }

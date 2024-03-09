@@ -15,7 +15,7 @@ namespace dev
 		const float* const m_dpiScaleP = nullptr;
 
 	public:
-		BaseWindow(const int _defaultW, const int _defaultH, const float const* _fontSizeP, const  float const* _dpiScaleP)
+		BaseWindow(const int _defaultW, const int _defaultH, const float* const _fontSizeP, const  float* const _dpiScaleP)
 			:
 			m_defaultW(_defaultW), m_defaultH(_defaultH), m_fontSizeP(_fontSizeP), m_dpiScaleP(_dpiScaleP)
 		{};

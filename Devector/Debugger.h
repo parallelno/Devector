@@ -8,6 +8,7 @@
 #include <vector>
 #include <format>
 
+#include "Types.h"
 #include "I8080.h"
 #include "Memory.h"
 #include "Breakpoint.h"
@@ -29,7 +30,7 @@ namespace dev
 			};
 
 			Type type;
-			uint16_t addr;
+			Addr addr;
 			std::string addrS;
 			std::string str; // labels, comments, code
 			std::string consts; // labels that are assiciated with arguments of an operation
@@ -39,8 +40,13 @@ namespace dev
 			uint64_t writes;
 			const Breakpoint::Status breakpointStatus;
 
-			DisasmLine(Type _type, uint16_t _addr, std::string _str, uint64_t _runs = UINT64_MAX, uint64_t _reads = UINT64_MAX, uint64_t _writes = UINT64_MAX, std::string _consts = "", const Breakpoint::Status _breakpointStatus = Breakpoint::Status::NONE)
-				: type(_type), addr(_addr), str(_str), runs(_runs), reads(_reads), writes(_writes), consts(_consts), breakpointStatus(_breakpointStatus)
+			DisasmLine(Type _type, Addr _addr, std::string _str,
+				uint64_t _runs = UINT64_MAX, uint64_t _reads = UINT64_MAX, uint64_t _writes = UINT64_MAX, 
+				std::string _consts = "", const Breakpoint::Status _breakpointStatus = Breakpoint::Status::DELETED)
+				: 
+				type(_type), addr(_addr), str(_str), 
+				runs(_runs), reads(_reads), writes(_writes), 
+				consts(_consts), breakpointStatus(_breakpointStatus)
 			{
 				if (type == Type::CODE) {
 					addrS = std::format("0x{:04X}", _addr);
@@ -54,31 +60,36 @@ namespace dev
 				}
 			};
 			DisasmLine()
-				: type(Type::CODE), addr(0), str(), stats(), runs(), reads(), writes(), consts(), breakpointStatus(Breakpoint::Status::NONE)
+				: type(Type::CODE), addr(0), str(), stats(), 
+				runs(), reads(), writes(), 
+				consts(), breakpointStatus(Breakpoint::Status::DELETED)
 			{};
 		};
 		using Disasm = std::vector<DisasmLine>;
 		using Watchpoints = std::vector<Watchpoint>;
-		using Breakpoints = std::map<size_t, Breakpoint>;
+		using Breakpoints = std::map<GlobalAddr, Breakpoint>;
 
 		Debugger(I8080& _cpu, Memory& _memory);
 		void Init();
 
-		void Read(const uint32_t _globalAddr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode);
-		void Write(const uint32_t _globalAddr, Memory::AddrSpace _addrSpace, const uint8_t _val);
+		void Read(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode);
+		void Write(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val);
 
-		auto GetDisasm(const uint16_t _addr, const size_t _lines, const int _instructionOffset) ->Disasm;
+		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) ->Disasm;
 
-		void AddBreakpoint(const uint32_t _addr, const Breakpoint::Status _active = Breakpoint::Status::ENABLED, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		void DelBreakpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		bool CheckBreakpoints(const uint32_t _globalAddr);
+		void AddBreakpoint(const GlobalAddr _globalAddr, 
+			const Breakpoint::Status _active = Breakpoint::Status::ACTIVE, const std::string& _comment = "");
+		void DelBreakpoint(const GlobalAddr _globalAddr);
+		bool CheckBreakpoints(const GlobalAddr _globalAddr);
 		void PrintBreakpoints();
 		auto GetBreakpoints() -> const Breakpoints;
-		auto GetBreakpointStatus(const uint32_t _globalAddr) -> const Breakpoint::Status;
+		auto GetBreakpointStatus(const GlobalAddr _globalAddr) -> const Breakpoint::Status;
 
-		void AddWatchpoint(const Watchpoint::Access _access, const uint32_t _addr, const Watchpoint::Condition _cond, const uint16_t _value, const size_t _valueSize = 1, const bool _active = true, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		void DelWatchpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		bool CheckWatchpoint(const Watchpoint::Access _access, const uint32_t _globalAddr, const uint8_t _value);
+		void AddWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const Watchpoint::Condition _cond,
+			const uint16_t _value, const size_t _valueSize = 1, const bool _active = true, 
+			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		void DelWatchpoint(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		bool CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value);
 		void ResetWatchpoints();
 		void PrintWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;
@@ -93,11 +104,11 @@ namespace dev
 		auto GetDisasmLine(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string;
 		auto GetDisasmLineDb(const uint8_t _data) const ->const std::string;
 		auto GetCmdLen(const uint8_t _addr) const -> const uint8_t;
-		auto GetAddr(const uint16_t _endAddr, const int _instructionOffset) const->uint16_t;
-		auto WatchpointsFind(const uint32_t _globalAddr) -> Watchpoints::iterator;
-		void WatchpointsErase(const uint32_t _globalAddr);
+		auto GetAddr(const Addr _endAddr, const int _instructionOffset) const -> Addr;
+		auto WatchpointsFind(const GlobalAddr _globalAddr) -> Watchpoints::iterator;
+		void WatchpointsErase(const GlobalAddr _globalAddr);
 
-		void TraceLogUpdate(const uint32_t _globalAddr, const uint8_t _val);
+		void TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _val);
 		auto TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const ->int;
 		auto TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const ->int;
 
@@ -106,8 +117,8 @@ namespace dev
 		static constexpr int LABEL_TYPE_EXTERNAL	= 1 << 2;
 		static constexpr int LABEL_TYPE_ALL			= LABEL_TYPE_LABEL | LABEL_TYPE_CONST | LABEL_TYPE_EXTERNAL;
 
-		auto LabelsToStr(uint16_t _addr, int _labelTypes) const -> const std::string;
-		auto GetDisasmLabels(uint16_t _addr) const -> const std::string;
+		auto LabelsToStr(const Addr _addr, int _labelTypes) const -> const std::string;
+		auto GetDisasmLabels(const Addr _addr) const -> const std::string;
 
 		uint64_t m_memRuns[Memory::GLOBAL_MEMORY_LEN];
 		uint64_t m_memReads[Memory::GLOBAL_MEMORY_LEN];

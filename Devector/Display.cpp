@@ -40,10 +40,10 @@ void dev::Display::Draw8PxlsActiveArea()
 	auto& memory = m_memory.m_data;
 	auto pos_addr = (m_rasterPixel - BORDER_LEFT) / RASTERIZED_PXLS * RES_H + RES_H - 1 - (m_rasterLine - BORDER_TOP);
 
-	uint16_t addr8 = (uint16_t)(0x8000 + pos_addr);
-	uint16_t addrA = (uint16_t)(0xA000 + pos_addr);
-	uint16_t addrC = (uint16_t)(0xC000 + pos_addr);
-	uint16_t addrE = (uint16_t)(0xE000 + pos_addr);
+	auto addr8 = (Addr)(0x8000 + pos_addr);
+	auto addrA = (Addr)(0xA000 + pos_addr);
+	auto addrC = (Addr)(0xC000 + pos_addr);
+	auto addrE = (Addr)(0xE000 + pos_addr);
 
 	auto color_byte8 = memory[addr8];
 	auto color_byteA = memory[addrA];

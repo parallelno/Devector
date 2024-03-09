@@ -4,6 +4,7 @@
 
 #include "imgui_impl_opengl3_loader.h"
 #include <vector>
+#include "../Devector/Types.h"
 #include "Utils/Globals.h"
 #include "Utils/ImGuiUtils.h"
 #include "Ui/BaseWindow.h"
@@ -22,11 +23,11 @@ namespace dev
 		Display& m_display;
 		void DrawDisplay();
 
-		void CreateFrameBuffer(const uint32_t _image[], const int _width, const int _height);
+		void CreateFrameBuffer(const ColorI _image[], const int _width, const int _height);
 		void UpdateFrameBuffer();
 
 	public:
-		DisplayWindow(Display& _display, const float const* _fontSizeP, const float const* _dpiScaleP);
+		DisplayWindow(Display& _display, const float* const _fontSizeP, const float* const _dpiScaleP);
 		void Update();
 	};
 

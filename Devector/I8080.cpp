@@ -357,14 +357,14 @@ void dev::I8080::Decode()
 		case 0xF0: RETCond(m_flagS == false); break; // RP
 		case 0xF8: RETCond(m_flagS == true); break; // RM
 
-		case 0xC7: RST(0x00); break; // RST 0
-		case 0xCF: RST(0x08); break; // RST 1
-		case 0xD7: RST(0x10); break; // RST 2
-		case 0xDF: RST(0x18); break; // RST 3
-		case 0xE7: RST(0x20); break; // RST 4
-		case 0xEF: RST(0x28); break; // RST 5
-		case 0xF7: RST(0x30); break; // RST 6
-		case 0xFF: RST(0x38); break; // RST 7
+		case 0xC7: RST(0); break; // RST 0
+		case 0xCF: RST(1); break; // RST 1
+		case 0xD7: RST(2); break; // RST 2
+		case 0xDF: RST(3); break; // RST 3
+		case 0xE7: RST(4); break; // RST 4
+		case 0xEF: RST(5); break; // RST 5
+		case 0xF7: RST(6); break; // RST 6
+		case 0xFF: RST(7); break; // RST 7
 
 		case 0xDB: IN_(); break; // IN
 		case 0xD3: OUT_(); break; // OUT
@@ -406,18 +406,18 @@ uint8_t dev::I8080::ReadInstrMovePC()
 	return op_code;
 }
 
-uint8_t dev::I8080::ReadByte(uint32_t _addr, Memory::AddrSpace _addrSpace)
+uint8_t dev::I8080::ReadByte(const GlobalAddr _globalAddr, Memory::AddrSpace _addrSpace)
 {
-	auto val = MemoryRead(_addr, _addrSpace);
-	DebugOnRead(_addr, _addrSpace, val, false);
+	auto val = MemoryRead(_globalAddr, _addrSpace);
+	DebugOnRead(_globalAddr, _addrSpace, val, false);
 
 	return val;
 }
 
-void dev::I8080::WriteByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace)
+void dev::I8080::WriteByte(const GlobalAddr _globalAddr, uint8_t _value, Memory::AddrSpace _addrSpace)
 {
-	MemoryWrite(_addr, _value, _addrSpace);
-	DebugOnWrite(_addr, _addrSpace, _value);
+	MemoryWrite(_globalAddr, _value, _addrSpace);
+	DebugOnWrite(_globalAddr, _addrSpace, _value);
 }
 
 uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)
@@ -591,11 +591,11 @@ void dev::I8080::MOVRegReg(uint8_t& _ddd, uint8_t _sss)
 	}
 }
 
-void dev::I8080::LoadRegPtr(uint8_t& _ddd, uint16_t addr)
+void dev::I8080::LoadRegPtr(uint8_t& _ddd, Addr _addr)
 {
 	if (m_machineCycle == 1)
 	{
-		_ddd = ReadByte(addr);
+		_ddd = ReadByte(_addr);
 	}
 }
 
@@ -643,7 +643,7 @@ void dev::I8080::LDA()
 	}
 	else if (m_machineCycle == 3)
 	{
-		m_a = ReadByte((uint16_t)(m_W << 8 | m_Z));
+		m_a = ReadByte(m_W << 8 | m_Z);
 	}
 }
 
@@ -659,11 +659,11 @@ void dev::I8080::STA()
 	}
 	else if (m_machineCycle == 3)
 	{
-		WriteByte((uint16_t)(m_W << 8 | m_Z), m_a);
+		WriteByte(m_W << 8 | m_Z, m_a);
 	}
 }
 
-void dev::I8080::STAX(uint16_t _addr)
+void dev::I8080::STAX(Addr _addr)
 {
 	if (m_machineCycle == 1)
 	{
@@ -687,13 +687,13 @@ void dev::I8080::LXISP()
 {
 	if (m_machineCycle == 1)
 	{
-		uint8_t _lb = ReadByteMovePC();
-		m_sp = (uint16_t)(m_sp & 0xff00 | _lb);
+		auto _lb = ReadByteMovePC();
+		m_sp = m_sp & 0xff00 | _lb;
 	}
 	else if (m_machineCycle == 2)
 	{
-		uint8_t _hb = ReadByteMovePC();
-		m_sp = (uint16_t)(_hb << 8 | m_sp & 0xff);
+		auto _hb = ReadByteMovePC();
+		m_sp = _hb << 8 | m_sp & 0xff;
 	}
 }
 
@@ -709,13 +709,13 @@ void dev::I8080::LHLD()
 	}
 	else if (m_machineCycle == 3)
 	{
-		m_l = ReadByte((uint16_t)(m_W << 8 | m_Z));
+		m_l = ReadByte(m_W << 8 | m_Z);
 		m_Z++;
-		m_W += (uint8_t)(m_Z == 0 ? 1 : 0);
+		m_W += m_Z == 0 ? 1 : 0;
 	}
 	else if (m_machineCycle == 4)
 	{
-		m_h = ReadByte((uint16_t)(m_W << 8 | m_Z));
+		m_h = ReadByte(m_W << 8 | m_Z);
 	}
 }
 
@@ -731,13 +731,13 @@ void dev::I8080::SHLD()
 	}
 	else if (m_machineCycle == 3)
 	{
-		WriteByte((uint16_t)(m_W << 8 | m_Z), m_l);
+		WriteByte(m_W << 8 | m_Z, m_l);
 		m_Z++;
-		m_W += (uint8_t)(m_Z == 0 ? 1 : 0);
+		m_W += m_Z == 0 ? 1 : 0;
 	}
 	else if (m_machineCycle == 4)
 	{
-		WriteByte((uint16_t)(m_W << 8 | m_Z), m_h);
+		WriteByte(m_W << 8 | m_Z, m_h);
 	}
 }
 
@@ -992,7 +992,7 @@ void dev::I8080::INXSP()
 	}
 	else if (m_machineCycle == 1)
 	{
-		m_sp = (uint16_t)(m_W << 8 | m_Z);
+		m_sp = m_W << 8 | m_Z;
 	}
 }
 
@@ -1019,7 +1019,7 @@ void dev::I8080::DCXSP()
 	}
 	else if (m_machineCycle == 1)
 	{
-		m_sp = (uint16_t)(m_W << 8 | m_Z);
+		m_sp = m_W << 8 | m_Z;
 	}
 }
 
@@ -1184,7 +1184,7 @@ void dev::I8080::CMP(uint8_t _sss)
 {
 	m_ACT = m_a;
 	m_TMP = _sss;
-	uint16_t result = (uint16_t)(m_ACT - m_TMP);
+	uint16_t result = m_ACT - m_TMP;
 	m_flagC = result >> 8 == 1;
 	m_flagAC = (~(m_ACT ^ result ^ m_TMP) & 0x10) == 0x10;
 	SetZSP((uint8_t)(result & 0xFF));
@@ -1282,12 +1282,12 @@ void dev::I8080::CALL(bool _condition)
 	}
 	else if (m_machineCycle == 5)
 	{
-		m_pc = (uint16_t)(m_W << 8 | m_Z);
+		m_pc = m_W << 8 | m_Z;
 	}
 }
 
 // pushes the current pc to the stack, then jumps to an address
-void dev::I8080::RST(uint8_t _addr)
+void dev::I8080::RST(uint8_t _arg)
 {
 	if (m_machineCycle == 0)
 	{
@@ -1301,12 +1301,12 @@ void dev::I8080::RST(uint8_t _addr)
 	else if (m_machineCycle == 2)
 	{
 		m_W = 0;
-		m_Z = _addr;
+		m_Z = _arg << 3;
 		WriteByte(m_sp, (uint8_t)(m_pc & 0xff), Memory::AddrSpace::STACK);
 	}
 	else if (m_machineCycle == 3)
 	{
-		m_pc = (uint16_t)(m_W << 8 | m_Z);
+		m_pc = m_W << 8 | m_Z;
 	}
 }
 
@@ -1322,7 +1322,7 @@ void dev::I8080::RET()
 	{
 		m_W = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
-		m_pc = (uint16_t)(m_W << 8 | m_Z);
+		m_pc = m_W << 8 | m_Z;
 	}
 }
 
@@ -1342,7 +1342,7 @@ void dev::I8080::RETCond(bool _condition)
 	{
 		m_W = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
-		m_pc = (uint16_t)(m_W << 8 | m_Z);
+		m_pc = m_W << 8 | m_Z;
 	}
 }
 

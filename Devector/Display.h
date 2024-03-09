@@ -2,6 +2,7 @@
 #ifndef DEV_DISPLAY_H
 #define DEV_DISPLAY_H
 
+#include "Types.h"
 #include "Memory.h"
 
 namespace dev
@@ -50,10 +51,10 @@ namespace dev
 		static constexpr int FRAME_CC = FRAME_W * FRAME_H;
 
 		//WriteableBitmap frame;
-		uint32_t m_data[FRAME_W * FRAME_H];
+		ColorI m_data[FRAME_W * FRAME_H];
 
-		uint32_t m_palette[PALETTE_LEN];
-		uint32_t m_fillColor;
+		ColorI m_palette[PALETTE_LEN];
+		ColorI m_fillColor;
 
 
 		int m_rasterLine;	// currently rasterized scanline idx from the bottom

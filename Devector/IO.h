@@ -3,6 +3,7 @@
 #define DEV_IO_H
 
 #include <cstdint>
+#include "Types.h"
 
 namespace dev
 {

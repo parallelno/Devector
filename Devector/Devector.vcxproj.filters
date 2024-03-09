@@ -163,6 +163,7 @@
     <ClInclude Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.h">
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="Types.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="SharedSource">

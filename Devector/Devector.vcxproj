@@ -160,6 +160,7 @@
     <ClInclude Include="..\SharedSource\utils\StringUtils.h" />
     <ClInclude Include="..\SharedSource\utils\Utils.h" />
     <ClInclude Include="Breakpoint.h" />
+    <ClInclude Include="Types.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="DevectorApp.h" />
     <ClInclude Include="Display.h" />

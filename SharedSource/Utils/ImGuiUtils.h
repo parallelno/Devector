@@ -8,6 +8,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "..\Devector\Types.h"
 
 namespace dev 
 {
@@ -22,29 +23,29 @@ namespace dev
 #define DEV_COL32_B_SHIFT    8
 #define DEV_COL32_A_SHIFT    0
 
-	static constexpr ImVec4 IM_VEC4(const uint32_t col)
+	static constexpr ImVec4 IM_VEC4(const uint32_t _color)
 	{
 		return ImVec4(
-			((col & DEV_COL32_R_MASK) >> DEV_COL32_R_SHIFT) / 255.0f,
-			((col & DEV_COL32_G_MASK) >> DEV_COL32_G_SHIFT) / 255.0f,
-			((col & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT) / 255.0f,
-			((col & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT) / 255.0f);
+			((_color & DEV_COL32_R_MASK) >> DEV_COL32_R_SHIFT) / 255.0f,
+			((_color & DEV_COL32_G_MASK) >> DEV_COL32_G_SHIFT) / 255.0f,
+			((_color & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT) / 255.0f,
+			((_color & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT) / 255.0f);
 	}
 	// 0xRRGGBBAA
-	static constexpr ImU32 IM_U32(const uint32_t col)
+	static constexpr ImU32 IM_U32(const uint32_t _color)
 	{
 		return
-			(col & DEV_COL32_R_MASK) >> DEV_COL32_R_SHIFT << 0 |
-			(col & DEV_COL32_G_MASK) >> DEV_COL32_G_SHIFT << 8 |
-			(col & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT << 16 |
-			(col & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT << 24;
+			(_color & DEV_COL32_R_MASK) >> DEV_COL32_R_SHIFT << 0 |
+			(_color & DEV_COL32_G_MASK) >> DEV_COL32_G_SHIFT << 8 |
+			(_color & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT << 16 |
+			(_color & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT << 24;
 	}
 
 	// Make the UI compact because there are so many fields
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);
 	void PopStyleCompact();
 	void UpdatePropertyPrintStat(const char* _parameterName);
-	void ColumnClippingEnable(const float m_dpiScale = 1.0f);
+	void ColumnClippingEnable(const float _dpiScale = 1.0f);
 	void ColumnClippingDisable();
 
 
@@ -84,9 +85,10 @@ namespace dev
 	//void DrawProperty1(const std::string& _name, const std::string& _value, const ImVec2& _aligment = { 1.0f, 0.5f });
 	void DrawProperty2(const std::string& _name, const std::string& _value);
 	void DrawSeparator2(const std::string& _text);
-	void DrawPropertyEditable2(const std::string& _name, std::string* _value);
+	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, const char* _hint = "");
+	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val);
 
-	bool TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
+	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 }
 
 #endif // !DEV_IMGUI_UTILS_H

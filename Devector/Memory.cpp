@@ -15,23 +15,23 @@ void dev::Memory::Load(const std::vector<uint8_t>& _data)
     std::copy(_data.begin(), _data.end(), m_data + ROM_LOAD_ADDR);
 }
 
-auto dev::Memory::GetByte(uint32_t _addr, AddrSpace _addrSpace) const
+auto dev::Memory::GetByte(GlobalAddr _globalAddr, AddrSpace _addrSpace) const
 -> uint8_t
 {
-    _addr = GetGlobalAddr(_addr, _addrSpace);
-    return m_data[_addr];
+    _globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
+    return m_data[_globalAddr];
 }
 
-void dev::Memory::SetByte(uint32_t _addr, uint8_t _value, AddrSpace _addrSpace)
+void dev::Memory::SetByte(GlobalAddr _globalAddr, uint8_t _value, AddrSpace _addrSpace)
 {
-    _addr = GetGlobalAddr(_addr, _addrSpace);
-    m_data[_addr] = _value;
+    _globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
+    m_data[_globalAddr] = _value;
 }
 
-auto dev::Memory::GetWord(uint32_t _addr, AddrSpace _addrSpace) const
+auto dev::Memory::GetWord(GlobalAddr _globalAddr, AddrSpace _addrSpace) const
 -> uint16_t
 {
-    return GetByte(_addr+1, _addrSpace) << 8 | GetByte(_addr, _addrSpace);
+    return GetByte(_globalAddr + 1, _addrSpace) << 8 | GetByte(_globalAddr, _addrSpace);
 }
 
 int dev::Memory::Length()
@@ -39,37 +39,38 @@ int dev::Memory::Length()
     return GLOBAL_MEMORY_LEN;
 }
 
-// converts an UInt16 addr to a global addr depending on the ram/stack mapping modes
-uint32_t dev::Memory::GetGlobalAddr(uint32_t _addr, AddrSpace _addrSpace) const
+// converts an addr to a global addr depending on the ram/stack mapping modes
+auto dev::Memory::GetGlobalAddr(const GlobalAddr _globalAddr, AddrSpace _addrSpace) const
+-> GlobalAddr
 {
-    if (_addrSpace == AddrSpace::GLOBAL) return _addr % GLOBAL_MEMORY_LEN;
+    if (_addrSpace == AddrSpace::GLOBAL) return _globalAddr % GLOBAL_MEMORY_LEN;
 
-    _addr &= 0xffff;
+    Addr addr = _globalAddr & 0xFFFF;
 
     if (_addrSpace == AddrSpace::STACK)
     {
         if (m_mappingModeStack)
         {
-            return _addr + m_mappingPageStack * RAM_DISK_PAGE_LEN;
+            return (GlobalAddr)(addr + (m_mappingPageStack + 1) * RAM_DISK_PAGE_LEN);
         }
     }
-    else if (_addrSpace == AddrSpace::RAM)
+    else if (_addrSpace == AddrSpace::RAM && IsRamMapped(addr))
     {
-        if (_addr < 0x8000 || m_mappingModeRam == 0) return _addr;
-
-        if (((m_mappingModeRam & 0x20) > 0) && (_addr >= 0xa000) && (_addr <= 0xdfff))
-        {
-            return _addr + m_mappingPageRam * RAM_DISK_PAGE_LEN;
-        }
-        if (((m_mappingModeRam & 0x40) > 0) && (_addr >= 0x8000) && (_addr <= 0x9fff))
-        {
-            return _addr + m_mappingPageRam * RAM_DISK_PAGE_LEN;
-        }
-        if (((m_mappingModeRam & 0x80) > 0) && (_addr >= 0xe000) && (_addr <= 0xffff))
-        {
-            return _addr + m_mappingPageRam * RAM_DISK_PAGE_LEN;
-        }
+        return (GlobalAddr)(addr + (m_mappingPageRam + 1) * RAM_DISK_PAGE_LEN);
     }
 
-    return _addr;
+    return addr;
+}
+
+// check if the addr is mapped to the ram-disk
+bool dev::Memory::IsRamMapped(Addr _addr) const
+{
+    if ((m_mappingModeRam & MAPPING_MODE_RAM_A000) && (_addr >= 0xa000) && (_addr <= 0xdfff) ||
+        (m_mappingModeRam & MAPPING_MODE_RAM_8000) && (_addr >= 0x8000) && (_addr <= 0x9fff) ||
+        (m_mappingModeRam & MAPPING_MODE_RAM_E000) && (_addr >= 0xe000) && (_addr <= 0xffff))
+    {
+        return true;
+    }
+
+    return false;
 }

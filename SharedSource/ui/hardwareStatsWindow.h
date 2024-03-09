@@ -26,7 +26,7 @@ namespace dev
 
 	public:
 		HardwareStatsWindow(Hardware& _hardware,
-			const float const* _fontSizeP, const float const* _dpiScaleP);
+			const float* const _fontSizeP, const float* const _dpiScaleP);
 		
 		void Update();
 

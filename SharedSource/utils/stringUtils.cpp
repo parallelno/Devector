@@ -1,6 +1,8 @@
 #include <sstream>
 
 #include "Utils/StringUtils.h"
+#include <locale>
+#include <codecvt>
 
 double dev::fast_atof(const char* _s)
 {
@@ -86,5 +88,12 @@ auto dev::BoolToStr(const bool _val, bool _text)
 	static const std::string false_s0 = "0";
 	static const std::string true_s0 = "1";
 	return _val ? true_s0 : false_s0;
+}
+
+auto dev::StrHexToInt(const char* _str)
+-> int
+{
+	char* end;
+	return strtol(_str, &end, 16);
 }
 

@@ -16,6 +16,7 @@
 
 #include <functional>
 
+#include "Types.h"
 #include "Memory.h"
 
 namespace dev 
@@ -24,7 +25,7 @@ namespace dev
 	{
 	public:
 		uint64_t m_cc; // clock cycles. it's the debug related data
-		uint16_t m_pc, m_sp; // program counter, stack pointer
+		Addr m_pc, m_sp; // program counter, stack pointer
 		uint8_t m_a, m_b, m_c, m_d, m_e, m_h, m_l; // registers
 		uint8_t m_instructionRegister; // an internal register that stores the fetched instruction
 
@@ -55,12 +56,12 @@ namespace dev
 		static constexpr uint8_t OPCODE_HLT = 0x76;
 
 		// memory + io interface
-		using MemoryReadFunc = std::function <uint8_t (uint32_t _addr, Memory::AddrSpace _addrSpace)>;
-		using MemoryWriteFunc = std::function <void (uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace)>;
-		using InputFunc = std::function <uint8_t (uint8_t _port)>;
-		using OutputFunc = std::function <void (uint8_t _port, uint8_t _value)>;
-		using DebugOnReadFunc = std::function<void(const uint32_t _addr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _is_opcode)>;
-		using DebugOnWriteFunc = std::function<void(const uint32_t _addr, Memory::AddrSpace _addrSpace, const uint8_t _val)>;
+		using MemoryReadFunc = std::function <uint8_t (const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace)>;
+		using MemoryWriteFunc = std::function <void (const GlobalAddr _globalAddr, const uint8_t _value, const Memory::AddrSpace _addrSpace)>;
+		using InputFunc = std::function <uint8_t (const uint8_t _port)>;
+		using OutputFunc = std::function <void (const uint8_t _port, const uint8_t _value)>;
+		using DebugOnReadFunc = std::function<void(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _is_opcode)>;
+		using DebugOnWriteFunc = std::function<void(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val)>;
 
 		I8080() = delete;
 		I8080(
@@ -94,8 +95,8 @@ namespace dev
 		////////////////////////////////////////////////////////////////////////////
 
 		uint8_t ReadInstrMovePC();
-		uint8_t ReadByte(uint32_t _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		void WriteByte(uint32_t _addr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		uint8_t ReadByte(const GlobalAddr _globalAddr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		void WriteByte(const GlobalAddr _globalAddr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		uint8_t ReadByteMovePC(Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 
 		////////////////////////////////////////////////////////////////////////////
@@ -128,13 +129,13 @@ namespace dev
 		void RAL();
 		void RAR();
 		void MOVRegReg(uint8_t& _ddd, uint8_t _sss);
-		void LoadRegPtr(uint8_t& _ddd, uint16_t _addr);
+		void LoadRegPtr(uint8_t& _ddd, Addr _addr);
 		void MOVMemReg(uint8_t _sss);
 		void MVIRegData(uint8_t& _ddd);
 		void MVIMemData();
 		void LDA();
 		void STA();
-		void STAX(uint16_t _addr);
+		void STAX(Addr _addr);
 		void LXI(uint8_t& _hb, uint8_t& _lb);
 		void LXISP();
 		void LHLD();
@@ -175,7 +176,7 @@ namespace dev
 		void JMP(bool _condition = true);
 		void PCHL();
 		void CALL(bool _condition = true);
-		void RST(uint8_t _addr);
+		void RST(uint8_t _arg);
 		void RET();
 		void RETCond(bool _condition);
 		void IN_();

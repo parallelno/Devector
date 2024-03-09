@@ -8,8 +8,7 @@
 #include <vector>
 #include <format>
 
-#include "I8080.h"
-#include "Memory.h"
+#include "Types.h"
 
 namespace dev
 {
@@ -17,20 +16,22 @@ namespace dev
 	{
 	public:
 		enum class Status : int {
-			NONE = 0,
+			DELETED = 0,
 			DISABLED,
-			ENABLED
+			ACTIVE
 		};
-		Breakpoint(const uint32_t _globalAddr, const Status _status = Status::ENABLED);
+		Breakpoint(const GlobalAddr _globalAddr, const Status _status = Status::ACTIVE, const std::string& _comment = "");
 		auto CheckStatus() const -> const bool;
 		auto GetStatus() const -> const Status;
 		auto GetStatusI() const -> const int;
+		auto GetComment() const -> const std::string&;
 		auto IsActiveS() const -> const char*;
 		void Print() const;
 
 	private:
 		Status m_status;
-		uint32_t m_globalAddr;
+		GlobalAddr m_globalAddr;
+		std::string m_comment;
 	};
 }
 #endif // !DEV_BREAKPOINTS_H

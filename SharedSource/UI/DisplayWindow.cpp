@@ -2,7 +2,7 @@
 #include <gl/GL.h>
 
 dev::DisplayWindow::DisplayWindow(Display& _display, 
-        const float const* _fontSizeP, const float const* _dpiScaleP)
+        const float* const _fontSizeP, const float* const _dpiScaleP)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_display(_display)
@@ -32,7 +32,7 @@ void dev::DisplayWindow::DrawDisplay()
     }
 }
 
-void dev::DisplayWindow::CreateFrameBuffer(const uint32_t _image[], const int _width, const int _height)
+void dev::DisplayWindow::CreateFrameBuffer(const ColorI _image[], const int _width, const int _height)
 {
     // Create a OpenGL texture identifier
     if (!m_frameTextureId)

@@ -39,9 +39,9 @@ void dev::Debugger::Init()
 }
 
 void dev::Debugger::Read(
-    const uint32_t _addr, Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode)
+    const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode)
 {
-    auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
+    auto globalAddr = m_memory.GetGlobalAddr(_globalAddr, _addrSpace);
 
     if (_isOpcode) {
         m_memRuns[globalAddr]++;
@@ -53,9 +53,9 @@ void dev::Debugger::Read(
     }
 }
 
-void dev::Debugger::Write(const uint32_t _addr, Memory::AddrSpace _addrSpace, const uint8_t _val)
+void dev::Debugger::Write(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val)
 {
-    auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
+    auto globalAddr = m_memory.GetGlobalAddr(_globalAddr, _addrSpace);
     m_memWrites[globalAddr]++;
     m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, globalAddr, _val);
 }
@@ -115,7 +115,7 @@ static const char* mnemonics[0x100] =
 // define the maximum number of bytes in a command
 #define CMD_LEN_MAX 3
 
-// array containing lengths of commands, indexed by opcode
+// array containing lengths of commands, indexed by an opcode
 static const uint8_t cmd_lens[0x100] =
 {
 	1,3,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
@@ -137,9 +137,9 @@ static const uint8_t cmd_lens[0x100] =
 };
 
 // returns the instruction length in bytes
-auto dev::Debugger::GetCmdLen(const uint8_t _addr) const -> const uint8_t
+auto dev::Debugger::GetCmdLen(const uint8_t _opcode) const -> const uint8_t
 {
-	return cmd_lens[_addr];
+	return cmd_lens[_opcode];
 }
 
 // returns the mnemonic for an instruction
@@ -218,13 +218,14 @@ auto dev::Debugger::GetDisasmLine(const uint8_t _opcode, const uint8_t _dataL, c
 // shifts the addr by _instructionsOffset instruction counter
 // if _instructionsOffset=3, it returns the addr of a third instruction after _addr, and vice versa
 #define MAX_ATTEMPTS 41 // max attemts to find an addr of an instruction before _addr 
-uint16_t dev::Debugger::GetAddr(const uint16_t _addr, const int _instructionOffset) const
+auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) const
+-> Addr
 {
-	uint16_t instructions = _instructionOffset > 0 ? _instructionOffset : -_instructionOffset;
+	int instructions = _instructionOffset > 0 ? _instructionOffset : -_instructionOffset;
 
 	if (_instructionOffset > 0)
 	{
-		uint16_t addr = _addr;
+		Addr addr = _addr;
 		for (int i = 0; i < instructions; i++)
 		{
 			auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
@@ -235,7 +236,7 @@ uint16_t dev::Debugger::GetAddr(const uint16_t _addr, const int _instructionOffs
 	}
 	else if (_instructionOffset < 0)
 	{
-		std::vector<uint16_t> possibleDisasmStartAddrs;
+		std::vector<Addr> possibleDisasmStartAddrs;
 
 		int disasmStartAddr = _addr - instructions * CMD_LEN_MAX;
 
@@ -280,7 +281,7 @@ uint16_t dev::Debugger::GetAddr(const uint16_t _addr, const int _instructionOffs
 
 // _instructionsOffset defines the start address of the disasm. 
 // -5 means the start address is 5 instructions prior the _addr, and vise versa.
-auto dev::Debugger::GetDisasm(const uint16_t _addr, const size_t _lines, const int _instructionOffset)
+auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset)
 ->Disasm
 {
 	Disasm out;
@@ -291,7 +292,7 @@ auto dev::Debugger::GetDisasm(const uint16_t _addr, const size_t _lines, const i
 	int lines = (int)_lines;
 
 	// calculate a new address that precedes the specified 'addr' by the instructionsOffset
-	uint16_t addr = GetAddr((uint16_t)_addr, _instructionOffset);
+	Addr addr = GetAddr(_addr, _instructionOffset);
 
 	if (_instructionOffset < 0 && addr == _addr)
 	{
@@ -306,7 +307,7 @@ auto dev::Debugger::GetDisasm(const uint16_t _addr, const size_t _lines, const i
 				DisasmLine disasmLine(DisasmLine::Type::LABELS, addr, GetDisasmLabels(addr));
 				out.emplace_back(std::move(disasmLine));
 			}
-			size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
+			auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
 			auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
 			auto breakpointStatus = GetBreakpointStatus(globalAddr);
 			DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], "", breakpointStatus);
@@ -338,7 +339,7 @@ auto dev::Debugger::GetDisasm(const uint16_t _addr, const size_t _lines, const i
 			consts = LabelsToStr(dataH << 8 | dataL, LABEL_TYPE_ALL);
 		}
 
-		size_t globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
+		auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
 		auto disasmS = GetDisasmLine(opcode, dataL, dataH);
 		auto breakpointStatus = GetBreakpointStatus(globalAddr);
 		DisasmLine lineS(DisasmLine::Type::CODE, addr, disasmS, m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], consts, breakpointStatus);
@@ -504,7 +505,7 @@ auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const si
 	return out;
 }
 
-void dev::Debugger::TraceLogUpdate(const uint32_t _globalAddr, const uint8_t _val)
+void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _val)
 {
 	auto last_global_addr = m_traceLog[m_traceLogIdx].m_globalAddr;
 	auto last_opcode = m_traceLog[m_traceLogIdx].m_opcode;
@@ -517,7 +518,7 @@ void dev::Debugger::TraceLogUpdate(const uint32_t _globalAddr, const uint8_t _va
 
 	if (_val == OPCODE_PCHL)
 	{
-		uint16_t pc = m_cpu.GetHL();
+		Addr pc = m_cpu.GetHL();
 		m_traceLog[m_traceLogIdx].m_dataL = pc & 0xff;
 		m_traceLog[m_traceLogIdx].m_dataH = pc >> 8 & 0xff;
 	}
@@ -634,33 +635,29 @@ bool dev::Debugger::CheckBreak()
 //
 //////////////////////////////////////////////////////////////
 
-void dev::Debugger::AddBreakpoint(const uint32_t _addr, const Breakpoint::Status _active, const Memory::AddrSpace _addrSpace)
+void dev::Debugger::AddBreakpoint(const GlobalAddr _globalAddr, const Breakpoint::Status _active, const std::string& _comment)
 {
-	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
-
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bp = m_breakpoints.find(globalAddr);
+	auto bp = m_breakpoints.find(_globalAddr);
 	if (bp != m_breakpoints.end())
 	{
 		m_breakpoints.erase(bp);
 	}
 
-	m_breakpoints.emplace(globalAddr, std::move(Breakpoint(globalAddr, _active)));
+	m_breakpoints.emplace(_globalAddr, std::move(Breakpoint(_globalAddr, _active, _comment)));
 }
 
-void dev::Debugger::DelBreakpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace)
+void dev::Debugger::DelBreakpoint(const GlobalAddr _globalAddr)
 {
-	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
-
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bp = m_breakpoints.find(globalAddr);
+	auto bp = m_breakpoints.find(_globalAddr);
 	if (bp != m_breakpoints.end())
 	{
 		m_breakpoints.erase(bp);
 	}
 }
 
-bool dev::Debugger::CheckBreakpoints(const uint32_t _globalAddr)
+bool dev::Debugger::CheckBreakpoints(const GlobalAddr _globalAddr)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 	auto bp = m_breakpoints.find(_globalAddr);
@@ -689,13 +686,13 @@ auto dev::Debugger::GetBreakpoints() -> const Breakpoints
 	return out;
 }
 
-auto dev::Debugger::GetBreakpointStatus(const uint32_t _globalAddr)
+auto dev::Debugger::GetBreakpointStatus(const GlobalAddr _globalAddr)
 -> const Breakpoint::Status
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 	auto bp = m_breakpoints.find(_globalAddr);
 
-	return bp == m_breakpoints.end() ? Breakpoint::Status::NONE : bp->second.GetStatus();
+	return bp == m_breakpoints.end() ? Breakpoint::Status::DELETED : bp->second.GetStatus();
 }
 
 //////////////////////////////////////////////////////////////
@@ -705,24 +702,20 @@ auto dev::Debugger::GetBreakpointStatus(const uint32_t _globalAddr)
 //////////////////////////////////////////////////////////////
 
 void dev::Debugger::AddWatchpoint(
-	const Watchpoint::Access _access, const uint32_t _addr, const Watchpoint::Condition _cond,
+	const Watchpoint::Access _access, const GlobalAddr _globalAddr, const Watchpoint::Condition _cond,
 	const uint16_t _value, const size_t _value_size, const bool _active, const Memory::AddrSpace _addrSpace)
 {
-	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
-
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	m_watchpoints.emplace_back(std::move(Watchpoint(_access, globalAddr, _cond, _value, _value_size, _active)));
+	m_watchpoints.emplace_back(std::move(Watchpoint(_access, _globalAddr, _cond, _value, _value_size, _active)));
 }
 
-void dev::Debugger::DelWatchpoint(const uint32_t _addr, const Memory::AddrSpace _addrSpace)
+void dev::Debugger::DelWatchpoint(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace)
 {
-	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
-
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	WatchpointsErase(globalAddr);
+	WatchpointsErase(_globalAddr);
 }
 
-bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const uint32_t _globalAddr, const uint8_t _value)
+bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
 	auto wp = WatchpointsFind(_globalAddr);
@@ -756,13 +749,13 @@ void dev::Debugger::PrintWatchpoints()
 	}
 }
 
-auto dev::Debugger::WatchpointsFind(const uint32_t _globalAddr)
+auto dev::Debugger::WatchpointsFind(const GlobalAddr _globalAddr)
 ->Watchpoints::iterator
 {
 	return std::find_if(m_watchpoints.begin(), m_watchpoints.end(), [_globalAddr](Watchpoint& w) {return w.CheckAddr(_globalAddr);});
 }
 
-void dev::Debugger::WatchpointsErase(const uint32_t _globalAddr)
+void dev::Debugger::WatchpointsErase(const GlobalAddr _globalAddr)
 {
 	m_watchpoints.erase(std::remove_if(m_watchpoints.begin(), m_watchpoints.end(), [_globalAddr](Watchpoint const& _w)
 		{
@@ -788,7 +781,7 @@ auto dev::Debugger::GetWatchpoints() -> const Watchpoints
 //
 //////////////////////////////////////////////////////////////
 
-auto dev::Debugger::GetDisasmLabels(uint16_t _addr) const
+auto dev::Debugger::GetDisasmLabels(const Addr _addr) const
 -> const std::string
 {
 	std::string out;
@@ -813,7 +806,7 @@ auto dev::Debugger::GetDisasmLabels(uint16_t _addr) const
 	return out;
 }
 
-auto dev::Debugger::LabelsToStr(uint16_t _addr, int _labelTypes) const
+auto dev::Debugger::LabelsToStr(const Addr _addr, int _labelTypes) const
 -> const std::string
 {
 	std::string out;

@@ -7,8 +7,9 @@
 #include "Utils/StringUtils.h"
 #include "Utils/Utils.h"
 
-dev::Breakpoint::Breakpoint(const uint32_t _globalAddr, const Status _status)
-	: m_globalAddr(_globalAddr), m_status(_status)
+dev::Breakpoint::Breakpoint(const GlobalAddr _globalAddr, const Status _status, const std::string& _comment)
+	: 
+	m_globalAddr(_globalAddr), m_status(_status), m_comment(_comment)
 {}
 
 auto dev::Breakpoint::GetStatus() const
@@ -23,15 +24,21 @@ auto dev::Breakpoint::GetStatusI() const
 	return static_cast<int>(m_status);
 }
 
+auto dev::Breakpoint::GetComment() const
+->const std::string&
+{
+	return m_comment;
+}
+
 auto dev::Breakpoint::IsActiveS() const -> const char*
 {
-	return m_status == Status::ENABLED ? "X" : "-";
+	return m_status == Status::ACTIVE ? "X" : "-";
 }
 
 auto dev::Breakpoint::CheckStatus() const
 ->const bool
 {
-	return m_status == Status::ENABLED;
+	return m_status == Status::ACTIVE;
 }
 
 void dev::Breakpoint::Print() const
