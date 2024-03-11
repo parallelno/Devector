@@ -196,7 +196,7 @@ void dev::DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir, const floa
 	ImGui::RenderArrow(window->DrawList, drawPos, _color, _dir);
 }
 
-void dev::DrawBreakpoint(const bool _isSet, const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
+void dev::DrawBreakpoint(const Breakpoint::Status _status, const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
 {
     ImGuiWindow* window = ImGui::GetCurrentWindow();
     if (window->SkipItems)
@@ -204,11 +204,9 @@ void dev::DrawBreakpoint(const bool _isSet, const float _dpiScale, const float _
 
 	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT = dev::IM_U32(0xFF2828C0);
 	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT_HOVER = dev::IM_U32(0xFF5538FF);
+	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT_DISABLED = dev::IM_U32(0x606060FF);
 	static constexpr float DISASM_TBL_BREAKPOINT_SIZE = 0.35f;
 	static constexpr float DISASM_TBL_BREAKPOINT_SIZE_HOVERED = 0.40f;
-
-	ImU32 color = _isSet ? DISASM_TBL_COLOR_BREAKPOINT : DISASM_TBL_COLOR_BREAKPOINT_HOVER;
-	float scale = _isSet ? DISASM_TBL_BREAKPOINT_SIZE : DISASM_TBL_BREAKPOINT_SIZE_HOVERED;
 
     ImGuiContext& g = *GImGui;
     const ImGuiStyle& style = g.Style;
@@ -218,11 +216,16 @@ void dev::DrawBreakpoint(const bool _isSet, const float _dpiScale, const float _
 	pos.x += _posXOffset * g.FontSize;
     pos.y += window->DC.CurrLineTextBaseOffset;
     const ImRect bb(pos, pos + totalSize);
+	auto hovered = ImGui::IsMouseHoveringRect(bb.Min, bb.Max);
 
-    if (!_isSet && !ImGui::IsMouseHoveringRect(bb.Min, bb.Max)) return;
+    if (_status == Breakpoint::Status::DELETED && !hovered) return;
+
+	ImU32 color = hovered ? DISASM_TBL_COLOR_BREAKPOINT_HOVER :
+		_status == Breakpoint::Status::ACTIVE ? DISASM_TBL_COLOR_BREAKPOINT : DISASM_TBL_COLOR_BREAKPOINT_DISABLED;
+
+	float scale = hovered ? DISASM_TBL_BREAKPOINT_SIZE_HOVERED : DISASM_TBL_BREAKPOINT_SIZE;
 
 	ImGui::ItemSize(_itemHasSize ? totalSize : ImVec2{}, 0.0f);
-
     if (!ImGui::ItemAdd(bb, 0))
         return;
 

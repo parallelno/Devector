@@ -9,6 +9,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "..\Devector\Types.h"
+#include "..\Devector\Breakpoint.h"
 
 namespace dev 
 {
@@ -23,6 +24,7 @@ namespace dev
 #define DEV_COL32_B_SHIFT    8
 #define DEV_COL32_A_SHIFT    0
 
+	// 0xRRGGBBAA
 	static constexpr ImVec4 IM_VEC4(const uint32_t _color)
 	{
 		return ImVec4(
@@ -81,7 +83,7 @@ namespace dev
 	void DrawHelpMarker(const char* _text);
 	void DrawPopup(const char* _title, const char* _text);
 	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
-	void DrawBreakpoint(const bool _isSet, const float _dpiScale, const float _posXOffset = -0.2f, const bool _itemHasSize = false);
+	void DrawBreakpoint(const Breakpoint::Status _status, const float _dpiScale, const float _posXOffset = -0.2f, const bool _itemHasSize = false);
 	//void DrawProperty1(const std::string& _name, const std::string& _value, const ImVec2& _aligment = { 1.0f, 0.5f });
 	void DrawProperty2(const std::string& _name, const std::string& _value);
 	void DrawSeparator2(const std::string& _text);

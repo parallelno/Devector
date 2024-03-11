@@ -43,6 +43,8 @@ namespace dev
 
 		std::list<std::wstring> m_recentFilePaths;
 
+		bool m_reqDisasmUpdate = false;
+
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ,
 			const int _mainWindowWidth, const int _mainWindowHeight);

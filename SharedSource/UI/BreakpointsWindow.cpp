@@ -3,10 +3,11 @@
 #include "Utils\StringUtils.h"
 
 dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
-	const float* const _fontSizeP, const float* const _dpiScaleP)
+	const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware)
+	m_hardware(_hardware),
+	m_reqDisasmUpdate(_reqDisasmUpdate)
 {}
 
 void dev::BreakpointsWindow::Update()
@@ -54,21 +55,35 @@ void dev::BreakpointsWindow::DrawContextMenu(const char* _itemID)
 			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &active);
 			// addr
 			DrawProperty2EditableS("Global Address", "##BPContextAddress", & globalAddrS, "0x100");
-			// Condition
+			// condition
 			DrawProperty2EditableS("Condition", "##BPContextCondition", &conditionS, "");
-			// Comment
+			// comment
 			DrawProperty2EditableS("Comment", "##BPContextComment", &commentS, "");
 
-			// OK button
+			
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
-			ImGui::Text(""); // negative space after properties
-			if (ImGui::Button("Ok", buttonSize))
+			// warning
+			bool warning = false;
+			GlobalAddr globalAddr = dev::StrHexToInt(globalAddrS.c_str());
+			std::string warningS = "";
+			if (globalAddr > Memory::GLOBAL_MEMORY_LEN - 1) {
+				warningS = "Too large address";
+				warning = true;
+			}
+			//ImGui::SameLine(); 
+			ImGui::TextColored(COLOR_WARNING, warningS.c_str());
+			
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+			// OK button
+			if (ImGui::Button("Ok", buttonSize) && !warning)
 			{
-				GlobalAddr globalAddr = dev::StrHexToInt(globalAddrS.c_str());
 				m_hardware.m_debugger.AddBreakpoint(globalAddr, active ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, commentS);
 				ImGui::CloseCurrentPopup();
+				m_reqDisasmUpdate = true;
 			}
 			// Cancel button
 			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();

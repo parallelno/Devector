@@ -5,11 +5,12 @@
 
 dev::DisasmWindow::DisasmWindow(
         dev::Hardware& _hardware, ImFont* fontComment, 
-        const float* const _fontSize, const float* const _dpiScale)
+        const float* const _fontSize, const float* const _dpiScale, bool& _reqDisasmUpdate)
     :
     BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
     m_hardware(_hardware),
-    m_fontComment(fontComment)
+    m_fontCommentP(fontComment),
+    m_reqDisasmUpdate(_reqDisasmUpdate)
 {}
 
 void dev::DisasmWindow::Update()
@@ -89,7 +90,6 @@ void dev::DisasmWindow::DrawDisassembly()
 {
     if (m_disasm.empty()) return;
 
-    //m_reqDisasmUpdatem = ReqDisasmUpdate::NONE;
     static int item_current_idx = 0;
     int scrollDirection = 0;
 
@@ -115,13 +115,6 @@ void dev::DisasmWindow::DrawDisassembly()
         ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthFixed, CODE_W);
         ImGui::TableSetupColumn("stats", ImGuiTableColumnFlags_WidthFixed, STATS_W);
         ImGui::TableSetupColumn("consts");
-
-        /*
-        ImGuiListClipper clipper;
-        clipper.Begin((int)m_disasm.size());
-        while (clipper.Step())
-            for (int row_idx = clipper.DisplayStart; row_idx < clipper.DisplayEnd; row_idx++)
-        */
 
         for (int line_idx = 0; line_idx < 200; line_idx++)
             {
@@ -152,7 +145,7 @@ void dev::DisasmWindow::DrawDisassembly()
 
                 // draw breakpoints
                 ImGui::SameLine();
-                dev::DrawBreakpoint(true, *m_dpiScaleP);
+                dev::DrawBreakpoint(line.breakpointStatus, *m_dpiScaleP);
 
                 // draw program counter icon
                 if (isCode && addr == m_hardware.m_cpu.m_pc)
@@ -176,8 +169,8 @@ void dev::DisasmWindow::DrawDisassembly()
                 // draw a comment
                 if (isComment)
                 {
-                    if (m_fontComment) {
-                        ImGui::PushFont(m_fontComment);
+                    if (m_fontCommentP) {
+                        ImGui::PushFont(m_fontCommentP);
                     }
 
                     // the code column
@@ -185,7 +178,7 @@ void dev::DisasmWindow::DrawDisassembly()
                     ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, line.str.c_str());
 
                     // Revert to the default font
-                    if (m_fontComment) {
+                    if (m_fontCommentP) {
                         ImGui::PopFont();
                     }
 
@@ -296,6 +289,11 @@ void dev::DisasmWindow::DrawDisassembly()
     }
     ImGui::PopStyleVar(2);
 
+    if (m_reqDisasmUpdate) 
+    {
+        m_reqDisasmUpdate = false;
+        UpdateDisasm(m_disasm[0].addr, 0);
+    }
     // check the keys
     if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
     {
