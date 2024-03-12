@@ -196,57 +196,76 @@ void dev::DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir, const floa
 	ImGui::RenderArrow(window->DrawList, drawPos, _color, _dir);
 }
 
-void dev::DrawBreakpoint(const Breakpoint::Status _status, const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
+bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
 {
-    ImGuiWindow* window = ImGui::GetCurrentWindow();
-    if (window->SkipItems)
-        return;
-
-	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT = dev::IM_U32(0xFF2828C0);
-	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT_HOVER = dev::IM_U32(0xFF5538FF);
-	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT_DISABLED = dev::IM_U32(0x606060FF);
+	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT = dev::IM_U32(0xFF2828A0);
+	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT_HOVER = dev::IM_U32(0xFFD010C0);
+	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT_DISABLED = dev::IM_U32(0x656565D0);
 	static constexpr float DISASM_TBL_BREAKPOINT_SIZE = 0.35f;
 	static constexpr float DISASM_TBL_BREAKPOINT_SIZE_HOVERED = 0.40f;
 
+    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
     ImGuiContext& g = *GImGui;
+	
     const ImGuiStyle& style = g.Style;
+	const ImGuiID id = window->GetID(label);
+
+	g.ActiveId = id;
 
     const ImVec2 totalSize = ImVec2(g.FontSize, g.FontSize);
 	ImVec2 pos = window->DC.CursorPos;
 	pos.x += _posXOffset * g.FontSize;
     pos.y += window->DC.CurrLineTextBaseOffset;
     const ImRect bb(pos, pos + totalSize);
-	auto hovered = ImGui::IsMouseHoveringRect(bb.Min, bb.Max);
-
-    if (_status == Breakpoint::Status::DELETED && !hovered) return;
-
-	ImU32 color = hovered ? DISASM_TBL_COLOR_BREAKPOINT_HOVER :
-		_status == Breakpoint::Status::ACTIVE ? DISASM_TBL_COLOR_BREAKPOINT : DISASM_TBL_COLOR_BREAKPOINT_DISABLED;
-
-	float scale = hovered ? DISASM_TBL_BREAKPOINT_SIZE_HOVERED : DISASM_TBL_BREAKPOINT_SIZE;
 
 	ImGui::ItemSize(_itemHasSize ? totalSize : ImVec2{}, 0.0f);
     if (!ImGui::ItemAdd(bb, 0))
-        return;
+        return false;
 
-    // Render
+	auto hovered = ImGui::IsMouseHoveringRect(bb.Min, bb.Max);
+	bool pressed = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+	bool ctrlPressed = ImGui::IsKeyDown(ImGuiKey_LeftCtrl);
+
+	if (hovered && pressed)
+	{
+		if (*_statusP == Breakpoint::Status::DELETED){
+			*_statusP = Breakpoint::Status::ACTIVE;
+		}
+		else if (*_statusP == Breakpoint::Status::DISABLED){
+			*_statusP = Breakpoint::Status::ACTIVE;
+		}
+		else if (*_statusP == Breakpoint::Status::ACTIVE) 
+		{
+			if (ctrlPressed) {
+				*_statusP = Breakpoint::Status::DISABLED;
+			}
+			else {
+				*_statusP = Breakpoint::Status::DELETED;
+			}
+		}
+			
+		
+		ImGui::MarkItemEdited(id);
+	}
+
+	ImU32 color = *_statusP == Breakpoint::Status::ACTIVE ? DISASM_TBL_COLOR_BREAKPOINT : DISASM_TBL_COLOR_BREAKPOINT_DISABLED;
     auto drawPos = bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
-    window->DrawList->AddCircleFilled(drawPos, g.FontSize * scale * _dpiScale, color, 8);
-}
-/*
-void dev::HardwareStatsWindow::DrawProperty1(const std::string& _name, const std::string& _value, const ImVec2& _aligment)
-{
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
 
-	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name.c_str(), _aligment);
-	ImGui::PopStyleColor();
 
-	ImGui::SameLine();
-	TextAligned(_value.c_str(), _aligment);
+	// render the hover highlight
+	if (hovered)
+		window->DrawList->AddCircleFilled(drawPos, g.FontSize * DISASM_TBL_BREAKPOINT_SIZE_HOVERED * _dpiScale, DISASM_TBL_COLOR_BREAKPOINT_HOVER, 8);
+
+	// render the breakpoint
+	if (*_statusP != Breakpoint::Status::DELETED)
+		window->DrawList->AddCircleFilled(drawPos, g.FontSize * DISASM_TBL_BREAKPOINT_SIZE * _dpiScale, color, 8);
+
+	return pressed;
 }
-*/
+
 void dev::DrawProperty2(const std::string& _name, const std::string& _value)
 {
 	ImGui::TableNextRow();
@@ -295,3 +314,96 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label, b
 	ImGui::TableNextColumn();
 	ImGui::Checkbox(_label, _val);
 }
+/*
+void dev::MouseHandling(ImGuiContext& _g, ImGuiButtonFlags _flags, ImGuiID id)
+{
+	auto pressed = false;
+	// Mouse handling
+	const ImGuiID test_owner_id = ImGuiKeyOwner_Any;
+	ImGuiWindow* window = ImGui::GetCurrentWindow();
+
+	// Default only reacts to left mouse button
+	if ((_flags & ImGuiButtonFlags_MouseButtonMask_) == 0)
+		_flags |= ImGuiButtonFlags_MouseButtonDefault_;
+
+	// Default behavior requires click + release inside bounding box
+	if ((_flags & ImGuiButtonFlags_PressedOnMask_) == 0)
+		_flags |= ImGuiButtonFlags_PressedOnDefault_;
+
+	// Default behavior inherited from item flags
+	// Note that _both_ ButtonFlags and ItemFlags are valid sources, so copy one into the item_flags and only check that.
+	ImGuiItemFlags item_flags = (g.LastItemData.ID == id ? g.LastItemData.InFlags : g.CurrentItemFlags);
+	if (_flags & ImGuiButtonFlags_AllowOverlap)
+		item_flags |= ImGuiItemFlags_AllowOverlap;
+	if (_flags & ImGuiButtonFlags_Repeat)
+		item_flags |= ImGuiItemFlags_ButtonRepeat;
+
+	ImGuiWindow* backup_hovered_window = g.HoveredWindow;
+	const bool flatten_hovered_children = (_flags & ImGuiButtonFlags_FlattenChildren) && g.HoveredWindow && g.HoveredWindow->RootWindowDockTree == window->RootWindowDockTree;
+	if (flatten_hovered_children)
+		g.HoveredWindow = window;
+
+	// Poll mouse buttons
+	// - 'mouse_button_clicked' is generally carried into ActiveIdMouseButton when setting ActiveId.
+	// - Technically we only need some values in one code path, but since this is gated by hovered test this is fine.
+	int mouse_button_clicked = -1;
+	int mouse_button_released = -1;
+	for (int button = 0; button < 3; button++)
+		if (_flags & (ImGuiButtonFlags_MouseButtonLeft << button)) // Handle ImGuiButtonFlags_MouseButtonRight and ImGuiButtonFlags_MouseButtonMiddle here.
+		{
+			if (ImGui::IsMouseClicked(button, test_owner_id) && mouse_button_clicked == -1) { mouse_button_clicked = button; }
+			if (ImGui::IsMouseReleased(button, test_owner_id) && mouse_button_released == -1) { mouse_button_released = button; }
+		}
+
+	// Process initial action
+	if (!(_flags & ImGuiButtonFlags_NoKeyModifiers) || (!_g.IO.KeyCtrl && !_g.IO.KeyShift && !_g.IO.KeyAlt))
+	{
+		if (mouse_button_clicked != -1 && _g.ActiveId != id)
+		{
+			if (!(_flags & ImGuiButtonFlags_NoSetKeyOwner))
+				ImGui::SetKeyOwner(ImGui::MouseButtonToKey(mouse_button_clicked), id);
+			if (_flags & (ImGuiButtonFlags_PressedOnClickRelease | ImGuiButtonFlags_PressedOnClickReleaseAnywhere))
+			{
+				ImGui::SetActiveID(id, window);
+				_g.ActiveIdMouseButton = mouse_button_clicked;
+				if (!(_flags & ImGuiButtonFlags_NoNavFocus))
+					ImGui::SetFocusID(id, window);
+				ImGui::FocusWindow(window);
+			}
+			if ((_flags & ImGuiButtonFlags_PressedOnClick) || ((_flags & ImGuiButtonFlags_PressedOnDoubleClick) && _g.IO.MouseClickedCount[mouse_button_clicked] == 2))
+			{
+				pressed = true;
+				if (_flags & ImGuiButtonFlags_NoHoldingActiveId)
+					ImGui::ClearActiveID();
+				else
+					ImGui::SetActiveID(id, window); // Hold on ID
+				if (!(_flags & ImGuiButtonFlags_NoNavFocus))
+					ImGui::SetFocusID(id, window);
+				_g.ActiveIdMouseButton = mouse_button_clicked;
+				ImGui::FocusWindow(window);
+			}
+		}
+		if (_flags & ImGuiButtonFlags_PressedOnRelease)
+		{
+			if (mouse_button_released != -1)
+			{
+				const bool has_repeated_at_least_once = (item_flags & ImGuiItemFlags_ButtonRepeat) && _g.IO.MouseDownDurationPrev[mouse_button_released] >= _g.IO.KeyRepeatDelay; // Repeat mode trumps on release behavior
+				if (!has_repeated_at_least_once)
+					pressed = true;
+				if (!(_flags & ImGuiButtonFlags_NoNavFocus))
+					ImGui::SetFocusID(id, window);
+				ImGui::ClearActiveID();
+			}
+		}
+
+		// 'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
+		// Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing finer RepeatDelay/RepeatRate settings.
+		if (_g.ActiveId == id && (item_flags & ImGuiItemFlags_ButtonRepeat))
+			if (_g.IO.MouseDownDuration[_g.ActiveIdMouseButton] > 0.0f && ImGui::IsMouseClicked(_g.ActiveIdMouseButton, test_owner_id, ImGuiInputFlags_Repeat))
+				pressed = true;
+	}
+
+	if (pressed)
+		_g.NavDisableHighlight = true;
+}
+*/

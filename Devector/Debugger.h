@@ -77,8 +77,9 @@ namespace dev
 
 		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) ->Disasm;
 
+		void SetBreakpointStatus(const GlobalAddr _globalAddr, const Breakpoint::Status _status);
 		void AddBreakpoint(const GlobalAddr _globalAddr, 
-			const Breakpoint::Status _active = Breakpoint::Status::ACTIVE, const std::string& _comment = "");
+			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE, const std::string& _comment = "");
 		void DelBreakpoint(const GlobalAddr _globalAddr);
 		bool CheckBreakpoints(const GlobalAddr _globalAddr);
 		void PrintBreakpoints();

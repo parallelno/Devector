@@ -24,10 +24,20 @@ auto dev::Breakpoint::GetStatusI() const
 	return static_cast<int>(m_status);
 }
 
+void dev::Breakpoint::SetStatus(const Status _status)
+{
+	m_status = _status;
+}
+
 auto dev::Breakpoint::GetComment() const
 ->const std::string&
 {
 	return m_comment;
+}
+
+bool dev::Breakpoint::IsActive() const
+{
+	return m_status == Status::ACTIVE;
 }
 
 auto dev::Breakpoint::IsActiveS() const -> const char*

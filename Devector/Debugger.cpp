@@ -370,71 +370,35 @@ void dev::Debugger::LoadLabels(const std::wstring& _path)
 	if (!dev::IsFileExist(_path)) return;
 
 	// load labels
-	auto result = dev::LoadFile(_path);
-	if (!result) return;
-
-	char* labels_c(reinterpret_cast<char*>(result->data()));
+	auto lines = dev::LoadTextFile(_path);
+	if (lines.empty()) return;
 	
-	char* labelValPairContext = nullptr; // for strtok_s
-	
-	char* label_c = strtok_s(labels_c, " $\n", &labelValPairContext);
-	char* addr_c = strtok_s(nullptr, " $\n", &labelValPairContext);
-	
-	int addr = 0;
-	char* end;
-
-	char* labelContext = nullptr; // for strtok_s
-
-	while (label_c != nullptr)
+	for( const auto& line : lines)
 	{
-		if (addr_c == nullptr) break;
+		//char* labelBeforePeriod_c = strtok_s(label_c, " .&\n", &labelContext);
+		auto label_addr = dev::Split(line, ' ');
+		if (label_addr.size() != 2) continue;
 
-		char* labelBeforePeriod_c = strtok_s(label_c, " .&\n", &labelContext);
+		const auto& labelName = label_addr[0];
+		auto addr = StrHexToInt(label_addr[1].c_str()+1); // +1 to skip the '$' char
+		// skip if the label name is empty or the addr is not valid
+		if (labelName.empty() ||  addr < 0 || addr > Memory::GLOBAL_MEMORY_LEN) continue;
+		// skip if the label name contains '.' meaning it is a labl in the Macro. Macros are not supported in the disasm, so skip it.
+		if (labelName.find('.') != std::string::npos) continue;
 
-		addr = strtol(addr_c, &end, 16);
-		/*
-		if (std::string(label_c) == "main_start")
+		if (IsConstLabel(labelName.c_str()))
 		{
-			int temp = 1;
-		}
-		*/
-		// check if it is a CONSTANT_NAME
-		if (IsConstLabel(labelBeforePeriod_c))
-		{
-			if (!m_consts.contains(addr))
-			{
-				m_consts.emplace(addr, AddrLabels{ std::string(label_c) });
-			}
-			else
-			{
-				m_consts[addr].push_back(label_c);
-			}
+			m_consts.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
 		}
 		// check if it is an __external_label
-		else if (strlen(label_c) >= 2 && label_c[0] == '_' && label_c[1] == '_')
+		else if (labelName.size() >= 2 && labelName[0] == '_' && labelName[1] == '_')
 		{
-			if (!m_externalLabels.contains(addr))
-			{
-				m_externalLabels.emplace(addr, AddrLabels{ std::string(label_c) });
-			}
-			else
-			{
-				m_externalLabels[addr].push_back(label_c);
-			}
+			m_externalLabels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
 		}
 		else
 		{
-			if (!m_labels.contains(addr))
-			{
-				m_labels.emplace(addr, AddrLabels{ std::string(label_c) });
-			}
-			else
-			{
-				m_labels[addr].push_back(label_c);
-			}
+			m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
 		}
-		label_c = strtok_s(nullptr, " $\n", &labelValPairContext);
-		addr_c = strtok_s(nullptr, " $\n", &labelValPairContext);
 	}
 }
 
@@ -635,7 +599,22 @@ bool dev::Debugger::CheckBreak()
 //
 //////////////////////////////////////////////////////////////
 
-void dev::Debugger::AddBreakpoint(const GlobalAddr _globalAddr, const Breakpoint::Status _active, const std::string& _comment)
+void dev::Debugger::SetBreakpointStatus(const GlobalAddr _globalAddr, const Breakpoint::Status _status)
+{
+	if (_status == Breakpoint::Status::DELETED)
+	{
+		DelBreakpoint(_globalAddr);
+		return;
+	}
+	auto bp = m_breakpoints.find(_globalAddr);
+	if (bp != m_breakpoints.end()) {
+		bp->second.SetStatus(_status);
+		return;
+	}
+	AddBreakpoint(_globalAddr, _status);
+}
+
+void dev::Debugger::AddBreakpoint(const GlobalAddr _globalAddr, const Breakpoint::Status _status, const std::string& _comment)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 	auto bp = m_breakpoints.find(_globalAddr);
@@ -644,7 +623,7 @@ void dev::Debugger::AddBreakpoint(const GlobalAddr _globalAddr, const Breakpoint
 		m_breakpoints.erase(bp);
 	}
 
-	m_breakpoints.emplace(_globalAddr, std::move(Breakpoint(_globalAddr, _active, _comment)));
+	m_breakpoints.emplace(_globalAddr, std::move(Breakpoint(_globalAddr, _status, _comment)));
 }
 
 void dev::Debugger::DelBreakpoint(const GlobalAddr _globalAddr)

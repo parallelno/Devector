@@ -90,7 +90,7 @@ void dev::DisasmWindow::DrawDisassembly()
 {
     if (m_disasm.empty()) return;
 
-    static int item_current_idx = 0;
+    static int selectedLineIdx = 0;
     int scrollDirection = 0;
 
     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
@@ -116,42 +116,44 @@ void dev::DisasmWindow::DrawDisassembly()
         ImGui::TableSetupColumn("stats", ImGuiTableColumnFlags_WidthFixed, STATS_W);
         ImGui::TableSetupColumn("consts");
 
-        for (int line_idx = 0; line_idx < 200; line_idx++)
+        for (int lineIdx = 0; lineIdx < 200; lineIdx++)
             {
                 // TODO: fix it. replace with fixed amount of lines and without a need to check the end of the window
                 if (IsDisasmTableOutOfWindow()) break;
 
                 ImGui::TableNextRow();
 
-                if (line_idx >= m_disasm.size()) break;
+                if (lineIdx >= m_disasm.size()) break;
 
-                auto& line = m_disasm[line_idx];
+                auto& line = m_disasm[lineIdx];
 
                 bool isComment = line.type == Debugger::DisasmLine::Type::COMMENT;
                 bool isCode = line.type == Debugger::DisasmLine::Type::CODE;
                 int addr = line.addr;
 
-                // the breakpoints and the execution cursor column
-                char disasmLineId_s[32];
-                sprintf_s(disasmLineId_s, "##disasmLineId%04d", line_idx);
-
+                // the line selection/highlight
                 ImGui::TableNextColumn();
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_BRK);
-                const bool is_selected = (item_current_idx == line_idx);
-                if (ImGui::Selectable(disasmLineId_s, is_selected, ImGuiSelectableFlags_SpanAllColumns))
+                const bool isSelected = selectedLineIdx == lineIdx;
+                if (ImGui::Selectable(std::format("##disasmLineId{:04d}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
                 {
-                    item_current_idx = line_idx;
+                    selectedLineIdx = lineIdx;
                 }
 
                 // draw breakpoints
                 ImGui::SameLine();
-                dev::DrawBreakpoint(line.breakpointStatus, *m_dpiScaleP);
+                auto bpStatus = line.breakpointStatus;
+                if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
+                {
+                    m_hardware.m_debugger.SetBreakpointStatus(addr, bpStatus);
+                    m_reqDisasmUpdate = true;
+                }
 
                 // draw program counter icon
                 if (isCode && addr == m_hardware.m_cpu.m_pc)
                 {
                     ImGui::SameLine();
-                    dev::DrawProgramCounter(DISASM_TBL_COLOR_PC, ImGuiDir_Right, *m_dpiScaleP);
+                    //dev::DrawProgramCounter(DISASM_TBL_COLOR_PC, ImGuiDir_Right, *m_dpiScaleP);
                 }
 
 

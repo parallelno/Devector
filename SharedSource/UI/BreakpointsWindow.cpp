@@ -25,7 +25,6 @@ void dev::BreakpointsWindow::Update()
 void dev::BreakpointsWindow::DrawProperty(const std::string& _name, const ImVec2& _aligment)
 {
 	ImGui::TableNextColumn();
-
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
 	TextAligned(_name.c_str(), _aligment);
 	ImGui::PopStyleColor();
@@ -34,7 +33,7 @@ void dev::BreakpointsWindow::DrawProperty(const std::string& _name, const ImVec2
 // should be called right after ImGui::EndTable();
 void dev::BreakpointsWindow::DrawContextMenu(const char* _itemID)
 {
-	static bool active = true;
+	static bool isActive = true;
 	static std::string globalAddrS = "0x100";
 	static std::string conditionS = "";
 	static std::string commentS = "";
@@ -52,7 +51,7 @@ void dev::BreakpointsWindow::DrawContextMenu(const char* _itemID)
 			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
 			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
 			// status
-			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &active);
+			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive);
 			// addr
 			DrawProperty2EditableS("Global Address", "##BPContextAddress", & globalAddrS, "0x100");
 			// condition
@@ -81,9 +80,9 @@ void dev::BreakpointsWindow::DrawContextMenu(const char* _itemID)
 			// OK button
 			if (ImGui::Button("Ok", buttonSize) && !warning)
 			{
-				m_hardware.m_debugger.AddBreakpoint(globalAddr, active ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, commentS);
-				ImGui::CloseCurrentPopup();
+				m_hardware.m_debugger.AddBreakpoint(globalAddr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, commentS);
 				m_reqDisasmUpdate = true;
+				ImGui::CloseCurrentPopup();
 			}
 			// Cancel button
 			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
@@ -98,6 +97,7 @@ void dev::BreakpointsWindow::DrawContextMenu(const char* _itemID)
 
 void dev::BreakpointsWindow::DrawTable()
 {
+	static int selectedAddr = 0;
 	const char* tableName = "##Breakpoints";
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
@@ -109,7 +109,7 @@ void dev::BreakpointsWindow::DrawTable()
 		//ImGuiTableFlags_ContextMenuInBody;
 	if (ImGui::BeginTable(tableName, 4, flags))
 	{
-		ImGui::TableSetupColumn("##BPActive", ImGuiTableColumnFlags_WidthFixed, 30);
+		ImGui::TableSetupColumn("##BPActive", ImGuiTableColumnFlags_WidthFixed, 25);
 		ImGui::TableSetupColumn("GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110);
 		ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 180);
 		ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch);
@@ -121,12 +121,26 @@ void dev::BreakpointsWindow::DrawTable()
 
 		for (const auto& [addr, breakpoint] : breakpoints)
 		{
-			ImGui::TableNextRow();
+			ImGui::TableNextRow(ImGuiTableRowFlags_None, 21.0f);
 
 			// isActive
-			DrawProperty(breakpoint.IsActiveS());
+			ImGui::TableNextColumn();
+			auto isActive = breakpoint.IsActive();
+			ImGui::Checkbox(std::format("##{:05X}", addr).c_str(), &isActive);
+			if (isActive != breakpoint.IsActive())
+			{
+				m_hardware.m_debugger.AddBreakpoint(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, breakpoint.GetComment());
+				m_reqDisasmUpdate = true;
+			}
 			// GlobalAddr
-			DrawProperty(std::format("0x{:05X}", addr));
+			ImGui::TableNextColumn();
+			ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+			const bool isSelected = selectedAddr == addr;
+			if (ImGui::Selectable(std::format("0x{:05X}", addr).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
+			{
+				selectedAddr = addr;
+			}
+			ImGui::PopStyleColor();
 			// Condition
 			DrawProperty("");
 			// Comment

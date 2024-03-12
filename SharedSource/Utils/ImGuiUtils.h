@@ -83,13 +83,12 @@ namespace dev
 	void DrawHelpMarker(const char* _text);
 	void DrawPopup(const char* _title, const char* _text);
 	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
-	void DrawBreakpoint(const Breakpoint::Status _status, const float _dpiScale, const float _posXOffset = -0.2f, const bool _itemHasSize = false);
-	//void DrawProperty1(const std::string& _name, const std::string& _value, const ImVec2& _aligment = { 1.0f, 0.5f });
+	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, const float _posXOffset = -0.2f, const bool _itemHasSize = false);
 	void DrawProperty2(const std::string& _name, const std::string& _value);
 	void DrawSeparator2(const std::string& _text);
 	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, const char* _hint = "");
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val);
-
+	//void MouseHandling(ImGuiContext& _g, ImGuiButtonFlags _flags, ImGuiID id);
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 }
 
