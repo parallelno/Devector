@@ -55,20 +55,20 @@ namespace dev
 
         Hardware();
 		~Hardware();
-		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result<const nlohmann::json>;
+		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result <nlohmann::json>;
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;
 
-		void AttachCheckBreak(CheckBreakFunc _funcP);
-		void AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc _funcP);
-		void AttachDebugOnRead(I8080::DebugOnReadFunc _funcP);
-		void AttachDebugOnWrite(I8080::DebugOnWriteFunc _funcP);
+		void AttachCheckBreak(CheckBreakFunc* _funcP);
+		void AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc* _funcP);
+		void AttachDebugOnRead(I8080::DebugOnReadFunc* _funcP);
+		void AttachDebugOnWrite(I8080::DebugOnWriteFunc* _funcP);
 
 	private:
-		std::atomic <CheckBreakFunc> m_checkBreak;
+		std::atomic <CheckBreakFunc*> m_checkBreak;
 		std::thread m_executionThread;
 		std::atomic<Status> m_status;
-		TQueue<std::pair<Req, nlohmann::json>> m_reqs;
-		TQueue<const nlohmann::json> m_reqRes;
+		TQueue <std::pair<Req, nlohmann::json>> m_reqs; // a request type
+		TQueue <nlohmann::json> m_reqRes;				// it's a result of a request sent back 
 
 		void Init();
 		void Run();
@@ -76,10 +76,10 @@ namespace dev
 		void ReqHandling(const bool _waitReq = false);
 		void Reset();
 		void SetMem(const nlohmann::json& _dataJ);
-		auto GetRegs() const -> const nlohmann::json;
-		auto GetRegPC() const -> const nlohmann::json;
-		auto GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> const nlohmann::json;
-		auto GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> const nlohmann::json;
+		auto GetRegs() const -> nlohmann::json;
+		auto GetRegPC() const -> nlohmann::json;
+		auto GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
+		auto GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 	};
 }
 #endif // !DEV_HARDWARE_H

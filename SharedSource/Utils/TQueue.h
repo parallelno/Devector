@@ -84,7 +84,7 @@ namespace dev {
             m_queue = {};
         }
 
-        inline bool empty() const
+        inline bool empty()
         {
             std::unique_lock<std::mutex> mlock(m_mutex);
             return m_queue.empty();

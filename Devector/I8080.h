@@ -7,8 +7,8 @@
 
 // Vector06 cpu timings:
 // every Vector06c instruction consists of one to six machine cycles
-// every Vector06c machine cycle consists of four active states aften called t-states (T1, T2, etc)
-// each t-state triggered by 3 Mhz clock clock
+// every Vector06c machine cycle consists of four active states often called t-states (T1, T2, etc)
+// each t-state triggered by 3 Mhz clock
 
 #pragma once
 #ifndef DEV_I8080_H
@@ -16,6 +16,7 @@
 
 #include <functional>
 #include <atomic>
+#include <mutex>
 
 #include "Types.h"
 #include "Memory.h"
@@ -72,16 +73,16 @@ namespace dev
 		void Init();
 		void Reset();
 		void ExecuteMachineCycle(bool _T50HZ);
-		bool IsInstructionExecuted();
+		bool IsInstructionExecuted() const;
 
-		void AttachDebugOnReadInstr(DebugOnReadInstrFunc _funcP);
-		void AttachDebugOnRead(DebugOnReadFunc _funcP);
-		void AttachDebugOnWrite(DebugOnWriteFunc _funcP);
+		void AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP);
+		void AttachDebugOnRead(DebugOnReadFunc* _funcP);
+		void AttachDebugOnWrite(DebugOnWriteFunc* _funcP);
 
 	private:
-		std::atomic <DebugOnReadInstrFunc> m_debugOnReadInstr;
-		std::atomic <DebugOnReadFunc> m_debugOnRead;
-		std::atomic <DebugOnWriteFunc> m_debugOnWrite;
+		std::atomic <DebugOnReadInstrFunc*> m_debugOnReadInstr = nullptr;
+		std::atomic <DebugOnReadFunc*> m_debugOnRead = nullptr;
+		std::atomic <DebugOnWriteFunc*> m_debugOnWrite = nullptr;
 
 		Memory& m_memory;
 		InputFunc Input;

@@ -32,10 +32,6 @@ void dev::I8080::Reset()
 	m_HLTA = m_INTE = m_IFF = m_eiPending = false;
 }
 
-void dev::I8080::AttachDebugOnReadInstr(DebugOnReadInstrFunc _funcP) { m_debugOnReadInstr.store(_funcP); }
-void dev::I8080::AttachDebugOnRead(DebugOnReadFunc _funcP) { m_debugOnRead.store(_funcP); }
-void dev::I8080::AttachDebugOnWrite(DebugOnWriteFunc _funcP) { m_debugOnWrite.store(_funcP); }
-
 void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
 {
 	m_IFF |= _T50HZ & m_INTE;
@@ -67,7 +63,7 @@ void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
 	m_cc += MACHINE_CC;
 }
 
-bool dev::I8080::IsInstructionExecuted()
+bool dev::I8080::IsInstructionExecuted() const
 {
 	return m_machineCycle != I8080::INSTR_EXECUTED;
 }
@@ -411,6 +407,10 @@ void dev::I8080::Decode()
 //
 ////////////////////////////////////////////////////////////////////////////
 
+void dev::I8080::AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP) { m_debugOnReadInstr.store(_funcP); }
+void dev::I8080::AttachDebugOnRead(DebugOnReadFunc* _funcP) { m_debugOnRead.store(_funcP); }
+void dev::I8080::AttachDebugOnWrite(DebugOnWriteFunc* _funcP) { m_debugOnWrite.store(_funcP); }
+
 uint8_t dev::I8080::ReadInstrMovePC()
 {
 	auto globalAddr = m_memory.GetGlobalAddr(m_pc, Memory::AddrSpace::RAM);
@@ -420,7 +420,7 @@ uint8_t dev::I8080::ReadInstrMovePC()
 	uint8_t _dataH = m_memory.GetByte(m_pc + 2, Memory::AddrSpace::RAM);
 
 	auto DebugOnReadInstr = m_debugOnReadInstr.load();
-	if (DebugOnReadInstr) DebugOnReadInstr(globalAddr, op_code, _dataH, _dataL, GetHL());
+	if (*DebugOnReadInstr) (*DebugOnReadInstr)(globalAddr, op_code, _dataH, _dataL, GetHL());
 	m_pc++;
 	return op_code;
 }
@@ -431,7 +431,7 @@ uint8_t dev::I8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
 
 	auto val = m_memory.GetByte(_addr, _addrSpace);
 	auto DebugOnRead = m_debugOnRead.load();
-	if (DebugOnRead) DebugOnRead(globalAddr, val);
+	if (*DebugOnRead) (*DebugOnRead)(globalAddr, val);
 
 	return val;
 }
@@ -442,7 +442,7 @@ void dev::I8080::WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _
 	
 	m_memory.SetByte(_addr, _value, _addrSpace);
 	auto DebugOnWrite = m_debugOnWrite.load();
-	if (DebugOnWrite) DebugOnWrite(globalAddr, _value);
+	if (DebugOnWrite) (*DebugOnWrite)(globalAddr, _value);
 }
 
 uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)

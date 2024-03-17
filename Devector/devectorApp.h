@@ -6,6 +6,9 @@
 #include "Utils/Status.h"
 #include "Utils/JsonUtils.h"
 #include "Utils/ImGuiApp.h"
+
+#include "Memory.h"
+
 #include "UI/HardwareStatsWindow.h"
 #include "UI/DisasmWindow.h"
 #include "UI/DisplayWindow.h"
@@ -14,9 +17,9 @@
 #include "Hardware.h"
 #include "Debugger.h"
 
-#include <mutex>
+//#include <mutex>
 #include <string>
-#include <atomic>
+//#include <atomic>
 
 namespace dev
 {
@@ -45,7 +48,6 @@ namespace dev
 		std::list<std::wstring> m_recentFilePaths;
 
 		bool m_reqDisasmUpdate = false;
-		//bool m_running = false;
 
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ,

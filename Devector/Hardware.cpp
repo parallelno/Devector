@@ -56,7 +56,7 @@ void dev::Hardware::Run()
                 ReqHandling();
                 auto CheckBreak = m_checkBreak.load();
                 auto pcGlobalAddr = m_memory.GetGlobalAddr(m_cpu.GetPC(), Memory::RAM);
-                if (CheckBreak && CheckBreak(pcGlobalAddr)) break;
+                if (*CheckBreak && (*CheckBreak)(pcGlobalAddr)) break;
 
             } while (!m_display.IsInt50Hz());
 
@@ -84,22 +84,23 @@ void dev::Hardware::SetMem(const nlohmann::json& _dataJ)
 
 // called from the external thread
 auto dev::Hardware::Request(const Req _req, const nlohmann::json& _dataJ)
--> Result<const nlohmann::json>
+-> Result<nlohmann::json>
 {
     m_reqs.push({ _req, _dataJ });
     return m_reqRes.pop();
 }
 
-void dev::Hardware::AttachCheckBreak(CheckBreakFunc _funcP) { m_checkBreak.store(_funcP); }
-void dev::Hardware::AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc _funcP) { m_cpu.AttachDebugOnReadInstr(_funcP); }
-void dev::Hardware::AttachDebugOnRead(I8080::DebugOnReadFunc _funcP) { m_cpu.AttachDebugOnRead(_funcP); }
-void dev::Hardware::AttachDebugOnWrite(I8080::DebugOnWriteFunc _funcP) { m_cpu.AttachDebugOnWrite(_funcP); }
+void dev::Hardware::AttachCheckBreak(CheckBreakFunc* _funcP) { m_checkBreak.store(_funcP); }
+void dev::Hardware::AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc* _funcP) { m_cpu.AttachDebugOnReadInstr(_funcP); }
+void dev::Hardware::AttachDebugOnRead(I8080::DebugOnReadFunc* _funcP) { m_cpu.AttachDebugOnRead(_funcP); }
+void dev::Hardware::AttachDebugOnWrite(I8080::DebugOnWriteFunc* _funcP) { m_cpu.AttachDebugOnWrite(_funcP); }
 
 void dev::Hardware::ReqHandling(const bool _waitReq)
 {
     if (!m_reqs.empty() || _waitReq)
-    {
+    {        
         auto result = m_reqs.pop();
+
         const auto& [req, dataj] = *result;
 
         switch (req)
@@ -193,7 +194,7 @@ auto dev::Hardware::GetFrame(const bool _vsync)
 }
 
 auto dev::Hardware::GetRegs() const
--> const nlohmann::json
+-> nlohmann::json
 {
     nlohmann::json out = {
         {"cc", m_cpu.GetCC() },
@@ -216,7 +217,7 @@ auto dev::Hardware::GetRegs() const
 }
 
 auto dev::Hardware::GetRegPC() const
--> const nlohmann::json
+-> nlohmann::json
 {
     nlohmann::json out = {
         {"pc", m_cpu.GetPC() },
@@ -225,7 +226,7 @@ auto dev::Hardware::GetRegPC() const
 }
 
 auto dev::Hardware::GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace)
--> const nlohmann::json
+-> nlohmann::json
 {
     Addr addr = _addr["addr"];
     nlohmann::json out = {
@@ -235,7 +236,7 @@ auto dev::Hardware::GetByte(const nlohmann::json _addr, const Memory::AddrSpace 
 }
 
 auto dev::Hardware::GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace)
--> const nlohmann::json
+-> nlohmann::json
 {
     Addr addr = _addr["addr"];
     nlohmann::json out = {

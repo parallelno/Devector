@@ -18,16 +18,15 @@ dev::Debugger::Debugger(Hardware& _hardware)
 
 void dev::Debugger::Init()
 {
-	m_hardware.AttachCheckBreak({ std::bind(&Debugger::CheckBreak, this, std::placeholders::_1) });
+	Hardware::CheckBreakFunc m_checkBreakFunc = std::bind(&Debugger::CheckBreak, this, std::placeholders::_1);
+	I8080::DebugOnReadInstrFunc m_debugOnReadInstrFunc = std::bind(&Debugger::ReadInstr, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
+	I8080::DebugOnReadFunc m_debugOnReadFunc = std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2);
+	I8080::DebugOnWriteFunc m_debugOnWriteFunc = std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2);
 
-	m_hardware.AttachDebugOnReadInstr(
-		{ std::bind(&Debugger::ReadInstr, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5) });
-
-	m_hardware.AttachDebugOnRead(
-		{ std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2) });
-	
-	m_hardware.AttachDebugOnWrite(
-		{ std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2) });
+	m_hardware.AttachCheckBreak( &m_checkBreakFunc );
+	m_hardware.AttachDebugOnReadInstr( &m_debugOnReadInstrFunc );
+	m_hardware.AttachDebugOnRead( &m_debugOnReadFunc );
+	m_hardware.AttachDebugOnWrite( &m_debugOnWriteFunc );
 
     m_memRuns.fill(0);
     m_memReads.fill(0);
@@ -596,14 +595,14 @@ bool dev::Debugger::CheckBreak(GlobalAddr _globalAddr)
 	if (m_wpBreak)
 	{
 		m_wpBreak = false;
-		PrintWatchpoints();
-		ResetWatchpoints();
+		//PrintWatchpoints();
+		//ResetWatchpoints();
 		return true;
 	}
 
 	auto break_ = CheckBreakpoints(_globalAddr);
 
-	if (break_) PrintWatchpoints();
+	//if (break_) PrintWatchpoints();
 
 	return break_;
 }

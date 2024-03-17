@@ -85,7 +85,6 @@ namespace dev
 			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE, const std::string& _comment = "");
 		void DelBreakpoint(const GlobalAddr _globalAddr);
 		bool CheckBreakpoints(const GlobalAddr _globalAddr);
-		void PrintBreakpoints();
 		auto GetBreakpoints() -> const Breakpoints;
 		auto GetBreakpointStatus(const GlobalAddr _globalAddr) -> const Breakpoint::Status;
 
@@ -95,7 +94,6 @@ namespace dev
 		void DelWatchpoint(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		bool CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value);
 		void ResetWatchpoints();
-		void PrintWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;
 
 		bool CheckBreak(GlobalAddr _globalAddr);
@@ -162,6 +160,12 @@ namespace dev
 		Breakpoints m_breakpoints;
 		Watchpoints m_watchpoints;
 		bool m_wpBreak;
+
+		Hardware::CheckBreakFunc m_checkBreakFunc;
+		I8080::DebugOnReadInstrFunc m_debugOnReadInstrFunc;
+		I8080::DebugOnReadFunc m_debugOnReadFunc;
+		I8080::DebugOnWriteFunc m_debugOnWriteFunc;
+
 	};
 }
 #endif // !DEV_DEBUGGER_H
