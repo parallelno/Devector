@@ -1,13 +1,13 @@
 #include "DisplayWindow.h"
 #include <gl/GL.h>
 
-dev::DisplayWindow::DisplayWindow(Display& _display, 
+dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
         const float* const _fontSizeP, const float* const _dpiScaleP)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_display(_display)
+    m_hardware(_hardware)
 {
-    CreateFrameBuffer(m_display.m_data, m_display.FRAME_W, m_display.FRAME_H);
+    CreateTexture(true);
 }
 
 void dev::DisplayWindow::Update()
@@ -27,13 +27,16 @@ void dev::DisplayWindow::DrawDisplay()
 
     if (m_frameTextureId)
     {
-        UpdateFrameBuffer();
+        CreateTexture(true);
         ImGui::Image((void*)(intptr_t)m_frameTextureId, ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
     }
 }
 
-void dev::DisplayWindow::CreateFrameBuffer(const ColorI _image[], const int _width, const int _height)
+// creates a textre
+void dev::DisplayWindow::CreateTexture(const bool _vsync)
 {
+    auto frameP = m_hardware.GetFrame(_vsync);
+
     // Create a OpenGL texture identifier
     if (!m_frameTextureId)
     {
@@ -49,11 +52,5 @@ void dev::DisplayWindow::CreateFrameBuffer(const ColorI _image[], const int _wid
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _width, _height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _image);
-}
-
-void dev::DisplayWindow::UpdateFrameBuffer()
-{
-    // TODO: optimization. Consider using glTexSubImage2D, Render-to-texture with FBO, Pixel Buffer Object PBO. 
-    CreateFrameBuffer(m_display.m_data, m_display.FRAME_W, m_display.FRAME_H);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Display::FRAME_W, Display::FRAME_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, frameP->data());
 }

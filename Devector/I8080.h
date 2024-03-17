@@ -15,6 +15,7 @@
 #define DEV_I8080_H
 
 #include <functional>
+#include <atomic>
 
 #include "Types.h"
 #include "Memory.h"
@@ -23,7 +24,6 @@ namespace dev
 {
 	class I8080
 	{
-	public:
 		uint64_t m_cc; // clock cycles. it's the debug related data
 		Addr m_pc, m_sp; // program counter, stack pointer
 		uint8_t m_a, m_b, m_c, m_d, m_e, m_h, m_l; // registers
@@ -55,36 +55,37 @@ namespace dev
 		static constexpr uint8_t OPCODE_RST7 = 0xff;
 		static constexpr uint8_t OPCODE_HLT = 0x76;
 
+	public:
 		// memory + io interface
-		using MemoryReadFunc = std::function <uint8_t (const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace)>;
-		using MemoryWriteFunc = std::function <void (const GlobalAddr _globalAddr, const uint8_t _value, const Memory::AddrSpace _addrSpace)>;
 		using InputFunc = std::function <uint8_t (const uint8_t _port)>;
 		using OutputFunc = std::function <void (const uint8_t _port, const uint8_t _value)>;
-		using DebugOnReadFunc = std::function<void(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _is_opcode)>;
-		using DebugOnWriteFunc = std::function<void(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val)>;
-
+		using DebugOnReadInstrFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl)>;
+		using DebugOnReadFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
+		using DebugOnWriteFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
+	
 		I8080() = delete;
 		I8080(
-			MemoryReadFunc _memoryRead,
-			MemoryWriteFunc _memoryWrite,
+			Memory& _memory,
 			InputFunc _input,
 			OutputFunc _output);
 
 		void Init();
+		void Reset();
 		void ExecuteMachineCycle(bool _T50HZ);
+		bool IsInstructionExecuted();
 
-		DebugOnReadFunc DebugOnRead;
-		DebugOnWriteFunc DebugOnWrite;
+		void AttachDebugOnReadInstr(DebugOnReadInstrFunc _funcP);
+		void AttachDebugOnRead(DebugOnReadFunc _funcP);
+		void AttachDebugOnWrite(DebugOnWriteFunc _funcP);
 
 	private:
-		MemoryReadFunc MemoryRead;
-		MemoryWriteFunc MemoryWrite;
+		std::atomic <DebugOnReadInstrFunc> m_debugOnReadInstr;
+		std::atomic <DebugOnReadFunc> m_debugOnRead;
+		std::atomic <DebugOnWriteFunc> m_debugOnWrite;
+
+		Memory& m_memory;
 		InputFunc Input;
 		OutputFunc Output;
-
-		//static constexpr int INSTRUCTION_MAX = 0x100;
-		//using InstructionAction = void(*)();
-		//InstructionAction m_actions[INSTRUCTION_MAX];
 
 		void Decode();
 
@@ -95,8 +96,8 @@ namespace dev
 		////////////////////////////////////////////////////////////////////////////
 
 		uint8_t ReadInstrMovePC();
-		uint8_t ReadByte(const GlobalAddr _globalAddr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		void WriteByte(const GlobalAddr _globalAddr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		uint8_t ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		void WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		uint8_t ReadByteMovePC(Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 
 		////////////////////////////////////////////////////////////////////////////
@@ -105,16 +106,29 @@ namespace dev
 		//
 		////////////////////////////////////////////////////////////////////////////
 	public:
-		uint8_t GetFlags() const;
+		uint64_t GetCC() const;
+		uint16_t GetPC() const;
+		uint16_t GetSP() const;
 		uint16_t GetAF() const;
-		void SetFlags(uint8_t _psw);
 		uint16_t GetBC() const;
-		void SetBC(uint16_t _val);
 		uint16_t GetDE() const;
-		void SetDE(uint16_t _val);
 		uint16_t GetHL() const;
-		void SetHL(uint16_t _val);
+		uint8_t GetFlags() const;
+		bool GetFlagS() const;
+		bool GetFlagZ() const;
+		bool GetFlagAC() const;
+		bool GetFlagP() const;
+		bool GetFlagC() const;
+		bool GetINTE() const;
+		bool GetIFF() const;
+		bool GetHLTA() const;
+
 	private:
+		void SetBC(uint16_t _val);
+		void SetDE(uint16_t _val);
+		void SetHL(uint16_t _val);
+		void SetFlags(uint8_t _psw);
+
 		////////////////////////////////////////////////////////////////////////////
 		//
 		// Instruction helpers
@@ -128,15 +142,15 @@ namespace dev
 		void RRC();
 		void RAL();
 		void RAR();
-		void MOVRegReg(uint8_t& _ddd, uint8_t _sss);
-		void LoadRegPtr(uint8_t& _ddd, Addr _addr);
+		void MOVRegReg(uint8_t& _regDest, uint8_t _regSrc);
+		void LoadRegPtr(uint8_t& _regDest, Addr _addr);
 		void MOVMemReg(uint8_t _sss);
-		void MVIRegData(uint8_t& _ddd);
+		void MVIRegData(uint8_t& _regDest);
 		void MVIMemData();
 		void LDA();
 		void STA();
 		void STAX(Addr _addr);
-		void LXI(uint8_t& _hb, uint8_t& _lb);
+		void LXI(uint8_t& _regH, uint8_t& _regL);
 		void LXISP();
 		void LHLD();
 		void SHLD();
@@ -144,7 +158,7 @@ namespace dev
 		void XCHG();
 		void XTHL();
 		void PUSH(uint8_t _hb, uint8_t _lb);
-		void POP(uint8_t& _hb, uint8_t& _lb);
+		void POP(uint8_t& _regH, uint8_t& _regL);
 		void ADD(uint8_t _a, uint8_t _b, bool _cy);
 		void ADDMem(bool _cy);
 		void ADI(bool _cy);
@@ -152,13 +166,13 @@ namespace dev
 		void SUBMem(bool _cy);
 		void SBI(bool _cy);
 		void DAD(uint16_t _val);
-		void INR(uint8_t& _ddd);
+		void INR(uint8_t& _regDest);
 		void INRMem();
-		void DCR(uint8_t& _ddd);
+		void DCR(uint8_t& _regDest);
 		void DCRMem();
-		void INX(uint8_t& _hb, uint8_t& _lb);
+		void INX(uint8_t& _regH, uint8_t& _regL);
 		void INXSP();
-		void DCX(uint8_t& _hb, uint8_t& _lb);
+		void DCX(uint8_t& _regH, uint8_t& _regL);
 		void DCXSP();
 		void DAA();
 		void ANA(uint8_t _sss);

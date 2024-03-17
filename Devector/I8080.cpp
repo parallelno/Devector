@@ -1,13 +1,11 @@
 #include "I8080.h"
 
 dev::I8080::I8080(
-	MemoryReadFunc _memoryRead, 
-	MemoryWriteFunc _memoryWrite, 
+	Memory& _memory,
 	InputFunc _input, 
 	OutputFunc _output)
 	:
-	MemoryRead(_memoryRead),
-	MemoryWrite(_memoryWrite),
+	m_memory(_memory),
 	Input(_input),
 	Output(_output)
 {
@@ -20,13 +18,23 @@ dev::I8080::I8080(
 
 void dev::I8080::Init()
 {
+	m_a = m_b = m_c = m_d = m_e = m_h = m_l = 0;
+	Reset();
+}
+
+void dev::I8080::Reset()
+{
 	m_cc = m_pc = m_sp = 0;
-	m_a = m_b = m_c = m_d = m_e = m_h = m_l = m_instructionRegister = m_TMP = m_ACT = m_W = m_Z = 0;
+	m_instructionRegister = m_TMP = m_ACT = m_W = m_Z = 0;
 	m_flagS = m_flagZ = m_flagAC = m_flagP = m_flagC = m_INTE = false;
 
 	m_machineCycle = 0;
 	m_HLTA = m_INTE = m_IFF = m_eiPending = false;
 }
+
+void dev::I8080::AttachDebugOnReadInstr(DebugOnReadInstrFunc _funcP) { m_debugOnReadInstr.store(_funcP); }
+void dev::I8080::AttachDebugOnRead(DebugOnReadFunc _funcP) { m_debugOnRead.store(_funcP); }
+void dev::I8080::AttachDebugOnWrite(DebugOnWriteFunc _funcP) { m_debugOnWrite.store(_funcP); }
 
 void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
 {
@@ -57,6 +65,11 @@ void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
 
 	Decode();
 	m_cc += MACHINE_CC;
+}
+
+bool dev::I8080::IsInstructionExecuted()
+{
+	return m_machineCycle != I8080::INSTR_EXECUTED;
 }
 
 // an instruction execution time in macine cycles
@@ -400,24 +413,36 @@ void dev::I8080::Decode()
 
 uint8_t dev::I8080::ReadInstrMovePC()
 {
-	uint8_t op_code = MemoryRead(m_pc, Memory::AddrSpace::RAM);
-	DebugOnRead(m_pc, Memory::AddrSpace::RAM, op_code, true);
+	auto globalAddr = m_memory.GetGlobalAddr(m_pc, Memory::AddrSpace::RAM);
+
+	uint8_t op_code = m_memory.GetByte(m_pc, Memory::AddrSpace::RAM);
+	uint8_t _dataL = m_memory.GetByte(m_pc + 1, Memory::AddrSpace::RAM);
+	uint8_t _dataH = m_memory.GetByte(m_pc + 2, Memory::AddrSpace::RAM);
+
+	auto DebugOnReadInstr = m_debugOnReadInstr.load();
+	if (DebugOnReadInstr) DebugOnReadInstr(globalAddr, op_code, _dataH, _dataL, GetHL());
 	m_pc++;
 	return op_code;
 }
 
-uint8_t dev::I8080::ReadByte(const GlobalAddr _globalAddr, Memory::AddrSpace _addrSpace)
+uint8_t dev::I8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
 {
-	auto val = MemoryRead(_globalAddr, _addrSpace);
-	DebugOnRead(_globalAddr, _addrSpace, val, false);
+	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
+
+	auto val = m_memory.GetByte(_addr, _addrSpace);
+	auto DebugOnRead = m_debugOnRead.load();
+	if (DebugOnRead) DebugOnRead(globalAddr, val);
 
 	return val;
 }
 
-void dev::I8080::WriteByte(const GlobalAddr _globalAddr, uint8_t _value, Memory::AddrSpace _addrSpace)
+void dev::I8080::WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _addrSpace)
 {
-	MemoryWrite(_globalAddr, _value, _addrSpace);
-	DebugOnWrite(_globalAddr, _addrSpace, _value);
+	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
+	
+	m_memory.SetByte(_addr, _value, _addrSpace);
+	auto DebugOnWrite = m_debugOnWrite.load();
+	if (DebugOnWrite) DebugOnWrite(globalAddr, _value);
 }
 
 uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)
@@ -500,6 +525,18 @@ void dev::I8080::SetHL(uint16_t val)
 	m_l = (uint8_t)(val & 0xFF);
 }
 
+uint64_t dev::I8080::GetCC() const { return m_cc; }
+uint16_t dev::I8080::GetPC() const { return m_pc; }
+uint16_t dev::I8080::GetSP() const { return m_sp; }
+bool dev::I8080::GetFlagS() const {	return m_flagS; }
+bool dev::I8080::GetFlagZ() const { return m_flagZ; }
+bool dev::I8080::GetFlagAC() const { return m_flagAC; }
+bool dev::I8080::GetFlagP() const { return m_flagP; }
+bool dev::I8080::GetFlagC() const {	return m_flagC; }
+bool dev::I8080::GetINTE() const { return m_INTE; }
+bool dev::I8080::GetIFF() const { return m_IFF; }
+bool dev::I8080::GetHLTA() const { return m_HLTA; }
+
 ////////////////////////////////////////////////////////////////////////////
 //
 // Instruction helpers
@@ -579,23 +616,23 @@ void dev::I8080::RAR()
 	m_a |= (uint8_t)(cy ? 1 << 7 : 0);
 }
 
-void dev::I8080::MOVRegReg(uint8_t& _ddd, uint8_t _sss)
+void dev::I8080::MOVRegReg(uint8_t& _regDest, uint8_t _regSrc)
 {
 	if (m_machineCycle == 0)
 	{
-		m_TMP = _sss;
+		m_TMP = _regSrc;
 	}
 	else
 	{
-		_ddd = m_TMP;
+		_regDest = m_TMP;
 	}
 }
 
-void dev::I8080::LoadRegPtr(uint8_t& _ddd, Addr _addr)
+void dev::I8080::LoadRegPtr(uint8_t& _regDest, Addr _addr)
 {
 	if (m_machineCycle == 1)
 	{
-		_ddd = ReadByte(_addr);
+		_regDest = ReadByte(_addr);
 	}
 }
 
@@ -611,11 +648,11 @@ void dev::I8080::MOVMemReg(uint8_t _sss)
 	}
 }
 
-void dev::I8080::MVIRegData(uint8_t& _ddd)
+void dev::I8080::MVIRegData(uint8_t& _regDest)
 {
 	if (m_machineCycle == 1)
 	{
-		_ddd = ReadByteMovePC();
+		_regDest = ReadByteMovePC();
 	}
 }
 
@@ -671,15 +708,15 @@ void dev::I8080::STAX(Addr _addr)
 	}
 }
 
-void dev::I8080::LXI(uint8_t& _hb, uint8_t& _lb)
+void dev::I8080::LXI(uint8_t& _regH, uint8_t& _regL)
 {
 	if (m_machineCycle == 1)
 	{
-		_lb = ReadByteMovePC();
+		_regL = ReadByteMovePC();
 	}
 	else if (m_machineCycle == 2)
 	{
-		_hb = ReadByteMovePC();
+		_regH = ReadByteMovePC();
 	}
 }
 
@@ -805,16 +842,16 @@ void dev::I8080::PUSH(uint8_t _hb, uint8_t _lb)
 	}
 }
 
-void dev::I8080::POP(uint8_t& _hb, uint8_t& _lb)
+void dev::I8080::POP(uint8_t& _regH, uint8_t& _regL)
 {
 	if (m_machineCycle == 1)
 	{
-		_lb = ReadByte(m_sp, Memory::AddrSpace::STACK);
+		_regH = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
 	}
 	else if (m_machineCycle == 2)
 	{
-		_hb = ReadByte(m_sp, Memory::AddrSpace::STACK);
+		_regH = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
 	}
 }
@@ -909,18 +946,18 @@ void dev::I8080::DAD(uint16_t _val)
 	}
 }
 
-void dev::I8080::INR(uint8_t& _ddd)
+void dev::I8080::INR(uint8_t& _regDest)
 {
 	if (m_machineCycle == 0)
 	{
-		m_TMP = _ddd;
+		m_TMP = _regDest;
 		m_TMP++;
 		m_flagAC = (m_TMP & 0xF) == 0;
 		SetZSP(m_TMP);
 	}
 	else if (m_machineCycle == 1)
 	{
-		_ddd = m_TMP;
+		_regDest = m_TMP;
 	}
 }
 
@@ -939,18 +976,18 @@ void dev::I8080::INRMem()
 	}
 }
 
-void dev::I8080::DCR(uint8_t& _ddd)
+void dev::I8080::DCR(uint8_t& _regDest)
 {
 	if (m_machineCycle == 0)
 	{
-		m_TMP = _ddd;
+		m_TMP = _regDest;
 		m_TMP--;
 		m_flagAC = !((m_TMP & 0xF) == 0xF);
 		SetZSP(m_TMP);
 	}
 	else if (m_machineCycle == 1)
 	{
-		_ddd = m_TMP;
+		_regDest = m_TMP;
 	}
 }
 
@@ -969,17 +1006,17 @@ void dev::I8080::DCRMem()
 	}
 }
 
-void dev::I8080::INX(uint8_t& _hb, uint8_t& _lb)
+void dev::I8080::INX(uint8_t& _regH, uint8_t& _regL)
 {
 	if (m_machineCycle == 0)
 	{
-		m_Z = (uint8_t)(_lb + 1);
-		m_W = (uint8_t)(m_Z == 0 ? _hb + 1 : _hb);
+		m_Z = (uint8_t)(_regL + 1);
+		m_W = (uint8_t)(m_Z == 0 ? _regH + 1 : _regH);
 	}
 	else if (m_machineCycle == 1)
 	{
-		_hb = m_W;
-		_lb = m_Z;
+		_regH = m_W;
+		_regL = m_Z;
 	}
 }
 
@@ -996,17 +1033,17 @@ void dev::I8080::INXSP()
 	}
 }
 
-void dev::I8080::DCX(uint8_t& _hb, uint8_t& _lb)
+void dev::I8080::DCX(uint8_t& _regH, uint8_t& _regL)
 {
 	if (m_machineCycle == 0)
 	{
-		m_Z = (uint8_t)(_lb - 1);
-		m_W = (uint8_t)(m_Z == 0xff ? _hb - 1 : _hb);
+		m_Z = (uint8_t)(_regL - 1);
+		m_W = (uint8_t)(m_Z == 0xff ? _regH - 1 : _regH);
 	}
 	else if (m_machineCycle == 1)
 	{
-		_hb = m_W;
-		_lb = m_Z;
+		_regH = m_W;
+		_regL = m_Z;
 	}
 }
 

@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <array>
 #include <functional>
 
 #include "Types.h"
@@ -12,7 +13,12 @@ namespace dev
 {
 	class Memory
 	{
-	public: 
+	public:
+		enum AddrSpace
+		{
+			RAM, STACK, GLOBAL
+		};
+
 		static constexpr uint8_t MAPPING_MODE_RAM_OFF	= 0;
 		static constexpr uint8_t MAPPING_MODE_RAM_A000	= 1 << 0;
 		static constexpr uint8_t MAPPING_MODE_RAM_8000	= 1 << 1;
@@ -20,18 +26,12 @@ namespace dev
 
 		static constexpr GlobalAddr ROM_LOAD_ADDR = 0x100;
 
-		static constexpr size_t MEMORY_MAIN_LEN = 64 * 1024;
 		static constexpr size_t MEMORY_RAMDISK_LEN = 256 * 1024;
 		static constexpr size_t RAM_DISK_PAGE_LEN = 64 * 1024;
 		static constexpr size_t RAMDISK_MAX = 1;
 
+		static constexpr size_t MEMORY_MAIN_LEN = 64 * 1024;
 		static constexpr size_t GLOBAL_MEMORY_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAMDISK_MAX;
-		int8_t m_data[GLOBAL_MEMORY_LEN];
-
-		enum AddrSpace
-		{
-			RAM, STACK, GLOBAL
-		};
 
 		bool m_mappingModeStack;
 		size_t m_mappingPageStack;
@@ -42,15 +42,15 @@ namespace dev
 		uint8_t m_mappingPageRam; // 0 - mapping to the ram-disk page0, etc
 
 		void Init();
-		void Load(const std::vector<uint8_t>& _data);
-
-		auto GetByte(GlobalAddr _globalAddr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const -> uint8_t;
-		void SetByte(GlobalAddr _globalAddr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-
-		auto GetWord(GlobalAddr _globalAddr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const -> uint16_t;
-		int Length();
-		auto GetGlobalAddr(const GlobalAddr _globalAddr, AddrSpace _addrSpace) const -> GlobalAddr;
+		void Set(const std::vector<uint8_t>& _data, const Addr _loadAddr = ROM_LOAD_ADDR);
+		auto GetByte(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const->uint8_t;
+		void SetByte(GlobalAddr _globalAddr, uint8_t _value, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		auto GetWord(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const -> uint16_t;
+		auto GetGlobalAddr(const GlobalAddr _globalAddr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		bool IsRamMapped(const Addr _addr) const;
+
+	private:
+		std::array<int8_t, GLOBAL_MEMORY_LEN> m_data;
 	};
 }
 #endif // !DEV_MEMORY_H

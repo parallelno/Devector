@@ -10,6 +10,7 @@
 #include "Ui/BaseWindow.h"
 
 #include "..\Devector\Hardware.h"
+#include "..\Devector\Debugger.h"
 
 namespace dev
 {
@@ -48,6 +49,7 @@ namespace dev
 		static constexpr int DISASM_INSTRUCTION_OFFSET = -6;
 		
 		Hardware& m_hardware;
+		Debugger& m_debugger;
 		ImFont* m_fontCommentP = nullptr;
 		bool& m_reqDisasmUpdate;
 		char m_searchText[255] = "";
@@ -60,7 +62,7 @@ namespace dev
 
 	public:
 
-		DisasmWindow(Hardware& _hardware, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate);
+		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate);
 		void Update();
 		void UpdateDisasm(const GlobalAddr _globalAddr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET);
 	};

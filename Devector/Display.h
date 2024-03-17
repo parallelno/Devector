@@ -2,11 +2,18 @@
 #ifndef DEV_DISPLAY_H
 #define DEV_DISPLAY_H
 
+#include <vector>
+#include <array>
+#include <chrono>
+#include <mutex>
+
 #include "Types.h"
 #include "Memory.h"
 
 namespace dev
 {
+	using namespace std::chrono_literals;
+
 	class Display
 	{
 	private:
@@ -30,44 +37,49 @@ namespace dev
 		static constexpr bool MODE_256 = false;
 		static constexpr bool MODE_512 = true;
 	public:
-		static constexpr int FRAME_W = 768;
-		static constexpr int FRAME_H = 312;
+		static constexpr int FRAME_W = 768;					// a frame resolution including borders
+		static constexpr int FRAME_H = 312;					// a frame resolution including borders
+		static constexpr int FRAME_LEN = FRAME_W * FRAME_H;	// the size of a frame buffer
+
+		static constexpr auto VSYC_DELAY = 19968000ns; // For the realtime emulation it should be called by the (3000000/59904)Mz timer or every 0.019968 sec
+
+		using FrameBuffer = std::array <ColorI, FRAME_LEN>;
+
 	private:
-		static constexpr int VSYNC = 22;
-		static constexpr int VBLANK_TOP = 18;
-		static constexpr int BORDER_TOP = VSYNC + VBLANK_TOP;
-		static constexpr int BORDER_LEFT = 128;
-		static constexpr int RES_W = 512;
-		static constexpr int RES_H = 256;
-		static constexpr int RASTERIZED_PXLS = 16;
+		static constexpr int SCAN_VSYNC = 22;
+		static constexpr int SCAN_VBLANK_TOP = 18;
+		static constexpr int SCAN_BORDER_TOP = SCAN_VSYNC + SCAN_VBLANK_TOP;
+		static constexpr int BORDER_LEFT = 128;				// left border in pxls
+		static constexpr int BORDER_RIGHT = BORDER_LEFT;	// right border in pxls
+		static constexpr int RES_W = 512;			// horizontal screen resolution in MODE_512
+		static constexpr int RES_H = 256;			// vertical screen resolution
+		static constexpr int RASTERIZED_PXLS = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
 		static constexpr int PALETTE_LEN = 16;
 
 		bool m_mode;
+		bool m_t50Hz; // interruption request
 
-		//GCHandle data_handle{ get; private set; }
+		FrameBuffer m_frameBuffer;	// rasterizer draws here
+		FrameBuffer m_backBuffer;	// a buffer to simulate VSYNC
+		FrameBuffer m_gpuBuffer;	// temp buffer for output to GPU
+		std::mutex m_backBufferMutex;
 
-	public:
-		bool T50HZ; // interruption request
-		static constexpr int FRAME_CC = FRAME_W * FRAME_H;
-
-		//WriteableBitmap frame;
-		ColorI m_data[FRAME_W * FRAME_H];
-
-		ColorI m_palette[PALETTE_LEN];
+		std::array <ColorI, PALETTE_LEN> m_palette;
 		ColorI m_fillColor;
-
 
 		int m_rasterLine;	// currently rasterized scanline idx from the bottom
 		int m_rasterPixel;	// currently rasterized scanline pixel
 
 		const Memory& m_memory;
 
+	public:
 		Display(const Memory& _memory);
-
 		void Init();
-
-		// to draw a pxl
-		void Rasterize();
+		void Rasterize();	// to draw a pxl
+		bool IsInt50Hz();
+		auto GetFrame(const bool _vsync) ->const FrameBuffer*;
+		int GetRasterLine() const { return m_rasterLine; };
+		int GetRasterPixel() const { return m_rasterPixel; };
 	private:
 		void Draw8PxlsActiveArea();
 		void Draw8PxlsBorder();

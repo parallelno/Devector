@@ -158,6 +158,7 @@
     <ClInclude Include="..\SharedSource\utils\Result.h" />
     <ClInclude Include="..\SharedSource\utils\Status.h" />
     <ClInclude Include="..\SharedSource\utils\StringUtils.h" />
+    <ClInclude Include="..\SharedSource\Utils\TQueue.h" />
     <ClInclude Include="..\SharedSource\utils\Utils.h" />
     <ClInclude Include="Breakpoint.h" />
     <ClInclude Include="Types.h" />

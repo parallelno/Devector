@@ -2,7 +2,7 @@
 
 void dev::Memory::Init()
 {
-    std::fill(m_data, m_data + std::size(m_data), 0);
+    m_data.fill(0);
 
     m_mappingModeStack = false;
     m_mappingPageStack = 0;
@@ -10,37 +10,32 @@ void dev::Memory::Init()
     m_mappingPageRam = 0;
 }
 
-void dev::Memory::Load(const std::vector<uint8_t>& _data)
+void dev::Memory::Set(const std::vector<uint8_t>& _data, const Addr _loadAddr)
 {
-    std::copy(_data.begin(), _data.end(), m_data + ROM_LOAD_ADDR);
+    std::copy(_data.begin(), _data.end(), m_data.data() + _loadAddr);
 }
 
-auto dev::Memory::GetByte(GlobalAddr _globalAddr, AddrSpace _addrSpace) const
+auto dev::Memory::GetByte(GlobalAddr _globalAddr, const AddrSpace _addrSpace) const
 -> uint8_t
 {
     _globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
     return m_data[_globalAddr];
 }
 
-void dev::Memory::SetByte(GlobalAddr _globalAddr, uint8_t _value, AddrSpace _addrSpace)
+void dev::Memory::SetByte(GlobalAddr _globalAddr, uint8_t _value, const AddrSpace _addrSpace)
 {
     _globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
     m_data[_globalAddr] = _value;
 }
 
-auto dev::Memory::GetWord(GlobalAddr _globalAddr, AddrSpace _addrSpace) const
+auto dev::Memory::GetWord(GlobalAddr _globalAddr, const AddrSpace _addrSpace) const
 -> uint16_t
 {
     return GetByte(_globalAddr + 1, _addrSpace) << 8 | GetByte(_globalAddr, _addrSpace);
 }
 
-int dev::Memory::Length()
-{
-    return GLOBAL_MEMORY_LEN;
-}
-
 // converts an addr to a global addr depending on the ram/stack mapping modes
-auto dev::Memory::GetGlobalAddr(const GlobalAddr _globalAddr, AddrSpace _addrSpace) const
+auto dev::Memory::GetGlobalAddr(const GlobalAddr _globalAddr, const AddrSpace _addrSpace) const
 -> GlobalAddr
 {
     if (_addrSpace == AddrSpace::GLOBAL) return _globalAddr % GLOBAL_MEMORY_LEN;

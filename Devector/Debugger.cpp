@@ -7,10 +7,9 @@
 #include "Utils/StringUtils.h"
 #include "Utils/Utils.h"
 
-dev::Debugger::Debugger(I8080& _cpu, Memory& _memory)
+dev::Debugger::Debugger(Hardware& _hardware)
     : 
-	m_cpu(_cpu),
-	m_memory(_memory),
+	m_hardware(_hardware),
     m_wpBreak(false),
 	m_traceLog()
 {
@@ -19,9 +18,20 @@ dev::Debugger::Debugger(I8080& _cpu, Memory& _memory)
 
 void dev::Debugger::Init()
 {
-    std::fill(m_memRuns, m_memRuns + std::size(m_memRuns), 0);
-    std::fill(m_memReads, m_memReads + std::size(m_memReads), 0);
-    std::fill(m_memWrites, m_memWrites + std::size(m_memWrites), 0);
+	m_hardware.AttachCheckBreak({ std::bind(&Debugger::CheckBreak, this, std::placeholders::_1) });
+
+	m_hardware.AttachDebugOnReadInstr(
+		{ std::bind(&Debugger::ReadInstr, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5) });
+
+	m_hardware.AttachDebugOnRead(
+		{ std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2) });
+	
+	m_hardware.AttachDebugOnWrite(
+		{ std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2) });
+
+    m_memRuns.fill(0);
+    m_memReads.fill(0);
+    m_memWrites.fill(0);
 
 	for (size_t i = 0; i < TRACE_LOG_SIZE; i++)
 	{
@@ -30,34 +40,32 @@ void dev::Debugger::Init()
 	m_traceLogIdx = 0;
 	m_traceLogIdxViewOffset = 0;
 
-	if (!m_cpu.DebugOnRead) {
-		m_cpu.DebugOnRead = std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-	}
-	if (!m_cpu.DebugOnWrite) {
-		m_cpu.DebugOnWrite = std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-	}
+	m_breakpoints.clear();
+	m_watchpoints.clear();
+
+	m_hardware.Request(Hardware::Req::RUN);
 }
 
+// a hardware thread
+void dev::Debugger::ReadInstr(
+	const GlobalAddr _globalAddr, const uint8_t _val, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl)
+{
+	m_memRuns[_globalAddr]++;
+	TraceLogUpdate(_globalAddr, _val, _dataH, _dataL, _hl);
+}
+
+// a hardware thread
 void dev::Debugger::Read(
-    const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode)
+    const GlobalAddr _globalAddr, const uint8_t _val)
 {
-    auto globalAddr = m_memory.GetGlobalAddr(_globalAddr, _addrSpace);
-
-    if (_isOpcode) {
-        m_memRuns[globalAddr]++;
-        TraceLogUpdate(globalAddr, _val);
-    }
-    else {
-        m_memReads[globalAddr]++;
-        m_wpBreak |= CheckWatchpoint(Watchpoint::Access::R, globalAddr, _val);
-    }
+	m_memReads[_globalAddr]++;
+    m_wpBreak |= CheckWatchpoint(Watchpoint::Access::R, _globalAddr, _val);
 }
-
-void dev::Debugger::Write(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val)
+// a hardware thread
+void dev::Debugger::Write(const GlobalAddr _globalAddr, const uint8_t _val)
 {
-    auto globalAddr = m_memory.GetGlobalAddr(_globalAddr, _addrSpace);
-    m_memWrites[globalAddr]++;
-    m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, globalAddr, _val);
+    m_memWrites[_globalAddr]++;
+    m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, _globalAddr, _val);
 }
 
 
@@ -228,7 +236,9 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 		Addr addr = _addr;
 		for (int i = 0; i < instructions; i++)
 		{
-			auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
+			//auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
+			auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr })["data"];
+
 			auto cmdLen = GetCmdLen(opcode);
 			addr = addr + cmdLen;
 		}
@@ -247,7 +257,9 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 
 			while (addr < _addr && currentInstruction < instructions)
 			{
-				auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
+				//auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
+				auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr })["data"];
+
 				auto cmdLen = GetCmdLen(opcode);
 				addr = addr + cmdLen;
 				currentInstruction++;
@@ -307,8 +319,12 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 				DisasmLine disasmLine(DisasmLine::Type::LABELS, addr, GetDisasmLabels(addr));
 				out.emplace_back(std::move(disasmLine));
 			}
-			auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
-			auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
+			
+			//auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
+			auto db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr })["data"];
+			//auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
+			auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { "addr", addr })["data"];
+
 			auto breakpointStatus = GetBreakpointStatus(globalAddr);
 			DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], "", breakpointStatus);
 			out.emplace_back(lineS);
@@ -319,9 +335,14 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 
 	for (int i = 0; i < lines; i++)
 	{
+		/*
 		auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
 		auto dataL = m_memory.GetByte(addr + 1, Memory::AddrSpace::RAM);
 		auto dataH = m_memory.GetByte(addr + 2, Memory::AddrSpace::RAM);
+		*/
+		auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr })["data"];
+		auto dataL = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr + 1 })["data"];
+		auto dataH = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr + 2 })["data"];
 
 		if (m_labels.contains(addr))
 		{
@@ -339,7 +360,9 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 			consts = LabelsToStr(dataH << 8 | dataL, LABEL_TYPE_ALL);
 		}
 
-		auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
+		//auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
+		auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { "addr", addr })["data"];
+
 		auto disasmS = GetDisasmLine(opcode, dataL, dataH);
 		auto breakpointStatus = GetBreakpointStatus(globalAddr);
 		DisasmLine lineS(DisasmLine::Type::CODE, addr, disasmS, m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], consts, breakpointStatus);
@@ -415,6 +438,24 @@ void dev::Debugger::ResetLabels()
 //
 //////////////////////////////////////////////////////////////
 
+// a hardware thread
+void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _opcode, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl)
+{
+	m_traceLogIdx = (m_traceLogIdx - 1) % TRACE_LOG_SIZE;
+	m_traceLog[m_traceLogIdx].m_globalAddr = _globalAddr;
+	m_traceLog[m_traceLogIdx].m_opcode = _opcode;
+
+	if (_opcode == OPCODE_PCHL)
+	{
+		m_traceLog[m_traceLogIdx].m_dataL = _hl & 0xff;
+		m_traceLog[m_traceLogIdx].m_dataH = _hl >> 8;
+	}
+	else {
+		m_traceLog[m_traceLogIdx].m_dataL = _dataL;
+		m_traceLog[m_traceLogIdx].m_dataH = _dataH;
+	}
+}
+
 auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const size_t _filter)
 ->std::string
 {
@@ -452,9 +493,9 @@ auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const si
 			}
 			lineS += m_traceLog[idx % TRACE_LOG_SIZE].ToStr();
 
-			const size_t operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
+			const Addr operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
 
-			lineS += LabelsToStr(operand_addr & 0xffff, LABEL_TYPE_ALL);
+			lineS += LabelsToStr(operand_addr, LABEL_TYPE_ALL);
 			if (line != 0)
 			{
 				lineS += "\n";
@@ -467,30 +508,6 @@ auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const si
 	}
 
 	return out;
-}
-
-void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _val)
-{
-	auto last_global_addr = m_traceLog[m_traceLogIdx].m_globalAddr;
-	auto last_opcode = m_traceLog[m_traceLogIdx].m_opcode;
-
-	m_traceLogIdx = (m_traceLogIdx - 1) % TRACE_LOG_SIZE;
-	m_traceLog[m_traceLogIdx].m_globalAddr = _globalAddr;
-	m_traceLog[m_traceLogIdx].m_opcode = _val;
-	m_traceLog[m_traceLogIdx].m_dataL = m_memory.GetByte(_globalAddr + 1, Memory::AddrSpace::RAM);
-	m_traceLog[m_traceLogIdx].m_dataH = m_memory.GetByte(_globalAddr + 2, Memory::AddrSpace::RAM);
-
-	if (_val == OPCODE_PCHL)
-	{
-		Addr pc = m_cpu.GetHL();
-		m_traceLog[m_traceLogIdx].m_dataL = pc & 0xff;
-		m_traceLog[m_traceLogIdx].m_dataH = pc >> 8 & 0xff;
-	}
-	else
-	{
-		m_traceLog[m_traceLogIdx].m_dataL = m_memory.GetByte(_globalAddr + 1, Memory::AddrSpace::RAM);
-		m_traceLog[m_traceLogIdx].m_dataH = m_memory.GetByte(_globalAddr + 2, Memory::AddrSpace::RAM);
-	}
 }
 
 auto dev::Debugger::TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const
@@ -573,7 +590,8 @@ void dev::Debugger::TraceLog::Clear()
 //
 //////////////////////////////////////////////////////////////
 
-bool dev::Debugger::CheckBreak()
+// a hardware thread
+bool dev::Debugger::CheckBreak(GlobalAddr _globalAddr)
 {
 	if (m_wpBreak)
 	{
@@ -583,10 +601,7 @@ bool dev::Debugger::CheckBreak()
 		return true;
 	}
 
-	auto pc = m_cpu.m_pc;
-	auto globalAddr = m_memory.GetGlobalAddr(pc, Memory::AddrSpace::RAM);
-
-	auto break_ = CheckBreakpoints(globalAddr);
+	auto break_ = CheckBreakpoints(_globalAddr);
 
 	if (break_) PrintWatchpoints();
 
@@ -643,7 +658,7 @@ bool dev::Debugger::CheckBreakpoints(const GlobalAddr _globalAddr)
 	if (bp == m_breakpoints.end()) return false;
 	return bp->second.CheckStatus();
 }
-
+/*
 void dev::Debugger::PrintBreakpoints()
 {
 	std::printf("breakpoints:\n");
@@ -653,7 +668,7 @@ void dev::Debugger::PrintBreakpoints()
 		bp.Print();
 	}
 }
-
+*/
 auto dev::Debugger::GetBreakpoints() -> const Breakpoints
 {
 	Breakpoints out;
@@ -694,6 +709,7 @@ void dev::Debugger::DelWatchpoint(const GlobalAddr _globalAddr, const Memory::Ad
 	WatchpointsErase(_globalAddr);
 }
 
+// a hardware thread
 bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
@@ -701,11 +717,12 @@ bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const Glob
 	if (wp == m_watchpoints.end()) return false;
 
 	auto out = wp->Check(_access, _globalAddr, _value);
-
+	/*
 	if (out) {
 		auto data = m_memory.GetWord(_globalAddr, Memory::AddrSpace::RAM);
 		std::printf("wp break = true. addr: 0x%05x, word: 0x%02x \n", _globalAddr, data);
 	}
+	*/
 	return out;
 }
 
@@ -717,7 +734,7 @@ void dev::Debugger::ResetWatchpoints()
 		watchpoint.Reset();
 	}
 }
-
+/*
 void dev::Debugger::PrintWatchpoints()
 {
 	std::printf("watchpoints:\n");
@@ -727,11 +744,12 @@ void dev::Debugger::PrintWatchpoints()
 		wp.Print();
 	}
 }
+*/
 
 auto dev::Debugger::WatchpointsFind(const GlobalAddr _globalAddr)
 ->Watchpoints::iterator
 {
-	return std::find_if(m_watchpoints.begin(), m_watchpoints.end(), [_globalAddr](Watchpoint& w) {return w.CheckAddr(_globalAddr);});
+	return std::find_if(m_watchpoints.begin(), m_watchpoints.end(), [_globalAddr](Watchpoint& _w) {return _w.CheckAddr(_globalAddr);});
 }
 
 void dev::Debugger::WatchpointsErase(const GlobalAddr _globalAddr)
@@ -813,4 +831,32 @@ auto dev::Debugger::LabelsToStr(const Addr _addr, int _labelTypes) const
 	}
 
 	return out;
+}
+
+//////////////////////////////////////////////////////////////
+//
+// Requests
+//
+//////////////////////////////////////////////////////////////
+
+void dev::Debugger::ReqLoadRom(const std::wstring& _path)
+{
+	auto fileSize = GetFileSize(_path);
+
+	if (fileSize > Memory::MEMORY_MAIN_LEN) {
+		// TODO: communicate the fail state
+		return;
+	}
+
+	auto result = dev::LoadFile(_path);
+	
+	if (!result || result->empty()) {
+		// TODO: communicate the fail state
+		return;
+	}
+
+	m_hardware.Request(Hardware::Req::RESET, {});
+	m_hardware.Request(Hardware::Req::SET_MEM, *result);
+
+	Log("file loaded: {}", dev::StrWToStr(_path));
 }

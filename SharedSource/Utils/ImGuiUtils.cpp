@@ -5,6 +5,7 @@
 #include "..\3rdParty\imgui\misc\cpp\imgui_stdlib.h"
 
 // Make the UI compact because there are so many fields
+// TODO: check it is not over extensively used
 void dev::PushStyleCompact(const float _paddingMulX, const float _paddingMulY)
 {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -63,61 +64,6 @@ void dev::DrawTextSelectable(const char* _label, const std::string& _text)
 	ImGui::PopStyleVar();
 }
 
-/*
-void dev::DrawTextSelectableColored(const ImVec4& col, const std::string& _text)
-{
-	ImVec2 text_size = ImGui::CalcTextSize(_text.c_str(), _text.c_str() + _text.size());
-	text_size.x = -FLT_MIN; // fill width (suppresses label)
-	text_size.y += ImGui::GetStyle().FramePadding.y; // single pad
-
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 }); // make align with text height
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0.f, 0.f, 0.f, 0.f }); // remove text input box
-
-	ImGui::PushStyleColor(ImGuiCol_Text, col);
-
-
-	ImGui::InputTextMultiline(
-		"",
-		const_cast<char*>(_text.c_str()), // ugly const cast
-		_text.size() + 1, // needs to include '\0'
-		text_size,
-		ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_NoHorizontalScroll
-	);
-	ImGui::PopStyleColor();
-
-	ImGui::PopStyleColor();
-	ImGui::PopStyleVar();
-}
-*/
-/*
-template <typename... Args>
-void dev::DrawTextSelectableColored(const ImVec4& col, const std::string& _fmt, Args&&... args)
-{
-	std::string text = std::vformat(_fmt, std::make_format_args(args...));
-
-	ImVec2 text_size = ImGui::CalcTextSize(text.c_str(), text.c_str() + text.size());
-	text_size.x = -FLT_MIN; // fill width (suppresses label)
-	text_size.y += ImGui::GetStyle().FramePadding.y; // single pad
-
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 }); // make align with text height
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0.f, 0.f, 0.f, 0.f }); // remove text input box
-
-	ImGui::PushStyleColor(ImGuiCol_Text, col);
-
-
-	ImGui::InputTextMultiline(
-		"",
-		const_cast<char*>(text.c_str()), // ugly const cast
-		text.size() + 1, // needs to include '\0'
-		text_size,
-		ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_NoHorizontalScroll
-	);
-	ImGui::PopStyleColor();
-
-	ImGui::PopStyleColor();
-	ImGui::PopStyleVar();
-}
-*/
 void dev::DrawHelpMarker(const char* _text)
 {
 	ImGui::TextDisabled("(?)");
@@ -213,8 +159,6 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
     const ImGuiStyle& style = g.Style;
 	const ImGuiID id = window->GetID(label);
 
-	g.ActiveId = id;
-
     const ImVec2 totalSize = ImVec2(g.FontSize, g.FontSize);
 	ImVec2 pos = window->DC.CursorPos;
 	pos.x += _posXOffset * g.FontSize;
@@ -253,7 +197,6 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
 
 	ImU32 color = *_statusP == Breakpoint::Status::ACTIVE ? DISASM_TBL_COLOR_BREAKPOINT : DISASM_TBL_COLOR_BREAKPOINT_DISABLED;
     auto drawPos = bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
-
 
 	// render the hover highlight
 	if (hovered)
@@ -314,96 +257,3 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label, b
 	ImGui::TableNextColumn();
 	ImGui::Checkbox(_label, _val);
 }
-/*
-void dev::MouseHandling(ImGuiContext& _g, ImGuiButtonFlags _flags, ImGuiID id)
-{
-	auto pressed = false;
-	// Mouse handling
-	const ImGuiID test_owner_id = ImGuiKeyOwner_Any;
-	ImGuiWindow* window = ImGui::GetCurrentWindow();
-
-	// Default only reacts to left mouse button
-	if ((_flags & ImGuiButtonFlags_MouseButtonMask_) == 0)
-		_flags |= ImGuiButtonFlags_MouseButtonDefault_;
-
-	// Default behavior requires click + release inside bounding box
-	if ((_flags & ImGuiButtonFlags_PressedOnMask_) == 0)
-		_flags |= ImGuiButtonFlags_PressedOnDefault_;
-
-	// Default behavior inherited from item flags
-	// Note that _both_ ButtonFlags and ItemFlags are valid sources, so copy one into the item_flags and only check that.
-	ImGuiItemFlags item_flags = (g.LastItemData.ID == id ? g.LastItemData.InFlags : g.CurrentItemFlags);
-	if (_flags & ImGuiButtonFlags_AllowOverlap)
-		item_flags |= ImGuiItemFlags_AllowOverlap;
-	if (_flags & ImGuiButtonFlags_Repeat)
-		item_flags |= ImGuiItemFlags_ButtonRepeat;
-
-	ImGuiWindow* backup_hovered_window = g.HoveredWindow;
-	const bool flatten_hovered_children = (_flags & ImGuiButtonFlags_FlattenChildren) && g.HoveredWindow && g.HoveredWindow->RootWindowDockTree == window->RootWindowDockTree;
-	if (flatten_hovered_children)
-		g.HoveredWindow = window;
-
-	// Poll mouse buttons
-	// - 'mouse_button_clicked' is generally carried into ActiveIdMouseButton when setting ActiveId.
-	// - Technically we only need some values in one code path, but since this is gated by hovered test this is fine.
-	int mouse_button_clicked = -1;
-	int mouse_button_released = -1;
-	for (int button = 0; button < 3; button++)
-		if (_flags & (ImGuiButtonFlags_MouseButtonLeft << button)) // Handle ImGuiButtonFlags_MouseButtonRight and ImGuiButtonFlags_MouseButtonMiddle here.
-		{
-			if (ImGui::IsMouseClicked(button, test_owner_id) && mouse_button_clicked == -1) { mouse_button_clicked = button; }
-			if (ImGui::IsMouseReleased(button, test_owner_id) && mouse_button_released == -1) { mouse_button_released = button; }
-		}
-
-	// Process initial action
-	if (!(_flags & ImGuiButtonFlags_NoKeyModifiers) || (!_g.IO.KeyCtrl && !_g.IO.KeyShift && !_g.IO.KeyAlt))
-	{
-		if (mouse_button_clicked != -1 && _g.ActiveId != id)
-		{
-			if (!(_flags & ImGuiButtonFlags_NoSetKeyOwner))
-				ImGui::SetKeyOwner(ImGui::MouseButtonToKey(mouse_button_clicked), id);
-			if (_flags & (ImGuiButtonFlags_PressedOnClickRelease | ImGuiButtonFlags_PressedOnClickReleaseAnywhere))
-			{
-				ImGui::SetActiveID(id, window);
-				_g.ActiveIdMouseButton = mouse_button_clicked;
-				if (!(_flags & ImGuiButtonFlags_NoNavFocus))
-					ImGui::SetFocusID(id, window);
-				ImGui::FocusWindow(window);
-			}
-			if ((_flags & ImGuiButtonFlags_PressedOnClick) || ((_flags & ImGuiButtonFlags_PressedOnDoubleClick) && _g.IO.MouseClickedCount[mouse_button_clicked] == 2))
-			{
-				pressed = true;
-				if (_flags & ImGuiButtonFlags_NoHoldingActiveId)
-					ImGui::ClearActiveID();
-				else
-					ImGui::SetActiveID(id, window); // Hold on ID
-				if (!(_flags & ImGuiButtonFlags_NoNavFocus))
-					ImGui::SetFocusID(id, window);
-				_g.ActiveIdMouseButton = mouse_button_clicked;
-				ImGui::FocusWindow(window);
-			}
-		}
-		if (_flags & ImGuiButtonFlags_PressedOnRelease)
-		{
-			if (mouse_button_released != -1)
-			{
-				const bool has_repeated_at_least_once = (item_flags & ImGuiItemFlags_ButtonRepeat) && _g.IO.MouseDownDurationPrev[mouse_button_released] >= _g.IO.KeyRepeatDelay; // Repeat mode trumps on release behavior
-				if (!has_repeated_at_least_once)
-					pressed = true;
-				if (!(_flags & ImGuiButtonFlags_NoNavFocus))
-					ImGui::SetFocusID(id, window);
-				ImGui::ClearActiveID();
-			}
-		}
-
-		// 'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
-		// Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing finer RepeatDelay/RepeatRate settings.
-		if (_g.ActiveId == id && (item_flags & ImGuiItemFlags_ButtonRepeat))
-			if (_g.IO.MouseDownDuration[_g.ActiveIdMouseButton] > 0.0f && ImGui::IsMouseClicked(_g.ActiveIdMouseButton, test_owner_id, ImGuiInputFlags_Repeat))
-				pressed = true;
-	}
-
-	if (pressed)
-		_g.NavDisableHighlight = true;
-}
-*/

@@ -6,11 +6,12 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <array>
 #include <format>
 
 #include "Types.h"
-#include "I8080.h"
-#include "Memory.h"
+#include "Hardware.h"
+#include "Display.h"
 #include "Breakpoint.h"
 #include "Watchpoint.h"
 
@@ -69,11 +70,13 @@ namespace dev
 		using Watchpoints = std::vector<Watchpoint>;
 		using Breakpoints = std::map<GlobalAddr, Breakpoint>;
 
-		Debugger(I8080& _cpu, Memory& _memory);
+		Debugger(Hardware& _hardware);
 		void Init();
 
-		void Read(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val, const bool _isOpcode);
-		void Write(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace, const uint8_t _val);
+		void ReadInstr(
+			const GlobalAddr _globalAddr, const uint8_t _val, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
+		void Read(const GlobalAddr _globalAddr, const uint8_t _val);
+		void Write(const GlobalAddr _globalAddr, const uint8_t _val);
 
 		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) ->Disasm;
 
@@ -95,11 +98,13 @@ namespace dev
 		void PrintWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;
 
-		bool CheckBreak();
+		bool CheckBreak(GlobalAddr _globalAddr);
 
 		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> std::string;
 		void LoadLabels(const std::wstring& _path);
 		void ResetLabels();
+
+		void ReqLoadRom(const std::wstring& _path);
 
 	private:
 		auto GetDisasmLine(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string;
@@ -109,7 +114,7 @@ namespace dev
 		auto WatchpointsFind(const GlobalAddr _globalAddr) -> Watchpoints::iterator;
 		void WatchpointsErase(const GlobalAddr _globalAddr);
 
-		void TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _val);
+		void TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _opcode, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
 		auto TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const ->int;
 		auto TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const ->int;
 
@@ -121,9 +126,10 @@ namespace dev
 		auto LabelsToStr(const Addr _addr, int _labelTypes) const -> const std::string;
 		auto GetDisasmLabels(const Addr _addr) const -> const std::string;
 
-		uint64_t m_memRuns[Memory::GLOBAL_MEMORY_LEN];
-		uint64_t m_memReads[Memory::GLOBAL_MEMORY_LEN];
-		uint64_t m_memWrites[Memory::GLOBAL_MEMORY_LEN];
+		using MemStats = std::array<uint64_t, Memory::GLOBAL_MEMORY_LEN>;
+		MemStats m_memRuns;
+		MemStats m_memReads;
+		MemStats m_memWrites;
 
 		struct TraceLog
 		{
@@ -136,7 +142,7 @@ namespace dev
 			void Clear();
 		};
 
-		TraceLog m_traceLog[TRACE_LOG_SIZE];
+		std::array <TraceLog, TRACE_LOG_SIZE> m_traceLog;
 		size_t m_traceLogIdx = 0;
 		int m_traceLogIdxViewOffset = 0;
 
@@ -149,8 +155,7 @@ namespace dev
 		// labels with a prefix "__" called externals and used in the code libraries in the ram-disk. they're combined by their associated addr
 		Labels m_externalLabels;
 
-		I8080& m_cpu;
-		Memory& m_memory;
+		Hardware& m_hardware;
 
 		std::mutex m_breakpointsMutex;
 		std::mutex m_watchpointsMutex;

@@ -4,11 +4,12 @@
 #include "Utils\StringUtils.h"
 
 dev::DisasmWindow::DisasmWindow(
-        dev::Hardware& _hardware, ImFont* fontComment, 
+        dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
         const float* const _fontSize, const float* const _dpiScale, bool& _reqDisasmUpdate)
     :
     BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
     m_hardware(_hardware),
+    m_debugger(_debugger),
     m_fontCommentP(fontComment),
     m_reqDisasmUpdate(_reqDisasmUpdate)
 {}
@@ -29,33 +30,43 @@ void dev::DisasmWindow::Update()
 
 void dev::DisasmWindow::DrawDebugControls()
 {
+    Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)["pc"];
+
     if (ImGui::Button("Step"))
     {
-        m_hardware.ExecuteInstruction();
-        UpdateDisasm(m_hardware.m_cpu.m_pc);
+        //m_hardware.ExecuteInstruction();
+        m_hardware.Request(Hardware::Req::STOP);
+        m_hardware.Request(Hardware::Req::EXECUTE_INSTR);
+
+        UpdateDisasm(regPC);
     }
     ImGui::SameLine();
     if (ImGui::Button("Step 0x100"))
     {
         for (int i = 0; i < 0x100; i++)
         {
-            m_hardware.ExecuteInstruction();
+            //m_hardware.ExecuteInstruction();
+            m_hardware.Request(Hardware::Req::STOP);
+            m_hardware.Request(Hardware::Req::EXECUTE_INSTR, "100");
         }
 
-        UpdateDisasm(m_hardware.m_cpu.m_pc);
+        UpdateDisasm(regPC);
     }
     ImGui::SameLine();
     if (ImGui::Button("Step Frame"))
     {
-        m_hardware.ExecuteFrame();
-        UpdateDisasm(m_hardware.m_cpu.m_pc);
+        //m_hardware.ExecuteFrame();
+        m_hardware.Request(Hardware::Req::STOP);
+        m_hardware.Request(Hardware::Req::EXECUTE_FRAME);
+
+        UpdateDisasm(regPC);
     }
 }
 
 void dev::DisasmWindow::UpdateDisasm(const GlobalAddr _globalAddr, const int _instructionsOffset)
 {
     // TODO: request meaningful amount disasmm lines, not a 100!
-    m_disasm = m_hardware.m_debugger.GetDisasm(_globalAddr, 80, _instructionsOffset);
+    m_disasm = m_debugger.GetDisasm(_globalAddr, 80, _instructionsOffset);
 }
 
 void dev::DisasmWindow::DrawSearch()
@@ -89,6 +100,8 @@ bool dev::DisasmWindow::IsDisasmTableOutOfWindow()
 void dev::DisasmWindow::DrawDisassembly()
 {
     if (m_disasm.empty()) return;
+
+    Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)["pc"];
 
     static int selectedLineIdx = 0;
     int scrollDirection = 0;
@@ -145,12 +158,12 @@ void dev::DisasmWindow::DrawDisassembly()
                 auto bpStatus = line.breakpointStatus;
                 if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
                 {
-                    m_hardware.m_debugger.SetBreakpointStatus(addr, bpStatus);
+                    m_debugger.SetBreakpointStatus(addr, bpStatus);
                     m_reqDisasmUpdate = true;
                 }
 
                 // draw program counter icon
-                if (isCode && addr == m_hardware.m_cpu.m_pc)
+                if (isCode && addr == regPC)
                 {
                     ImGui::SameLine();
                     //dev::DrawProgramCounter(DISASM_TBL_COLOR_PC, ImGuiDir_Right, *m_dpiScaleP);

@@ -6,6 +6,7 @@
 
 namespace dev
 {
+	//using json = nlohmann::json;
 
 	// jsonObj["Var"] = Var;
 #define JSON_SET(jsonObj, Var) (jsonObj[#Var] = (Var))
@@ -78,6 +79,13 @@ case EmunType::Val:
 		const std::string& _fieldName,
 		const bool _exit = true)
 		-> nlohmann::json;
+
+	auto GetJsonVectorUint8(
+		const nlohmann::json& _json,
+		const std::string& _fieldName,
+		const bool _exit = true,
+		const std::vector<uint8_t>& _defaultValue = {})
+		-> const std::vector<uint8_t>;
 
 } // namespace dev
 #endif // !DEV_JSON_UTILS_H

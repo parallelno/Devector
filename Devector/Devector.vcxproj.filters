@@ -164,6 +164,9 @@
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Types.h" />
+    <ClInclude Include="..\SharedSource\Utils\TQueue.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="SharedSource">

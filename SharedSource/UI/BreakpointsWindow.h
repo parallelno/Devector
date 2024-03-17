@@ -5,7 +5,7 @@
 #include "Utils/Globals.h"
 #include "Utils/ImGuiUtils.h"
 #include "Ui/BaseWindow.h"
-#include "../Devector/Hardware.h"
+#include "../Devector/Debugger.h"
 
 namespace dev
 {
@@ -13,17 +13,16 @@ namespace dev
 	{
 		static constexpr int DEFAULT_WINDOW_W = 600;
 		static constexpr int DEFAULT_WINDOW_H = 300;
-		// colors
 		static constexpr ImVec4 COLOR_WARNING = dev::IM_VEC4(0xFF2020FF);
 
-		Hardware& m_hardware;
+		Debugger& m_debugger;
 		bool& m_reqDisasmUpdate;
 
 		void DrawTable();
 		void DrawContextMenu(const char* _itemID);
 
 	public:
-		BreakpointsWindow(Hardware& _hardware,
+		BreakpointsWindow(Debugger& m_debugger,
 			const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate);
 
 		void Update();

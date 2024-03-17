@@ -13,13 +13,13 @@ void dev::Display::Init()
 	m_rasterLine = 0;
 	m_rasterPixel = 0;
 
-	std::fill(m_palette, m_palette + std::size(m_palette), 0xffffffff);
-	std::fill(m_data, m_data + std::size(m_data), 0xffff0000);
+	m_palette.fill(0xffffffff);
+	m_frameBuffer.fill(0xffff0000);
 }
 
 void dev::Display::Rasterize()
 {
-	if (m_rasterLine < BORDER_TOP || m_rasterLine >= BORDER_TOP + RES_H ||
+	if (m_rasterLine < SCAN_BORDER_TOP || m_rasterLine >= SCAN_BORDER_TOP + RES_H ||
 		m_rasterPixel < BORDER_LEFT || m_rasterPixel >= BORDER_LEFT + RES_W)
 	{
 		Draw8PxlsBorder();
@@ -32,23 +32,28 @@ void dev::Display::Rasterize()
 	m_rasterPixel = (m_rasterPixel + RASTERIZED_PXLS) % FRAME_W;
 	m_rasterLine = m_rasterPixel == 0 ? (m_rasterLine + 1) % FRAME_H : m_rasterLine;
 
-	T50HZ = (m_rasterPixel + m_rasterLine) == 0;
+	m_t50Hz = (m_rasterPixel + m_rasterLine) == 0;
+
+	// copy a frame to a back buffer
+	if (m_t50Hz) {
+		std::unique_lock<std::mutex> mlock(m_backBufferMutex);
+		m_backBuffer = m_frameBuffer;
+	}
 }
 
 void dev::Display::Draw8PxlsActiveArea()
 {
-	auto& memory = m_memory.m_data;
-	auto pos_addr = (m_rasterPixel - BORDER_LEFT) / RASTERIZED_PXLS * RES_H + RES_H - 1 - (m_rasterLine - BORDER_TOP);
+	auto pos_addr = (m_rasterPixel - BORDER_LEFT) / RASTERIZED_PXLS * RES_H + RES_H - 1 - (m_rasterLine - SCAN_BORDER_TOP);
 
 	auto addr8 = (Addr)(0x8000 + pos_addr);
 	auto addrA = (Addr)(0xA000 + pos_addr);
 	auto addrC = (Addr)(0xC000 + pos_addr);
 	auto addrE = (Addr)(0xE000 + pos_addr);
 
-	auto color_byte8 = memory[addr8];
-	auto color_byteA = memory[addrA];
-	auto color_byteC = memory[addrC];
-	auto color_byteE = memory[addrE];
+	auto color_byte8 = m_memory.GetByte(addr8, Memory::AddrSpace::GLOBAL);
+	auto color_byteA = m_memory.GetByte(addrA, Memory::AddrSpace::GLOBAL);
+	auto color_byteC = m_memory.GetByte(addrC, Memory::AddrSpace::GLOBAL);
+	auto color_byteE = m_memory.GetByte(addrE, Memory::AddrSpace::GLOBAL);
 
 	for (int i = 0; i < RASTERIZED_PXLS; i += 2)
 	{
@@ -61,8 +66,8 @@ void dev::Display::Draw8PxlsActiveArea()
 
 		m_fillColor = (color_bit8 | color_bitA | color_bitC | color_bitE) == 0 ? 0xff000000 : 0xffffffff; // palette[palette_idx];
 
-		m_data[m_rasterPixel + m_rasterLine * FRAME_W + i] = m_fillColor;
-		m_data[m_rasterPixel + m_rasterLine * FRAME_W + i + 1] = m_fillColor;
+		m_frameBuffer[m_rasterPixel + m_rasterLine * FRAME_W + i] = m_fillColor;
+		m_frameBuffer[m_rasterPixel + m_rasterLine * FRAME_W + i + 1] = m_fillColor;
 	}
 }
 
@@ -70,7 +75,18 @@ void dev::Display::Draw8PxlsBorder()
 {
 	for (int i = 0; i < RASTERIZED_PXLS; i += 2)
 	{
-		m_data[m_rasterPixel + m_rasterLine * FRAME_W + i] = 0xff0000ff;
-		m_data[m_rasterPixel + m_rasterLine * FRAME_W + i + 1] = 0xff0000ff;
+		m_frameBuffer[m_rasterPixel + m_rasterLine * FRAME_W + i] = 0xff0000ff;
+		m_frameBuffer[m_rasterPixel + m_rasterLine * FRAME_W + i + 1] = 0xff0000ff;
 	}
+}
+
+bool dev::Display::IsInt50Hz() { return m_t50Hz; }
+
+auto dev::Display::GetFrame(const bool _vsync)
+->const FrameBuffer*
+{
+	std::unique_lock<std::mutex> mlock(m_backBufferMutex);
+	m_gpuBuffer = _vsync ? m_backBuffer : m_frameBuffer;
+
+	return &m_gpuBuffer;
 }

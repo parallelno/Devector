@@ -2,11 +2,11 @@
 #include "BreakpointsWindow.h"
 #include "Utils\StringUtils.h"
 
-dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
+dev::BreakpointsWindow::BreakpointsWindow(Debugger& _debugger,
 	const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware),
+	m_debugger(_debugger),
 	m_reqDisasmUpdate(_reqDisasmUpdate)
 {}
 
@@ -80,7 +80,7 @@ void dev::BreakpointsWindow::DrawContextMenu(const char* _itemID)
 			// OK button
 			if (ImGui::Button("Ok", buttonSize) && !warning)
 			{
-				m_hardware.m_debugger.AddBreakpoint(globalAddr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, commentS);
+				m_debugger.AddBreakpoint(globalAddr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, commentS);
 				m_reqDisasmUpdate = true;
 				ImGui::CloseCurrentPopup();
 			}
@@ -117,7 +117,7 @@ void dev::BreakpointsWindow::DrawTable()
 
 		PushStyleCompact(1.0f, 0.0f);
 
-		auto breakpoints = m_hardware.m_debugger.GetBreakpoints();
+		auto breakpoints = m_debugger.GetBreakpoints();
 
 		for (const auto& [addr, breakpoint] : breakpoints)
 		{
@@ -129,7 +129,7 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGui::Checkbox(std::format("##{:05X}", addr).c_str(), &isActive);
 			if (isActive != breakpoint.IsActive())
 			{
-				m_hardware.m_debugger.AddBreakpoint(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, breakpoint.GetComment());
+				m_debugger.AddBreakpoint(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, breakpoint.GetComment());
 				m_reqDisasmUpdate = true;
 			}
 			// GlobalAddr

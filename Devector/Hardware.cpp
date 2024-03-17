@@ -1,56 +1,39 @@
 #include "Hardware.h"
 #include "Utils/StringUtils.h"
+#include <chrono>
 
 dev::Hardware::Hardware()
     :
+    m_status(Status::STOP),
     m_memory(),
     m_io(),
     m_cpu(
-        std::bind(&Memory::GetByte, &m_memory, std::placeholders::_1, std::placeholders::_2),
-        std::bind(&Memory::SetByte, &m_memory, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+        m_memory,
         std::bind(&IO::PortIn, &m_io, std::placeholders::_1),
         std::bind(&IO::PortOut, &m_io, std::placeholders::_1, std::placeholders::_2)),
-    m_display(m_memory),
-    m_debugger(m_cpu, m_memory)
-{}
-
-auto dev::Hardware::LoadRom(const std::wstring& _path)
--> Result<std::vector<uint8_t>>
+    m_display(m_memory)
 {
-    auto fileSize = GetFileSize(_path);
-    if (fileSize > Memory::MEMORY_MAIN_LEN){
-        // TODO: communicate the fail state
-        return {};
-    }
-
-    auto result = dev::LoadFile(_path);
-
-    if (!result || result->empty()){
-        // TODO: communicate the fail state
-        return {};
-    }
-
     Init();
-    m_memory.Load(*result);
-    Log("file loaded: {}", dev::StrWToStr(_path));
-    return result;
+    m_executionThread = std::thread(&Hardware::Run, this);
+}
+
+dev::Hardware::~Hardware()
+{
+    m_status = Status::EXIT;
+    m_executionThread.join();
 }
 
 void dev::Hardware::Init()
 {
     m_memory.Init();
-    m_cpu.Init();
     m_display.Init();
-    m_debugger.Init();
 }
 
-// rasterizes the frame. For realtime emulation it should be called by the 50.08 Hz (3000000/59904) timer
-void dev::Hardware::ExecuteFrame()
+// called when the hardware needs to reset
+void dev::Hardware::Reset()
 {
-    do
-    {
-        ExecuteInstruction();
-    } while (!m_display.T50HZ);
+    Init();
+    m_cpu.Reset();
 }
 
 void dev::Hardware::ExecuteInstruction()
@@ -58,6 +41,205 @@ void dev::Hardware::ExecuteInstruction()
     do
     {
         m_display.Rasterize();
-        m_cpu.ExecuteMachineCycle(m_display.T50HZ);
-    } while (m_cpu.m_machineCycle != I8080::INSTR_EXECUTED);
+        m_cpu.ExecuteMachineCycle(m_display.IsInt50Hz());
+    } while (!m_cpu.IsInstructionExecuted());
+}
+
+void dev::Hardware::Run()
+{    
+    while (m_status != Status::EXIT)
+    {
+        if (m_status == Status::RUN)
+        {   // rasterizes a frame
+            do {
+                ExecuteInstruction();
+                ReqHandling();
+                auto CheckBreak = m_checkBreak.load();
+                auto pcGlobalAddr = m_memory.GetGlobalAddr(m_cpu.GetPC(), Memory::RAM);
+                if (CheckBreak && CheckBreak(pcGlobalAddr)) break;
+
+            } while (!m_display.IsInt50Hz());
+
+            // vsync
+            auto now = std::chrono::steady_clock::now();
+            std::this_thread::sleep_until(now + Display::VSYC_DELAY);
+        }
+        else {
+            ReqHandling(true);
+        }
+    }
+}
+
+void dev::Hardware::SetMem(const nlohmann::json& _dataJ)
+{
+    const auto& data = dev::GetJsonVectorUint8(_dataJ, "data");
+
+    if (data.size() > Memory::MEMORY_MAIN_LEN) {
+        // TODO: communicate the fail state
+        return;
+    }
+
+    m_memory.Set(data);
+}
+
+// called from the external thread
+auto dev::Hardware::Request(const Req _req, const nlohmann::json& _dataJ)
+-> Result<const nlohmann::json>
+{
+    m_reqs.push({ _req, _dataJ });
+    return m_reqRes.pop();
+}
+
+void dev::Hardware::AttachCheckBreak(CheckBreakFunc _funcP) { m_checkBreak.store(_funcP); }
+void dev::Hardware::AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc _funcP) { m_cpu.AttachDebugOnReadInstr(_funcP); }
+void dev::Hardware::AttachDebugOnRead(I8080::DebugOnReadFunc _funcP) { m_cpu.AttachDebugOnRead(_funcP); }
+void dev::Hardware::AttachDebugOnWrite(I8080::DebugOnWriteFunc _funcP) { m_cpu.AttachDebugOnWrite(_funcP); }
+
+void dev::Hardware::ReqHandling(const bool _waitReq)
+{
+    if (!m_reqs.empty() || _waitReq)
+    {
+        auto result = m_reqs.pop();
+        const auto& [req, dataj] = *result;
+
+        switch (req)
+        {
+
+        case Req::RUN:
+            m_status = Status::RUN;
+            m_reqRes.emplace({});
+            break;
+
+        case Req::STOP:
+            m_status = Status::STOP;
+            m_reqRes.emplace({});
+            break;
+
+        case Req::EXIT:
+            m_status = Status::EXIT;
+            m_reqRes.emplace({});
+            break;
+
+        case Req::RESET:
+            Reset();
+            m_reqRes.emplace({});
+            break;
+
+        case Req::SET_MEM:
+            SetMem(dataj);
+            m_reqRes.emplace({});
+            break;
+
+        case Req::EXECUTE_INSTR:
+            ExecuteInstruction();
+            m_reqRes.emplace({});
+            break;
+
+        case Req::EXECUTE_FRAME:
+            do { ExecuteInstruction(); } 
+            while (!m_display.IsInt50Hz());
+            m_reqRes.emplace({});
+            break;
+
+        case Req::GET_REGS:
+            m_reqRes.emplace(GetRegs());
+            break;
+
+        case Req::GET_REG_PC:
+            m_reqRes.emplace(GetRegPC());
+            break;
+
+        case Req::GET_BYTE_RAM:
+            m_reqRes.emplace(GetByte(dataj, Memory::AddrSpace::RAM));
+            break;
+
+        case Req::GET_WORD_STACK:
+            m_reqRes.emplace(GetWord(dataj, Memory::AddrSpace::STACK));
+            break;
+
+        case Req::GET_DISPLAY_DATA:
+            m_reqRes.emplace({
+                {"rasterLine", m_display.GetRasterLine()},
+                {"m_rasterPixel", m_display.GetRasterPixel()},
+                });
+            break;
+
+        case Req::GET_MEMORY_MODES:
+            m_reqRes.emplace({
+                {"mappingModeStack", m_memory.m_mappingModeStack},
+                {"mappingPageStack", m_memory.m_mappingPageStack},
+                {"mappingModeRam", m_memory.m_mappingModeRam},
+                {"mappingPageRam", m_memory.m_mappingPageRam}
+                });
+            break;
+
+        case Req::GET_GLOBAL_ADDR_RAM:
+            m_reqRes.emplace({
+                {"data", m_memory.GetGlobalAddr(dataj["addr"], Memory::AddrSpace::RAM)}
+                });
+            break;
+
+        default:
+            break;
+        }
+    }
+}
+
+// called from the external thread
+auto dev::Hardware::GetFrame(const bool _vsync)
+->const Display::FrameBuffer*
+{
+    return m_display.GetFrame(_vsync);
+}
+
+auto dev::Hardware::GetRegs() const
+-> const nlohmann::json
+{
+    nlohmann::json out = {
+        {"cc", m_cpu.GetCC() },
+        {"pc", m_cpu.GetPC() },
+        {"sp", m_cpu.GetSP() },
+        {"af", m_cpu.GetAF() },
+        {"bc", m_cpu.GetBC() },
+        {"de", m_cpu.GetDE() },
+        {"hl", m_cpu.GetHL() },
+        {"flagS",   m_cpu.GetFlagS() },
+        {"flagZ",   m_cpu.GetFlagZ() },
+        {"flagAC",  m_cpu.GetFlagAC() },
+        {"flagP",   m_cpu.GetFlagP() },
+        {"flagC",   m_cpu.GetFlagC() },
+        {"flagINTE",m_cpu.GetINTE() },
+        {"flagIFF", m_cpu.GetIFF() },
+        {"flagHLTA",m_cpu.GetHLTA() },
+    };
+    return out;
+}
+
+auto dev::Hardware::GetRegPC() const
+-> const nlohmann::json
+{
+    nlohmann::json out = {
+        {"pc", m_cpu.GetPC() },
+    };
+    return out;
+}
+
+auto dev::Hardware::GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace)
+-> const nlohmann::json
+{
+    Addr addr = _addr["addr"];
+    nlohmann::json out = {
+        {"data", m_memory.GetByte(_addr, Memory::AddrSpace::RAM)}
+    };
+    return out;
+}
+
+auto dev::Hardware::GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace)
+-> const nlohmann::json
+{
+    Addr addr = _addr["addr"];
+    nlohmann::json out = {
+        {"data", m_memory.GetWord(_addr, Memory::AddrSpace::STACK)}
+    };
+    return out;
 }

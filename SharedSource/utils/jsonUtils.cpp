@@ -161,3 +161,29 @@ auto dev::GetJsonObject(
 	}
 	return _json[_fieldName];
 }
+
+auto dev::GetJsonVectorUint8(
+	const nlohmann::json& _json,
+	const std::string& _fieldName,
+	const bool _exit,
+	const std::vector<uint8_t>& _defaultValue)
+	-> const std::vector<uint8_t>
+{
+	if (!_json.contains(_fieldName))
+	{
+		if (_exit) {
+			JsonParsingExit(_fieldName);
+		}
+		return _defaultValue;
+
+	}
+	if (_json[_fieldName].type() != nlohmann::json::value_t::array)
+	{
+		if (_exit)
+		{
+			JsonParsingTypeMissmatchExit(_json, _fieldName, "std::vector");
+		}
+		return _defaultValue;
+	}
+	return _json[_fieldName];
+}

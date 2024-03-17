@@ -12,8 +12,8 @@
 #include "UI/BreakpointsWindow.h"
 #include "UI/WatchpointsWindow.h"
 #include "Hardware.h"
+#include "Debugger.h"
 
-#include <thread>
 #include <mutex>
 #include <string>
 #include <atomic>
@@ -30,6 +30,7 @@ namespace dev
 		const std::string m_stringPath;
 
 		std::unique_ptr <dev::Hardware> m_hardwareP;
+		std::unique_ptr <dev::Debugger> m_debuggerP;
 
 		std::unique_ptr <dev::HardwareStatsWindow> m_hardwareStatsWindowP;
 		std::unique_ptr <dev::DisasmWindow> m_disasmWindowP;
@@ -44,6 +45,7 @@ namespace dev
 		std::list<std::wstring> m_recentFilePaths;
 
 		bool m_reqDisasmUpdate = false;
+		//bool m_running = false;
 
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ,

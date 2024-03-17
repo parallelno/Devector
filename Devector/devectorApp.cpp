@@ -26,11 +26,12 @@ dev::DevectorApp::DevectorApp(
 void dev::DevectorApp::WindowsInit()
 {
 	m_hardwareP = std::make_unique < dev::Hardware>();
+	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
-	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
-	m_displayWindowP = std::make_unique<dev::DisplayWindow>(m_hardwareP->m_display, &m_fontSize, &m_dpiScale);
-	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
-	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
+	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
+	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
+	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
+	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -137,17 +138,19 @@ void dev::DevectorApp::Update()
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)
 {
-	m_hardwareP->LoadRom(_path);
-
 	auto labelsFilenamePostfix = dev::StrToStrW(dev::GetJsonString(m_settingsJ, "labelsFilenamePostfix", false, LABELS_FILENAME));
 	auto labelsDir = dev::GetDir(_path);
 	auto labelsPath = labelsDir + L"\\" + dev::GetFilename(_path) + labelsFilenamePostfix;
+	m_debuggerP->LoadLabels(labelsPath);
 
-	m_hardwareP->m_debugger.LoadLabels(labelsPath);
+	
+	
+	m_debuggerP->ReqLoadRom(_path);
 
-	m_disasmWindowP->UpdateDisasm(m_hardwareP->m_cpu.m_pc);
-	//TODO: fix it
-	//RecentFilesUpdate(_path);
+	Addr regPC = m_hardwareP->Request(Hardware::Req::GET_REG_PC)["pc"];
+	m_disasmWindowP->UpdateDisasm(regPC);
+
+	RecentFilesUpdate(_path);
 	RecentFilesStore();
 }
 
@@ -183,6 +186,7 @@ void dev::DevectorApp::MainMenuUpdate()
 					if (ImGui::MenuItem(dev::StrWToStr(path).c_str()))
 					{
 						LoadRom(path);
+						break; // because m_recentFilePaths was modified
 					}
 				}
 				ImGui::EndMenu();
@@ -232,7 +236,7 @@ void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path)
 	m_recentFilePaths.remove(_path);
 
 	// add a new one
-	m_recentFilePaths.push_front({ path });
+	m_recentFilePaths.push_front({path});
 	// check the amount
 	if (m_recentFilePaths.size() > RECENT_FILES_MAX)
 	{

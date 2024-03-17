@@ -88,7 +88,6 @@ namespace dev
 	void DrawSeparator2(const std::string& _text);
 	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, const char* _hint = "");
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val);
-	//void MouseHandling(ImGuiContext& _g, ImGuiButtonFlags _flags, ImGuiID id);
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 }
 

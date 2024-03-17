@@ -5,7 +5,7 @@
 #include "Utils/Globals.h"
 #include "Utils/ImGuiUtils.h"
 #include "Ui/BaseWindow.h"
-#include "../Devector/Hardware.h"
+#include "../Devector/Debugger.h"
 
 namespace dev
 {
@@ -14,12 +14,12 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_W = 600;
 		static constexpr int DEFAULT_WINDOW_H = 300;
 
-		Hardware& m_hardware;
+		Debugger& m_debugger;
 
 		void DrawTable();
 
 	public:
-		WatchpointsWindow(Hardware& _hardware,
+		WatchpointsWindow(Debugger& _debugger,
 			const float* const _fontSizeP, const float* const _dpiScaleP);
 
 		void Update();
