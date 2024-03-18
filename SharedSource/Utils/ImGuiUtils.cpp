@@ -206,7 +206,7 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
 	if (*_statusP != Breakpoint::Status::DELETED)
 		window->DrawList->AddCircleFilled(drawPos, g.FontSize * DISASM_TBL_BREAKPOINT_SIZE * _dpiScale, color, 8);
 
-	return pressed;
+	return pressed && hovered;
 }
 
 void dev::DrawProperty2(const std::string& _name, const std::string& _value)

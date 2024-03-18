@@ -87,9 +87,6 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
     else if (_isRunning && ImGui::Button("Break"))
     {
         m_hardware.Request(Hardware::Req::STOP);
-
-        Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-        UpdateDisasm(regPC);
     }
 }
 
@@ -129,18 +126,17 @@ bool dev::DisasmWindow::IsDisasmTableOutOfWindow()
 
 void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 {
-    if (!m_break && !_isRunning) {
-        m_break = true;
-        Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
+    auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+    const auto& data = *res;
+    uint64_t cc = data["cc"];
+    Addr regPC = data["pc"];
+
+    if (cc - m_ccLast > 0) {
         UpdateDisasm(regPC);
     }
-    else {
-        m_break = !_isRunning;
-    }
+    m_ccLast = cc;
 
     if (_isRunning || m_disasm.empty()) return;
-
-    Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
 
     static int selectedLineIdx = 0;
     int scrollDirection = 0;
@@ -345,8 +341,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
     if (m_reqDisasmUpdate) 
     {
+        UpdateDisasm(m_disasm[6].addr);
         m_reqDisasmUpdate = false;
-        UpdateDisasm(m_disasm[0].addr, 0);
     }
     // check the keys
     if (ImGui::IsKeyDown(ImGuiKey_UpArrow))

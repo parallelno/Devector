@@ -19,7 +19,7 @@ dev::Hardware::Hardware()
 
 dev::Hardware::~Hardware()
 {
-    m_status = Status::EXIT;
+    Request(Hardware::Req::EXIT);
     m_executionThread.join();
 }
 
@@ -50,6 +50,7 @@ void dev::Hardware::Run()
 
                 auto CheckBreak = m_checkBreak.load();
                 auto pcGlobalAddr = m_memory.GetGlobalAddr(m_cpu.GetPC(), Memory::RAM);
+                
                 if (*CheckBreak && (*CheckBreak)(pcGlobalAddr)) {
                     m_status = Status::STOP;
                 }
