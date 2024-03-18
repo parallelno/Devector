@@ -8,7 +8,7 @@ dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware)
 {
-	UpdateStats(false);
+	UpdateData(false);
 }
 
 void dev::HardwareStatsWindow::Update()
@@ -19,7 +19,7 @@ void dev::HardwareStatsWindow::Update()
 	ImGui::Begin("Hardware Stats", &open, ImGuiWindowFlags_NoCollapse);
 	
 	bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-	UpdateStats(isRunning);
+	UpdateData(isRunning);
 	DrawStats(isRunning);
 
 	ImGui::End();
@@ -167,7 +167,7 @@ void dev::HardwareStatsWindow::DrawStats(const bool _isRunning)
 	ImGui::PopStyleVar(2);
 }
 
-void dev::HardwareStatsWindow::UpdateStats(const bool _isRunning)
+void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 {
 	if (_isRunning) return;
 
@@ -175,11 +175,10 @@ void dev::HardwareStatsWindow::UpdateStats(const bool _isRunning)
 	const auto& data = *res;
 
 	uint64_t cc = data["cc"];
-
-	m_ccLastRun = cc - m_ccLast == 0 ? m_ccLastRun : cc - m_ccLast;
-	m_ccDiff = cc - m_ccLast;
+	auto ccDiff = cc - m_ccLast;
+	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
 	m_ccLast = cc;
-	if (m_ccDiff == 0) return;
+	if (ccDiff == 0) return;
 
 	// Regs
 	Addr regAF = data["af"];

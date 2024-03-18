@@ -12,7 +12,9 @@ dev::DisasmWindow::DisasmWindow(
     m_debugger(_debugger),
     m_fontCommentP(fontComment),
     m_reqDisasmUpdate(_reqDisasmUpdate)
-{}
+{
+    UpdateData(false);
+}
 
 void dev::DisasmWindow::Update()
 {
@@ -25,7 +27,10 @@ void dev::DisasmWindow::Update()
 
     DrawDebugControls(isRunning);
 	DrawSearch(isRunning);
+    
     isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the status in DrawDebugControls
+    UpdateData(isRunning);
+
     DrawDisasm(isRunning);
 
 	ImGui::End();
@@ -33,43 +38,6 @@ void dev::DisasmWindow::Update()
 
 void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 {
-    if (_isRunning) {
-        ImGui::BeginDisabled();
-    }
-    if (ImGui::Button("Step"))
-    {
-        m_hardware.Request(Hardware::Req::STOP);
-        m_hardware.Request(Hardware::Req::EXECUTE_INSTR);
-
-        Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-        UpdateDisasm(regPC);
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Step 0x100"))
-    {
-        for (int i = 0; i < 0x100; i++)
-        {
-            m_hardware.Request(Hardware::Req::STOP);
-            m_hardware.Request(Hardware::Req::EXECUTE_INSTR, "100");
-        }
-
-        Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-        UpdateDisasm(regPC);
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Step Frame"))
-    {
-        m_hardware.Request(Hardware::Req::STOP);
-        m_hardware.Request(Hardware::Req::EXECUTE_FRAME);
-
-        Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-        UpdateDisasm(regPC);
-    }
-    if (_isRunning) {
-        ImGui::EndDisabled();
-    }
-
-    ImGui::SameLine();
     if (!_isRunning && ImGui::Button("Conti"))
     {
         m_hardware.Request(Hardware::Req::RUN);
@@ -79,21 +47,41 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
         m_hardware.Request(Hardware::Req::STOP);
     }
     
+    if (_isRunning) ImGui::BeginDisabled();
+
+     ImGui::SameLine();
+    if (ImGui::Button("Step"))
+    {
+        m_hardware.Request(Hardware::Req::STOP);
+        m_hardware.Request(Hardware::Req::EXECUTE_INSTR);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Step 0x100"))
+    {
+        for (int i = 0; i < 0x100; i++)
+        {
+            m_hardware.Request(Hardware::Req::STOP);
+            m_hardware.Request(Hardware::Req::EXECUTE_INSTR, "100");
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Step Frame"))
+    {
+        m_hardware.Request(Hardware::Req::STOP);
+        m_hardware.Request(Hardware::Req::EXECUTE_FRAME);
+    }
+
+    if (_isRunning) ImGui::EndDisabled();
+
     ImGui::SameLine();
     if (ImGui::Button("Reset"))
-    {       
+    {
         m_hardware.Request(Hardware::Req::STOP);
         m_hardware.Request(Hardware::Req::RESET);
         m_debugger.ReqLoadRomLast();
         m_debugger.Reset();
         m_hardware.Request(Hardware::Req::RUN);
     }
-}
-
-void dev::DisasmWindow::UpdateDisasm(const GlobalAddr _globalAddr, const int _instructionsOffset)
-{
-    // TODO: request a meaningful amount disasmm lines, not 100!
-    m_disasm = m_debugger.GetDisasm(_globalAddr, 80, _instructionsOffset);
 }
 
 void dev::DisasmWindow::DrawSearch(const bool _isRunning)
@@ -120,14 +108,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 {
     auto res = m_hardware.Request(Hardware::Req::GET_REGS);
     const auto& data = *res;
-    uint64_t cc = data["cc"];
     Addr regPC = data["pc"];
-
-    // check if it needs an update
-    if (!_isRunning && cc - m_ccLast > 0) {
-        UpdateDisasm(regPC);
-    }
-    m_ccLast = cc;
 
     if (m_disasm.empty()) return;
 
@@ -334,7 +315,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     }
     ImGui::PopStyleVar(2);
 
-    if (m_reqDisasmUpdate) 
+    if (m_reqDisasmUpdate)
     {
         UpdateDisasm(m_disasm[6].addr);
         m_reqDisasmUpdate = false;
@@ -359,4 +340,31 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     }
 
     if (_isRunning) ImGui::EndDisabled();
+}
+
+
+void dev::DisasmWindow::UpdateData(const bool _isRunning, int64_t _addr, const int _instructionsOffset)
+{
+    if (_isRunning) return;
+
+    auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+    const auto& data = *res;
+
+    uint64_t cc = data["cc"];
+    auto ccDiff = cc - m_ccLast;
+    m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
+    m_ccLast = cc;
+    if (ccDiff == 0) return;
+
+    // update
+    if (_addr < 0) {
+        _addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
+    }
+    UpdateDisasm(_addr, _instructionsOffset);
+}
+
+void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOffset)
+{
+    // TODO: request a meaningful amount disasmm lines, not 80!
+    m_disasm = m_debugger.GetDisasm(_addr, 80, _instructionsOffset);
 }

@@ -16,7 +16,6 @@ namespace dev
 
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
-		int64_t m_ccDiff = 0;
 
 		Hardware& m_hardware;
 		
@@ -61,7 +60,7 @@ namespace dev
 		void DrawFlags();
 		void DrawStack();
 		void DrawHardware();
-		void UpdateStats(const bool _isRunning);
+		void UpdateData(const bool _isRunning);
 
 	public:
 		HardwareStatsWindow(Hardware& _hardware,

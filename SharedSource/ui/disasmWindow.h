@@ -54,18 +54,20 @@ namespace dev
 		bool& m_reqDisasmUpdate;
 		char m_searchText[255] = "";
 		Debugger::Disasm m_disasm;
-		int64_t m_ccLast = 0;
+		int64_t m_ccLast = -1; // to force the first stats update
+		int64_t m_ccLastRun = 0;
 
 		void DrawDebugControls(const bool _isRunning);
 		void DrawSearch(const bool _isRunning);
 		void DrawDisasm(const bool _isRunning);
+		void UpdateData(const bool _isRunning, int64_t _globalAddr = -1, const int _instructionsOffset = -DISASM_INSTRUCTION_OFFSET);
 		bool IsDisasmTableOutOfWindow();
 
 	public:
 
 		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate);
 		void Update();
-		void UpdateDisasm(const GlobalAddr _globalAddr, const int _instructionsOffset = -DISASM_INSTRUCTION_OFFSET);
+		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = -DISASM_INSTRUCTION_OFFSET);
 	};
 
 };
