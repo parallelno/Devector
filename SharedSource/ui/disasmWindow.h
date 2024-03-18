@@ -45,7 +45,6 @@ namespace dev
 		static constexpr float CODE_W = 200.0f;
 		static constexpr float COMMAND_W = 120.0f;
 		static constexpr float STATS_W = 100.0f;
-
 		static constexpr int DISASM_INSTRUCTION_OFFSET = 6;
 		
 		Hardware& m_hardware;
@@ -56,6 +55,7 @@ namespace dev
 		Debugger::Disasm m_disasm;
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
+		int m_selectedLineIdx = 0;
 
 		void DrawDebugControls(const bool _isRunning);
 		void DrawSearch(const bool _isRunning);

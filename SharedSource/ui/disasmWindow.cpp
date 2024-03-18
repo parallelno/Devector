@@ -88,7 +88,12 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 {
     if (_isRunning) ImGui::BeginDisabled();
     ImGui::PushItemWidth(-100);
-    ImGui::InputTextWithHint("##empty 1", "0x100", m_searchText, IM_ARRAYSIZE(m_searchText));
+    if (ImGui::InputTextWithHint("##empty 1", "0x100", m_searchText, IM_ARRAYSIZE(m_searchText))) 
+    {
+        Addr addr = dev::StrHexToInt(m_searchText);
+        UpdateDisasm(addr);
+        m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
+    }
     ImGui::SameLine(); dev::DrawHelpMarker(
         "Search by a hexadecimal address in the format of 0x100 or 100,\n"
         "or by a case-sensitive label name.");
@@ -114,15 +119,10 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
     if (_isRunning) ImGui::BeginDisabled();
 
-    static int selectedLineIdx = 0;
-    int scrollDirection = 0;
-
     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-
-    static ImGuiTableFlags tbl_flags = ImGuiTableFlags_NoBordersInBody;
-
-    const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
+        
+    int lineIdx = 0;
 
     PushStyleCompact();
 
@@ -139,8 +139,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
         ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthFixed, CODE_W);
         ImGui::TableSetupColumn("stats", ImGuiTableColumnFlags_WidthFixed, STATS_W);
         ImGui::TableSetupColumn("consts");
-
-        for (int lineIdx = 0; lineIdx < 200; lineIdx++)
+        
+        for (; lineIdx < 200; lineIdx++)
             {
                 // TODO: fix it. replace with fixed amount of lines and without a need to check the end of the window
                 if (IsDisasmTableOutOfWindow()) break;
@@ -158,10 +158,10 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                 // the line selection/highlight
                 ImGui::TableNextColumn();
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_BRK);
-                const bool isSelected = selectedLineIdx == lineIdx;
+                const bool isSelected = m_selectedLineIdx == lineIdx;
                 if (ImGui::Selectable(std::format("##disasmLineId{:04d}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
                 {
-                    selectedLineIdx = lineIdx;
+                    m_selectedLineIdx = lineIdx;
                 }
 
                 // draw breakpoints
@@ -315,28 +315,56 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     }
     ImGui::PopStyleVar(2);
 
-    if (m_reqDisasmUpdate)
+    if (m_reqDisasmUpdate && m_disasm.size() >= 1)
     {
-        UpdateDisasm(m_disasm[6].addr);
+        UpdateDisasm(m_disasm[0].addr);
         m_reqDisasmUpdate = false;
     }
     // check the keys
     if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
     {
-        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, -1);
+        if (m_disasm.size() >= 1)
+        {
+            m_selectedLineIdx -= 1;
+            if (m_selectedLineIdx < 0) {
+                m_selectedLineIdx = 0;
+                UpdateDisasm(m_disasm[0].addr, -1);
+            }
+        }
     }
     else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
     {
-        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, 1);
+        if (m_disasm.size() >= 1)
+        {
+            m_selectedLineIdx += 1;
+            if (m_selectedLineIdx > lineIdx - 1) {
+                m_selectedLineIdx = lineIdx - 1;
+                UpdateDisasm(m_disasm[0].addr, 1);
+            }
+        }
     }
 
     if (ImGui::GetIO().MouseWheel > 0.0f)
     {
-        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, -2);
+        if (m_disasm.size() >= 1)
+        {
+            m_selectedLineIdx -= 1;
+            if (m_selectedLineIdx < 0) {
+                m_selectedLineIdx = 0;
+                UpdateDisasm(m_disasm[0].addr, -2);
+            }
+        }
     }
     else if (ImGui::GetIO().MouseWheel < 0.0f)
     {
-        if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, 2);
+        if (m_disasm.size() >= 1)
+        {
+            m_selectedLineIdx += 1;
+            if (m_selectedLineIdx > lineIdx - 1) {
+                m_selectedLineIdx = lineIdx - 1;
+                UpdateDisasm(m_disasm[0].addr, 2);
+            }
+        }
     }
 
     if (_isRunning) ImGui::EndDisabled();
@@ -360,6 +388,8 @@ void dev::DisasmWindow::UpdateData(const bool _isRunning, int64_t _addr, const i
     if (_addr < 0) {
         _addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
     }
+
+    m_selectedLineIdx = -_instructionsOffset;
     UpdateDisasm(_addr, _instructionsOffset);
 }
 
