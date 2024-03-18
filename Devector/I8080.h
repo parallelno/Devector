@@ -196,6 +196,7 @@ namespace dev
 		void RETCond(bool _condition);
 		void IN_();
 		void OUT_();
+		void HLT();
 
 	};
 }

@@ -46,14 +46,10 @@ void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
 			m_HLTA = false;
 			m_instructionRegister = OPCODE_RST7;
 		}
+		
 		// normal instruction execution
-		else
+		if (!m_IFF || m_eiPending)
 		{
-			if (m_instructionRegister == OPCODE_HLT)
-			{
-				m_pc--; // move the program counter back if the last instruction was HLT
-			}
-
 			m_eiPending = false;
 			m_instructionRegister = ReadInstrMovePC();
 		}
@@ -65,13 +61,13 @@ void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
 
 bool dev::I8080::IsInstructionExecuted() const
 {
-	return m_machineCycle == I8080::INSTR_EXECUTED;
+	return m_machineCycle == I8080::INSTR_EXECUTED || m_HLTA;
 }
 
 // an instruction execution time in macine cycles
 static constexpr int M_CYCLES[]
 {
-	//  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+//  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
 	1, 3, 2, 2, 2, 2, 2, 1, 1, 3, 2, 2, 2, 2, 2, 1, // 0
 	1, 3, 2, 2, 2, 2, 2, 1, 1, 3, 2, 2, 2, 2, 2, 1, // 1
 	1, 3, 5, 2, 2, 2, 2, 1, 1, 3, 5, 2, 2, 2, 2, 1, // 2
@@ -80,7 +76,7 @@ static constexpr int M_CYCLES[]
 	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 4
 	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 5
 	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 6
-	2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 7
+	2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 7
 
 	1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, // 8
 	1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, // 9
@@ -380,7 +376,7 @@ void dev::I8080::Decode()
 
 		case 0xF3: m_INTE = false; break; // DI
 		case 0xFB: m_INTE = true; m_eiPending = true; break; // EI
-		case 0x76: m_HLTA = true; break; // HLT
+		case 0x76: HLT(); break; // HLT
 
 		case 0x00: break; // NOP
 		case 0x08: break; // undocumented NOP
@@ -1400,6 +1396,27 @@ void dev::I8080::OUT_()
 		m_W = 0;
 		m_Z = ReadByteMovePC();
 		Output(m_Z, m_a);
+	}
+}
+
+void dev::I8080::HLT()
+{
+	if (m_machineCycle == 0)
+	{
+		m_pc--;
+	}
+	else if (m_machineCycle == 1)
+	{
+		// to loop into the M2 of HLT
+		if (!m_IFF) {
+			m_HLTA = true;
+			m_machineCycle -= 1; 
+		}
+		// to end the command execution
+		else {
+			m_pc++;
+		}
+
 	}
 }
 

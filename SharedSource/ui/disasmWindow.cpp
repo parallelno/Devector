@@ -317,7 +317,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
     if (m_reqDisasmUpdate && m_disasm.size() >= 1)
     {
-        UpdateDisasm(m_disasm[0].addr);
+        UpdateDisasm(m_disasm[0].addr, 0);
         m_reqDisasmUpdate = false;
     }
     // check the keys
