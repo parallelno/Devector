@@ -8,29 +8,40 @@
 #include "Utils/Utils.h"
 
 dev::Debugger::Debugger(Hardware& _hardware)
-    : 
+	:
 	m_hardware(_hardware),
-    m_wpBreak(false),
-	m_traceLog()
+	m_wpBreak(false),
+	m_traceLog(),
+	m_pathLast()
 {
     Init();
 }
 
 void dev::Debugger::Init()
 {
-	Hardware::CheckBreakFunc m_checkBreakFunc = std::bind(&Debugger::CheckBreak, this, std::placeholders::_1);
-	I8080::DebugOnReadInstrFunc m_debugOnReadInstrFunc = std::bind(&Debugger::ReadInstr, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
-	I8080::DebugOnReadFunc m_debugOnReadFunc = std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2);
-	I8080::DebugOnWriteFunc m_debugOnWriteFunc = std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2);
+	m_checkBreakFunc = std::bind(&Debugger::CheckBreak, this, std::placeholders::_1);
+	m_debugOnReadInstrFunc = std::bind(&Debugger::ReadInstr, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
+	m_debugOnReadFunc = std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2);
+	m_debugOnWriteFunc = std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2);
 
 	m_hardware.AttachCheckBreak( &m_checkBreakFunc );
 	m_hardware.AttachDebugOnReadInstr( &m_debugOnReadInstrFunc );
 	m_hardware.AttachDebugOnRead( &m_debugOnReadFunc );
 	m_hardware.AttachDebugOnWrite( &m_debugOnWriteFunc );
 
-    m_memRuns.fill(0);
-    m_memReads.fill(0);
-    m_memWrites.fill(0);
+	Reset();
+
+	m_breakpoints.clear();
+	m_watchpoints.clear();
+
+	m_hardware.Request(Hardware::Req::RUN);
+}
+
+void dev::Debugger::Reset()
+{
+	m_memRuns.fill(0);
+	m_memReads.fill(0);
+	m_memWrites.fill(0);
 
 	for (size_t i = 0; i < TRACE_LOG_SIZE; i++)
 	{
@@ -38,11 +49,6 @@ void dev::Debugger::Init()
 	}
 	m_traceLogIdx = 0;
 	m_traceLogIdxViewOffset = 0;
-
-	m_breakpoints.clear();
-	m_watchpoints.clear();
-
-	m_hardware.Request(Hardware::Req::RUN);
 }
 
 // a hardware thread
@@ -236,7 +242,7 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 		for (int i = 0; i < instructions; i++)
 		{
 			//auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-			auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr })["data"];
+			auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 
 			auto cmdLen = GetCmdLen(opcode);
 			addr = addr + cmdLen;
@@ -257,7 +263,7 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 			while (addr < _addr && currentInstruction < instructions)
 			{
 				//auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-				auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr })["data"];
+				auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 
 				auto cmdLen = GetCmdLen(opcode);
 				addr = addr + cmdLen;
@@ -320,9 +326,9 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 			}
 			
 			//auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-			auto db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr })["data"];
+			auto db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 			//auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
-			auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { "addr", addr })["data"];
+			auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
 
 			auto breakpointStatus = GetBreakpointStatus(globalAddr);
 			DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], "", breakpointStatus);
@@ -339,9 +345,9 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 		auto dataL = m_memory.GetByte(addr + 1, Memory::AddrSpace::RAM);
 		auto dataH = m_memory.GetByte(addr + 2, Memory::AddrSpace::RAM);
 		*/
-		auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr })["data"];
-		auto dataL = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr + 1 })["data"];
-		auto dataH = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { "addr", addr + 2 })["data"];
+		auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
+		auto dataL = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 1 } })->at("data");
+		auto dataH = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 2 } })->at("data");
 
 		if (m_labels.contains(addr))
 		{
@@ -360,7 +366,7 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 		}
 
 		//auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
-		auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { "addr", addr })["data"];
+		auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
 
 		auto disasmS = GetDisasmLine(opcode, dataL, dataH);
 		auto breakpointStatus = GetBreakpointStatus(globalAddr);
@@ -564,15 +570,7 @@ auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _
 auto dev::Debugger::TraceLog::ToStr() const
 ->std::string
 {
-	std::stringstream out;
-
-	out << "0x";
-	out << std::setw(5) << std::setfill('0');
-	out << std::uppercase << std::hex << static_cast<int>(m_globalAddr) << ": ";
-
-	out << GetMnemonic(m_opcode, m_dataL, m_dataH);
-
-	return out.str();
+	return std::format("0x{:05X}: {}", m_globalAddr, GetMnemonic(m_opcode, m_dataL, m_dataH));
 }
 
 void dev::Debugger::TraceLog::Clear()
@@ -840,6 +838,8 @@ auto dev::Debugger::LabelsToStr(const Addr _addr, int _labelTypes) const
 
 void dev::Debugger::ReqLoadRom(const std::wstring& _path)
 {
+	m_pathLast = _path;
+
 	auto fileSize = GetFileSize(_path);
 
 	if (fileSize > Memory::MEMORY_MAIN_LEN) {
@@ -854,8 +854,14 @@ void dev::Debugger::ReqLoadRom(const std::wstring& _path)
 		return;
 	}
 
-	m_hardware.Request(Hardware::Req::RESET, {});
 	m_hardware.Request(Hardware::Req::SET_MEM, *result);
 
 	Log("file loaded: {}", dev::StrWToStr(_path));
+}
+
+void dev::Debugger::ReqLoadRomLast()
+{
+	if (m_pathLast.empty()) return;
+
+	ReqLoadRom(m_pathLast);
 }

@@ -63,10 +63,12 @@ namespace dev
 		{
 			return std::move(m_result.value());
 		}
+		
 		inline T* operator->()
 		{
 			return &m_result.value();
 		}
+
 		inline Result<T>& operator= (const Result<T>& _other) noexcept
 		{
 			if (this == &_other) return *this;

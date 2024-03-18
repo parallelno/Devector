@@ -29,13 +29,6 @@ void dev::Hardware::Init()
     m_display.Init();
 }
 
-// called when the hardware needs to reset
-void dev::Hardware::Reset()
-{
-    Init();
-    m_cpu.Reset();
-}
-
 void dev::Hardware::ExecuteInstruction()
 {
     do
@@ -54,11 +47,14 @@ void dev::Hardware::Run()
             do {
                 ExecuteInstruction();
                 ReqHandling();
+
                 auto CheckBreak = m_checkBreak.load();
                 auto pcGlobalAddr = m_memory.GetGlobalAddr(m_cpu.GetPC(), Memory::RAM);
-                if (*CheckBreak && (*CheckBreak)(pcGlobalAddr)) break;
+                if (*CheckBreak && (*CheckBreak)(pcGlobalAddr)) {
+                    m_status = Status::STOP;
+                }
 
-            } while (!m_display.IsInt50Hz());
+            } while (m_status == Status::RUN && !m_display.IsInt50Hz());
 
             // vsync
             auto now = std::chrono::steady_clock::now();
@@ -68,18 +64,6 @@ void dev::Hardware::Run()
             ReqHandling(true);
         }
     }
-}
-
-void dev::Hardware::SetMem(const nlohmann::json& _dataJ)
-{
-    const auto& data = dev::GetJsonVectorUint8(_dataJ, "data");
-
-    if (data.size() > Memory::MEMORY_MAIN_LEN) {
-        // TODO: communicate the fail state
-        return;
-    }
-
-    m_memory.Set(data);
 }
 
 // called from the external thread
@@ -105,7 +89,6 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
         switch (req)
         {
-
         case Req::RUN:
             m_status = Status::RUN;
             m_reqRes.emplace({});
@@ -116,6 +99,12 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             m_reqRes.emplace({});
             break;
 
+        case Req::IS_RUNNING:
+            m_reqRes.emplace({
+                {"isRunning", m_status == Status::RUN},
+                });
+            break;
+
         case Req::EXIT:
             m_status = Status::EXIT;
             m_reqRes.emplace({});
@@ -123,6 +112,11 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
         case Req::RESET:
             Reset();
+            m_reqRes.emplace({});
+            break;
+
+        case Req::RESTART:
+            Restart();
             m_reqRes.emplace({});
             break;
 
@@ -147,7 +141,9 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             break;
 
         case Req::GET_REG_PC:
-            m_reqRes.emplace(GetRegPC());
+            m_reqRes.emplace({
+                {"pc", m_cpu.GetPC() },
+                });
             break;
 
         case Req::GET_BYTE_RAM:
@@ -161,7 +157,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
         case Req::GET_DISPLAY_DATA:
             m_reqRes.emplace({
                 {"rasterLine", m_display.GetRasterLine()},
-                {"m_rasterPixel", m_display.GetRasterPixel()},
+                {"rasterPixel", m_display.GetRasterPixel()},
                 });
             break;
 
@@ -186,11 +182,27 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
     }
 }
 
-// called from the external thread
-auto dev::Hardware::GetFrame(const bool _vsync)
-->const Display::FrameBuffer*
+void dev::Hardware::Reset()
 {
-    return m_display.GetFrame(_vsync);
+    Init();
+    m_cpu.Reset();
+}
+
+void dev::Hardware::Restart()
+{
+    m_cpu.Reset();
+}
+
+void dev::Hardware::SetMem(const nlohmann::json& _dataJ)
+{
+    const std::vector<uint8_t> data = _dataJ;
+
+    if (data.size() > Memory::MEMORY_MAIN_LEN) {
+        // TODO: communicate the fail state
+        return;
+    }
+
+    m_memory.Set(data);
 }
 
 auto dev::Hardware::GetRegs() const
@@ -216,21 +228,12 @@ auto dev::Hardware::GetRegs() const
     return out;
 }
 
-auto dev::Hardware::GetRegPC() const
--> nlohmann::json
-{
-    nlohmann::json out = {
-        {"pc", m_cpu.GetPC() },
-    };
-    return out;
-}
-
 auto dev::Hardware::GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace)
 -> nlohmann::json
 {
     Addr addr = _addr["addr"];
     nlohmann::json out = {
-        {"data", m_memory.GetByte(_addr, Memory::AddrSpace::RAM)}
+        {"data", m_memory.GetByte(addr, Memory::AddrSpace::RAM)}
     };
     return out;
 }
@@ -240,7 +243,14 @@ auto dev::Hardware::GetWord(const nlohmann::json _addr, const Memory::AddrSpace 
 {
     Addr addr = _addr["addr"];
     nlohmann::json out = {
-        {"data", m_memory.GetWord(_addr, Memory::AddrSpace::STACK)}
+        {"data", m_memory.GetWord(addr, Memory::AddrSpace::STACK)}
     };
     return out;
+}
+
+// called from the external thread
+auto dev::Hardware::GetFrame(const bool _vsync)
+->const Display::FrameBuffer*
+{
+    return m_display.GetFrame(_vsync);
 }

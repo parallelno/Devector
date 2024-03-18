@@ -40,8 +40,10 @@ namespace dev
 			SET_MEM,
 			RUN,
 			STOP,
+			IS_RUNNING,
 			EXIT,
 			RESET,
+			RESTART,
 			EXECUTE_INSTR,
 			EXECUTE_FRAME,
 			GET_REGS,
@@ -75,9 +77,9 @@ namespace dev
 		void ExecuteInstruction();
 		void ReqHandling(const bool _waitReq = false);
 		void Reset();
+		void Restart();
 		void SetMem(const nlohmann::json& _dataJ);
 		auto GetRegs() const -> nlohmann::json;
-		auto GetRegPC() const -> nlohmann::json;
 		auto GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 	};

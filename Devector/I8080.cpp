@@ -65,7 +65,7 @@ void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
 
 bool dev::I8080::IsInstructionExecuted() const
 {
-	return m_machineCycle != I8080::INSTR_EXECUTED;
+	return m_machineCycle == I8080::INSTR_EXECUTED;
 }
 
 // an instruction execution time in macine cycles
@@ -846,7 +846,7 @@ void dev::I8080::POP(uint8_t& _regH, uint8_t& _regL)
 {
 	if (m_machineCycle == 1)
 	{
-		_regH = ReadByte(m_sp, Memory::AddrSpace::STACK);
+		_regL = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
 	}
 	else if (m_machineCycle == 2)

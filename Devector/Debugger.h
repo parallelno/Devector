@@ -72,6 +72,7 @@ namespace dev
 
 		Debugger(Hardware& _hardware);
 		void Init();
+		void Reset();
 
 		void ReadInstr(
 			const GlobalAddr _globalAddr, const uint8_t _val, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
@@ -103,6 +104,7 @@ namespace dev
 		void ResetLabels();
 
 		void ReqLoadRom(const std::wstring& _path);
+		void ReqLoadRomLast();
 
 	private:
 		auto GetDisasmLine(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string;
@@ -166,6 +168,7 @@ namespace dev
 		I8080::DebugOnReadFunc m_debugOnReadFunc;
 		I8080::DebugOnWriteFunc m_debugOnWriteFunc;
 
+		std::wstring m_pathLast;
 	};
 }
 #endif // !DEV_DEBUGGER_H

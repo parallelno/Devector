@@ -23,114 +23,130 @@ void dev::HardwareStatsWindow::Update()
 
 void dev::HardwareStatsWindow::DrawRegs()
 {
-	auto regs = m_hardware.Request(Hardware::Req::GET_REGS);
-	Addr regAF = regs["af"];
-	Addr regBC = regs["bc"];
-	Addr regDE = regs["de"];
-	Addr regHL = regs["hl"];
-	Addr regSP = regs["sp"];
-	Addr regPC = regs["pc"];
+	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+	if (res) { 
+		const auto& data = *res;
+		Addr regAF = data["af"];
+		Addr regBC = data["bc"];
+		Addr regDE = data["de"];
+		Addr regHL = data["hl"];
+		Addr regSP = data["sp"];
+		Addr regPC = data["pc"];
 
-	static ImGuiTableFlags flags =
-		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
-		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_NoPadInnerX |
-		ImGuiTableFlags_ContextMenuInBody;
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_NoPadInnerX |
+			ImGuiTableFlags_ContextMenuInBody;
 
-	if (ImGui::BeginTable("regs", 2, flags))
-	{
-		ImGui::TableSetupColumn("regsNames", ImGuiTableColumnFlags_WidthFixed, 30);
+		if (ImGui::BeginTable("regs", 2, flags))
+		{
+			ImGui::TableSetupColumn("regsNames", ImGuiTableColumnFlags_WidthFixed, 30);
 
-		DrawProperty2("AF", std::format("{:04X}", regAF));
-		DrawProperty2("BC", std::format("{:04X}", regBC));
-		DrawProperty2("DE", std::format("{:04X}", regDE));
-		DrawProperty2("HL", std::format("{:04X}", regHL));
-		DrawProperty2("SP", std::format("{:04X}", regSP));
-		DrawProperty2("PC", std::format("{:04X}", regPC));
+			DrawProperty2("AF", std::format("{:04X}", regAF));
+			DrawProperty2("BC", std::format("{:04X}", regBC));
+			DrawProperty2("DE", std::format("{:04X}", regDE));
+			DrawProperty2("HL", std::format("{:04X}", regHL));
+			DrawProperty2("SP", std::format("{:04X}", regSP));
+			DrawProperty2("PC", std::format("{:04X}", regPC));
 
-		ImGui::EndTable();
+			ImGui::EndTable();
+		}
 	}
 }
 
 void dev::HardwareStatsWindow::DrawFlags()
 {
-	auto regs = m_hardware.Request(Hardware::Req::GET_REGS);
-	bool flagC = regs["flagC"];
-	bool flagZ = regs["flagZ"];
-	bool flagP = regs["flagP"];
-	bool flagS = regs["flagS"];
-	bool flagAC		= regs["flagAC"];
-	bool flagINTE	= regs["flagINTE"];
-	bool flagIFF	= regs["flagIFF"];
-	bool flagHLTA	= regs["flagHLTA"];
+	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+	if (res){
+		const auto& data = *res;
 
-	static ImGuiTableFlags flags =
-		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
-		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_NoPadInnerX |
-		ImGuiTableFlags_ContextMenuInBody;
+		bool flagC = data["flagC"];
+		bool flagZ = data["flagZ"];
+		bool flagP = data["flagP"];
+		bool flagS = data["flagS"];
+		bool flagAC = data["flagAC"];
+		bool flagINTE = data["flagINTE"];
+		bool flagIFF = data["flagIFF"];
+		bool flagHLTA = data["flagHLTA"];
 
-	if (ImGui::BeginTable("flags", 2, flags))
-	{		
-		ImGui::TableSetupColumn("flagsNames", ImGuiTableColumnFlags_WidthFixed, 45);
+		static ImGuiTableFlags tableFlags =
+			ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_NoPadInnerX |
+			ImGuiTableFlags_ContextMenuInBody;
 
-		DrawProperty2("C", dev::BoolToStr(flagC));
-		DrawProperty2("Z", dev::BoolToStr(flagZ));
-		DrawProperty2("P", dev::BoolToStr(flagP));
-		DrawProperty2("S", dev::BoolToStr(flagS));
-		DrawProperty2("AC", dev::BoolToStr(flagAC));
-		DrawSeparator2("");
-		DrawProperty2("INTE", dev::BoolToStr(flagINTE));
-		DrawProperty2("IFF", dev::BoolToStr(flagIFF));
-		DrawProperty2("HLTA", dev::BoolToStr(flagHLTA));
+		if (ImGui::BeginTable("flags", 2, tableFlags))
+		{
+			ImGui::TableSetupColumn("flagsNames", ImGuiTableColumnFlags_WidthFixed, 45);
 
-		ImGui::EndTable();
+			DrawProperty2("C", dev::BoolToStr(flagC));
+			DrawProperty2("Z", dev::BoolToStr(flagZ));
+			DrawProperty2("P", dev::BoolToStr(flagP));
+			DrawProperty2("S", dev::BoolToStr(flagS));
+			DrawProperty2("AC", dev::BoolToStr(flagAC));
+			DrawSeparator2("");
+			DrawProperty2("INTE", dev::BoolToStr(flagINTE));
+			DrawProperty2("IFF", dev::BoolToStr(flagIFF));
+			DrawProperty2("HLTA", dev::BoolToStr(flagHLTA));
+
+			ImGui::EndTable();
+		}
 	}
+
 }
 
 void dev::HardwareStatsWindow::DrawStack()
 {
-	auto regs = m_hardware.Request(Hardware::Req::GET_REGS);
-	Addr regSP = regs["sp"];
-	Addr dataAddrN6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { "addr", regSP - 8 })["data"];
-	Addr dataAddrN4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { "addr", regSP - 6 })["data"];
-	Addr dataAddrN2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { "addr", regSP - 4 })["data"];
-	Addr dataAddr0  = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { "addr", regSP - 2 })["data"];
-	Addr dataAddrP2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { "addr", regSP     })["data"];
-	Addr dataAddrP4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { "addr", regSP + 2 })["data"];
-	Addr dataAddrP6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { "addr", regSP + 4 })["data"];
+	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+	if (res) {
+		const auto& data = *res;
+		Addr regSP = data["sp"];
 
-	static ImGuiTableFlags flags =
-		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
-		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_NoPadInnerX |
-		ImGuiTableFlags_ContextMenuInBody;
+		Addr dataAddrN6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 8 } })->at("data");
+		Addr dataAddrN4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 6 } })->at("data");
+		Addr dataAddrN2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 4 } })->at("data");
+		Addr dataAddr0 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 2 } })->at("data");
+		Addr dataAddrP2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP } })->at("data");
+		Addr dataAddrP4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 2 } })->at("data");
+		Addr dataAddrP6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 4 } })->at("data");
 
-	if (ImGui::BeginTable("stack", 2, flags))
-	{
-		ImGui::TableSetupColumn("stackAddrs", ImGuiTableColumnFlags_WidthFixed, 30);
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_NoPadInnerX |
+			ImGuiTableFlags_ContextMenuInBody;
 
-		// Stack		
-		DrawProperty2("-4", std::format("{:04X}", dataAddrN6));
-		DrawProperty2("-6", std::format("{:04X}", dataAddrN4));
-		DrawProperty2("-2", std::format("{:04X}", dataAddrN2));
-		DrawProperty2("SP", std::format("{:04X}", dataAddr0));
-		DrawProperty2("+2", std::format("{:04X}", dataAddrP2));
-		DrawProperty2("+4", std::format("{:04X}", dataAddrP4));
-		DrawProperty2("+6", std::format("{:04X}", dataAddrP6));
+		if (ImGui::BeginTable("stack", 2, flags))
+		{
+			ImGui::TableSetupColumn("stackAddrs", ImGuiTableColumnFlags_WidthFixed, 30);
 
-		ImGui::EndTable();
+			// Stack		
+			DrawProperty2("-4", std::format("{:04X}", dataAddrN6));
+			DrawProperty2("-6", std::format("{:04X}", dataAddrN4));
+			DrawProperty2("-2", std::format("{:04X}", dataAddrN2));
+			DrawProperty2("SP", std::format("{:04X}", dataAddr0));
+			DrawProperty2("+2", std::format("{:04X}", dataAddrP2));
+			DrawProperty2("+4", std::format("{:04X}", dataAddrP4));
+			DrawProperty2("+6", std::format("{:04X}", dataAddrP6));
+
+			ImGui::EndTable();
+		}
 	}
+
 }
 
 void dev::HardwareStatsWindow::DrawHardware()
 {
-	auto regs = m_hardware.Request(Hardware::Req::GET_REGS);
-	uint64_t regCC = regs["cc"];
-	auto displayData = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
-	int rasterPixel = regs["rasterPixel"];
-	int rasterLine = regs["rasterLine"];
-	auto memoryModes = m_hardware.Request(Hardware::Req::GET_MEMORY_MODES);
+	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+	const auto& data = *res;
+	uint64_t cc = data["cc"];
+	res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
+	const auto& displayData = *res;
+	int rasterPixel = data["rasterPixel"];
+	int rasterLine = data["rasterLine"];
+	res = m_hardware.Request(Hardware::Req::GET_MEMORY_MODES);
+	const auto& memoryModes = *res;
 	bool mappingModeStack = memoryModes["mappingModeStack"];
 	size_t mappingPageStack = memoryModes["mappingPageStack"];
 	uint8_t mappingModeRam = memoryModes["mappingModeRam"];
@@ -148,9 +164,10 @@ void dev::HardwareStatsWindow::DrawHardware()
 		ImGui::TableSetupColumn("hardwareValue", ImGuiTableColumnFlags_WidthStretch);
 
 		// cpu cycles
-		auto lastRunCC = regCC - m_ccLast;
-		DrawProperty2("CPU Cicles", std::format("{}", regCC));
-		DrawProperty2("Last Run", std::format("{}", lastRunCC));
+		m_ccLastRun = cc - m_ccLast == 0 ? m_ccLastRun : cc - m_ccLast;
+		m_ccLast = cc;
+		DrawProperty2("CPU Cicles", std::format("{}", cc));
+		DrawProperty2("Last Run", std::format("{}", m_ccLastRun));
 		DrawProperty2("CRT", std::format("X: {:03} Y: {:03}", rasterPixel, rasterLine));
 
 		// mapping

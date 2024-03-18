@@ -54,10 +54,11 @@ namespace dev
 		bool& m_reqDisasmUpdate;
 		char m_searchText[255] = "";
 		Debugger::Disasm m_disasm;
+		bool m_break = false;
 
-		void DrawDebugControls();
+		void DrawDebugControls(const bool _isRunning);
 		void DrawSearch();
-		void DrawDisassembly();
+		void DrawDisasm(const bool _isRunning);
 		bool IsDisasmTableOutOfWindow();
 
 	public:

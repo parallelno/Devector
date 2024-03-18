@@ -143,12 +143,11 @@ void dev::DevectorApp::LoadRom(const std::wstring& _path)
 	auto labelsPath = labelsDir + L"\\" + dev::GetFilename(_path) + labelsFilenamePostfix;
 	m_debuggerP->LoadLabels(labelsPath);
 
-	
-	
+	m_hardwareP->Request(Hardware::Req::STOP);
+	m_hardwareP->Request(Hardware::Req::RESET);
 	m_debuggerP->ReqLoadRom(_path);
-
-	Addr regPC = m_hardwareP->Request(Hardware::Req::GET_REG_PC)["pc"];
-	m_disasmWindowP->UpdateDisasm(regPC);
+	m_debuggerP->Reset();
+	m_hardwareP->Request(Hardware::Req::RUN);
 
 	RecentFilesUpdate(_path);
 	RecentFilesStore();
