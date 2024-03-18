@@ -57,7 +57,7 @@ namespace dev
 		int64_t m_ccLast = 0;
 
 		void DrawDebugControls(const bool _isRunning);
-		void DrawSearch();
+		void DrawSearch(const bool _isRunning);
 		void DrawDisasm(const bool _isRunning);
 		bool IsDisasmTableOutOfWindow();
 

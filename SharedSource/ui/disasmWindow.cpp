@@ -24,7 +24,8 @@ void dev::DisasmWindow::Update()
     bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 
     DrawDebugControls(isRunning);
-	DrawSearch();
+	DrawSearch(isRunning);
+    isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the status in DrawDebugControls
     DrawDisasm(isRunning);
 
 	ImGui::End();
@@ -64,12 +65,21 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
         Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
         UpdateDisasm(regPC);
     }
-    ImGui::SameLine();
-    
     if (_isRunning) {
         ImGui::EndDisabled();
     }
 
+    ImGui::SameLine();
+    if (!_isRunning && ImGui::Button("Conti"))
+    {
+        m_hardware.Request(Hardware::Req::RUN);
+    }
+    else if (_isRunning && ImGui::Button("Break"))
+    {
+        m_hardware.Request(Hardware::Req::STOP);
+    }
+    
+    ImGui::SameLine();
     if (ImGui::Button("Reset"))
     {       
         m_hardware.Request(Hardware::Req::STOP);
@@ -77,16 +87,6 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
         m_debugger.ReqLoadRomLast();
         m_debugger.Reset();
         m_hardware.Request(Hardware::Req::RUN);
-    }
-
-    ImGui::SameLine();
-    if (!_isRunning && ImGui::Button("Conti"))
-    {
-        m_hardware.Request(Hardware::Req::RUN);
-    } 
-    else if (_isRunning && ImGui::Button("Break"))
-    {
-        m_hardware.Request(Hardware::Req::STOP);
     }
 }
 
@@ -96,24 +96,16 @@ void dev::DisasmWindow::UpdateDisasm(const GlobalAddr _globalAddr, const int _in
     m_disasm = m_debugger.GetDisasm(_globalAddr, 80, _instructionsOffset);
 }
 
-void dev::DisasmWindow::DrawSearch()
+void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 {
+    if (_isRunning) ImGui::BeginDisabled();
     ImGui::PushItemWidth(-100);
     ImGui::InputTextWithHint("##empty 1", "0x100", m_searchText, IM_ARRAYSIZE(m_searchText));
     ImGui::SameLine(); dev::DrawHelpMarker(
         "Search by a hexadecimal address in the format of 0x100 or 100,\n"
         "or by a case-sensitive label name.");
     ImGui::PopItemWidth();
-}
-
-// Make the UI compact because there are so many fields
-void PushStyleCompact()
-{
-    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 3 });
-}
-void PopStyleCompact()
-{
-    ImGui::PopStyleVar(2);
+    if (_isRunning) ImGui::EndDisabled();
 }
 
 bool dev::DisasmWindow::IsDisasmTableOutOfWindow()
@@ -131,12 +123,15 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     uint64_t cc = data["cc"];
     Addr regPC = data["pc"];
 
-    if (cc - m_ccLast > 0) {
+    // check if it needs an update
+    if (!_isRunning && cc - m_ccLast > 0) {
         UpdateDisasm(regPC);
     }
     m_ccLast = cc;
 
-    if (_isRunning || m_disasm.empty()) return;
+    if (m_disasm.empty()) return;
+
+    if (_isRunning) ImGui::BeginDisabled();
 
     static int selectedLineIdx = 0;
     int scrollDirection = 0;
@@ -198,7 +193,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                 }
 
                 // draw program counter icon
-                if (isCode && addr == regPC)
+                if (isCode && addr == regPC && !_isRunning)
                 {
                     ImGui::SameLine();
                     dev::DrawProgramCounter(DISASM_TBL_COLOR_PC, ImGuiDir_Right, *m_dpiScaleP);
@@ -362,4 +357,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     {
         if (m_disasm.size() >= 1) UpdateDisasm(m_disasm[0].addr, 2);
     }
+
+    if (_isRunning) ImGui::EndDisabled();
 }

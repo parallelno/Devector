@@ -14,16 +14,54 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
 
-		int64_t m_ccLast = 0;
+		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
+		int64_t m_ccDiff = 0;
 
 		Hardware& m_hardware;
+		
+		////////////////////
+		// stats
+		std::string m_regAFS;
+		std::string m_regBCS;
+		std::string m_regDES;
+		std::string m_regHLS;
+		std::string m_regSPS;
+		std::string m_regPCS;
 
-		void DrawStats();
+		bool m_flagC = false;
+		bool m_flagZ = false;
+		bool m_flagP = false;
+		bool m_flagS = false;
+		bool m_flagAC = false;
+		bool m_flagINTE = false;
+		bool m_flagIFF = false;
+		bool m_flagHLTA = false;
+
+		std::string m_dataAddrN6S;
+		std::string m_dataAddrN4S;
+		std::string m_dataAddrN2S;
+		std::string m_dataAddr0S;
+		std::string m_dataAddrP2S;
+		std::string m_dataAddrP4S;
+		std::string m_dataAddrP6S;
+
+		std::string m_ccS;
+		std::string m_ccLastRunS;
+		std::string m_rasterPixel_rasterLineS;
+		std::string m_mappingRamModeS;
+		std::string m_mappingPageRamS;
+		std::string m_mappingModeStackS;
+		std::string m_mappingPageStackS;
+		// stats end
+		////////////////////
+
+		void DrawStats(const bool _isRunning);
 		void DrawRegs();
 		void DrawFlags();
 		void DrawStack();
 		void DrawHardware();
+		void UpdateStats(const bool _isRunning);
 
 	public:
 		HardwareStatsWindow(Hardware& _hardware,
