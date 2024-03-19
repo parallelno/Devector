@@ -54,7 +54,6 @@ namespace dev
 		bool m_HLTA; // indicates that HLT instruction is executed
 		bool m_eiPending; // if set, the interruption call is pending until the next instruction
 		static constexpr uint8_t OPCODE_RST7 = 0xff;
-		static constexpr uint8_t OPCODE_HLT = 0x76;
 
 	public:
 		// memory + io interface

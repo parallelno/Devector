@@ -25,9 +25,9 @@ void dev::DisplayWindow::Update()
 void dev::DisplayWindow::DrawDisplay()
 {
 
+    CreateTexture(true);
     if (m_frameTextureId)
     {
-        CreateTexture(true);
         ImGui::Image((void*)(intptr_t)m_frameTextureId, ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
     }
 }

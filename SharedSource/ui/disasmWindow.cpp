@@ -325,7 +325,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     {
         if (m_disasm.size() >= 1)
         {
-            m_selectedLineIdx -= 1;
+            m_selectedLineIdx--;
             if (m_selectedLineIdx < 0) {
                 m_selectedLineIdx = 0;
                 UpdateDisasm(m_disasm[0].addr, -1);
@@ -348,7 +348,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     {
         if (m_disasm.size() >= 1)
         {
-            m_selectedLineIdx -= 1;
+            m_selectedLineIdx--;
             if (m_selectedLineIdx < 0) {
                 m_selectedLineIdx = 0;
                 UpdateDisasm(m_disasm[0].addr, -2);

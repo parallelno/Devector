@@ -46,9 +46,8 @@ void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
 			m_HLTA = false;
 			m_instructionRegister = OPCODE_RST7;
 		}
-		
 		// normal instruction execution
-		if (!m_IFF || m_eiPending)
+		else
 		{
 			m_eiPending = false;
 			m_instructionRegister = ReadInstrMovePC();
@@ -1407,16 +1406,13 @@ void dev::I8080::HLT()
 	}
 	else if (m_machineCycle == 1)
 	{
+		ReadInstrMovePC();
 		// to loop into the M2 of HLT
 		if (!m_IFF) {
 			m_HLTA = true;
-			m_machineCycle -= 1; 
+			m_machineCycle -= 1;
+			m_pc--;
 		}
-		// to end the command execution
-		else {
-			m_pc++;
-		}
-
 	}
 }
 
