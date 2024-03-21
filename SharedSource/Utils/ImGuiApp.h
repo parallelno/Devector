@@ -2,12 +2,15 @@
 #ifndef DEV_IMGUI_APP_H
 #define DEV_IMGUI_APP_H
 
-#include "imgui_impl_glfw.h"
 #include <stdio.h>
 #include <string>
 #include <atomic>
 #include <thread>
 #include <Windows.h>
+
+#include "Utils/ImGuiUtils.h"
+#include "GLFW/glfw3.h" // Will drag system OpenGL headers
+#include "imgui.h"
 
 #include "Utils/JsonUtils.h"
 

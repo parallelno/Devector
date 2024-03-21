@@ -12,26 +12,38 @@ void dev::Memory::Init()
 
 void dev::Memory::Set(const std::vector<uint8_t>& _data, const Addr _loadAddr)
 {
+    std::unique_lock<std::mutex> mlock(m_ramMutex);
     std::copy(_data.begin(), _data.end(), m_data.data() + _loadAddr);
 }
 
-auto dev::Memory::GetByte(GlobalAddr _globalAddr, const AddrSpace _addrSpace) const
+auto dev::Memory::GetByte(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
 -> uint8_t
 {
     _globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
+    std::unique_lock<std::mutex> mlock(m_ramMutex);
     return m_data[_globalAddr];
 }
 
 void dev::Memory::SetByte(GlobalAddr _globalAddr, uint8_t _value, const AddrSpace _addrSpace)
 {
     _globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
+    std::unique_lock<std::mutex> mlock(m_ramMutex);
     m_data[_globalAddr] = _value;
 }
 
-auto dev::Memory::GetWord(GlobalAddr _globalAddr, const AddrSpace _addrSpace) const
+auto dev::Memory::GetWord(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
 -> uint16_t
 {
     return GetByte(_globalAddr + 1, _addrSpace) << 8 | GetByte(_globalAddr, _addrSpace);
+}
+
+auto dev::Memory::GetRam8K(const Addr _addr)
+-> const OutRam*
+{
+    std::unique_lock<std::mutex> mlock(m_ramMutex);
+    std::copy(m_data.begin(), m_data.begin() + m_out.size(), m_out.begin());
+
+    return &m_out;
 }
 
 // converts an addr to a global addr depending on the ram/stack mapping modes
@@ -69,3 +81,4 @@ bool dev::Memory::IsRamMapped(Addr _addr) const
 
     return false;
 }
+

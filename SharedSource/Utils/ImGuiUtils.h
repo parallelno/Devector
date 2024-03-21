@@ -5,9 +5,9 @@
 #include <string>
 #include <list>
 #include <format>
+
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+
 #include "..\Devector\Types.h"
 #include "..\Devector\Breakpoint.h"
 
@@ -92,4 +92,3 @@ namespace dev
 }
 
 #endif // !DEV_IMGUI_UTILS_H
-

@@ -37,6 +37,14 @@ void dev::Debugger::Init()
 	m_hardware.Request(Hardware::Req::RUN);
 }
 
+dev::Debugger::~Debugger()
+{
+	m_hardware.AttachCheckBreak(nullptr);
+	m_hardware.AttachDebugOnReadInstr(nullptr);
+	m_hardware.AttachDebugOnRead(nullptr);
+	m_hardware.AttachDebugOnWrite(nullptr);
+}
+
 void dev::Debugger::Reset()
 {
 	m_memRuns.fill(0);
@@ -273,7 +281,7 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 			// if we reached the _addr address with counted instructions equals instructions
 			if (addr == _addr && currentInstruction == instructions)
 			{
-				possibleDisasmStartAddrs.push_back(disasmStartAddr);
+				possibleDisasmStartAddrs.push_back((Addr)disasmStartAddr);
 			}
 			disasmStartAddr++;
 
@@ -314,7 +322,7 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 	if (_instructionOffset < 0 && addr == _addr)
 	{
 		// it failed to find an new addr, we assume a data blob is ahead
-		addr -= instructionsOffset;
+		addr -= (Addr)instructionsOffset;
 		lines -= instructionsOffset;
 
 		for (int i = 0; i < instructionsOffset; i++)
@@ -694,13 +702,13 @@ auto dev::Debugger::GetBreakpointStatus(const GlobalAddr _globalAddr)
 
 void dev::Debugger::AddWatchpoint(
 	const Watchpoint::Access _access, const GlobalAddr _globalAddr, const Watchpoint::Condition _cond,
-	const uint16_t _value, const size_t _value_size, const bool _active, const Memory::AddrSpace _addrSpace)
+	const uint16_t _value, const size_t _value_size, const bool _active)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
 	m_watchpoints.emplace_back(std::move(Watchpoint(_access, _globalAddr, _cond, _value, _value_size, _active)));
 }
 
-void dev::Debugger::DelWatchpoint(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace)
+void dev::Debugger::DelWatchpoint(const GlobalAddr _globalAddr)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
 	WatchpointsErase(_globalAddr);

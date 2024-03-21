@@ -84,6 +84,7 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	}
 
 	using SendEmergencyMsgT = std::function<void(const std::string&)>;
+
 	static void Exit(
 		const std::string& _errStr,
 		dev::ErrCode _err,
@@ -97,6 +98,7 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		dev::ThreadSleep(30.0);
 		exit(_err);
 	}
+
 	//--------------------------------------------------------------
 	//
 	// MATH

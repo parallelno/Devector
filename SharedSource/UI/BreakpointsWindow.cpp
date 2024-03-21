@@ -1,6 +1,7 @@
 #include <format>
 #include "BreakpointsWindow.h"
-#include "Utils\StringUtils.h"
+#include "Utils/ImGuiUtils.h"
+#include "Utils/StringUtils.h"
 
 dev::BreakpointsWindow::BreakpointsWindow(Debugger& _debugger,
 	const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate)
@@ -135,7 +136,7 @@ void dev::BreakpointsWindow::DrawTable()
 			// GlobalAddr
 			ImGui::TableNextColumn();
 			ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-			const bool isSelected = selectedAddr == addr;
+			const bool isSelected = selectedAddr == (int)addr;
 			if (ImGui::Selectable(std::format("0x{:05X}", addr).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
 				selectedAddr = addr;

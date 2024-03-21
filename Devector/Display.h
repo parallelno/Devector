@@ -70,10 +70,10 @@ namespace dev
 		int m_rasterLine;	// currently rasterized scanline idx from the bottom
 		int m_rasterPixel;	// currently rasterized scanline pixel
 
-		const Memory& m_memory;
+		Memory& m_memory;
 
 	public:
-		Display(const Memory& _memory);
+		Display(Memory& _memory);
 		void Init();
 		void Rasterize();	// to draw a pxl
 		bool IsInt50Hz();

@@ -1,7 +1,8 @@
 #include <format>
-
 #include "DisasmWindow.h"
-#include "Utils\StringUtils.h"
+#include "Utils/ImGuiUtils.h"
+#include "Utils/StringUtils.h"
+
 
 dev::DisasmWindow::DisasmWindow(
         dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
@@ -90,7 +91,7 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
     ImGui::PushItemWidth(-100);
     if (ImGui::InputTextWithHint("##empty 1", "0x100", m_searchText, IM_ARRAYSIZE(m_searchText))) 
     {
-        Addr addr = dev::StrHexToInt(m_searchText);
+        Addr addr = (Addr)dev::StrHexToInt(m_searchText);
         UpdateDisasm(addr);
         m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
     }
@@ -101,7 +102,7 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
     if (_isRunning) ImGui::EndDisabled();
 }
 
-bool dev::DisasmWindow::IsDisasmTableOutOfWindow()
+bool dev::DisasmWindow::IsDisasmTableOutOfWindow() const
 {
     ImVec2 cursorPos = ImGui::GetCursorPos();
     float remainingSpace = ImGui::GetWindowSize().y - cursorPos.y - *m_fontSizeP * 1.0f;
@@ -296,7 +297,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                     ImGui::TableNextColumn();
                     ColumnClippingEnable(*m_dpiScaleP); // enable clipping
                     ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DISASM_TBL_BG_COLOR_ADDR));
-                    auto* statsColor = (line.runs == 0 && line.reads == 0 && line.writes == 0) ? &DISASM_TBL_COLOR_ZERO_STATS : &DISASM_TBL_COLOR_ADDR;
+                    const ImVec4* statsColor = (line.runs == 0 && line.reads == 0 && line.writes == 0) ? &DISASM_TBL_COLOR_ZERO_STATS : &DISASM_TBL_COLOR_ADDR;
                     ImGui::TextColored(*statsColor, line.stats.c_str());
                     ColumnClippingDisable();
 
@@ -390,7 +391,7 @@ void dev::DisasmWindow::UpdateData(const bool _isRunning, int64_t _addr, const i
     }
 
     m_selectedLineIdx = -_instructionsOffset;
-    UpdateDisasm(_addr, _instructionsOffset);
+    UpdateDisasm((Addr)_addr, _instructionsOffset);
 }
 
 void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOffset)

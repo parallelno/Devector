@@ -6,15 +6,8 @@
 
 namespace dev
 {
-	//using json = nlohmann::json;
-
-	// jsonObj["Var"] = Var;
 #define JSON_SET(jsonObj, Var) (jsonObj[#Var] = (Var))
-/*
-case EmunType::Val:
-	jsonObj[EmunType] = "Val";
-	break;
-*/
+
 #define JSON_SET_ENUM(jsonObj, EmunType, Var) \
         case EmunType::##Var : \
 		     jsonObj[#EmunType] = #Var; \

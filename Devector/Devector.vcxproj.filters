@@ -9,18 +9,6 @@
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\sqlite3.c">
       <Filter>SharedSource\3rdParty\sqlite3</Filter>
     </ClCompile>
-    <ClCompile Include="..\SharedSource\utils\JsonUtils.cpp">
-      <Filter>SharedSource\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SharedSource\utils\Utils.cpp">
-      <Filter>SharedSource\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SharedSource\utils\ArgsParser.cpp">
-      <Filter>SharedSource\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SharedSource\utils\StringUtils.cpp">
-      <Filter>SharedSource\Utils</Filter>
-    </ClCompile>
     <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui.cpp">
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClCompile>
@@ -42,12 +30,6 @@
     <ClCompile Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_opengl3.cpp">
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\SharedSource\Utils\ImGuiApp.cpp">
-      <Filter>SharedSource\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SharedSource\Utils\ImGuiUtils.cpp">
-      <Filter>SharedSource\Utils</Filter>
-    </ClCompile>
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="IO.cpp" />
     <ClCompile Include="Memory.cpp" />
@@ -55,13 +37,37 @@
     <ClCompile Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.cpp">
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\SharedSource\UI\BaseWindow.cpp">
-      <Filter>SharedSource\UI</Filter>
-    </ClCompile>
     <ClCompile Include="I8080.cpp" />
     <ClCompile Include="Watchpoint.cpp" />
     <ClCompile Include="Hardware.cpp" />
     <ClCompile Include="Debugger.cpp" />
+    <ClCompile Include="..\SharedSource\Utils\Utils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\JsonUtils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\StringUtils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\ArgsParser.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\ImGuiApp.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\ImGuiUtils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\UI\WatchpointsWindow.cpp">
+      <Filter>SharedSource\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\UI\BaseWindow.cpp">
+      <Filter>SharedSource\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\UI\HardwareStatsWindow.cpp">
+      <Filter>SharedSource\UI</Filter>
+    </ClCompile>
     <ClCompile Include="..\SharedSource\UI\BreakpointsWindow.cpp">
       <Filter>SharedSource\UI</Filter>
     </ClCompile>
@@ -71,10 +77,7 @@
     <ClCompile Include="..\SharedSource\UI\DisplayWindow.cpp">
       <Filter>SharedSource\UI</Filter>
     </ClCompile>
-    <ClCompile Include="..\SharedSource\UI\HardwareStatsWindow.cpp">
-      <Filter>SharedSource\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SharedSource\UI\WatchpointsWindow.cpp">
+    <ClCompile Include="..\SharedSource\UI\RamViewWindow.cpp">
       <Filter>SharedSource\UI</Filter>
     </ClCompile>
   </ItemGroup>
@@ -85,21 +88,6 @@
     </ClInclude>
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3ext.h">
       <Filter>SharedSource\3rdParty\sqlite3</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\utils\JsonUtils.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\utils\Utils.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\utils\ArgsParser.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\utils\Globals.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\utils\StringUtils.h">
-      <Filter>SharedSource\Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imconfig.h">
       <Filter>SharedSource\3rdParty\imgui</Filter>
@@ -119,21 +107,6 @@
     <ClInclude Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_opengl3_loader.h">
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\SharedSource\utils\Result.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\utils\Status.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\Utils\ImGuiUtils.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\Utils\ImGuiApp.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\Utils\Consts.h">
-      <Filter>SharedSource\Utils</Filter>
-    </ClInclude>
     <ClInclude Include="Display.h" />
     <ClInclude Include="IO.h" />
     <ClInclude Include="Memory.h" />
@@ -142,29 +115,68 @@
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Types.h" />
+    <ClInclude Include="I8080.h" />
+    <ClInclude Include="Watchpoint.h" />
+    <ClInclude Include="Hardware.h" />
+    <ClInclude Include="Debugger.h" />
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\examples\libs\glfw\include\GLFW\glfw3native.h">
+      <Filter>SharedSource\3rdParty\glfw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\examples\libs\glfw\include\GLFW\glfw3.h">
+      <Filter>SharedSource\3rdParty\glfw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Utils.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\JsonUtils.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Result.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Status.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\StringUtils.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
     <ClInclude Include="..\SharedSource\Utils\TQueue.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\ArgsParser.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Consts.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Globals.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\ImGuiApp.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\ImGuiUtils.h">
       <Filter>SharedSource\Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\SharedSource\UI\BaseWindow.h">
       <Filter>SharedSource\UI</Filter>
     </ClInclude>
-    <ClInclude Include="I8080.h" />
-    <ClInclude Include="Watchpoint.h" />
-    <ClInclude Include="Hardware.h" />
-    <ClInclude Include="Debugger.h" />
-    <ClInclude Include="..\SharedSource\UI\BreakpointsWindow.h">
-      <Filter>SharedSource\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\UI\DisasmWindow.h">
-      <Filter>SharedSource\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\UI\DisplayWindow.h">
+    <ClInclude Include="..\SharedSource\UI\WatchpointsWindow.h">
       <Filter>SharedSource\UI</Filter>
     </ClInclude>
     <ClInclude Include="..\SharedSource\UI\HardwareStatsWindow.h">
       <Filter>SharedSource\UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\SharedSource\UI\WatchpointsWindow.h">
+    <ClInclude Include="..\SharedSource\UI\DisasmWindow.h">
+      <Filter>SharedSource\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\UI\BreakpointsWindow.h">
+      <Filter>SharedSource\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\UI\DisplayWindow.h">
+      <Filter>SharedSource\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\UI\RamViewWindow.h">
       <Filter>SharedSource\UI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -192,6 +204,12 @@
     </Filter>
     <Filter Include="SharedSource\UI">
       <UniqueIdentifier>{82b2260f-9d10-4c68-840b-414ab5b5efd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\3rdParty\glew">
+      <UniqueIdentifier>{0cc78307-a3f3-4661-9ab8-f8551a6801f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\3rdParty\glfw">
+      <UniqueIdentifier>{5970f580-d2e7-4c37-864f-e63c6a6233bc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

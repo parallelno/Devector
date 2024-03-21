@@ -59,6 +59,7 @@ namespace dev
 		~Hardware();
 		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result <nlohmann::json>;
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;
+		auto GetRam8K(const Addr _addr) -> const Memory::OutRam*;
 
 		void AttachCheckBreak(CheckBreakFunc* _funcP);
 		void AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc* _funcP);

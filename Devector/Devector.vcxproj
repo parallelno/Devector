@@ -57,18 +57,18 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ZMQ_STATIC;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;ZMQ_STATIC;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\zeromq\include\;$(SolutionDir)SharedSource\3rdParty\cppzmq\;$(SolutionDir)SharedSource\3rdParty\implot\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends\;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\zeromq\include\;$(SolutionDir)SharedSource\3rdParty\cppzmq\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
-      <AdditionalDependencies>Ws2_32.lib;Iphlpapi.lib;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\lib-vc2010-64\glfw3.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\lib-vc2010-64\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;Iphlpapi.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "$(SolutionDir)Bin\"</Command>
@@ -80,10 +80,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ZMQ_STATIC;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;ZMQ_STATIC;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\zeromq\include\;$(SolutionDir)SharedSource\3rdParty\cppzmq\;$(SolutionDir)SharedSource\3rdParty\implot\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends\;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\zeromq\include\;$(SolutionDir)SharedSource\3rdParty\cppzmq\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -91,9 +91,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
-      <AdditionalDependencies>Ws2_32.lib;Iphlpapi.lib;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\lib-vc2010-64\glfw3.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\lib-vc2010-64\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;Iphlpapi.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;glfw3.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "$(SolutionDir)Bin\"</Command>
@@ -115,13 +115,14 @@
     <ClCompile Include="..\SharedSource\UI\DisasmWindow.cpp" />
     <ClCompile Include="..\SharedSource\UI\DisplayWindow.cpp" />
     <ClCompile Include="..\SharedSource\UI\HardwareStatsWindow.cpp" />
+    <ClCompile Include="..\SharedSource\UI\RamViewWindow.cpp" />
     <ClCompile Include="..\SharedSource\UI\WatchpointsWindow.cpp" />
-    <ClCompile Include="..\SharedSource\utils\ArgsParser.cpp" />
+    <ClCompile Include="..\SharedSource\Utils\ArgsParser.cpp" />
     <ClCompile Include="..\SharedSource\Utils\ImGuiApp.cpp" />
     <ClCompile Include="..\SharedSource\Utils\ImGuiUtils.cpp" />
-    <ClCompile Include="..\SharedSource\utils\JsonUtils.cpp" />
-    <ClCompile Include="..\SharedSource\utils\StringUtils.cpp" />
-    <ClCompile Include="..\SharedSource\utils\Utils.cpp" />
+    <ClCompile Include="..\SharedSource\Utils\JsonUtils.cpp" />
+    <ClCompile Include="..\SharedSource\Utils\StringUtils.cpp" />
+    <ClCompile Include="..\SharedSource\Utils\Utils.cpp" />
     <ClCompile Include="Breakpoint.cpp" />
     <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Display.cpp" />
@@ -137,6 +138,8 @@
     <ClInclude Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="..\SharedSource\3rdParty\imgui\backends\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\examples\libs\glfw\include\GLFW\glfw3.h" />
+    <ClInclude Include="..\SharedSource\3rdParty\imgui\examples\libs\glfw\include\GLFW\glfw3native.h" />
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imconfig.h" />
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imgui.h" />
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imgui_internal.h" />
@@ -148,18 +151,19 @@
     <ClInclude Include="..\SharedSource\UI\DisasmWindow.h" />
     <ClInclude Include="..\SharedSource\UI\DisplayWindow.h" />
     <ClInclude Include="..\SharedSource\UI\HardwareStatsWindow.h" />
+    <ClInclude Include="..\SharedSource\UI\RamViewWindow.h" />
     <ClInclude Include="..\SharedSource\UI\WatchpointsWindow.h" />
-    <ClInclude Include="..\SharedSource\utils\ArgsParser.h" />
+    <ClInclude Include="..\SharedSource\Utils\ArgsParser.h" />
     <ClInclude Include="..\SharedSource\Utils\Consts.h" />
-    <ClInclude Include="..\SharedSource\utils\Globals.h" />
+    <ClInclude Include="..\SharedSource\Utils\Globals.h" />
     <ClInclude Include="..\SharedSource\Utils\ImGuiApp.h" />
     <ClInclude Include="..\SharedSource\Utils\ImGuiUtils.h" />
-    <ClInclude Include="..\SharedSource\utils\JsonUtils.h" />
-    <ClInclude Include="..\SharedSource\utils\Result.h" />
-    <ClInclude Include="..\SharedSource\utils\Status.h" />
-    <ClInclude Include="..\SharedSource\utils\StringUtils.h" />
+    <ClInclude Include="..\SharedSource\Utils\JsonUtils.h" />
+    <ClInclude Include="..\SharedSource\Utils\Result.h" />
+    <ClInclude Include="..\SharedSource\Utils\Status.h" />
+    <ClInclude Include="..\SharedSource\Utils\StringUtils.h" />
     <ClInclude Include="..\SharedSource\Utils\TQueue.h" />
-    <ClInclude Include="..\SharedSource\utils\Utils.h" />
+    <ClInclude Include="..\SharedSource\Utils\Utils.h" />
     <ClInclude Include="Breakpoint.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Hardware.h" />

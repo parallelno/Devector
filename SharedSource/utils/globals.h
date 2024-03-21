@@ -16,6 +16,8 @@ namespace dev
 	constexpr static ErrCode ERROR_UNSPECIFIED = 1;
 	constexpr static ErrCode ERROR_NO_FILES = 2;
 
-} // namespace dev
+	// TODO: use GLuint instead
+	using GLuint1 = unsigned int;
+}
 
 #endif // !DEV_GLOBALS_H

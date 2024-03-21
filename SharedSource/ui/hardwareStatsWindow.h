@@ -3,7 +3,6 @@
 #define DEV_HARDWARE_STATS_WINDOW_H
 
 #include "Utils/Globals.h"
-#include "Utils/ImGuiUtils.h"
 #include "Ui/BaseWindow.h"
 #include "../Devector/Hardware.h"
 
@@ -16,7 +15,6 @@ namespace dev
 
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
-
 		Hardware& m_hardware;
 		
 		////////////////////

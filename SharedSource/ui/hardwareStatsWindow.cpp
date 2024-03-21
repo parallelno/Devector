@@ -1,6 +1,7 @@
 #include <format>
 #include "HardwareStatsWindow.h"
-#include "Utils\StringUtils.h"
+#include "Utils/ImGuiUtils.h"
+#include "Utils/StringUtils.h"
 
 dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware, 
 		const float* const _fontSizeP, const float* const _dpiScaleP)
@@ -225,8 +226,8 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	// Hardware
 	res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
 	const auto& displayData = *res;
-	int rasterPixel = data["rasterPixel"];
-	int rasterLine = data["rasterLine"];
+	int rasterPixel = displayData["rasterPixel"];
+	int rasterLine = displayData["rasterLine"];
 	res = m_hardware.Request(Hardware::Req::GET_MEMORY_MODES);
 	const auto& memoryModes = *res;
 	bool mappingModeStack = memoryModes["mappingModeStack"];

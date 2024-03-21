@@ -9,8 +9,8 @@
 #include "Utils/ImGuiUtils.h"
 #include "Ui/BaseWindow.h"
 
-#include "..\Devector\Hardware.h"
-#include "..\Devector\Debugger.h"
+#include "../Devector/Hardware.h"
+#include "../Devector/Debugger.h"
 
 namespace dev
 {
@@ -61,7 +61,7 @@ namespace dev
 		void DrawSearch(const bool _isRunning);
 		void DrawDisasm(const bool _isRunning);
 		void UpdateData(const bool _isRunning, int64_t _globalAddr = -1, const int _instructionsOffset = -DISASM_INSTRUCTION_OFFSET);
-		bool IsDisasmTableOutOfWindow();
+		bool IsDisasmTableOutOfWindow() const;
 
 	public:
 

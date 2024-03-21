@@ -19,6 +19,11 @@ dev::Hardware::Hardware()
 
 dev::Hardware::~Hardware()
 {
+    m_checkBreak.store(nullptr);
+    m_cpu.AttachDebugOnReadInstr(nullptr);
+    m_cpu.AttachDebugOnRead(nullptr);
+    m_cpu.AttachDebugOnWrite(nullptr);
+
     Request(Hardware::Req::EXIT);
     m_executionThread.join();
 }
@@ -51,7 +56,7 @@ void dev::Hardware::Run()
                 auto CheckBreak = m_checkBreak.load();
                 auto pcGlobalAddr = m_memory.GetGlobalAddr(m_cpu.GetPC(), Memory::RAM);
                 
-                if (*CheckBreak && (*CheckBreak)(pcGlobalAddr)) {
+                if (CheckBreak && *CheckBreak && (*CheckBreak)(pcGlobalAddr)) {
                     m_status = Status::STOP;
                 }
 
@@ -234,7 +239,7 @@ auto dev::Hardware::GetByte(const nlohmann::json _addr, const Memory::AddrSpace 
 {
     Addr addr = _addr["addr"];
     nlohmann::json out = {
-        {"data", m_memory.GetByte(addr, Memory::AddrSpace::RAM)}
+        {"data", m_memory.GetByte(addr, _addrSpace)}
     };
     return out;
 }
@@ -244,7 +249,7 @@ auto dev::Hardware::GetWord(const nlohmann::json _addr, const Memory::AddrSpace 
 {
     Addr addr = _addr["addr"];
     nlohmann::json out = {
-        {"data", m_memory.GetWord(addr, Memory::AddrSpace::STACK)}
+        {"data", m_memory.GetWord(addr, _addrSpace)}
     };
     return out;
 }
@@ -254,4 +259,10 @@ auto dev::Hardware::GetFrame(const bool _vsync)
 ->const Display::FrameBuffer*
 {
     return m_display.GetFrame(_vsync);
+}
+
+auto dev::Hardware::GetRam8K(const Addr _addr)
+->const Memory::OutRam*
+{
+    return m_memory.GetRam8K(_addr);
 }

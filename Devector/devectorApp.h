@@ -1,25 +1,22 @@
 #pragma once
 #ifndef DEV_DEVECTORAPP_H
 #define DEV_DEVECTORAPP_H
+#include <string>
 
 #include "Types.h"
 #include "Utils/Status.h"
 #include "Utils/JsonUtils.h"
 #include "Utils/ImGuiApp.h"
 
-#include "Memory.h"
-
-#include "UI/HardwareStatsWindow.h"
-#include "UI/DisasmWindow.h"
-#include "UI/DisplayWindow.h"
 #include "UI/BreakpointsWindow.h"
 #include "UI/WatchpointsWindow.h"
+#include "UI/DisasmWindow.h"
+#include "UI/HardwareStatsWindow.h"
+#include "UI/DisplayWindow.h"
+#include "UI/RamViewWindow.h"
+
 #include "Hardware.h"
 #include "Debugger.h"
-
-//#include <mutex>
-#include <string>
-//#include <atomic>
 
 namespace dev
 {
@@ -34,12 +31,12 @@ namespace dev
 
 		std::unique_ptr <dev::Hardware> m_hardwareP;
 		std::unique_ptr <dev::Debugger> m_debuggerP;
-
+		std::unique_ptr <dev::BreakpointsWindow>m_breakpointsWindowP;
 		std::unique_ptr <dev::HardwareStatsWindow> m_hardwareStatsWindowP;
 		std::unique_ptr <dev::DisasmWindow> m_disasmWindowP;
-		std::unique_ptr <dev::DisplayWindow>m_displayWindowP;
-		std::unique_ptr <dev::BreakpointsWindow>m_breakpointsWindowP;
 		std::unique_ptr <dev::WatchpointsWindow>m_watchpointsWindowP;
+		std::unique_ptr <dev::DisplayWindow>m_displayWindowP;
+		std::unique_ptr <dev::RamViewWindow>m_ramViewWindowP;
 
 		bool m_hardwareStatsWindowShow = true;
 		bool m_disasmWindowShow = true;

@@ -71,6 +71,7 @@ namespace dev
 		using Breakpoints = std::map<GlobalAddr, Breakpoint>;
 
 		Debugger(Hardware& _hardware);
+		~Debugger();
 		void Init();
 		void Reset();
 
@@ -90,9 +91,8 @@ namespace dev
 		auto GetBreakpointStatus(const GlobalAddr _globalAddr) -> const Breakpoint::Status;
 
 		void AddWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const Watchpoint::Condition _cond,
-			const uint16_t _value, const size_t _valueSize = 1, const bool _active = true, 
-			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		void DelWatchpoint(const GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+			const uint16_t _value, const size_t _valueSize = 1, const bool _active = true);
+		void DelWatchpoint(const GlobalAddr _globalAddr);
 		bool CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value);
 		void ResetWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;
