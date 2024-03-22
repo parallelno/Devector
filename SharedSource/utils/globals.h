@@ -15,9 +15,6 @@ namespace dev
 	constexpr static ErrCode NO_ERRORS = 0;
 	constexpr static ErrCode ERROR_UNSPECIFIED = 1;
 	constexpr static ErrCode ERROR_NO_FILES = 2;
-
-	// TODO: use GLuint instead
-	using GLuint1 = unsigned int;
 }
 
 #endif // !DEV_GLOBALS_H

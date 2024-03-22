@@ -14,6 +14,8 @@
 #include "Utils/Result.h"
 #include "../Devector/Hardware.h"
 
+#include "../Utils/GLUtils.h"
+
 namespace dev
 {
 	class RamViewWindow : public BaseWindow
@@ -21,17 +23,12 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_W = 256;
 		static constexpr int DEFAULT_WINDOW_H = 256;
 
-		struct ShaderData {
-			GLuint1 shaderProgram = 0;
-			GLuint1 frameTextureId = 0;
-		};
-		ShaderData m_shaderData;
 		Hardware& m_hardware;
+		GLUtils m_glUtils;
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 
 		void DrawDisplay();
-		void CreateTexture(const bool _vsync);
 		void UpdateData(const bool _isRunning);
 		void Init();
 

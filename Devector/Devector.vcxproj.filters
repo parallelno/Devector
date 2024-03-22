@@ -80,6 +80,9 @@
     <ClCompile Include="..\SharedSource\UI\RamViewWindow.cpp">
       <Filter>SharedSource\UI</Filter>
     </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\GLUtils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -178,6 +181,12 @@
     </ClInclude>
     <ClInclude Include="..\SharedSource\UI\RamViewWindow.h">
       <Filter>SharedSource\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\3rdParty\glew\include\GL\glew.h">
+      <Filter>SharedSource\3rdParty\glew</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\GLUtils.h">
+      <Filter>SharedSource\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
