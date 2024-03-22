@@ -23,7 +23,7 @@ namespace dev
 		ShaderData m_shaderData;
 		Hardware& m_hardware;
 
-		GLuint1 Init();
+		GLenum1 Init();
 		void DrawDisplay();
 		void CreateRamTexture();
 		GLuint1 CompileShader(GLenum1 _shaderType, const char* _source);
@@ -34,7 +34,7 @@ namespace dev
 		GLUtils(Hardware& _hardware, const int _frameSizeW, const int _frameSizeH);
 		~GLUtils();
 		void Update();
-		GLuint1 GLCheckError(GLuint1 _obj, const char* _txt);
+		GLuint1 GLCheckError(GLuint1 _obj, const std::string& _txt);
 		auto GetShaderData() -> const ShaderData&;
 		auto IsShaderDataReady() -> const bool;
 	};

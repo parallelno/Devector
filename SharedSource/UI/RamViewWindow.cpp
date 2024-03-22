@@ -32,60 +32,8 @@ void dev::RamViewWindow::DrawDisplay()
 
     if (m_glUtils.IsShaderDataReady())
     {       
-        // Draw ImGui image using a custom shader
         ImVec2 imageSize(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H);
         ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData().texture, imageSize);
-        /*
-        ImVec2 offset{0, 0};
-        ImVec2 p0 = ImGui::GetCursorScreenPos();
-        p0.x += offset.x;
-        p0.y += offset.y;
-        ImVec2 p1 = ImVec2(p0.x + imageSize.x, p0.y + imageSize.y);
-
-
-        ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
-        draw_list->AddCallback([](const ImDrawList* _draw_list, const ImDrawCmd* _curr_cmd)
-            {
-                auto shaderDataP = (ShaderData*)(_curr_cmd->UserCallbackData);
-                auto shaderProgram = shaderDataP->shaderProgram;
-                auto textureId = shaderDataP->texture;
-
-                ImDrawData* draw_data = ImGui::GetDrawData();
-
-                float L = draw_data->DisplayPos.x;
-                float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
-                float T = draw_data->DisplayPos.y;
-                float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
-
-                const float ortho_projection[4][4] =
-                {
-                   { 2.0f / (R - L),    0.0f,               0.0f,   0.0f },
-                   { 0.0f,              2.0f / (T - B),     0.0f,   0.0f },
-                   { 0.0f,              0.0f,               -1.0f,  0.0f },
-                   { (R + L) / (L - R), (T + B) / (B - T),  0.0f,   1.0f },
-                };
-
-
-                glUseProgram(shaderProgram); // If I remove this line, it works
-                glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "ProjMtx"), 1, GL_FALSE, &ortho_projection[0][0]);
-                
-
-                //glBindTexture(GL_TEXTURE_2D, textureId);
-                // Load texture data
-                //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
-                // Bind the texture unit to a texture sampler uniform in your shader
-                glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), textureId);
-                // Activate texture unit 0
-                glActiveTexture(GL_TEXTURE0);
-                // Bind the texture
-                glBindTexture(GL_TEXTURE_2D, textureId);
-
-            }, &m_shaderData);
-
-        draw_list->AddRectFilled(p0, p1, 0xFFFF00FF);
-        draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
-        */
     }
 }
 
