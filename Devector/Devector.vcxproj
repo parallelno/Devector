@@ -57,7 +57,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_MBCS;ZMQ_STATIC;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLEW_STATIC;_MBCS;ZMQ_STATIC;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\zeromq\include\;$(SolutionDir)SharedSource\3rdParty\cppzmq\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\;$(SolutionDir)SharedSource\3rdParty\glew\include\</AdditionalIncludeDirectories>
@@ -67,7 +67,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\lib-vc2010-64\;$(SolutionDir)SharedSource\3rdParty\glew\lib\Release\x64\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Ws2_32.lib;Iphlpapi.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;Iphlpapi.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;glew32s.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
     <PostBuildEvent>

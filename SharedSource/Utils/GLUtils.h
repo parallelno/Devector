@@ -9,8 +9,7 @@ namespace dev
 {
 	class GLUtils
 	{
-		int m_frameSizeW, m_frameSizeH;
-
+	public:
 		struct ShaderData {
 			GLuint1 shaderProgram = 0;
 			GLuint1 texture = 0;
@@ -19,6 +18,8 @@ namespace dev
 			GLuint1 vtxArrayObj = 0;
 			GLuint1 vtxBufferObj = 0;
 		};
+	private:
+		int m_frameSizeW, m_frameSizeH;
 
 		ShaderData m_shaderData;
 		Hardware& m_hardware;
@@ -35,7 +36,7 @@ namespace dev
 		~GLUtils();
 		void Update();
 		GLuint1 GLCheckError(GLuint1 _obj, const std::string& _txt);
-		auto GetShaderData() -> const ShaderData&;
+		auto GetShaderData() -> const ShaderData*;
 		auto IsShaderDataReady() -> const bool;
 	};
 }

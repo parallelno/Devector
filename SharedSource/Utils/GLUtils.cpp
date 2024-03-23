@@ -5,11 +5,17 @@
 
 // vertices of a quad with UV coordinates
 GLfloat vertices[] = {
-    // Positions______   // UV Coords
-    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
-     0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f, 0.0f,  1.0f, 1.0f,
-    -0.5f,  0.5f, 0.0f,  0.0f, 1.0f
+    /*
+    // Positions          // UV Coords
+     -1.0f,  1.0f, 1.0f,  0.0f, 1.0f,
+     -1.0f, -1.0f, 1.0f,  0.0f, 0.0f,
+      1.0f, -1.0f, 1.0f,  1.0f, 0.0f,
+      1.0f,  1.0f, 1.0f,  10.0f, 1.0f,
+      */
+     -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+     -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
+      1.0f,  1.0f, 0.0f,  10.0f, 1.0f,
+      1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
 };
 
 dev::GLUtils::GLUtils(Hardware& _hardware, const int _frameSizeW, const int _frameSizeH)
@@ -28,8 +34,21 @@ void dev::GLUtils::Update()
 void dev::GLUtils::DrawDisplay()
 {
 
-    if (m_shaderData.texture && m_shaderData.shaderProgram)
+    if (IsShaderDataReady())
     {
+        // Render
+        glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffer);
+        glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Render the quad
+        glUseProgram(m_shaderData.shaderProgram);
+
+        glBindVertexArray(m_shaderData.vtxArrayObj);
+        glDrawArrays(GL_QUADS, 0, 4);
+        glBindVertexArray(0);
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }
 
@@ -64,10 +83,10 @@ const char* vertexShaderSource = R"(
     #version 330 core
     precision highp float;
     
-    layout (location = 0) in vec2 Position;
+    layout (location = 0) in vec3 aPos;
     layout (location = 1) in vec2 UV;
 
-    uniform mat4 ProjMtx;
+    //uniform mat4 ProjMtx;
     
     out vec2 Frag_UV;
     out vec4 Frag_Color;
@@ -76,7 +95,8 @@ const char* vertexShaderSource = R"(
     {
         Frag_UV = UV;
         Frag_Color = vec4(1, 1, 0, 1);        
-        gl_Position = ProjMtx * vec4(Position.xy,0,1);
+        //gl_Position = ProjMtx * vec4(aPos.xy,0,1);
+        gl_Position = vec4(aPos.xyz,1);
     }
 )";
 
@@ -88,13 +108,14 @@ const char* fragmentShaderSource = R"(
     in vec2 Frag_UV;
     in vec4 Frag_Color;
 
-    uniform sampler2D texture1;
+    //uniform sampler2D texture1;
 
     layout (location = 0) out vec4 Out_Color;
 
     void main()
     {
         //float x = texture(texture1, Frag_Pos).r;
+        //Out_Color = vec4(1.0, 1.0, 1.0, 1.0);
         Out_Color = vec4(Frag_UV.x, Frag_UV.y, 0.0, 1.0);
     }
 )";
@@ -162,7 +183,7 @@ dev::GLUtils::~GLUtils()
     glDeleteProgram(m_shaderData.shaderProgram);
 }
 
-GLuint dev::GLUtils::GLCheckError(GLuint _obj, const std::string& _txt)
+GLuint dev::GLUtils::GLCheckError(GLuint1 _obj, const std::string& _txt)
 {
     // Check for compilation errors
     GLint success;
@@ -207,9 +228,9 @@ GLuint dev::GLUtils::CreateShaderProgram(const char* _vertexShaderSource, const 
 }
 
 auto dev::GLUtils::GetShaderData() 
--> const ShaderData&
+-> const ShaderData*
 {
-    return m_shaderData;
+    return &m_shaderData;
 }
 
 auto dev::GLUtils::IsShaderDataReady()
