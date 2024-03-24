@@ -6,12 +6,17 @@
 // vertices of a quad with UV coordinates
 GLfloat vertices[] = {
     // Positions          // UV Coords
-     -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+    /*
+     -1.0f, -1.0f, 0.0f,  1.0f, 1.0f,
      -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-      1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
+      1.0f,  1.0f, 0.0f,  0.0f, 0.0f,
       1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
+      */
+     -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,
+     -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,
+      1.0f,  1.0f, 0.0f,  1.0f, 0.0f,
+      1.0f, -1.0f, 0.0f,  1.0f, 1.0f,
 };
-
 
 
 // Vertex shader source code
@@ -19,40 +24,54 @@ const char* vertexShaderSource = R"(
     #version 330 core
     precision highp float;
     
-    layout (location = 0) in vec3 aPos;
-    layout (location = 1) in vec2 UV;
+    layout (location = 0) in vec3 vtxPos;
+    layout (location = 1) in vec2 vtxUV;
 
-    //uniform mat4 ProjMtx;
+    uniform vec4 globalColor;
     
-    out vec2 Frag_UV;
-    out vec4 Frag_Color;
+    out vec2 uv0;
+    out vec4 globalColor0;
 
     void main()
     {
-        Frag_UV = UV;
-        Frag_Color = vec4(1, 1, 0, 1);        
-        //gl_Position = ProjMtx * vec4(aPos.xy,0,1);
-        gl_Position = vec4(aPos.xyz,1);
+        uv0 = vtxUV;
+        globalColor0 = globalColor;        
+        gl_Position = vec4(vtxPos.xyz, 1.0f);
     }
 )";
 
 // Fragment shader source code
 const char* fragmentShaderSource = R"(
     #version 330 core
-    precision mediump float;
+    precision highp float;
 
-    in vec2 Frag_UV;
-    in vec4 Frag_Color;
+    in vec2 uv0;
+    in vec4 globalColor0;
 
-    //uniform sampler2D texture1;
+    uniform sampler2D texture0;
+    uniform ivec2 iresolution;
 
-    layout (location = 0) out vec4 Out_Color;
+    layout (location = 0) out vec4 out0;
+
+    int GetBit(float _color, int _bitIdx) {
+        return (int(_color * 255.0) >> _bitIdx) & 1;
+    }
+
+    #define RESOLUTION_X = 256
+    #define RESOLUTION_y = 256
 
     void main()
     {
-        //float x = texture(texture1, Frag_Pos).r;
-        //Out_Color = vec4(1.0, 1.0, 1.0, 1.0);
-        Out_Color = vec4(Frag_UV.x, Frag_UV.y, 0.0, 1.0);
+        
+        int addrOffset = int(uv0.x * 255.0 / 8.0) + int(uv0.y * 255.0) * 256;
+        vec2 uv = vec2( int(addrOffset / 256) / 255.0, int(addrOffset % 256)/ 255.0);
+        float byteColor = texture(texture0, uv).r;
+        
+        // int bitIdx = int(uv0.x / 8.0) % 8;
+        // int bitColor = GetBit(byteColor, bitIdx);
+
+        out0 = globalColor0 * byteColor;
+        //out0 = globalColor0 * vec4(uv0, 0, 1);
     }
 )";
 
@@ -74,7 +93,6 @@ void dev::GLUtils::DrawDisplay()
 
     if (IsShaderDataReady())
     {
-        // Render
         glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffer);
         glViewport(0, 0, m_frameSizeW, m_frameSizeH);
         glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
@@ -82,6 +100,12 @@ void dev::GLUtils::DrawDisplay()
 
         // Render the quad
         glUseProgram(m_shaderData.shaderProgram);
+
+        // send the color
+        glUniform4f(m_shaderData.globalColorId, 1.0f, 1.0f, 1.0f, 1.0f);
+        // assign a texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_shaderData.texture);
 
         glBindVertexArray(m_shaderData.vtxArrayObj);
         glDrawArrays(GL_QUADS, 0, 4);
@@ -117,8 +141,8 @@ void dev::GLUtils::CreateRamTexture()
 }
 
 
-// it is not initializing the Window and OpenGL 3.3 context assumming 
-// ImGui did it already
+// it is not initializing the Window and OpenGL 3.3 context 
+// assumming ImGui and did it already
 GLenum dev::GLUtils::Init()
 {
     auto glewInitCode = glewInit();
@@ -162,6 +186,13 @@ GLenum dev::GLUtils::Init()
 
     // Create shader program
     m_shaderData.shaderProgram = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
+    
+    // get uniform vars ids
+    m_shaderData.globalColorId = glGetUniformLocation(m_shaderData.shaderProgram, "globalColor");
+    
+    // assign a texture
+    glUseProgram(m_shaderData.shaderProgram);
+    glUniform1i(glGetUniformLocation(m_shaderData.shaderProgram, "texture0"), 0);
 
     return IsShaderDataReady() ? glewInitCode : -1;
 }

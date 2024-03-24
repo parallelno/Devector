@@ -33,56 +33,6 @@ void dev::RamViewWindow::DrawDisplay()
     if (m_glUtils.IsShaderDataReady())
     {       
         ImVec2 imageSize(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H);
-        /*
-        ImGui::InvisibleButton("canvas", imageSize);
-
-        ImVec2 p0 = ImGui::GetItemRectMin();
-        ImVec2 p1 = ImGui::GetItemRectMax();
-
-        ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
-        draw_list->PushClipRect(p0, p1);
-        draw_list->AddCallback([](const ImDrawList* _drawList, const ImDrawCmd* _callbackData)
-            {
-                const auto& shaderData = *(GLUtils::ShaderData*)(_callbackData->UserCallbackData);
-                auto shaderProgram = shaderData.shaderProgram;
-                //auto textureId = shaderDataP->frameTextureId;
-
-                ImDrawData* draw_data = ImGui::GetDrawData();
-                float L = draw_data->DisplayPos.x;
-                float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
-                float T = draw_data->DisplayPos.y;
-                float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
-
-                const float ortho_projection[4][4] =
-                {
-                   { 2.0f / (R - L),   0.0f,         0.0f,   0.0f },
-                   { 0.0f,         2.0f / (T - B),   0.0f,   0.0f },
-                   { 0.0f,         0.0f,        -1.0f,   0.0f },
-                   { (R + L) / (L - R),  (T + B) / (B - T),  0.0f,   1.0f },
-                };
-
-                glUseProgram(shaderProgram); // If I remove this line, it works
-                glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "ProjMtx"), 1, GL_FALSE, &ortho_projection[0][0]);
-
-            }, (void*)m_glUtils.GetShaderData());
-
-        draw_list->AddRectFilled(p0, p1, 0xFF0000FF);
-        draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
-        draw_list->PopClipRect();
-        */
-
-        /*
-        ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        draw_list->AddCallback([](const ImDrawList* _drawList, const ImDrawCmd* _callbackData)
-            {
-                auto glUtilsP = (GLUtils*)(_callbackData->UserCallbackData);
-                glUtilsP->Update();
-                
-
-            }, (void*)&m_glUtils);
-        draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
-        */
         ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
     }
 }

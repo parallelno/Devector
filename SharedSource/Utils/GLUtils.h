@@ -17,6 +17,7 @@ namespace dev
 			GLuint1 framebuffer = 0;
 			GLuint1 vtxArrayObj = 0;
 			GLuint1 vtxBufferObj = 0;
+			GLuint1 globalColorId = -1;
 		};
 	private:
 		int m_frameSizeW, m_frameSizeH;
