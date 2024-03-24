@@ -44,8 +44,8 @@ void dev::RamViewWindow::DrawDisplay()
         draw_list->PushClipRect(p0, p1);
         draw_list->AddCallback([](const ImDrawList* _drawList, const ImDrawCmd* _callbackData)
             {
-                auto shaderDataP = (GLUtils::ShaderData*)(_callbackData->UserCallbackData);
-                auto shaderProgram = shaderDataP->shaderProgram;
+                const auto& shaderData = *(GLUtils::ShaderData*)(_callbackData->UserCallbackData);
+                auto shaderProgram = shaderData.shaderProgram;
                 //auto textureId = shaderDataP->frameTextureId;
 
                 ImDrawData* draw_data = ImGui::GetDrawData();
@@ -63,14 +63,14 @@ void dev::RamViewWindow::DrawDisplay()
                 };
 
                 glUseProgram(shaderProgram); // If I remove this line, it works
-                //glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "ProjMtx"), 1, GL_FALSE, &ortho_projection[0][0]);
+                glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "ProjMtx"), 1, GL_FALSE, &ortho_projection[0][0]);
+
             }, (void*)m_glUtils.GetShaderData());
 
-        draw_list->AddRectFilled(p0, p1, 0xFFFF00FF);
+        draw_list->AddRectFilled(p0, p1, 0xFF0000FF);
         draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
         draw_list->PopClipRect();
         */
-
 
         /*
         ImDrawList* draw_list = ImGui::GetWindowDrawList();

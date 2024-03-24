@@ -5,77 +5,13 @@
 
 // vertices of a quad with UV coordinates
 GLfloat vertices[] = {
-    /*
     // Positions          // UV Coords
-     -1.0f,  1.0f, 1.0f,  0.0f, 1.0f,
-     -1.0f, -1.0f, 1.0f,  0.0f, 0.0f,
-      1.0f, -1.0f, 1.0f,  1.0f, 0.0f,
-      1.0f,  1.0f, 1.0f,  10.0f, 1.0f,
-      */
      -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
      -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-      1.0f,  1.0f, 0.0f,  10.0f, 1.0f,
+      1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
       1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
 };
 
-dev::GLUtils::GLUtils(Hardware& _hardware, const int _frameSizeW, const int _frameSizeH)
-    :
-    m_hardware(_hardware), m_frameSizeW(_frameSizeW), m_frameSizeH(_frameSizeH)
-{
-    Init();
-}
-
-void dev::GLUtils::Update()
-{
-    CreateRamTexture();
-    DrawDisplay();
-}
-
-void dev::GLUtils::DrawDisplay()
-{
-
-    if (IsShaderDataReady())
-    {
-        // Render
-        glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffer);
-        glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // Render the quad
-        glUseProgram(m_shaderData.shaderProgram);
-
-        glBindVertexArray(m_shaderData.vtxArrayObj);
-        glDrawArrays(GL_QUADS, 0, 4);
-        glBindVertexArray(0);
-        
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-}
-
-void dev::GLUtils::CreateRamTexture()
-{
-    auto ramP = m_hardware.GetRam8K(0);
-
-    // Create a OpenGL texture identifier
-    if (!m_shaderData.texture)
-    {
-        glGenTextures(1, &m_shaderData.texture);
-    }
-    glBindTexture(GL_TEXTURE_2D, m_shaderData.texture);
-
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    // Upload pixels into texture
-#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Display::FRAME_W, Display::FRAME_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, ram.data());
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256, 32, 0, GL_RED, GL_UNSIGNED_BYTE, ramP->data());
-}
 
 
 // Vertex shader source code
@@ -119,6 +55,67 @@ const char* fragmentShaderSource = R"(
         Out_Color = vec4(Frag_UV.x, Frag_UV.y, 0.0, 1.0);
     }
 )";
+
+dev::GLUtils::GLUtils(Hardware& _hardware, const int _frameSizeW, const int _frameSizeH)
+    :
+    m_hardware(_hardware), m_frameSizeW(_frameSizeW), m_frameSizeH(_frameSizeH)
+{
+    Init();
+}
+
+void dev::GLUtils::Update()
+{
+    CreateRamTexture();
+    DrawDisplay();
+}
+
+void dev::GLUtils::DrawDisplay()
+{
+
+    if (IsShaderDataReady())
+    {
+        // Render
+        glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffer);
+        glViewport(0, 0, m_frameSizeW, m_frameSizeH);
+        glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Render the quad
+        glUseProgram(m_shaderData.shaderProgram);
+
+        glBindVertexArray(m_shaderData.vtxArrayObj);
+        glDrawArrays(GL_QUADS, 0, 4);
+        glBindVertexArray(0);
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+}
+
+void dev::GLUtils::CreateRamTexture()
+{
+    auto ramP = m_hardware.GetRam8K(0);
+
+    // Create a OpenGL texture identifier
+    if (!m_shaderData.texture)
+    {
+        glGenTextures(1, &m_shaderData.texture);
+    }
+    glBindTexture(GL_TEXTURE_2D, m_shaderData.texture);
+
+    // Setup filtering parameters for display
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Display::FRAME_W, Display::FRAME_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, ram.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256, 32, 0, GL_RED, GL_UNSIGNED_BYTE, ramP->data());
+}
+
 
 // it is not initializing the Window and OpenGL 3.3 context assumming 
 // ImGui did it already
