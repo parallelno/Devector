@@ -9,7 +9,7 @@ dev::RamViewWindow::RamViewWindow(Hardware& _hardware,
         const float* const _fontSizeP, const float* const _dpiScaleP)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-    m_hardware(_hardware), m_glUtils(_hardware, DEFAULT_WINDOW_W, DEFAULT_WINDOW_H)
+    m_hardware(_hardware), m_glUtils(_hardware)
 {}
 
 void dev::RamViewWindow::Update()
@@ -24,6 +24,7 @@ void dev::RamViewWindow::Update()
 
 	DrawDisplay();
 
+    ScaleView();
 	ImGui::End();
 }
 
@@ -31,16 +32,29 @@ void dev::RamViewWindow::DrawDisplay()
 {
 
     if (m_glUtils.IsShaderDataReady())
-    {       
-        ImVec2 imageSize(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H);
+    {   
+        ImVec2 imageSize(GLUtils::FRAME_BUFFER_W * m_scale, GLUtils::FRAME_BUFFER_H * m_scale);
+        ImGui::SeparatorText("The Main Ram");
         ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
+        
+        ImGui::SeparatorText("The Ram-Disk Page 0");
+        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
+        
+        ImGui::SeparatorText("The Ram-Disk Page 1");
+        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
+        
+        ImGui::SeparatorText("The Ram-Disk Page 2");
+        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
+        
+        ImGui::SeparatorText("The Ram-Disk Page 3");
+        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
+        
+ 
     }
 }
 
 void dev::RamViewWindow::UpdateData(const bool _isRunning)
 {
-    if (!_isRunning) return;
-
     // check if the hardware updated its state
     auto res = m_hardware.Request(Hardware::Req::GET_REGS);
     const auto& data = *res;
@@ -53,4 +67,25 @@ void dev::RamViewWindow::UpdateData(const bool _isRunning)
 
     // update
     m_glUtils.Update();
+}
+
+// check the keys, scale the view
+void dev::RamViewWindow::ScaleView()
+{
+    if (ImGui::IsWindowHovered())
+    {
+        if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
+        {
+            float scaleAdjusted = m_scale < 1.0f ? SCALE_INC : m_scale * SCALE_INC;
+
+            if (ImGui::GetIO().MouseWheel > 0.0f)
+            {
+                m_scale = m_scale > SCALE_MAX ? SCALE_MAX : m_scale + scaleAdjusted;
+            }
+            else if (ImGui::GetIO().MouseWheel < 0.0f)
+            {
+                m_scale = m_scale < SCALE_MIN ? SCALE_MIN : m_scale - scaleAdjusted;
+            }
+        }
+    }
 }

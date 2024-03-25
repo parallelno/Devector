@@ -13,7 +13,6 @@ void dev::Display::Init()
 	m_rasterLine = 0;
 	m_rasterPixel = 0;
 
-	m_palette.fill(0xffffffff);
 	m_frameBuffer.fill(0xffff0000);
 }
 

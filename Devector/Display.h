@@ -54,7 +54,6 @@ namespace dev
 		static constexpr int RES_W = 512;			// horizontal screen resolution in MODE_512
 		static constexpr int RES_H = 256;			// vertical screen resolution
 		static constexpr int RASTERIZED_PXLS = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
-		static constexpr int PALETTE_LEN = 16;
 
 		bool m_mode;
 		bool m_t50Hz; // interruption request
@@ -64,7 +63,6 @@ namespace dev
 		FrameBuffer m_gpuBuffer;	// temp buffer for output to GPU
 		std::mutex m_backBufferMutex;
 
-		std::array <ColorI, PALETTE_LEN> m_palette;
 		ColorI m_fillColor;
 
 		int m_rasterLine;	// currently rasterized scanline idx from the bottom

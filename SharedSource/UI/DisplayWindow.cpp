@@ -62,8 +62,6 @@ void dev::DisplayWindow::CreateTexture(const bool _vsync)
 
 void dev::DisplayWindow::UpdateData(const bool _isRunning)
 {
-    if (!_isRunning) return;
-
     auto res = m_hardware.Request(Hardware::Req::GET_REGS);
     const auto& data = *res;
 
@@ -74,5 +72,5 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
     if (ccDiff == 0) return;
 
     // update
-    CreateTexture(true);
+    CreateTexture(_isRunning);
 }

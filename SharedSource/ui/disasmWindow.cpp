@@ -314,6 +314,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
         ImGui::EndTable();
         PopStyleCompact();
     }
+
     ImGui::PopStyleVar(2);
 
     if (m_reqDisasmUpdate && m_disasm.size() >= 1)
@@ -321,49 +322,53 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
         UpdateDisasm(m_disasm[0].addr, 0);
         m_reqDisasmUpdate = false;
     }
-    // check the keys
-    if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
-    {
-        if (m_disasm.size() >= 1)
-        {
-            m_selectedLineIdx--;
-            if (m_selectedLineIdx < 0) {
-                m_selectedLineIdx = 0;
-                UpdateDisasm(m_disasm[0].addr, -1);
-            }
-        }
-    }
-    else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
-    {
-        if (m_disasm.size() >= 1)
-        {
-            m_selectedLineIdx += 1;
-            if (m_selectedLineIdx > lineIdx - 1) {
-                m_selectedLineIdx = lineIdx - 1;
-                UpdateDisasm(m_disasm[0].addr, 1);
-            }
-        }
-    }
 
-    if (ImGui::GetIO().MouseWheel > 0.0f)
+    // check the keys
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        if (m_disasm.size() >= 1)
+        if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
         {
-            m_selectedLineIdx--;
-            if (m_selectedLineIdx < 0) {
-                m_selectedLineIdx = 0;
-                UpdateDisasm(m_disasm[0].addr, -2);
+            if (m_disasm.size() >= 1)
+            {
+                m_selectedLineIdx--;
+                if (m_selectedLineIdx < 0) {
+                    m_selectedLineIdx = 0;
+                    UpdateDisasm(m_disasm[0].addr, -1);
+                }
             }
         }
-    }
-    else if (ImGui::GetIO().MouseWheel < 0.0f)
-    {
-        if (m_disasm.size() >= 1)
+        else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
         {
-            m_selectedLineIdx += 1;
-            if (m_selectedLineIdx > lineIdx - 1) {
-                m_selectedLineIdx = lineIdx - 1;
-                UpdateDisasm(m_disasm[0].addr, 2);
+            if (m_disasm.size() >= 1)
+            {
+                m_selectedLineIdx += 1;
+                if (m_selectedLineIdx > lineIdx - 1) {
+                    m_selectedLineIdx = lineIdx - 1;
+                    UpdateDisasm(m_disasm[0].addr, 1);
+                }
+            }
+        }
+
+        if (ImGui::GetIO().MouseWheel > 0.0f)
+        {
+            if (m_disasm.size() >= 1)
+            {
+                m_selectedLineIdx--;
+                if (m_selectedLineIdx < 0) {
+                    m_selectedLineIdx = 0;
+                    UpdateDisasm(m_disasm[0].addr, -2);
+                }
+            }
+        }
+        else if (ImGui::GetIO().MouseWheel < 0.0f)
+        {
+            if (m_disasm.size() >= 1)
+            {
+                m_selectedLineIdx += 1;
+                if (m_selectedLineIdx > lineIdx - 1) {
+                    m_selectedLineIdx = lineIdx - 1;
+                    UpdateDisasm(m_disasm[0].addr, 2);
+                }
             }
         }
     }

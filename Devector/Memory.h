@@ -33,8 +33,9 @@ namespace dev
 
 		static constexpr size_t MEMORY_MAIN_LEN = 64 * 1024;
 		static constexpr size_t GLOBAL_MEMORY_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAMDISK_MAX;
+		static constexpr size_t MEMORY_READ_LEN = 64 * 1024;
 
-		using OutRam = std::array<int8_t, 0x2000>;
+		using OutRam = std::array<uint8_t, GLOBAL_MEMORY_LEN>;
 
 		bool m_mappingModeStack;
 		size_t m_mappingPageStack;
@@ -51,7 +52,7 @@ namespace dev
 		auto GetByte(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
 		void SetByte(GlobalAddr _globalAddr, uint8_t _value, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		auto GetWord(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint16_t;
-		auto GetRam8K(const Addr _addr) -> const OutRam*;
+		auto GetRam(const GlobalAddr _addr, GlobalAddr _len) -> const uint8_t*;
 		auto GetGlobalAddr(const GlobalAddr _globalAddr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		bool IsRamMapped(const Addr _addr) const;
 

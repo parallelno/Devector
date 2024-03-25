@@ -27,15 +27,18 @@ const char* vertexShaderSource = R"(
     layout (location = 0) in vec3 vtxPos;
     layout (location = 1) in vec2 vtxUV;
 
-    uniform vec4 globalColor;
+    uniform vec4 globalColorBg;
+    uniform vec4 globalColorFg;
     
     out vec2 uv0;
-    out vec4 globalColor0;
+    out vec4 globalColorBg0;
+    out vec4 globalColorFg0;
 
     void main()
     {
         uv0 = vtxUV;
-        globalColor0 = globalColor;        
+        globalColorBg0 = globalColorBg;
+        globalColorFg0 = globalColorFg;
         gl_Position = vec4(vtxPos.xyz, 1.0f);
     }
 )";
@@ -46,38 +49,46 @@ const char* fragmentShaderSource = R"(
     precision highp float;
 
     in vec2 uv0;
-    in vec4 globalColor0;
+    in vec4 globalColorBg0;
+    in vec4 globalColorFg0;
 
     uniform sampler2D texture0;
     uniform ivec2 iresolution;
 
     layout (location = 0) out vec4 out0;
 
+    #define BYTE_COLOR_MULL 0.6
+    #define BACK_COLOR_MULL 0.7
+
     int GetBit(float _color, int _bitIdx) {
         return (int(_color * 255.0) >> _bitIdx) & 1;
     }
 
-    #define RESOLUTION_X = 256
-    #define RESOLUTION_y = 256
-
     void main()
     {
-        
-        int addrOffset = int(uv0.x * 255.0 / 8.0) + int(uv0.y * 255.0) * 256;
-        vec2 uv = vec2( int(addrOffset / 256) / 255.0, int(addrOffset % 256)/ 255.0);
-        float byteColor = texture(texture0, uv).r;
-        
-        // int bitIdx = int(uv0.x / 8.0) % 8;
-        // int bitColor = GetBit(byteColor, bitIdx);
+        float isAddrBelow32K = 1.0 - step(0.5, uv0.y);
+        vec2 uv = vec2( uv0.y * 2.0, uv0.x / 2.0 + isAddrBelow32K * 0.5);
+        float byte = texture(texture0, uv).r;
 
-        out0 = globalColor0 * byteColor;
-        //out0 = globalColor0 * vec4(uv0, 0, 1);
+        float isOdd8K = step(0.5, fract(uv0.x / 0.5));
+        isOdd8K = mix(isOdd8K, 1.0 - isOdd8K, isAddrBelow32K);
+        vec3 bgColor = mix(globalColorBg0.xyz, globalColorBg0.xyz * BACK_COLOR_MULL, isOdd8K);
+
+        int bitIdx = 7 - int(uv0.x * 1023.0) & 7;
+        int isBitOn = GetBit(byte, bitIdx);
+
+        int isByteOdd = (int(uv0.x * 511.0)>>3) & 1;
+        vec3 byteColor = mix(globalColorFg0.xyz * BYTE_COLOR_MULL, globalColorFg0.xyz, float(isByteOdd));
+        vec3 color = mix(bgColor, byteColor, float(isBitOn));
+
+        out0 = vec4(color, globalColorBg0.a);
+        //out0 = vec4(byte,byte,byte, globalColorBg0.a);
     }
 )";
 
-dev::GLUtils::GLUtils(Hardware& _hardware, const int _frameSizeW, const int _frameSizeH)
+dev::GLUtils::GLUtils(Hardware& _hardware)
     :
-    m_hardware(_hardware), m_frameSizeW(_frameSizeW), m_frameSizeH(_frameSizeH)
+    m_hardware(_hardware), m_frameSizeW(FRAME_BUFFER_W), m_frameSizeH(FRAME_BUFFER_H)
 {
     Init();
 }
@@ -102,7 +113,9 @@ void dev::GLUtils::DrawDisplay()
         glUseProgram(m_shaderData.shaderProgram);
 
         // send the color
-        glUniform4f(m_shaderData.globalColorId, 1.0f, 1.0f, 1.0f, 1.0f);
+        glUniform4f(m_shaderData.globalColorBgId, 0.2f, 0.2f, 0.2f, 1.0f);
+        glUniform4f(m_shaderData.globalColorFgId, 1.0f, 1.0f, 1.0f, 1.0f);
+
         // assign a texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_shaderData.texture);
@@ -117,7 +130,7 @@ void dev::GLUtils::DrawDisplay()
 
 void dev::GLUtils::CreateRamTexture()
 {
-    auto ramP = m_hardware.GetRam8K(0);
+    auto ramP = m_hardware.GetRam(0, Memory::MEMORY_READ_LEN);
 
     // Create a OpenGL texture identifier
     if (!m_shaderData.texture)
@@ -129,19 +142,18 @@ void dev::GLUtils::CreateRamTexture()
     // Setup filtering parameters for display
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     // Upload pixels into texture
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Display::FRAME_W, Display::FRAME_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, ram.data());
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256, 32, 0, GL_RED, GL_UNSIGNED_BYTE, ramP->data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256, Memory::MEMORY_READ_LEN / 256, 0, GL_RED, GL_UNSIGNED_BYTE, ramP);
 }
 
 
-// it is not initializing the Window and OpenGL 3.3 context 
+// it is not initializing the Window and OpenGL 3.3 context
 // assumming ImGui and did it already
 GLenum dev::GLUtils::Init()
 {
@@ -188,7 +200,8 @@ GLenum dev::GLUtils::Init()
     m_shaderData.shaderProgram = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
     
     // get uniform vars ids
-    m_shaderData.globalColorId = glGetUniformLocation(m_shaderData.shaderProgram, "globalColor");
+    m_shaderData.globalColorBgId = glGetUniformLocation(m_shaderData.shaderProgram, "globalColorBg");
+    m_shaderData.globalColorFgId = glGetUniformLocation(m_shaderData.shaderProgram, "globalColorFg");
     
     // assign a texture
     glUseProgram(m_shaderData.shaderProgram);

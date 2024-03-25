@@ -39,6 +39,8 @@ void dev::DevectorApp::SettingsInit()
 	Request(REQ::LOAD_FONT);
 	AppStyleInit();
 	RecentFilesInit();
+	
+	glfwSetKeyCallback(nullptr /*window*/, DevectorApp::KeyHandling);
 }
 
 // Function to open a file dialog
@@ -180,6 +182,10 @@ void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path)
 	}
 }
 
+void dev::DevectorApp::KeyHandling(int _key, int _scancode, int _action, int _modes)
+{
+	m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "key", _key }, { "action", _action} });
+}
 
 void dev::DevectorApp::AppStyleInit()
 {

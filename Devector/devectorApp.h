@@ -61,7 +61,7 @@ namespace dev
 		void AppStyleInit();
 		void MainMenuUpdate();
 		void LoadRom(const std::wstring& _filePath);
-
+		void KeyHandling(int _key, int _scancode, int _action, int _modes);
 	};
 
 }

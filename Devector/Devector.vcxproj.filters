@@ -83,6 +83,7 @@
     <ClCompile Include="..\SharedSource\Utils\GLUtils.cpp">
       <Filter>SharedSource\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="Keyboard.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -188,6 +189,7 @@
     <ClInclude Include="..\SharedSource\Utils\GLUtils.h">
       <Filter>SharedSource\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Keyboard.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="SharedSource">

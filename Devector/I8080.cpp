@@ -63,7 +63,7 @@ bool dev::I8080::IsInstructionExecuted() const
 	return m_machineCycle == I8080::INSTR_EXECUTED || m_HLTA;
 }
 
-// an instruction execution time in macine cycles
+// an instruction execution time in macine cycles. each machine cicle is 4 cc
 static constexpr int M_CYCLES[]
 {
 //  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
@@ -1216,10 +1216,10 @@ void dev::I8080::CMP(uint8_t _sss)
 {
 	m_ACT = m_a;
 	m_TMP = _sss;
-	uint16_t result = m_ACT - m_TMP;
-	m_flagC = result >> 8 == 1;
-	m_flagAC = (~(m_ACT ^ result ^ m_TMP) & 0x10) == 0x10;
-	SetZSP((uint8_t)(result & 0xFF));
+	auto res = m_ACT - m_TMP;
+	m_flagC = (res >> 8) & 1;
+	m_flagAC = (~(m_ACT ^ (res & 0xFF) ^ m_TMP) & 0x10) == 0x10;
+	SetZSP((uint8_t)(res & 0xFF));
 }
 
 void dev::I8080::CMPMem()
@@ -1231,10 +1231,10 @@ void dev::I8080::CMPMem()
 	else if (m_machineCycle == 1)
 	{
 		m_TMP = ReadByte(GetHL());
-		uint16_t result = (uint16_t)(m_ACT - m_TMP);
-		m_flagC = result >> 8 == 1;
-		m_flagAC = (~(m_ACT ^ result ^ m_TMP) & 0x10) == 0x10;
-		SetZSP((uint8_t)(result & 0xFF));
+		auto res = m_ACT - m_TMP;
+		m_flagC = (res >> 8) & 1;
+		m_flagAC = (~(m_ACT ^ (res & 0xFF) ^ m_TMP) & 0x10) == 0x10;
+		SetZSP((uint8_t)(res & 0xFF));
 	}
 }
 
@@ -1247,10 +1247,10 @@ void dev::I8080::CPI()
 	else if (m_machineCycle == 1)
 	{
 		m_TMP = ReadByteMovePC();
-		uint16_t result = (uint16_t)(m_ACT - m_TMP);
-		m_flagC = result >> 8 == 1;
-		m_flagAC = (~(m_ACT ^ result ^ m_TMP) & 0x10) == 0x10;
-		SetZSP((uint8_t)(result & 0xFF));
+		auto res = m_ACT - m_TMP;
+		m_flagC = (res >> 8) & 1;
+		m_flagAC = (~(m_ACT ^ (res & 0xFF) ^ m_TMP) & 0x10) == 0x10;
+		SetZSP((uint8_t)(res & 0xFF));
 	}
 }
 
@@ -1384,6 +1384,9 @@ void dev::I8080::IN_()
 	{
 		m_W = 0;
 		m_Z = ReadByteMovePC();
+	}
+	else if (m_machineCycle == 2)
+	{
 		m_a = Input(m_Z);
 	}
 }
@@ -1394,6 +1397,9 @@ void dev::I8080::OUT_()
 	{
 		m_W = 0;
 		m_Z = ReadByteMovePC();
+	}
+	else if (m_machineCycle == 2)
+	{
 		Output(m_Z, m_a);
 	}
 }

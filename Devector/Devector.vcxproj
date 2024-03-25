@@ -130,6 +130,7 @@
     <ClCompile Include="Hardware.cpp" />
     <ClCompile Include="I8080.cpp" />
     <ClCompile Include="IO.cpp" />
+    <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="DevectorApp.cpp" />
     <ClCompile Include="Memory.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Hardware.h" />
     <ClInclude Include="I8080.h" />
+    <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="DevectorApp.h" />
     <ClInclude Include="Display.h" />

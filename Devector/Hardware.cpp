@@ -182,6 +182,10 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
                 });
             break;
 
+        case Req::KEY_HANDLING:
+            m_io.GetKeyboard().KeyHandling(dataj["key"], dataj["action"]);
+            break;
+
         default:
             break;
         }
@@ -261,8 +265,8 @@ auto dev::Hardware::GetFrame(const bool _vsync)
     return m_display.GetFrame(_vsync);
 }
 
-auto dev::Hardware::GetRam8K(const Addr _addr)
-->const Memory::OutRam*
+auto dev::Hardware::GetRam(const GlobalAddr _addr, GlobalAddr _len)
+-> const uint8_t*
 {
-    return m_memory.GetRam8K(_addr);
+    return m_memory.GetRam(_addr, _len);
 }

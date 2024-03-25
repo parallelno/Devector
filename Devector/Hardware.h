@@ -53,13 +53,14 @@ namespace dev
 			GET_DISPLAY_DATA,
 			GET_MEMORY_MODES,
 			GET_GLOBAL_ADDR_RAM,
+			KEY_HANDLING,
 		};
 
         Hardware();
 		~Hardware();
 		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result <nlohmann::json>;
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;
-		auto GetRam8K(const Addr _addr) -> const Memory::OutRam*;
+		auto GetRam(const GlobalAddr _addr, GlobalAddr _len) -> const uint8_t*;
 
 		void AttachCheckBreak(CheckBreakFunc* _funcP);
 		void AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc* _funcP);

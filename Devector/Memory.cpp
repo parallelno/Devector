@@ -37,13 +37,13 @@ auto dev::Memory::GetWord(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
     return GetByte(_globalAddr + 1, _addrSpace) << 8 | GetByte(_globalAddr, _addrSpace);
 }
 
-auto dev::Memory::GetRam8K(const Addr _addr)
--> const OutRam*
+auto dev::Memory::GetRam(const GlobalAddr _addr, GlobalAddr _len)
+-> const uint8_t*
 {
     std::unique_lock<std::mutex> mlock(m_ramMutex);
-    std::copy(m_data.begin(), m_data.begin() + m_out.size(), m_out.begin());
+    std::copy(m_data.begin() + _addr, m_data.begin() + _addr + _len, m_out.begin() + _addr);
 
-    return &m_out;
+    return &m_out[_addr];
 }
 
 // converts an addr to a global addr depending on the ram/stack mapping modes
