@@ -8,6 +8,7 @@
 #include "Types.h"
 #include "I8080.h"
 #include "Memory.h"
+#include "Keyboard.h"
 #include "IO.h"
 #include "Display.h"
 #include "Utils/Utils.h"
@@ -23,6 +24,7 @@ namespace dev
 	{
 		I8080 m_cpu;
 		Memory m_memory;
+		Keyboard m_keyboard;
 		IO m_io;
 		Display m_display;
 

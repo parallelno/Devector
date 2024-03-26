@@ -2,6 +2,7 @@
 #ifndef DEV_DEVECTORAPP_H
 #define DEV_DEVECTORAPP_H
 #include <string>
+#include "GLFW/glfw3.h"
 
 #include "Types.h"
 #include "Utils/Status.h"
@@ -61,7 +62,7 @@ namespace dev
 		void AppStyleInit();
 		void MainMenuUpdate();
 		void LoadRom(const std::wstring& _filePath);
-		void KeyHandling(int _key, int _scancode, int _action, int _modes);
+		static void KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes);
 	};
 
 }

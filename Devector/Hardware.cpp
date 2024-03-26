@@ -6,7 +6,8 @@ dev::Hardware::Hardware()
     :
     m_status(Status::STOP),
     m_memory(),
-    m_io(),
+    m_keyboard(),
+    m_io(m_keyboard, m_memory),
     m_cpu(
         m_memory,
         std::bind(&IO::PortIn, &m_io, std::placeholders::_1),

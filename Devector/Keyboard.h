@@ -13,17 +13,19 @@ namespace dev
     class Keyboard
     {
     private:
-        uint8_t matrix[8];
-        std::map<SDL_Scancode, uint32_t> keymap;
+        uint8_t m_encodingMatrix[8];
+        using KeyCode = int;
+        using RowColumnCode = int;
+        std::map<KeyCode, RowColumnCode> m_keymap;
 
     public:
-        bool ss, us, rus;
-        bool terminate;
+        bool m_keySS, m_keyUS, m_keyRus;
+        bool m_terminate;
         std::function<void(bool)> onreset;
 
         Keyboard();
         void KeyHandling(int _key, int _action);
-        int read(int rowbit);
+        auto Read(int _rows) -> uint8_t;
 
     private:
         void init_map();

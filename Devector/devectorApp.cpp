@@ -5,7 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
-
+#include "GLFW/glfw3.h"
 #include "DevectorApp.h"
 #include "Utils/Utils.h"
 #include "Utils/JsonUtils.h"
@@ -32,6 +32,10 @@ void dev::DevectorApp::WindowsInit()
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale);
 	m_ramViewWindowP = std::make_unique<dev::RamViewWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
+
+	// Set the key callback function
+	glfwSetWindowUserPointer(m_window, this);
+	glfwSetKeyCallback(m_window, DevectorApp::KeyHandling);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -39,8 +43,6 @@ void dev::DevectorApp::SettingsInit()
 	Request(REQ::LOAD_FONT);
 	AppStyleInit();
 	RecentFilesInit();
-	
-	glfwSetKeyCallback(nullptr /*window*/, DevectorApp::KeyHandling);
 }
 
 // Function to open a file dialog
@@ -182,9 +184,11 @@ void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path)
 	}
 }
 
-void dev::DevectorApp::KeyHandling(int _key, int _scancode, int _action, int _modes)
+void dev::DevectorApp::KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes)
 {
-	m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "key", _key }, { "action", _action} });
+	// Retrieve the user pointer to access the class instance
+	DevectorApp* instance = static_cast<DevectorApp*>(glfwGetWindowUserPointer(_window));
+	instance->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "key", _key }, { "action", _action} });
 }
 
 void dev::DevectorApp::AppStyleInit()

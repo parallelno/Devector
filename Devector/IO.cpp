@@ -1,11 +1,11 @@
 #include "IO.h"
 
-dev::IO::IO(Keyboard& _keyboard)
+dev::IO::IO(Keyboard& _keyboard, Memory& _memory)
     :
-    m_keyboard(_keyboard),
-    CW(0x08), PA(0xff), PB(0xff), PC(0xff), CW2(0), PA2(0xff), PB2(0xff), PC2(0xff),
+    m_keyboard(_keyboard), m_memory(_memory),
+    CW(0x08), m_portA(0xFF), m_portB(0xFF), m_portC(0xFF), CW2(0), PA2(0xFF), PB2(0xFF), PC2(0xFF),
     outport(-1), outbyte(-1), palettebyte(- 1),
-    joy_0e(0xff), joy_0f(0xff)
+    joy_0e(0xFF), joy_0f(0xFF)
 
 {
     m_palette.fill(0xFF000000);
@@ -14,54 +14,54 @@ dev::IO::IO(Keyboard& _keyboard)
 auto dev::IO::PortIn(uint8_t _port)
 -> uint8_t
 {
-    int result = 0xff;
+    int result = 0xFF;
 
     switch (_port) {
     case 0x00:
-        result = 0xff;
+        result = 0xFF;
         break;
     case 0x01:
     {
-        /* PC.low input ? */
-        auto pclow = (CW & 0x01) ? 0x0b : (PC & 0x0f);
-        /* PC.high input ? */
-        auto pcupp = (CW & 0x08) ?
-            (/*(this->tape_player.sample() << 4) |*/
-                (m_keyboard.ss ? 0 : (1 << 5)) |
-                (m_keyboard.us ? 0 : (1 << 6)) |
-                (m_keyboard.rus ? 0 : (1 << 7))) : (PC & 0xf0);
-        result = pclow | pcupp;
+        /* PortC.low input ? */
+        auto portCLow = (CW & 0x01) ? 0x0b : (m_portC & 0x0f);
+        /* PortC.high input ? */
+        auto portCUp = (CW & 0x08) ?
+            (/*(tape_player.sample() << 4) |*/
+                (m_keyboard.m_keySS ? 0 : (1 << 5)) |
+                (m_keyboard.m_keyUS ? 0 : (1 << 6)) |
+                (m_keyboard.m_keyRus ? 0 : (1 << 7))) : (m_portC & 0xf0);
+        result = portCLow | portCUp;
     }
         break;
 
     case 0x02:
-        if ((this->CW & 0x02) != 0) {
-            result = m_keyboard.read(~this->PA); // input
+        if ((CW & 0x02) != 0) {
+            result = m_keyboard.Read(m_portA); // input
         }
         else {
-            result = this->PB;       // output
+            result = m_portB;       // output
         }
         break;
     case 0x03:
-        if ((this->CW & 0x10) == 0) {
-            result = this->PA;       // output
+        if ((CW & 0x10) == 0) {
+            result = m_portA;       // output
         }
         else {
-            result = 0xff;          // input
+            result = 0xFF;          // input
         }
         break;
 
     case 0x04:
-        result = this->CW2;
+        result = CW2;
         break;
     case 0x05:
-        result = this->PC2;
+        result = PC2;
         break;
     case 0x06:
-        result = this->PB2;
+        result = PB2;
         break;
     case 0x07:
-        result = this->PA2;
+        result = PA2;
         break;
 
         // Timer
@@ -69,33 +69,33 @@ auto dev::IO::PortIn(uint8_t _port)
     case 0x09:
     case 0x0a:
     case 0x0b:
-        //return this->timer.read(~(port & 3));
+        //return timer.read(~(port & 3));
 
         // Joystick "C"
     case 0x0e:
-        return this->joy_0e;
+        return joy_0e;
     case 0x0f:
-        return this->joy_0f;
+        return joy_0f;
 
     case 0x14:
     case 0x15:
-        //result = this->ay.read(port & 1);
+        //result = ay.read(port & 1);
         break;
 
     case 0x18: // fdc data
-        //result = this->fdc.read(3);
+        //result = fdc.read(3);
         break;
     case 0x19: // fdc sector
-        //result = this->fdc.read(2);
+        //result = fdc.read(2);
         break;
     case 0x1a: // fdc track
-        //result = this->fdc.read(1);
+        //result = fdc.read(1);
         break;
     case 0x1b: // fdc status
-        //result = this->fdc.read(0);
+        //result = fdc.read(0);
         break;
     case 0x1c: // fdc control - readonly
-        //result = this->fdc.read(4); // ask Svofski why it is disabled
+        //result = fdc.read(4); // ask Svofski why it is disabled
         break;
     default:
         break;
@@ -104,9 +104,119 @@ auto dev::IO::PortIn(uint8_t _port)
     return result;
 }
 
+// cpu sends this data
 void dev::IO::PortOut(uint8_t _port, uint8_t _value)
 {
-    int a = 0;
+    outport = _port;
+    outbyte = _value;
+}
+
+// data sent by cpu handled here at commit time
+void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
+{
+    bool ruslat;
+    switch (_port) {
+        // PortInputA 
+    case 0x00:
+        PIA1_last = _value;
+        ruslat = m_portC & 8;
+        if ((_value & 0x80) == 0) {
+            // port C BSR: 
+            //   bit 0: 1 = set, 0 = reset
+            //   bit 1-3: bit number
+            int bit = (_value >> 1) & 7;
+            if ((_value & 1) == 1) {
+                m_portC |= 1 << bit;
+            }
+            else {
+                m_portC &= ~(1 << bit);
+            }
+            //ontapeoutchange(m_portC & 1);
+        }
+        else {
+            CW = _value;
+            PortOutHandling(1, 0);
+            PortOutHandling(2, 0);
+            PortOutHandling(3, 0);
+        }
+        if (((m_portC & 8) != ruslat) && onruslat) {
+            onruslat((m_portC & 8) == 0);
+        }
+        break;
+    case 0x01:
+        PIA1_last = _value;
+        ruslat = m_portC & 8;
+        m_portC = _value;
+        //ontapeoutchange(m_portC & 1);
+        if (((m_portC & 8) != ruslat) && onruslat) {
+            onruslat((m_portC & 8) == 0);
+        }
+        break;
+    case 0x02:
+        PIA1_last = _value;
+        m_portB = _value;
+        onborderchange(m_portB & 0x0f);
+        onmodechange((m_portB & 0x10) != 0);
+        break;
+    case 0x03:
+        PIA1_last = _value;
+        m_portA = _value;
+        break;
+        // PPI2
+    case 0x04:
+        CW2 = _value;
+        break;
+    case 0x05:
+        PC2 = _value;
+        break;
+    case 0x06:
+        PB2 = _value;
+        break;
+    case 0x07:
+        PA2 = _value;
+        break;
+
+        // Timer
+    case 0x08:
+    case 0x09:
+    case 0x0a:
+    case 0x0b:
+        //timer.write((~port & 3), _value);
+        break;
+
+    case 0x0c:
+    case 0x0d:
+    case 0x0e:
+    case 0x0f:
+        palettebyte = _value;
+        break;
+    case 0x10:
+        // kvas 
+        m_memory.SetRamDiskMode(_value);
+        break;
+    case 0x14:
+    case 0x15:
+        //ay.write(port & 1, _value);
+        break;
+
+    case 0x18: // fdc data
+        //fdc.write(3, _value);
+        break;
+    case 0x19: // fdc sector
+        //fdc.write(2, _value);
+        break;
+    case 0x1a: // fdc track
+        //fdc.write(1, _value);
+        break;
+    case 0x1b: // fdc command
+        //fdc.write(0, _value);
+        break;
+    case 0x1c: // fdc control
+        //fdc.write(4, _value);
+        break;
+    default:
+        break;
+    }
 }
 
 auto dev::IO::GetKeyboard()

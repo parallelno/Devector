@@ -20,6 +20,10 @@ namespace dev
 			RAM, STACK, GLOBAL
 		};
 
+		static constexpr uint8_t MAPPING_MODE_STACK_MASK = 0b00010000;
+		static constexpr uint8_t MAPPING_MODE_RAM_MASK = 0b11100000;
+		static constexpr uint8_t MAPPING_MODE_RAM_PAGE_MASK = 0b11;
+		static constexpr uint8_t MAPPING_MODE_STACK_PAGE_MASK = 0b1100;
 		static constexpr uint8_t MAPPING_MODE_RAM_OFF	= 0;
 		static constexpr uint8_t MAPPING_MODE_RAM_A000	= 1 << 0;
 		static constexpr uint8_t MAPPING_MODE_RAM_8000	= 1 << 1;
@@ -55,6 +59,7 @@ namespace dev
 		auto GetRam(const GlobalAddr _addr, GlobalAddr _len) -> const uint8_t*;
 		auto GetGlobalAddr(const GlobalAddr _globalAddr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		bool IsRamMapped(const Addr _addr) const;
+		void SetRamDiskMode(uint8_t _data);
 
 	private:
 		std::array<int8_t, GLOBAL_MEMORY_LEN> m_data;
