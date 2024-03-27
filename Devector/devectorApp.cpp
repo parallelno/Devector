@@ -35,7 +35,7 @@ void dev::DevectorApp::WindowsInit()
 
 	// Set the key callback function
 	glfwSetWindowUserPointer(m_window, this);
-	glfwSetKeyCallback(m_window, DevectorApp::KeyHandling);
+	ImGui_ImplGlfw_KeyCallback = glfwSetKeyCallback(m_window, DevectorApp::KeyHandling);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -187,8 +187,17 @@ void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path)
 void dev::DevectorApp::KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes)
 {
 	// Retrieve the user pointer to access the class instance
+	// TODO: check if a mouse cursor hovers the Display window or a Display window or any its controls are selected.
 	DevectorApp* instance = static_cast<DevectorApp*>(glfwGetWindowUserPointer(_window));
-	instance->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "key", _key }, { "action", _action} });
+	if (instance) 
+	{
+		instance->ImGui_ImplGlfw_KeyCallback(_window, _key, _scancode, _action, _modes);
+
+		if (instance->m_displayWindowP->IsHovered()) 
+		{
+			instance->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "key", _key }, { "action", _action} });
+		}
+	}
 }
 
 void dev::DevectorApp::AppStyleInit()

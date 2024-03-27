@@ -191,7 +191,6 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         palettebyte = _value;
         break;
     case 0x10:
-        // kvas 
         m_memory.SetRamDiskMode(_value);
         break;
     case 0x14:

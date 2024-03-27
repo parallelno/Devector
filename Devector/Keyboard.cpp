@@ -43,19 +43,17 @@ void dev::Keyboard::KeyHandling(int _key, int _action)
 	default:
 
 		auto it = m_keymap.find(_key);
-		if (it != m_keymap.end()) {
+		if (it != m_keymap.end()) 
+		{
 			auto rowColumn = it->second;
-
 			row = rowColumn >> 8;
 			column = rowColumn & 0xFF;
-			if (row != -1)
-			{
-				if (_action == GLFW_RELEASE) {
-					m_encodingMatrix[row] &= ~column;
-				}
-				else {
-					m_encodingMatrix[row] |= column;
-				}
+
+			if (_action == GLFW_RELEASE) {
+				m_encodingMatrix[row] &= ~column;
+			}
+			else {
+				m_encodingMatrix[row] |= column;
 			}
 		}
 		else {

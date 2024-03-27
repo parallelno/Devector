@@ -324,7 +324,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     }
 
     // check the keys
-    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    if (!_isRunning && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
         if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
         {

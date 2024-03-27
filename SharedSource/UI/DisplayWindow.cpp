@@ -8,7 +8,7 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
         const float* const _fontSizeP, const float* const _dpiScaleP)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-    m_hardware(_hardware)
+    m_hardware(_hardware), m_isHovered(false)
 {
     CreateTexture(true);
     UpdateData(false);
@@ -19,14 +19,20 @@ void dev::DisplayWindow::Update()
 	BaseWindow::Update();
 
 	static bool open = true;
-	ImGui::Begin("Display", &open, ImGuiWindowFlags_NoCollapse);
+	ImGui::Begin(m_name.c_str(), &open, ImGuiWindowFlags_NoCollapse);
 
     bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
     UpdateData(isRunning);
 	
     DrawDisplay();
 
+    m_isHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_None);
 	ImGui::End();
+}
+
+bool dev::DisplayWindow::IsHovered()
+{
+    return m_isHovered;
 }
 
 void dev::DisplayWindow::DrawDisplay()

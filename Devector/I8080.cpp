@@ -808,7 +808,7 @@ void dev::I8080::XTHL()
 	}
 	else if (m_machineCycle == 4)
 	{
-		WriteByte(m_sp, m_h, Memory::AddrSpace::STACK);
+		WriteByte(m_sp + 1u, m_h, Memory::AddrSpace::STACK);
 	}
 	else if (m_machineCycle == 5)
 	{

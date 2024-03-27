@@ -46,6 +46,7 @@ namespace dev
 		std::list<std::wstring> m_recentFilePaths;
 
 		bool m_reqDisasmUpdate = false;
+		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ,

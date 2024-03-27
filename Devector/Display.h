@@ -41,7 +41,7 @@ namespace dev
 		static constexpr int FRAME_H = 312;					// a frame resolution including borders
 		static constexpr int FRAME_LEN = FRAME_W * FRAME_H;	// the size of a frame buffer
 
-		static constexpr auto VSYC_DELAY = 19968000ns; // For the realtime emulation it should be called by the (3000000/59904)Mz timer or every 0.019968 sec
+		static constexpr auto VSYC_DELAY = 19968000ns; // For the realtime emulation it should be called every 0.019968 sec by 3000000/59904 Mz timer
 
 		using FrameBuffer = std::array <ColorI, FRAME_LEN>;
 
