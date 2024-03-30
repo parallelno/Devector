@@ -111,7 +111,7 @@ void dev::IO::PortOut(uint8_t _port, uint8_t _value)
     outbyte = _value;
 }
 
-// data sent by cpu handled here at commit time
+// data sent by cpu handled here at the commit time
 void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 {
     bool ruslat;

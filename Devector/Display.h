@@ -41,7 +41,7 @@ namespace dev
 		static constexpr int FRAME_H = 312;					// a frame resolution including borders
 		static constexpr int FRAME_LEN = FRAME_W * FRAME_H;	// the size of a frame buffer
 
-		static constexpr auto VSYC_DELAY = 19968000ns; // For the realtime emulation it should be called every 0.019968 sec by 3000000/59904 Mz timer
+		static constexpr auto VSYC_DELAY = 19968us; // For the realtime emulation it should be called every 0.019968 sec by 3000000/59904 Mz timer
 
 		using FrameBuffer = std::array <ColorI, FRAME_LEN>;
 
@@ -68,6 +68,8 @@ namespace dev
 		int m_rasterLine;	// currently rasterized scanline idx from the bottom
 		int m_rasterPixel;	// currently rasterized scanline pixel
 
+		uint64_t m_frameNum;
+
 		Memory& m_memory;
 
 	public:
@@ -76,6 +78,7 @@ namespace dev
 		void Rasterize();	// to draw a pxl
 		bool IsInt50Hz();
 		auto GetFrame(const bool _vsync) ->const FrameBuffer*;
+		auto GetFrameNum() const -> uint64_t { return m_frameNum; };
 		int GetRasterLine() const { return m_rasterLine; };
 		int GetRasterPixel() const { return m_rasterPixel; };
 	private:

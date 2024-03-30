@@ -69,7 +69,7 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
     if (ImGui::Button("Step Frame"))
     {
         m_hardware.Request(Hardware::Req::STOP);
-        m_hardware.Request(Hardware::Req::EXECUTE_FRAME);
+        m_hardware.Request(Hardware::Req::EXECUTE_FRAME_NO_BREAKS);
     }
 
     if (_isRunning) ImGui::EndDisabled();

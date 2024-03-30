@@ -111,6 +111,7 @@ static const char* mnemonics[0x100] =
 	"rp",  "pop PSW", "jp",  "di",   "cp",  "push PSW", "ori", "rst 0x6", "rm",  "sphl",    "jm",  "ei",      "cm",  "db 0xFD", "cpi", "rst 0x7"
 };
 
+// CAPITAL NAMING
 /*
 	"NOP",	   "LXI B",  "STAX B", "INX B",  "INR B", "DCR B", "MVI B", "RLC", "DB 0x08", "DAD B",  "LDAX B", "DCX B",  "INR C", "DCR C", "MVI C", "RRC",
 	"DB 0x10", "LXI D",  "STAX D", "INX D",  "INR D", "DCR D", "MVI D", "RAL", "DB 0x18", "DAD D",  "LDAX D", "DCX D",  "INR E", "DCR E", "MVI E", "RAR",
@@ -249,7 +250,6 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 		Addr addr = _addr;
 		for (int i = 0; i < instructions; i++)
 		{
-			//auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
 			auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 
 			auto cmdLen = GetCmdLen(opcode);
@@ -270,7 +270,6 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 
 			while (addr < _addr && currentInstruction < instructions)
 			{
-				//auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
 				auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 
 				auto cmdLen = GetCmdLen(opcode);
@@ -333,9 +332,7 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 				out.emplace_back(std::move(disasmLine));
 			}
 			
-			//auto db = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
 			auto db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
-			//auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
 			auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
 
 			auto breakpointStatus = GetBreakpointStatus(globalAddr);
@@ -348,11 +345,6 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 
 	for (int i = 0; i < lines; i++)
 	{
-		/*
-		auto opcode = m_memory.GetByte(addr, Memory::AddrSpace::RAM);
-		auto dataL = m_memory.GetByte(addr + 1, Memory::AddrSpace::RAM);
-		auto dataH = m_memory.GetByte(addr + 2, Memory::AddrSpace::RAM);
-		*/
 		auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 		auto dataL = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 1 } })->at("data");
 		auto dataH = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 2 } })->at("data");
@@ -373,7 +365,6 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 			consts = LabelsToStr(dataH << 8 | dataL, LABEL_TYPE_ALL);
 		}
 
-		//auto globalAddr = m_memory.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
 		auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
 
 		auto disasmS = GetDisasmLine(opcode, dataL, dataH);
@@ -595,7 +586,7 @@ void dev::Debugger::TraceLog::Clear()
 //
 //////////////////////////////////////////////////////////////
 
-// a hardware thread
+// an external thread
 bool dev::Debugger::CheckBreak(GlobalAddr _globalAddr)
 {
 	if (m_wpBreak)

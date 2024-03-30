@@ -118,7 +118,7 @@ void dev::GLUtils::DrawDisplay()
 
         // assign a texture
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_shaderData.texture);
+        glBindTexture(GL_TEXTURE_2D, m_shaderData.ramMainTexture);
 
         glBindVertexArray(m_shaderData.vtxArrayObj);
         glDrawArrays(GL_QUADS, 0, 4);
@@ -130,14 +130,14 @@ void dev::GLUtils::DrawDisplay()
 
 void dev::GLUtils::CreateRamTexture()
 {
-    auto ramP = m_hardware.GetRam(0, Memory::MEMORY_READ_LEN);
+    auto memP = m_hardware.GetRam();
 
     // Create a OpenGL texture identifier
-    if (!m_shaderData.texture)
+    if (!m_shaderData.ramMainTexture)
     {
-        glGenTextures(1, &m_shaderData.texture);
+        glGenTextures(1, &m_shaderData.ramMainTexture);
     }
-    glBindTexture(GL_TEXTURE_2D, m_shaderData.texture);
+    glBindTexture(GL_TEXTURE_2D, m_shaderData.ramMainTexture);
 
     // Setup filtering parameters for display
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -149,7 +149,7 @@ void dev::GLUtils::CreateRamTexture()
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256, Memory::MEMORY_READ_LEN / 256, 0, GL_RED, GL_UNSIGNED_BYTE, ramP);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256, (GLsizei)(Memory::MEMORY_MAIN_LEN / 256), 0, GL_RED, GL_UNSIGNED_BYTE, memP);
 }
 
 
@@ -214,9 +214,9 @@ dev::GLUtils::~GLUtils()
 {
     // Clean up
     glDeleteFramebuffers(1, &m_shaderData.framebuffer);
-    glDeleteTextures(1, &m_shaderData.texture);
+    glDeleteTextures(1, &m_shaderData.ramMainTexture);
     glDeleteTextures(1, &m_shaderData.framebufferTexture);
-    glDeleteTextures(1, &m_shaderData.texture);
+    glDeleteTextures(1, &m_shaderData.ramMainTexture);
     glDeleteVertexArrays(1, &m_shaderData.vtxArrayObj);
     glDeleteBuffers(1, &m_shaderData.vtxBufferObj);
 
@@ -278,6 +278,6 @@ auto dev::GLUtils::IsShaderDataReady()
 -> const bool
 {
     return m_shaderData.framebuffer && m_shaderData.framebufferTexture &&
-        m_shaderData.shaderProgram && m_shaderData.texture && 
+        m_shaderData.shaderProgram && m_shaderData.ramMainTexture && 
         m_shaderData.vtxArrayObj && m_shaderData.vtxBufferObj;
 }

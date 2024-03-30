@@ -37,9 +37,8 @@ namespace dev
 
 		static constexpr size_t MEMORY_MAIN_LEN = 64 * 1024;
 		static constexpr size_t GLOBAL_MEMORY_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAMDISK_MAX;
-		static constexpr size_t MEMORY_READ_LEN = 64 * 1024;
 
-		using OutRam = std::array<uint8_t, GLOBAL_MEMORY_LEN>;
+		using Ram = std::array<uint8_t, GLOBAL_MEMORY_LEN>;
 
 		bool m_mappingModeStack;
 		size_t m_mappingPageStack;
@@ -49,21 +48,19 @@ namespace dev
 									// MAPPING_MODE_RAM_E000 - addr range [0xE000-0xFFFF] is mapped to the ram-disk
 		uint8_t m_mappingPageRam; // 0 - mapping to the ram-disk page0, etc
 
-		std::mutex m_ramMutex;
-
 		void Init();
+		// internal thread access
 		void Set(const std::vector<uint8_t>& _data, const Addr _loadAddr = ROM_LOAD_ADDR);
 		auto GetByte(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
 		void SetByte(GlobalAddr _globalAddr, uint8_t _value, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		auto GetWord(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint16_t;
-		auto GetRam(const GlobalAddr _addr, GlobalAddr _len) -> const uint8_t*;
+		auto GetRam() const -> const Ram*;
 		auto GetGlobalAddr(const GlobalAddr _globalAddr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		bool IsRamMapped(const Addr _addr) const;
 		void SetRamDiskMode(uint8_t _data);
 
 	private:
-		std::array<int8_t, GLOBAL_MEMORY_LEN> m_data;
-		OutRam m_out; // to retrieve the data from an external thread
+		Ram m_data;
 	};
 }
 #endif // !DEV_MEMORY_H

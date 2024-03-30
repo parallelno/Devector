@@ -12,6 +12,7 @@ void dev::Display::Init()
 	m_mode = MODE_256;
 	m_rasterLine = 0;
 	m_rasterPixel = 0;
+	m_frameNum = 0;
 
 	m_frameBuffer.fill(0xffff0000);
 }
@@ -27,14 +28,17 @@ void dev::Display::Rasterize()
 	{
 		Draw8PxlsActiveArea();
 	}
+	
 	// advance the m_rasterPixel & m_rasterLine
 	m_rasterPixel = (m_rasterPixel + RASTERIZED_PXLS) % FRAME_W;
 	m_rasterLine = m_rasterPixel == 0 ? (m_rasterLine + 1) % FRAME_H : m_rasterLine;
 
 	m_t50Hz = (m_rasterPixel + m_rasterLine) == 0;
 
-	// copy a frame to a back buffer
-	if (m_t50Hz) {
+	if (m_t50Hz)
+	{
+		m_frameNum++;
+		// copy a frame to a back buffer
 		std::unique_lock<std::mutex> mlock(m_backBufferMutex);
 		m_backBuffer = m_frameBuffer;
 	}

@@ -15,7 +15,7 @@ dev::Hardware::Hardware()
     m_display(m_memory)
 {
     Init();
-    m_executionThread = std::thread(&Hardware::Run, this);
+    m_executionThread = std::thread(&Hardware::Execution, this);
 }
 
 dev::Hardware::~Hardware()
@@ -44,30 +44,58 @@ void dev::Hardware::ExecuteInstruction()
     } while (!m_cpu.IsInstructionExecuted());
 }
 
-void dev::Hardware::Run()
+void dev::Hardware::Execution()
 {    
     while (m_status != Status::EXIT)
     {
-        if (m_status == Status::RUN)
-        {   // rasterizes a frame
+        
+        auto startCC = m_cpu.GetCC();
+        auto startFrame = m_display.GetFrameNum();
+        auto startTime = std::chrono::system_clock::now();
+
+        auto expectedTime = std::chrono::system_clock::now();
+
+        while (m_status == Status::RUN)
+        {   
+            auto frameNum = m_display.GetFrameNum();
+            
+            // rasterizes a frame
             do {
                 ExecuteInstruction();
+
                 ReqHandling();
 
                 auto CheckBreak = m_checkBreak.load();
                 auto pcGlobalAddr = m_memory.GetGlobalAddr(m_cpu.GetPC(), Memory::RAM);
-                
-                if (CheckBreak && *CheckBreak && (*CheckBreak)(pcGlobalAddr)) {
+
+                if (CheckBreak && *CheckBreak && (*CheckBreak)(pcGlobalAddr)) 
+                {
                     m_status = Status::STOP;
                 }
 
-            } while (m_status == Status::RUN && !m_display.IsInt50Hz());
+            } while (m_status == Status::RUN && m_display.GetFrameNum() == frameNum);
 
             // vsync
-            auto now = std::chrono::steady_clock::now();
-            std::this_thread::sleep_until(now + Display::VSYC_DELAY);
+            if (m_status == Status::RUN)
+            {
+                expectedTime = expectedTime + Display::VSYC_DELAY;
+
+                if (std::chrono::system_clock::now() < expectedTime){
+                    std::this_thread::sleep_until(expectedTime);
+                }
+            }
         }
-        else {
+
+        auto elapsedCC = m_cpu.GetCC() - startCC;
+        if (elapsedCC) {
+            auto elapsedFrames = m_display.GetFrameNum() - startFrame;
+            std::chrono::duration<int64_t, std::nano> elapsedTime = std::chrono::system_clock::now() - startTime;
+            double timeDurationSec = elapsedTime.count() / 1000000000.0;
+            dev::Log("elapsed cpu cycles: {}, elapsed frames: {}, elapsed seconds: {}", elapsedCC, elapsedFrames, timeDurationSec);
+        }
+
+        while (m_status != Status::RUN)
+        {
             ReqHandling(true);
         }
     }
@@ -86,6 +114,7 @@ void dev::Hardware::AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc* _funcP) 
 void dev::Hardware::AttachDebugOnRead(I8080::DebugOnReadFunc* _funcP) { m_cpu.AttachDebugOnRead(_funcP); }
 void dev::Hardware::AttachDebugOnWrite(I8080::DebugOnWriteFunc* _funcP) { m_cpu.AttachDebugOnWrite(_funcP); }
 
+// internal thread
 void dev::Hardware::ReqHandling(const bool _waitReq)
 {
     if (!m_reqs.empty() || _waitReq)
@@ -137,8 +166,8 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             m_reqRes.emplace({});
             break;
 
-        case Req::EXECUTE_FRAME:
-            do { ExecuteInstruction(); } 
+        case Req::EXECUTE_FRAME_NO_BREAKS:
+            do { ExecuteInstruction(); }
             while (!m_display.IsInt50Hz());
             m_reqRes.emplace({});
             break;
@@ -259,15 +288,15 @@ auto dev::Hardware::GetWord(const nlohmann::json _addr, const Memory::AddrSpace 
     return out;
 }
 
+auto dev::Hardware::GetRam() const
+-> const Memory::Ram*
+{
+    return m_memory.GetRam();
+}
+
 // called from the external thread
 auto dev::Hardware::GetFrame(const bool _vsync)
 ->const Display::FrameBuffer*
 {
     return m_display.GetFrame(_vsync);
-}
-
-auto dev::Hardware::GetRam(const GlobalAddr _addr, GlobalAddr _len)
--> const uint8_t*
-{
-    return m_memory.GetRam(_addr, _len);
 }

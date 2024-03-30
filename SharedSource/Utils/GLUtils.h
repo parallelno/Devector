@@ -15,7 +15,7 @@ namespace dev
 
 		struct ShaderData {
 			GLuint1 shaderProgram = 0;
-			GLuint1 texture = 0;
+			GLuint1 ramMainTexture = 0;
 			GLuint1 framebufferTexture = 0;
 			GLuint1 framebuffer = 0;
 			GLuint1 vtxArrayObj = 0;

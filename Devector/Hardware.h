@@ -16,6 +16,7 @@
 #include "Utils/TQueue.h"
 #include "Utils/JsonUtils.h"
 #include <thread>
+#include <condition_variable>
 #include <atomic>
 
 namespace dev 
@@ -48,6 +49,7 @@ namespace dev
 			RESTART,
 			EXECUTE_INSTR,
 			EXECUTE_FRAME,
+			EXECUTE_FRAME_NO_BREAKS,
 			GET_REGS,
 			GET_REG_PC,
 			GET_BYTE_RAM,
@@ -62,7 +64,7 @@ namespace dev
 		~Hardware();
 		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result <nlohmann::json>;
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;
-		auto GetRam(const GlobalAddr _addr, GlobalAddr _len) -> const uint8_t*;
+		auto GetRam() const -> const Memory::Ram*;
 
 		void AttachCheckBreak(CheckBreakFunc* _funcP);
 		void AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc* _funcP);
@@ -72,12 +74,13 @@ namespace dev
 	private:
 		std::atomic <CheckBreakFunc*> m_checkBreak;
 		std::thread m_executionThread;
+		std::thread m_reqHandlingThread;
 		std::atomic<Status> m_status;
 		TQueue <std::pair<Req, nlohmann::json>> m_reqs; // a request type
 		TQueue <nlohmann::json> m_reqRes;				// it's a result of a request sent back 
 
 		void Init();
-		void Run();
+		void Execution();
 		void ExecuteInstruction();
 		void ReqHandling(const bool _waitReq = false);
 		void Reset();
