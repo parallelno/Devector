@@ -10,7 +10,7 @@ dev::IO::IO(Keyboard& _keyboard, Memory& _memory, VectorColorToArgbFunc _vectorC
     CW(0x08), m_portA(0xFF), m_portB(0xFF), m_portC(0xFF), CW2(0), PA2(0xFF), PB2(0xFF), PC2(0xFF),
     outport(PORT_NO_COMMIT), outbyte(PORT_NO_COMMIT), palettebyte(-1),
     joy_0e(0xFF), joy_0f(0xFF), m_borderColorIdx(0),
-    VectorColorToArgb(_vectorColorToArgbFunc)
+    VectorColorToArgb(_vectorColorToArgbFunc), m_displayMode(DISPLAY_MODE_256)
 {
     m_palette.fill(0xFF000000);
 }
@@ -186,7 +186,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         PIA1_last = _value;
         m_portB = _value;
         m_borderColorIdx = m_portB & 0x0f;
-        onmodechange((m_portB & 0x10) != 0);
+        m_displayMode = (m_portB & 0x10) != 0;
         break;
     case 0x03:
         PIA1_last = _value;
@@ -247,30 +247,4 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     default:
         break;
     }
-}
-
-auto dev::IO::GetKeyboard()
--> Keyboard&
-{
-    return m_keyboard;
-}
-
-auto dev::IO::GetColor(const size_t _colorIdx) const -> ColorI
-{
-    return m_palette[_colorIdx];
-}
-
-auto dev::IO::GetBorderColor() const -> ColorI
-{
-    return m_palette[m_borderColorIdx];
-}
-
-auto dev::IO::GetBorderColorIdx() const -> uint8_t
-{
-    return m_borderColorIdx;
-}
-
-auto dev::IO::GetScroll() const -> uint8_t
-{
-    return m_portA;
 }

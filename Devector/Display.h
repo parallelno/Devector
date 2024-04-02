@@ -35,8 +35,6 @@ namespace dev
 		// It rasters 4 horizontal pxls every cpu cycle no mater the mode.
 		// In MODE_256 it dups every 2 horizontal pxls.
 
-		static constexpr bool MODE_256 = false;
-		static constexpr bool MODE_512 = true;
 	public:
 		static constexpr int FRAME_W = 768;					// a frame resolution including borders
 		static constexpr int FRAME_H = 312;					// a frame resolution including borders
@@ -56,7 +54,6 @@ namespace dev
 		static constexpr int RES_H = 256;			// vertical screen resolution
 		static constexpr int RASTERIZED_PXLS = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
 
-		bool m_mode;
 		bool m_irq; // interruption request
 		uint8_t m_scrollIdx; // vertical scrolling, 255 - no scroll
 		int m_outCommitTimer; // in pixels (12Mhz clock)

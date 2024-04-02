@@ -29,16 +29,19 @@ namespace dev
 		static constexpr int IRQ_COMMIT_PXL = 176; // when apply the OUTed scroll data is handled. time's counted by 12 MHz clock (equals amount of pixels in 512 mode)
 		static constexpr int PALETTE_LEN = 16;
 
-		std::function<void(int)> onborderchange;
-		std::function<void(bool)> onmodechange;
+		// TODO: make it working
 		std::function<void(bool)> onruslat;
 
 		using VectorColorToArgbFunc = std::function<ColorI(const uint8_t)>;
+
+		static constexpr bool DISPLAY_MODE_256 = false;
+		static constexpr bool MODE_512 = true;
 
 	private:
 		using Palette = std::array <ColorI, PALETTE_LEN>;
 		Palette m_palette;
 		uint8_t m_borderColorIdx;
+		bool m_displayMode; // 256 or 512 modes
 
 		uint8_t CW, m_portA, m_portB, m_portC, PIA1_last;
 		uint8_t CW2, PA2, PB2, PC2;
@@ -62,11 +65,12 @@ namespace dev
 		void PortOut(uint8_t _port, uint8_t _value);
 		void PortOutCommit();
 		void PaletteCommit(const int _index);
-		auto GetKeyboard() -> Keyboard&;
-		auto GetColor(const size_t _colorIdx) const -> ColorI;
-		auto GetBorderColor() const -> ColorI;
-		auto GetBorderColorIdx() const -> uint8_t;
-		auto GetScroll() const -> uint8_t;
+		inline auto GetKeyboard() -> Keyboard& { return m_keyboard; };
+		inline auto GetColor(const size_t _colorIdx) const -> ColorI { return m_palette[_colorIdx]; };
+		inline auto GetBorderColor() const -> ColorI { return m_palette[m_borderColorIdx]; };
+		inline auto GetBorderColorIdx() const -> uint8_t { return m_borderColorIdx; };
+		inline auto GetScroll() const -> uint8_t { return m_portA; };
+		inline auto GetDisplayMode() const -> bool { return m_displayMode; };
 	};
 }
 #endif // !DEV_IO_H

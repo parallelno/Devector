@@ -2,14 +2,14 @@
 
 dev::Display::Display(Memory& _memory, IO& _io)
 	:
-	m_memory(_memory), m_io(_io), m_scrollIdx(0xff)
+	m_memory(_memory), m_io(_io), m_scrollIdx(0xff),
+	m_outCommitTimer(IO::PORT_NO_COMMIT), m_paletteCommitTimer(IO::PORT_NO_COMMIT)
 {
 	Init();
 }
 
 void dev::Display::Init()
 {
-	m_mode = MODE_256;
 	m_rasterLine = 0;
 	m_rasterPixel = 0;
 	m_frameNum = 0;
@@ -17,10 +17,9 @@ void dev::Display::Init()
 	m_frameBuffer.fill(0xffff0000);
 }
 
+// _isOutCommitMCicle is true when OUT command executes M3 T1
 void dev::Display::Rasterize(const bool _isOutCommitMCicle)
 {
-	m_outCommitTimer = IO::PORT_NO_COMMIT;
-	m_paletteCommitTimer = IO::PORT_NO_COMMIT;
 	if (_isOutCommitMCicle) {
 		m_outCommitTimer = IO::OUT_COMMIT_TIME;
 		m_paletteCommitTimer = IO::PALETTE_COMMIT_TIME;
@@ -30,18 +29,18 @@ void dev::Display::Rasterize(const bool _isOutCommitMCicle)
 	bool isBorder = isVertBorder || isVertBorder;
 	
 	bool isPortPortHandling = m_rasterLine == 0 || m_rasterLine == 311 || isHorizBorder ||
-							m_outCommitTimer <= RASTERIZED_PXLS ||
-							m_paletteCommitTimer <= RASTERIZED_PXLS;
+		(m_outCommitTimer >=0 && m_outCommitTimer <= RASTERIZED_PXLS) ||
+		(m_paletteCommitTimer >= 0 && m_paletteCommitTimer <= RASTERIZED_PXLS);
 
 	if (isBorder) {
 		if (isPortPortHandling) FillBorderWithPortHandling();
 		else FillBorder();
 	}
 	else if (isPortPortHandling) {
-		if (m_mode == MODE_256) FillActiveAreaMode256WithPortHandling();
+		if (m_io.GetDisplayMode() == IO::DISPLAY_MODE_256) FillActiveAreaMode256WithPortHandling();
 		else FillActiveAreaMode512WithPortHandling();
 	}
-	else if (MODE_256) FillActiveAreaMode256();
+	else if (m_io.GetDisplayMode() == IO::DISPLAY_MODE_256) FillActiveAreaMode256();
 	else FillActiveAreaMode512();
 
 	
