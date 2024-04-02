@@ -22,6 +22,7 @@ int main(int argc, char** argv)
 
     if (dev::IsFileExist(dev::StrToStrW(settingsPath)) == false)
     {
+        // TODO: make it working if there is no setting file (create default one with necessary settings)
         auto msg = std::format("settingsPath is invalid. file path: {}",
             settingsPath);
         dev::Exit(msg, dev::ERROR_UNSPECIFIED);

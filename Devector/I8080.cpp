@@ -25,16 +25,16 @@ void dev::I8080::Init()
 void dev::I8080::Reset()
 {
 	m_cc = m_pc = m_sp = 0;
-	m_instructionRegister = m_TMP = m_ACT = m_W = m_Z = 0;
+	m_instructionReg = m_TMP = m_ACT = m_W = m_Z = 0;
 	m_flagS = m_flagZ = m_flagAC = m_flagP = m_flagC = m_INTE = false;
 
 	m_machineCycle = 0;
 	m_HLTA = m_INTE = m_IFF = m_eiPending = false;
 }
 
-void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
+void dev::I8080::ExecuteMachineCycle(bool _irq)
 {
-	m_IFF |= _T50HZ & m_INTE;
+	m_IFF |= _irq & m_INTE;
 
 	if (m_machineCycle == 0)
 	{
@@ -44,13 +44,13 @@ void dev::I8080::ExecuteMachineCycle(bool _T50HZ)
 			m_INTE = false;
 			m_IFF = false;
 			m_HLTA = false;
-			m_instructionRegister = OPCODE_RST7;
+			m_instructionReg = OPCODE_RST7;
 		}
 		// normal instruction execution
 		else
 		{
 			m_eiPending = false;
-			m_instructionRegister = ReadInstrMovePC();
+			m_instructionReg = ReadInstrMovePC();
 		}
 	}
 
@@ -90,7 +90,7 @@ static constexpr int M_CYCLES[]
 
 void dev::I8080::Decode()
 {
-	switch (m_instructionRegister)
+	switch (m_instructionReg)
 	{
 		case 0x7F: MOVRegReg(m_a, m_a); break; // MOV A,A
 		case 0x78: MOVRegReg(m_a, m_b); break; // MOV A,B
@@ -392,7 +392,7 @@ void dev::I8080::Decode()
 	}
 	
 	m_machineCycle++;
-	m_machineCycle %= M_CYCLES[m_instructionRegister];
+	m_machineCycle %= M_CYCLES[m_instructionReg];
 }
 
 
@@ -514,6 +514,12 @@ uint16_t dev::I8080::GetHL() const
 	return (uint16_t)((m_h << 8) | m_l);
 }
 
+bool dev::I8080::IsOutCommitMCicle() const
+{
+	// if the OUT command just executed, return true
+	return m_instructionReg == OPCODE_OUT && m_machineCycle == 0;
+}
+
 void dev::I8080::SetHL(uint16_t val)
 {
 	m_h = (uint8_t)(val >> 8);
@@ -531,6 +537,7 @@ bool dev::I8080::GetFlagC() const {	return m_flagC; }
 bool dev::I8080::GetINTE() const { return m_INTE; }
 bool dev::I8080::GetIFF() const { return m_IFF; }
 bool dev::I8080::GetHLTA() const { return m_HLTA; }
+auto dev::I8080::GetMachineCycle() const -> int { return m_machineCycle; }
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -1298,13 +1305,14 @@ void dev::I8080::CALL(bool _condition)
 	}
 	else if (m_machineCycle == 3)
 	{
-		WriteByte(m_sp, (uint8_t)(m_pc >> 8), Memory::AddrSpace::STACK);
 		if (_condition)
 		{
+			WriteByte(m_sp, (uint8_t)(m_pc >> 8), Memory::AddrSpace::STACK);
 			m_sp--;
 		}
 		else
 		{
+			// end execution
 			m_machineCycle = 5;
 		}
 	}

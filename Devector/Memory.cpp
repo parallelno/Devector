@@ -34,6 +34,19 @@ auto dev::Memory::GetWord(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
 	return GetByte(_globalAddr + 1, _addrSpace) << 8 | GetByte(_globalAddr, _addrSpace);
 }
 
+// reads 4 bytes from every screen buffer.
+// all of these bytes are visually at the same position on the screen
+auto dev::Memory::GetScreenSpaceBytes(Addr _screenSpaceAddrOffset) const
+-> uint32_t
+{
+	auto byte8 = m_data[_screenSpaceAddrOffset + 0x8000];
+	auto byteA = m_data[_screenSpaceAddrOffset + 0xA000];
+	auto byteC = m_data[_screenSpaceAddrOffset + 0xC000];
+	auto byteE = m_data[_screenSpaceAddrOffset + 0xE000];
+
+	return byteE << 24 | byteC << 16 | byteA << 8 | byte8;
+}
+
 auto dev::Memory::GetRam() const
 -> const Ram*
 {

@@ -231,7 +231,8 @@ void dev::DrawSeparator2(const std::string& _text)
 	ImGui::SeparatorText("");
 }
 
-void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, const char* _hint)
+void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
+	const char* _hint, const char* _help)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
 	ImGui::TableNextColumn();
@@ -242,6 +243,12 @@ void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::str
 
 	ImGui::TableNextColumn();
 	ImGui::InputTextWithHint(_label, _hint, _value);
+	if (*_help != '\0') {
+		ImGui::SameLine();
+		ImGui::Dummy({12,10});
+		ImGui::SameLine();
+		dev::DrawHelpMarker(_help);
+	}
 }
 
 

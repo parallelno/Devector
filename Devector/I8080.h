@@ -28,7 +28,7 @@ namespace dev
 		uint64_t m_cc; // clock cycles. it's the debug related data
 		Addr m_pc, m_sp; // program counter, stack pointer
 		uint8_t m_a, m_b, m_c, m_d, m_e, m_h, m_l; // registers
-		uint8_t m_instructionRegister; // an internal register that stores the fetched instruction
+		uint8_t m_instructionReg; // an internal register that stores the fetched instruction
 
 		// Arithmetic and Logic Unit (ALU)
 		uint8_t m_TMP;    // an 8-bit temporary register
@@ -54,6 +54,7 @@ namespace dev
 		bool m_HLTA; // indicates that HLT instruction is executed
 		bool m_eiPending; // if set, the interruption call is pending until the next instruction
 		static constexpr uint8_t OPCODE_RST7 = 0xff;
+		static constexpr uint8_t OPCODE_OUT = 0xd3;
 
 	public:
 		// memory + io interface
@@ -71,7 +72,7 @@ namespace dev
 
 		void Init();
 		void Reset();
-		void ExecuteMachineCycle(bool _T50HZ);
+		void ExecuteMachineCycle(bool _irq);
 		bool IsInstructionExecuted() const;
 
 		void AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP);
@@ -122,6 +123,8 @@ namespace dev
 		bool GetINTE() const;
 		bool GetIFF() const;
 		bool GetHLTA() const;
+		int GetMachineCycle() const;
+		bool IsOutCommitMCicle() const;
 
 	private:
 		void SetBC(uint16_t _val);

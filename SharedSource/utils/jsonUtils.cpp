@@ -7,7 +7,7 @@ auto dev::LoadJson(const std::string& _path) -> nlohmann::json
 {
 	std::ifstream file(_path);
 	nlohmann::json json;
-	file >> json;
+	file >> json; 
 
 	return json;
 }

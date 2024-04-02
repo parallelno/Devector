@@ -86,7 +86,8 @@ namespace dev
 	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, const float _posXOffset = -0.2f, const bool _itemHasSize = false);
 	void DrawProperty2(const std::string& _name, const std::string& _value);
 	void DrawSeparator2(const std::string& _text);
-	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, const char* _hint = "");
+	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
+		const char* _hint = "", const char* _help = "");
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val);
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 }

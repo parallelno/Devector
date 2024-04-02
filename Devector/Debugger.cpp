@@ -617,21 +617,22 @@ void dev::Debugger::SetBreakpointStatus(const GlobalAddr _globalAddr, const Brea
 		DelBreakpoint(_globalAddr);
 		return;
 	}
-	auto bp = m_breakpoints.find(_globalAddr);
-	if (bp != m_breakpoints.end()) {
-		bp->second.SetStatus(_status);
+	auto bpI = m_breakpoints.find(_globalAddr);
+	if (bpI != m_breakpoints.end()) {
+		bpI->second.SetStatus(_status);
 		return;
 	}
 	AddBreakpoint(_globalAddr, _status);
 }
 
-void dev::Debugger::AddBreakpoint(const GlobalAddr _globalAddr, const Breakpoint::Status _status, const std::string& _comment)
+void dev::Debugger::AddBreakpoint(const GlobalAddr _globalAddr, 
+	const Breakpoint::Status _status, const std::string& _comment)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bp = m_breakpoints.find(_globalAddr);
-	if (bp != m_breakpoints.end())
+	auto bpI = m_breakpoints.find(_globalAddr);
+	if (bpI != m_breakpoints.end())
 	{
-		m_breakpoints.erase(bp);
+		m_breakpoints.erase(bpI);
 	}
 
 	m_breakpoints.emplace(_globalAddr, std::move(Breakpoint(_globalAddr, _status, _comment)));
@@ -640,19 +641,19 @@ void dev::Debugger::AddBreakpoint(const GlobalAddr _globalAddr, const Breakpoint
 void dev::Debugger::DelBreakpoint(const GlobalAddr _globalAddr)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bp = m_breakpoints.find(_globalAddr);
-	if (bp != m_breakpoints.end())
+	auto bpI = m_breakpoints.find(_globalAddr);
+	if (bpI != m_breakpoints.end())
 	{
-		m_breakpoints.erase(bp);
+		m_breakpoints.erase(bpI);
 	}
 }
 
 bool dev::Debugger::CheckBreakpoints(const GlobalAddr _globalAddr)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bp = m_breakpoints.find(_globalAddr);
-	if (bp == m_breakpoints.end()) return false;
-	return bp->second.CheckStatus();
+	auto bpI = m_breakpoints.find(_globalAddr);
+	if (bpI == m_breakpoints.end()) return false;
+	return bpI->second.CheckStatus();
 }
 /*
 void dev::Debugger::PrintBreakpoints()
@@ -680,9 +681,9 @@ auto dev::Debugger::GetBreakpointStatus(const GlobalAddr _globalAddr)
 -> const Breakpoint::Status
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bp = m_breakpoints.find(_globalAddr);
+	auto bpI = m_breakpoints.find(_globalAddr);
 
-	return bp == m_breakpoints.end() ? Breakpoint::Status::DELETED : bp->second.GetStatus();
+	return bpI == m_breakpoints.end() ? Breakpoint::Status::DELETED : bpI->second.GetStatus();
 }
 
 //////////////////////////////////////////////////////////////
@@ -692,27 +693,42 @@ auto dev::Debugger::GetBreakpointStatus(const GlobalAddr _globalAddr)
 //////////////////////////////////////////////////////////////
 
 void dev::Debugger::AddWatchpoint(
-	const Watchpoint::Access _access, const GlobalAddr _globalAddr, const Watchpoint::Condition _cond,
-	const uint16_t _value, const size_t _value_size, const bool _active)
+	const Watchpoint::Id _id, const Watchpoint::Access _access, 
+	const GlobalAddr _globalAddr, const Watchpoint::Condition _cond,
+	const uint16_t _value, const size_t _value_size, const bool _active, const std::string& _comment)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	m_watchpoints.emplace_back(std::move(Watchpoint(_access, _globalAddr, _cond, _value, _value_size, _active)));
+	
+	auto wpI = m_watchpoints.find(_id);
+	if (wpI != m_watchpoints.end())
+	{
+		wpI->second.Update(_access, _globalAddr, _cond, _value, _value_size, _active, _comment);
+	}
+	else {
+		const auto wp = Watchpoint(_access, _globalAddr, _cond, _value, _value_size, _active, _comment);
+		m_watchpoints.emplace(wp.GetId(), std::move(wp));
+	}
 }
 
-void dev::Debugger::DelWatchpoint(const GlobalAddr _globalAddr)
+void dev::Debugger::DelWatchpoint(const Watchpoint::Id _id)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	WatchpointsErase(_globalAddr);
+
+	auto bpI = m_watchpoints.find(_id);
+	if (bpI != m_watchpoints.end())
+	{
+		m_watchpoints.erase(bpI);
+	}
 }
 
 // a hardware thread
 bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	auto wp = WatchpointsFind(_globalAddr);
-	if (wp == m_watchpoints.end()) return false;
+	auto wpI = WatchpointsFind(_globalAddr);
+	if (wpI == m_watchpoints.end()) return false;
 
-	auto out = wp->Check(_access, _globalAddr, _value);
+	auto out = wpI->second.Check(_access, _globalAddr, _value);
 	/*
 	if (out) {
 		auto data = m_memory.GetWord(_globalAddr, Memory::AddrSpace::RAM);
@@ -725,7 +741,7 @@ bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const Glob
 void dev::Debugger::ResetWatchpoints()
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	for (auto& watchpoint : m_watchpoints)
+	for (auto& [id, watchpoint] : m_watchpoints)
 	{
 		watchpoint.Reset();
 	}
@@ -745,25 +761,20 @@ void dev::Debugger::PrintWatchpoints()
 auto dev::Debugger::WatchpointsFind(const GlobalAddr _globalAddr)
 ->Watchpoints::iterator
 {
-	return std::find_if(m_watchpoints.begin(), m_watchpoints.end(), [_globalAddr](Watchpoint& _w) {return _w.CheckAddr(_globalAddr);});
-}
-
-void dev::Debugger::WatchpointsErase(const GlobalAddr _globalAddr)
-{
-	m_watchpoints.erase(std::remove_if(m_watchpoints.begin(), m_watchpoints.end(), [_globalAddr](Watchpoint const& _w)
+	return std::find_if(m_watchpoints.begin(), m_watchpoints.end(), 
+		[_globalAddr](const Watchpoints::value_type& pair) 
 		{
-			return _w.GetGlobalAddr() == _globalAddr;
-		}), m_watchpoints.end());
-
+			return pair.second.CheckAddr(_globalAddr);
+		});
 }
 
 auto dev::Debugger::GetWatchpoints() -> const Watchpoints
 {
 	Watchpoints out;
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	for (const auto& wp : m_watchpoints)
+	for (const auto& [id, wp] : m_watchpoints)
 	{
-		out.push_back(wp);
+		out.emplace(id, Watchpoint{ wp });
 	}
 	return out;
 }

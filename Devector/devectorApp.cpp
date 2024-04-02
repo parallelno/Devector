@@ -30,7 +30,7 @@ void dev::DevectorApp::WindowsInit()
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
-	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale);
+	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
 	m_ramViewWindowP = std::make_unique<dev::RamViewWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
 
 	// Set the key callback function

@@ -7,12 +7,12 @@ dev::Hardware::Hardware()
     m_status(Status::STOP),
     m_memory(),
     m_keyboard(),
-    m_io(m_keyboard, m_memory),
+    m_io(m_keyboard, m_memory, &Display::VectorColorToArgb),
     m_cpu(
         m_memory,
         std::bind(&IO::PortIn, &m_io, std::placeholders::_1),
         std::bind(&IO::PortOut, &m_io, std::placeholders::_1, std::placeholders::_2)),
-    m_display(m_memory)
+    m_display(m_memory, m_io)
 {
     Init();
     m_executionThread = std::thread(&Hardware::Execution, this);
@@ -39,8 +39,9 @@ void dev::Hardware::ExecuteInstruction()
 {
     do
     {
-        m_display.Rasterize();
-        m_cpu.ExecuteMachineCycle(m_display.IsInt50Hz());
+        m_cpu.ExecuteMachineCycle(m_display.IsIRQ());
+        m_display.Rasterize(m_cpu.IsOutCommitMCicle());
+
     } while (!m_cpu.IsInstructionExecuted());
 }
 
@@ -168,7 +169,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
         case Req::EXECUTE_FRAME_NO_BREAKS:
             do { ExecuteInstruction(); }
-            while (!m_display.IsInt50Hz());
+            while (!m_display.IsIRQ());
             m_reqRes.emplace({});
             break;
 
@@ -214,6 +215,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
         case Req::KEY_HANDLING:
             m_io.GetKeyboard().KeyHandling(dataj["key"], dataj["action"]);
+            m_reqRes.emplace({});
             break;
 
         default:

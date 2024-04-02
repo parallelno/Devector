@@ -1,12 +1,16 @@
 #include "IO.h"
+// the hardware logic is mostly taken from:
+// https://github.com/parallelno/v06x/blob/master/src/board.cpp
+// https://github.com/parallelno/v06x/blob/master/src/vio.h
+// some of the pieces of the original code remain unclear for me
 
-dev::IO::IO(Keyboard& _keyboard, Memory& _memory)
+dev::IO::IO(Keyboard& _keyboard, Memory& _memory, VectorColorToArgbFunc _vectorColorToArgbFunc)
     :
     m_keyboard(_keyboard), m_memory(_memory),
     CW(0x08), m_portA(0xFF), m_portB(0xFF), m_portC(0xFF), CW2(0), PA2(0xFF), PB2(0xFF), PC2(0xFF),
-    outport(-1), outbyte(-1), palettebyte(- 1),
-    joy_0e(0xFF), joy_0f(0xFF)
-
+    outport(PORT_NO_COMMIT), outbyte(PORT_NO_COMMIT), palettebyte(-1),
+    joy_0e(0xFF), joy_0f(0xFF), m_borderColorIdx(0),
+    VectorColorToArgb(_vectorColorToArgbFunc)
 {
     m_palette.fill(0xFF000000);
 }
@@ -111,6 +115,32 @@ void dev::IO::PortOut(uint8_t _port, uint8_t _value)
     outbyte = _value;
 }
 
+void dev::IO::PortOutCommit()
+{
+    if (outport != PORT_NO_COMMIT)
+    {
+        PortOutHandling(outport, outbyte);
+        outport = outbyte = PORT_NO_COMMIT;
+    }
+}
+
+void dev::IO::PaletteCommit(const int _index)
+{
+    int w8 = palettebyte;
+    if (w8 == PORT_NO_COMMIT && outport == 0x0c) {
+        w8 = outbyte;
+        outport = outbyte = PORT_NO_COMMIT;
+    }
+    if (w8 != PORT_NO_COMMIT) {
+        int b = (w8 & 0xc0) >> 6;
+        int g = (w8 & 0x38) >> 3;
+        int r = (w8 & 0x07);
+
+        m_palette[_index] = VectorColorToArgb(w8);
+        palettebyte = PORT_NO_COMMIT;
+    }
+}
+
 // data sent by cpu handled here at the commit time
 void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 {
@@ -155,7 +185,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     case 0x02:
         PIA1_last = _value;
         m_portB = _value;
-        onborderchange(m_portB & 0x0f);
+        m_borderColorIdx = m_portB & 0x0f;
         onmodechange((m_portB & 0x10) != 0);
         break;
     case 0x03:
@@ -183,7 +213,8 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     case 0x0b:
         //timer.write((~port & 3), _value);
         break;
-
+        
+        // palette (all of them below???)
     case 0x0c:
     case 0x0d:
     case 0x0e:
@@ -222,4 +253,24 @@ auto dev::IO::GetKeyboard()
 -> Keyboard&
 {
     return m_keyboard;
+}
+
+auto dev::IO::GetColor(const size_t _colorIdx) const -> ColorI
+{
+    return m_palette[_colorIdx];
+}
+
+auto dev::IO::GetBorderColor() const -> ColorI
+{
+    return m_palette[m_borderColorIdx];
+}
+
+auto dev::IO::GetBorderColorIdx() const -> uint8_t
+{
+    return m_borderColorIdx;
+}
+
+auto dev::IO::GetScroll() const -> uint8_t
+{
+    return m_portA;
 }

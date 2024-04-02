@@ -9,6 +9,7 @@
 
 #include "Types.h"
 #include "Memory.h"
+#include "IO.h"
 
 namespace dev
 {
@@ -48,7 +49,7 @@ namespace dev
 	private:
 		static constexpr int SCAN_VSYNC = 22;
 		static constexpr int SCAN_VBLANK_TOP = 18;
-		static constexpr int SCAN_BORDER_TOP = SCAN_VSYNC + SCAN_VBLANK_TOP;
+		static constexpr int SCAN_ACTIVE_AREA_TOP = SCAN_VSYNC + SCAN_VBLANK_TOP;
 		static constexpr int BORDER_LEFT = 128;				// left border in pxls
 		static constexpr int BORDER_RIGHT = BORDER_LEFT;	// right border in pxls
 		static constexpr int RES_W = 512;			// horizontal screen resolution in MODE_512
@@ -56,14 +57,15 @@ namespace dev
 		static constexpr int RASTERIZED_PXLS = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
 
 		bool m_mode;
-		bool m_t50Hz; // interruption request
+		bool m_irq; // interruption request
+		uint8_t m_scrollIdx; // vertical scrolling, 255 - no scroll
+		int m_outCommitTimer; // in pixels (12Mhz clock)
+		int m_paletteCommitTimer; // in pixels (12Mhz clock)
 
 		FrameBuffer m_frameBuffer;	// rasterizer draws here
 		FrameBuffer m_backBuffer;	// a buffer to simulate VSYNC
 		FrameBuffer m_gpuBuffer;	// temp buffer for output to GPU
 		std::mutex m_backBufferMutex;
-
-		ColorI m_fillColor;
 
 		int m_rasterLine;	// currently rasterized scanline idx from the bottom
 		int m_rasterPixel;	// currently rasterized scanline pixel
@@ -71,19 +73,27 @@ namespace dev
 		uint64_t m_frameNum;
 
 		Memory& m_memory;
+		IO& m_io;
 
 	public:
-		Display(Memory& _memory);
+		Display(Memory& _memory, IO& _io);
 		void Init();
-		void Rasterize();	// to draw a pxl
-		bool IsInt50Hz();
+		void Rasterize(const bool _isOutCommitMCicle);	// to draw pxls
+		bool IsIRQ();
 		auto GetFrame(const bool _vsync) ->const FrameBuffer*;
 		auto GetFrameNum() const -> uint64_t { return m_frameNum; };
 		int GetRasterLine() const { return m_rasterLine; };
 		int GetRasterPixel() const { return m_rasterPixel; };
+		static ColorI VectorColorToArgb(const uint8_t _vColor);
 	private:
-		void Draw8PxlsActiveArea();
-		void Draw8PxlsBorder();
+		uint32_t BytesToColorIdxs();
+		void FillActiveAreaMode256();
+		void FillActiveAreaMode512();
+		void FillActiveAreaMode256WithPortHandling();
+		void FillActiveAreaMode512WithPortHandling();
+		void FillBorder();
+		void FillBorderWithPortHandling();
+		void CommitTimersHandling(const uint8_t _borderColorIdx);
 	};
 }
 #endif // !DEV_DISPLAY_H

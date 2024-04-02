@@ -1,0 +1,10 @@
+{
+  "mainWindowWidth": 1600,
+  "mainWindowHeight": 1200,
+  "fontPath": "fonts//JetBrainsMono-2.304//ttf//JetBrainsMonoNL-Medium.ttf",
+  "fontSize": 18,
+  "fontItalicPath": "fonts//JetBrainsMono-2.304//ttf//JetBrainsMonoNL-MediumItalic.ttf",
+  "fontItalicSize": 18,
+  "labelsFilenamePostfix": "debug.txt",
+  "recentFiles": []
+}

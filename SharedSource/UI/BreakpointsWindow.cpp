@@ -78,6 +78,10 @@ void dev::BreakpointsWindow::DrawContextMenu(const char* _itemID)
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
+
+			if (warning) {
+				ImGui::BeginDisabled();
+			}
 			// OK button
 			if (ImGui::Button("Ok", buttonSize) && !warning)
 			{
@@ -85,6 +89,10 @@ void dev::BreakpointsWindow::DrawContextMenu(const char* _itemID)
 				m_reqDisasmUpdate = true;
 				ImGui::CloseCurrentPopup();
 			}
+			if (warning) {
+				ImGui::EndDisabled();
+			}
+
 			// Cancel button
 			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
 			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
@@ -107,7 +115,6 @@ void dev::BreakpointsWindow::DrawTable()
 		ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchSame |
 		ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Hideable;
-		//ImGuiTableFlags_ContextMenuInBody;
 	if (ImGui::BeginTable(tableName, 4, flags))
 	{
 		ImGui::TableSetupColumn("##BPActive", ImGuiTableColumnFlags_WidthFixed, 25);
@@ -149,7 +156,6 @@ void dev::BreakpointsWindow::DrawTable()
 		}
 
 		PopStyleCompact();
-
 		ImGui::EndTable();
 	}
 	DrawContextMenu(tableName);

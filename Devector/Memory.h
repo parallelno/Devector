@@ -31,11 +31,12 @@ namespace dev
 
 		static constexpr GlobalAddr ROM_LOAD_ADDR = 0x100;
 
-		static constexpr size_t MEMORY_RAMDISK_LEN = 256 * 1024;
-		static constexpr size_t RAM_DISK_PAGE_LEN = 64 * 1024;
+		static constexpr size_t MEM_64K = 64 * 1024;
+		static constexpr size_t RAM_DISK_PAGE_LEN = MEM_64K;
+		static constexpr size_t MEMORY_RAMDISK_LEN = 4 * MEM_64K;
 		static constexpr size_t RAMDISK_MAX = 1;
 
-		static constexpr size_t MEMORY_MAIN_LEN = 64 * 1024;
+		static constexpr size_t MEMORY_MAIN_LEN = MEM_64K;
 		static constexpr size_t GLOBAL_MEMORY_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAMDISK_MAX;
 
 		using Ram = std::array<uint8_t, GLOBAL_MEMORY_LEN>;
@@ -54,6 +55,7 @@ namespace dev
 		auto GetByte(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
 		void SetByte(GlobalAddr _globalAddr, uint8_t _value, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		auto GetWord(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint16_t;
+		auto GetScreenSpaceBytes(Addr _screenSpaceAddrOffset) const -> uint32_t;
 		auto GetRam() const -> const Ram*;
 		auto GetGlobalAddr(const GlobalAddr _globalAddr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		bool IsRamMapped(const Addr _addr) const;

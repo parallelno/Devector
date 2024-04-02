@@ -95,7 +95,7 @@ dev::GLUtils::GLUtils(Hardware& _hardware)
 
 void dev::GLUtils::Update()
 {
-    CreateRamTexture();
+    CreateRamTextures();
     DrawDisplay();
 }
 
@@ -118,7 +118,7 @@ void dev::GLUtils::DrawDisplay()
 
         // assign a texture
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_shaderData.ramMainTexture);
+        glBindTexture(GL_TEXTURE_2D, m_shaderData.ramTextures[0]);
 
         glBindVertexArray(m_shaderData.vtxArrayObj);
         glDrawArrays(GL_QUADS, 0, 4);
@@ -128,28 +128,27 @@ void dev::GLUtils::DrawDisplay()
     }
 }
 
-void dev::GLUtils::CreateRamTexture()
+void dev::GLUtils::CreateRamTextures()
 {
     auto memP = m_hardware.GetRam();
 
-    // Create a OpenGL texture identifier
-    if (!m_shaderData.ramMainTexture)
+    for (int i = 0; i < RAM_TEXTURES; i++)
     {
-        glGenTextures(1, &m_shaderData.ramMainTexture);
-    }
-    glBindTexture(GL_TEXTURE_2D, m_shaderData.ramMainTexture);
+        glBindTexture(GL_TEXTURE_2D, m_shaderData.ramTextures[i]);
 
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // Setup filtering parameters for display
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    // Upload pixels into texture
+        // Upload pixels into texture
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256, (GLsizei)(Memory::MEMORY_MAIN_LEN / 256), 0, GL_RED, GL_UNSIGNED_BYTE, memP);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, RAM_TEXTURE_W, RAM_TEXTURE_H, 0, GL_RED, GL_UNSIGNED_BYTE, memP);
+    }
+
 }
 
 
@@ -163,7 +162,10 @@ GLenum dev::GLUtils::Init()
         return glewInitCode;
     }
 
-    CreateRamTexture();
+    // texture init
+    // Create a OpenGL texture identifiers
+    glGenTextures(RAM_TEXTURES, m_shaderData.ramTextures);
+    CreateRamTextures();
 
     // Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
     glGenVertexArrays(1, &m_shaderData.vtxArrayObj);
@@ -214,9 +216,8 @@ dev::GLUtils::~GLUtils()
 {
     // Clean up
     glDeleteFramebuffers(1, &m_shaderData.framebuffer);
-    glDeleteTextures(1, &m_shaderData.ramMainTexture);
+    glDeleteTextures(RAM_TEXTURES, m_shaderData.ramTextures);
     glDeleteTextures(1, &m_shaderData.framebufferTexture);
-    glDeleteTextures(1, &m_shaderData.ramMainTexture);
     glDeleteVertexArrays(1, &m_shaderData.vtxArrayObj);
     glDeleteBuffers(1, &m_shaderData.vtxBufferObj);
 
@@ -278,6 +279,6 @@ auto dev::GLUtils::IsShaderDataReady()
 -> const bool
 {
     return m_shaderData.framebuffer && m_shaderData.framebufferTexture &&
-        m_shaderData.shaderProgram && m_shaderData.ramMainTexture && 
+        m_shaderData.shaderProgram && //m_shaderData.ramMainTexture && 
         m_shaderData.vtxArrayObj && m_shaderData.vtxBufferObj;
 }

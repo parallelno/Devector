@@ -1,8 +1,8 @@
 #include "Display.h"
 
-dev::Display::Display(Memory& _memory)
+dev::Display::Display(Memory& _memory, IO& _io)
 	:
-	m_memory(_memory)
+	m_memory(_memory), m_io(_io), m_scrollIdx(0xff)
 {
 	Init();
 }
@@ -17,25 +17,43 @@ void dev::Display::Init()
 	m_frameBuffer.fill(0xffff0000);
 }
 
-void dev::Display::Rasterize()
+void dev::Display::Rasterize(const bool _isOutCommitMCicle)
 {
-	if (m_rasterLine < SCAN_BORDER_TOP || m_rasterLine >= SCAN_BORDER_TOP + RES_H ||
-		m_rasterPixel < BORDER_LEFT || m_rasterPixel >= BORDER_LEFT + RES_W)
-	{
-		Draw8PxlsBorder();
+	m_outCommitTimer = IO::PORT_NO_COMMIT;
+	m_paletteCommitTimer = IO::PORT_NO_COMMIT;
+	if (_isOutCommitMCicle) {
+		m_outCommitTimer = IO::OUT_COMMIT_TIME;
+		m_paletteCommitTimer = IO::PALETTE_COMMIT_TIME;
 	}
-	else
-	{
-		Draw8PxlsActiveArea();
+	bool isHorizBorder = m_rasterPixel < BORDER_LEFT || m_rasterPixel >= BORDER_LEFT + RES_W;
+	bool isVertBorder = m_rasterLine < SCAN_ACTIVE_AREA_TOP || m_rasterLine >= SCAN_ACTIVE_AREA_TOP + RES_H;
+	bool isBorder = isVertBorder || isVertBorder;
+	
+	bool isPortPortHandling = m_rasterLine == 0 || m_rasterLine == 311 || isHorizBorder ||
+							m_outCommitTimer <= RASTERIZED_PXLS ||
+							m_paletteCommitTimer <= RASTERIZED_PXLS;
+
+	if (isBorder) {
+		if (isPortPortHandling) FillBorderWithPortHandling();
+		else FillBorder();
 	}
+	else if (isPortPortHandling) {
+		if (m_mode == MODE_256) FillActiveAreaMode256WithPortHandling();
+		else FillActiveAreaMode512WithPortHandling();
+	}
+	else if (MODE_256) FillActiveAreaMode256();
+	else FillActiveAreaMode512();
+
+	
+
 	
 	// advance the m_rasterPixel & m_rasterLine
-	m_rasterPixel = (m_rasterPixel + RASTERIZED_PXLS) % FRAME_W;
+	m_rasterPixel = m_rasterPixel % FRAME_W;
 	m_rasterLine = m_rasterPixel == 0 ? (m_rasterLine + 1) % FRAME_H : m_rasterLine;
 
-	m_t50Hz = (m_rasterPixel + m_rasterLine) == 0;
+	m_irq = m_rasterLine == 0 && m_rasterPixel == IO::IRQ_COMMIT_PXL;
 
-	if (m_t50Hz)
+	if (m_rasterPixel + m_rasterLine == 0)
 	{
 		m_frameNum++;
 		// copy a frame to a back buffer
@@ -44,46 +62,143 @@ void dev::Display::Rasterize()
 	}
 }
 
-void dev::Display::Draw8PxlsActiveArea()
+void dev::Display::FillBorder()
 {
-	auto pos_addr = (m_rasterPixel - BORDER_LEFT) / RASTERIZED_PXLS * RES_H + RES_H - 1 - (m_rasterLine - SCAN_BORDER_TOP);
-
-	auto addr8 = (Addr)(0x8000 + pos_addr);
-	auto addrA = (Addr)(0xA000 + pos_addr);
-	auto addrC = (Addr)(0xC000 + pos_addr);
-	auto addrE = (Addr)(0xE000 + pos_addr);
-
-	auto color_byte8 = m_memory.GetByte(addr8, Memory::AddrSpace::GLOBAL);
-	auto color_byteA = m_memory.GetByte(addrA, Memory::AddrSpace::GLOBAL);
-	auto color_byteC = m_memory.GetByte(addrC, Memory::AddrSpace::GLOBAL);
-	auto color_byteE = m_memory.GetByte(addrE, Memory::AddrSpace::GLOBAL);
-
+	auto borderColor = m_io.GetBorderColor();
 	for (int i = 0; i < RASTERIZED_PXLS; i += 2)
 	{
-		int color_bit8 = (color_byte8 >> (7 - i / 2)) & 1;
-		int color_bitA = (color_byteA >> (7 - i / 2)) & 1;
-		int color_bitC = (color_byteC >> (7 - i / 2)) & 1;
-		int color_bitE = (color_byteE >> (7 - i / 2)) & 1;
-
-		int palette_idx = color_bit8 | color_bitA << 1 | color_bitC << 2 | color_bitE << 3;
-
-		m_fillColor = (color_bit8 | color_bitA | color_bitC | color_bitE) == 0 ? 0xff000000 : 0xffffffff; // palette[palette_idx];
-
-		m_frameBuffer[m_rasterPixel + m_rasterLine * FRAME_W + i] = m_fillColor;
-		m_frameBuffer[m_rasterPixel + m_rasterLine * FRAME_W + i + 1] = m_fillColor;
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = borderColor;
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = borderColor;
 	}
 }
 
-void dev::Display::Draw8PxlsBorder()
+void dev::Display::CommitTimersHandling(const uint8_t _borderColorIdx)
+{
+	if (m_outCommitTimer == 0)
+	{
+		m_outCommitTimer = IO::PORT_NO_COMMIT;
+		m_io.PortOutCommit();
+	}
+	m_outCommitTimer -= m_outCommitTimer != IO::PORT_NO_COMMIT ? 2 : 0;
+
+	if (m_paletteCommitTimer == 0)
+	{
+		m_paletteCommitTimer = IO::PORT_NO_COMMIT;
+		m_io.PaletteCommit(_borderColorIdx);
+	}
+	m_paletteCommitTimer -= m_paletteCommitTimer != IO::PORT_NO_COMMIT ? 2 : 0;
+	
+	return;
+}
+
+// fill up pixels in the border. works for 256 & 512 modes
+void dev::Display::FillBorderWithPortHandling()
 {
 	for (int i = 0; i < RASTERIZED_PXLS; i += 2)
 	{
-		m_frameBuffer[m_rasterPixel + m_rasterLine * FRAME_W + i] = 0xff0000ff;
-		m_frameBuffer[m_rasterPixel + m_rasterLine * FRAME_W + i + 1] = 0xff0000ff;
+		auto borderColorIdx = m_io.GetBorderColorIdx();
+		CommitTimersHandling(borderColorIdx);
+
+		auto color = m_io.GetBorderColor();
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = color;
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = color;
 	}
 }
 
-bool dev::Display::IsInt50Hz() { return m_t50Hz; }
+// it takes 4 bytes, each from every screen buffer
+// then it swizzels the bits like this:
+// buffer8000_byte = qwertyui
+// bufferA000_byte = opasdfgh
+// bufferC000_byte = jklzxcvb
+// bufferE000_byte = nm?!@#$%
+// out uint32_t = %bhi $vgu #cfy @xdt !zsr ?lae mkpw njoq
+// an examble:
+//	input:	1111 1111 0111 1111 0000 0000 0000 0000
+//	the input's similar to:
+//		buffer8000_byte = 0000 0000
+//		bufferA000_byte = 0000 0000
+//		bufferC000_byte = 0111 1111
+//		bufferE000_byte = 1111 1111
+//	output: 1100 1100 1100 1100 1100 1100 1100 1000
+uint32_t dev::Display::BytesToColorIdxs()
+{
+	auto addrHigh = (m_rasterPixel - BORDER_LEFT) / RASTERIZED_PXLS * RES_H;
+	auto addrLow = RES_H - 1 - (m_rasterLine - SCAN_ACTIVE_AREA_TOP);
+	Addr screenSpaceAddrOffset = addrHigh + addrLow;
+
+	auto bytes = m_memory.GetScreenSpaceBytes(screenSpaceAddrOffset);
+
+	uint32_t result = 0;
+	for (int i = 0; i < 8; i++)
+	{
+		result <<= 4;
+		result |= (bytes >> (i - 0 + 0 )) & 1;
+		result |= (bytes >> (i - 1 + 8 )) & 2;
+		result |= (bytes >> (i - 2 + 16)) & 4;
+		result |= (bytes >> (i - 3 + 24)) & 8;
+	}
+
+	return result;
+}
+
+void dev::Display::FillActiveAreaMode256()
+{
+	auto colorIdxs = BytesToColorIdxs();
+
+	for (int i = 0; i < RASTERIZED_PXLS; i += 2)
+	{
+		auto colorIdx = colorIdxs & 0x0f;
+		colorIdxs >>= 4;
+
+		auto color = m_io.GetColor(colorIdx);
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = color;
+
+		colorIdx = colorIdxs & 0x0f;
+		colorIdxs >>= 4;
+
+		color = m_io.GetColor(colorIdx);
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = color;
+	}
+}
+
+void dev::Display::FillActiveAreaMode256WithPortHandling()
+{
+	auto colorIdxs = BytesToColorIdxs();
+
+	for (int i = 0; i < RASTERIZED_PXLS; i += 2)
+	{
+		auto colorIdx = colorIdxs & 0x0f;
+		colorIdxs >>= 4;
+
+		CommitTimersHandling(colorIdxs);
+
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx /* & 0x03 */); // TODO: figure out why there's 0x03
+
+		colorIdx = colorIdxs & 0x0f;
+		colorIdxs >>= 4;
+
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx /* & 0x0c */); // TODO: figure out why there's 0x0c
+
+		if (m_rasterLine == SCAN_ACTIVE_AREA_TOP && m_rasterPixel == IO::SCROLL_COMMIT_PXL)
+		{
+			m_scrollIdx = m_io.GetScroll();
+		}
+	}
+}
+
+void dev::Display::FillActiveAreaMode512WithPortHandling()
+{
+	// TODO: replace with a proper code
+	FillActiveAreaMode256WithPortHandling();
+}
+
+void dev::Display::FillActiveAreaMode512()
+{
+	// TODO: replace with a proper code
+	FillActiveAreaMode256();
+}
+
+bool dev::Display::IsIRQ() { return m_irq; }
 
 auto dev::Display::GetFrame(const bool _vsync)
 ->const FrameBuffer*
@@ -92,4 +207,20 @@ auto dev::Display::GetFrame(const bool _vsync)
 	m_gpuBuffer = _vsync ? m_backBuffer : m_frameBuffer;
 
 	return &m_gpuBuffer;
+}
+
+// Vector color format: uint8_t BBGGGRRR
+auto dev::Display::VectorColorToArgb(const uint8_t _vColor) 
+-> ColorI
+{
+	int b = (_vColor & 0xc0) >> 6;
+	int g = (_vColor & 0x38) >> 3;
+	int r = (_vColor & 0x07);
+
+	uint32_t color =
+		0xff000000 |
+		(r << (5 + 16)) |
+		(g << (5 + 8 )) |
+		(b << (6 + 0 ));
+	return color;
 }

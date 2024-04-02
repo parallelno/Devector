@@ -27,13 +27,14 @@ namespace dev
 		void SetStatus(const Status _status);
 		auto GetComment() const -> const std::string&;
 		bool IsActive() const;
-		auto IsActiveS() const -> const char*;
 		void Print() const;
 
 	private:
 		Status m_status;
 		GlobalAddr m_globalAddr;
 		std::string m_comment;
+
+		auto IsActiveS() const -> const char*;
 	};
 }
 #endif // !DEV_BREAKPOINTS_H

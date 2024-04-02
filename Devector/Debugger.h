@@ -67,7 +67,7 @@ namespace dev
 			{};
 		};
 		using Disasm = std::vector<DisasmLine>;
-		using Watchpoints = std::vector<Watchpoint>;
+		using Watchpoints = std::map<Watchpoint::Id, Watchpoint>;
 		using Breakpoints = std::map<GlobalAddr, Breakpoint>;
 
 		Debugger(Hardware& _hardware);
@@ -76,7 +76,8 @@ namespace dev
 		void Reset();
 
 		void ReadInstr(
-			const GlobalAddr _globalAddr, const uint8_t _val, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
+			const GlobalAddr _globalAddr, const uint8_t _val, 
+			const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
 		void Read(const GlobalAddr _globalAddr, const uint8_t _val);
 		void Write(const GlobalAddr _globalAddr, const uint8_t _val);
 
@@ -90,9 +91,11 @@ namespace dev
 		auto GetBreakpoints() -> const Breakpoints;
 		auto GetBreakpointStatus(const GlobalAddr _globalAddr) -> const Breakpoint::Status;
 
-		void AddWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const Watchpoint::Condition _cond,
-			const uint16_t _value, const size_t _valueSize = 1, const bool _active = true);
-		void DelWatchpoint(const GlobalAddr _globalAddr);
+		void AddWatchpoint(const Watchpoint::Id _id, const Watchpoint::Access _access, 
+			const GlobalAddr _globalAddr, const Watchpoint::Condition _cond, 
+			const uint16_t _value, const size_t _valueSize = 1, 
+			const bool _active = true, const std::string& _comment = "");
+		void DelWatchpoint(const Watchpoint::Id _id);
 		bool CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value);
 		void ResetWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;
@@ -112,9 +115,9 @@ namespace dev
 		auto GetCmdLen(const uint8_t _addr) const -> const uint8_t;
 		auto GetAddr(const Addr _endAddr, const int _instructionOffset) const -> Addr;
 		auto WatchpointsFind(const GlobalAddr _globalAddr) -> Watchpoints::iterator;
-		void WatchpointsErase(const GlobalAddr _globalAddr);
 
-		void TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _opcode, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
+		void TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _opcode, 
+			const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
 		auto TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const ->int;
 		auto TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const ->int;
 
