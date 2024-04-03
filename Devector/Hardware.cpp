@@ -33,6 +33,7 @@ void dev::Hardware::Init()
 {
     m_memory.Init();
     m_display.Init();
+    m_io.Init();
 }
 
 void dev::Hardware::ExecuteInstruction()
@@ -40,7 +41,7 @@ void dev::Hardware::ExecuteInstruction()
     do
     {
         m_cpu.ExecuteMachineCycle(m_display.IsIRQ());
-        m_display.Rasterize(m_cpu.IsOutCommitMCicle());
+        m_display.Rasterize();
 
     } while (!m_cpu.IsInstructionExecuted());
 }

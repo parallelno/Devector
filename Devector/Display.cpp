@@ -2,8 +2,7 @@
 
 dev::Display::Display(Memory& _memory, IO& _io)
 	:
-	m_memory(_memory), m_io(_io), m_scrollIdx(0xff),
-	m_outCommitTimer(IO::PORT_NO_COMMIT), m_paletteCommitTimer(IO::PORT_NO_COMMIT)
+	m_memory(_memory), m_io(_io), m_scrollIdx(0xff)
 {
 	Init();
 }
@@ -18,19 +17,17 @@ void dev::Display::Init()
 }
 
 // _isOutCommitMCicle is true when OUT command executes M3 T1
-void dev::Display::Rasterize(const bool _isOutCommitMCicle)
+void dev::Display::Rasterize()
 {
-	if (_isOutCommitMCicle) {
-		m_outCommitTimer = IO::OUT_COMMIT_TIME;
-		m_paletteCommitTimer = IO::PALETTE_COMMIT_TIME;
-	}
 	bool isHorizBorder = m_rasterPixel < BORDER_LEFT || m_rasterPixel >= BORDER_LEFT + RES_W;
 	bool isVertBorder = m_rasterLine < SCAN_ACTIVE_AREA_TOP || m_rasterLine >= SCAN_ACTIVE_AREA_TOP + RES_H;
-	bool isBorder = isVertBorder || isVertBorder;
+	bool isBorder = isHorizBorder || isVertBorder;
 	
+	auto outCommitTime = m_io.GetOutCommitTime();
+	auto paletteCommitTime = m_io.GetPaletteCommitTime();
+
 	bool isPortPortHandling = m_rasterLine == 0 || m_rasterLine == 311 || isHorizBorder ||
-		(m_outCommitTimer >=0 && m_outCommitTimer <= RASTERIZED_PXLS) ||
-		(m_paletteCommitTimer >= 0 && m_paletteCommitTimer <= RASTERIZED_PXLS);
+		outCommitTime >= IO::PORT_COMMIT_TIME || paletteCommitTime >= IO::PORT_COMMIT_TIME;
 
 	if (isBorder) {
 		if (isPortPortHandling) FillBorderWithPortHandling();
@@ -71,32 +68,13 @@ void dev::Display::FillBorder()
 	}
 }
 
-void dev::Display::CommitTimersHandling(const uint8_t _borderColorIdx)
-{
-	if (m_outCommitTimer == 0)
-	{
-		m_outCommitTimer = IO::PORT_NO_COMMIT;
-		m_io.PortOutCommit();
-	}
-	m_outCommitTimer -= m_outCommitTimer != IO::PORT_NO_COMMIT ? 2 : 0;
-
-	if (m_paletteCommitTimer == 0)
-	{
-		m_paletteCommitTimer = IO::PORT_NO_COMMIT;
-		m_io.PaletteCommit(_borderColorIdx);
-	}
-	m_paletteCommitTimer -= m_paletteCommitTimer != IO::PORT_NO_COMMIT ? 2 : 0;
-	
-	return;
-}
-
 // fill up pixels in the border. works for 256 & 512 modes
 void dev::Display::FillBorderWithPortHandling()
 {
 	for (int i = 0; i < RASTERIZED_PXLS; i += 2)
 	{
 		auto borderColorIdx = m_io.GetBorderColorIdx();
-		CommitTimersHandling(borderColorIdx);
+		m_io.CommitTimersHandling(borderColorIdx);
 
 		auto color = m_io.GetBorderColor();
 		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = color;
@@ -169,7 +147,7 @@ void dev::Display::FillActiveAreaMode256WithPortHandling()
 		auto colorIdx = colorIdxs & 0x0f;
 		colorIdxs >>= 4;
 
-		CommitTimersHandling(colorIdxs);
+		m_io.CommitTimersHandling(colorIdxs);
 
 		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx /* & 0x03 */); // TODO: figure out why there's 0x03
 
@@ -212,9 +190,9 @@ auto dev::Display::GetFrame(const bool _vsync)
 auto dev::Display::VectorColorToArgb(const uint8_t _vColor) 
 -> ColorI
 {
-	int b = (_vColor & 0xc0) >> 6;
-	int g = (_vColor & 0x38) >> 3;
 	int r = (_vColor & 0x07);
+	int g = (_vColor & 0x38) >> 3;
+	int b = (_vColor & 0xc0) >> 6;
 
 	uint32_t color =
 		0xff000000 |

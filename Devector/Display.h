@@ -56,8 +56,6 @@ namespace dev
 
 		bool m_irq; // interruption request
 		uint8_t m_scrollIdx; // vertical scrolling, 255 - no scroll
-		int m_outCommitTimer; // in pixels (12Mhz clock)
-		int m_paletteCommitTimer; // in pixels (12Mhz clock)
 
 		FrameBuffer m_frameBuffer;	// rasterizer draws here
 		FrameBuffer m_backBuffer;	// a buffer to simulate VSYNC
@@ -75,7 +73,7 @@ namespace dev
 	public:
 		Display(Memory& _memory, IO& _io);
 		void Init();
-		void Rasterize(const bool _isOutCommitMCicle);	// to draw pxls
+		void Rasterize();
 		bool IsIRQ();
 		auto GetFrame(const bool _vsync) ->const FrameBuffer*;
 		auto GetFrameNum() const -> uint64_t { return m_frameNum; };
@@ -90,7 +88,6 @@ namespace dev
 		void FillActiveAreaMode512WithPortHandling();
 		void FillBorder();
 		void FillBorderWithPortHandling();
-		void CommitTimersHandling(const uint8_t _borderColorIdx);
 	};
 }
 #endif // !DEV_DISPLAY_H

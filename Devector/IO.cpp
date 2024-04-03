@@ -7,11 +7,31 @@
 dev::IO::IO(Keyboard& _keyboard, Memory& _memory, VectorColorToArgbFunc _vectorColorToArgbFunc)
     :
     m_keyboard(_keyboard), m_memory(_memory),
-    CW(0x08), m_portA(0xFF), m_portB(0xFF), m_portC(0xFF), CW2(0), PA2(0xFF), PB2(0xFF), PC2(0xFF),
-    outport(PORT_NO_COMMIT), outbyte(PORT_NO_COMMIT), palettebyte(-1),
-    joy_0e(0xFF), joy_0f(0xFF), m_borderColorIdx(0),
-    VectorColorToArgb(_vectorColorToArgbFunc), m_displayMode(DISPLAY_MODE_256)
+    VectorColorToArgb(_vectorColorToArgbFunc)
 {
+    Init();
+}
+
+void dev::IO::Init()
+{
+    CW = 0x08;
+    m_portA = 0xFF;
+    m_portB = 0xFF;
+    m_portC = 0xFF;
+    CW2 = 0;
+    PA2 = 0xFF;
+    PB2 = 0xFF;
+    PC2 = 0xFF;
+    outport = PORT_NO_COMMIT;
+    outbyte = PORT_NO_COMMIT;
+    palettebyte = PORT_NO_COMMIT;
+    joy_0e = 0xFF;
+    joy_0f = 0xFF;
+    m_borderColorIdx = 0;
+    m_displayMode = DISPLAY_MODE_256;
+    m_outCommitTimer = IO::PORT_NO_COMMIT;
+    m_paletteCommitTimer = IO::PORT_NO_COMMIT;
+
     m_palette.fill(0xFF000000);
 }
 
@@ -113,32 +133,21 @@ void dev::IO::PortOut(uint8_t _port, uint8_t _value)
 {
     outport = _port;
     outbyte = _value;
+
+    m_outCommitTimer = OUT_COMMIT_TIME;
+    if (_port == PORT_OUT_BORDER_COLOR) {
+        m_paletteCommitTimer = PALETTE_COMMIT_TIME;
+    }
 }
 
 void dev::IO::PortOutCommit()
 {
-    if (outport != PORT_NO_COMMIT)
-    {
-        PortOutHandling(outport, outbyte);
-        outport = outbyte = PORT_NO_COMMIT;
-    }
+    PortOutHandling(outport, outbyte);
 }
 
 void dev::IO::PaletteCommit(const int _index)
 {
-    int w8 = palettebyte;
-    if (w8 == PORT_NO_COMMIT && outport == 0x0c) {
-        w8 = outbyte;
-        outport = outbyte = PORT_NO_COMMIT;
-    }
-    if (w8 != PORT_NO_COMMIT) {
-        int b = (w8 & 0xc0) >> 6;
-        int g = (w8 & 0x38) >> 3;
-        int r = (w8 & 0x07);
-
-        m_palette[_index] = VectorColorToArgb(w8);
-        palettebyte = PORT_NO_COMMIT;
-    }
+    m_palette[_index] = VectorColorToArgb(palettebyte);
 }
 
 // data sent by cpu handled here at the commit time
@@ -148,7 +157,6 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     switch (_port) {
         // PortInputA 
     case 0x00:
-        PIA1_last = _value;
         ruslat = m_portC & 8;
         if ((_value & 0x80) == 0) {
             // port C BSR: 
@@ -174,7 +182,6 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         }
         break;
     case 0x01:
-        PIA1_last = _value;
         ruslat = m_portC & 8;
         m_portC = _value;
         //ontapeoutchange(m_portC & 1);
@@ -183,13 +190,11 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         }
         break;
     case 0x02:
-        PIA1_last = _value;
         m_portB = _value;
         m_borderColorIdx = m_portB & 0x0f;
         m_displayMode = (m_portB & 0x10) != 0;
         break;
     case 0x03:
-        PIA1_last = _value;
         m_portA = _value;
         break;
         // PPI2
@@ -215,7 +220,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         break;
         
         // palette (all of them below???)
-    case 0x0c:
+    case PORT_OUT_BORDER_COLOR:
     case 0x0d:
     case 0x0e:
     case 0x0f:
@@ -247,4 +252,24 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     default:
         break;
     }
+}
+
+// should be called once for every to rasterized pixels
+void dev::IO::CommitTimersHandling(const uint8_t _colorIdx)
+{
+    if (m_outCommitTimer == PORT_COMMIT_TIME)
+    {
+        m_outCommitTimer = IO::PORT_NO_COMMIT;
+        PortOutCommit();
+    }
+    m_outCommitTimer -= m_outCommitTimer < PORT_COMMIT_TIME ? 0 : 2;
+
+    if (m_paletteCommitTimer == PORT_COMMIT_TIME)
+    {
+        m_paletteCommitTimer = IO::PORT_NO_COMMIT;
+        PaletteCommit(_colorIdx);
+    }
+    m_paletteCommitTimer -= m_paletteCommitTimer < PORT_COMMIT_TIME ? 0 : 2;
+
+    return;
 }

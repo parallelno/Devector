@@ -514,12 +514,6 @@ uint16_t dev::I8080::GetHL() const
 	return (uint16_t)((m_h << 8) | m_l);
 }
 
-bool dev::I8080::IsOutCommitMCicle() const
-{
-	// if the OUT command just executed, return true
-	return m_instructionReg == OPCODE_OUT && m_machineCycle == 0;
-}
-
 void dev::I8080::SetHL(uint16_t val)
 {
 	m_h = (uint8_t)(val >> 8);

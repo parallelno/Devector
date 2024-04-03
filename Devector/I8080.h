@@ -124,7 +124,6 @@ namespace dev
 		bool GetIFF() const;
 		bool GetHLTA() const;
 		int GetMachineCycle() const;
-		bool IsOutCommitMCicle() const;
 
 	private:
 		void SetBC(uint16_t _val);

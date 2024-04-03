@@ -15,7 +15,9 @@ namespace dev
 	class IO
 	{
 	public:
+		static constexpr int PORT_OUT_BORDER_COLOR = 0x0c;
 		static constexpr int PORT_NO_COMMIT = -1; // no-data to process
+		static constexpr int PORT_COMMIT_TIME = 0; 
 		
 		// determines when the OUT command sends data into the port
 		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
@@ -42,8 +44,10 @@ namespace dev
 		Palette m_palette;
 		uint8_t m_borderColorIdx;
 		bool m_displayMode; // 256 or 512 modes
+		int m_outCommitTimer; // in pixels (12Mhz clock)
+		int m_paletteCommitTimer; // in pixels (12Mhz clock)
 
-		uint8_t CW, m_portA, m_portB, m_portC, PIA1_last;
+		uint8_t CW, m_portA, m_portB, m_portC;
 		uint8_t CW2, PA2, PB2, PC2;
 
 		int outport;
@@ -61,6 +65,7 @@ namespace dev
 
 	public:
 		IO(Keyboard& _keyboard, Memory& _memory, VectorColorToArgbFunc _vecToArgbFunc);
+		void Init();
 		auto PortIn(uint8_t _port) -> uint8_t;
 		void PortOut(uint8_t _port, uint8_t _value);
 		void PortOutCommit();
@@ -71,6 +76,9 @@ namespace dev
 		inline auto GetBorderColorIdx() const -> uint8_t { return m_borderColorIdx; };
 		inline auto GetScroll() const -> uint8_t { return m_portA; };
 		inline auto GetDisplayMode() const -> bool { return m_displayMode; };
+		inline auto GetOutCommitTime() const -> int { return m_outCommitTimer; };
+		inline auto GetPaletteCommitTime() const -> int { return m_paletteCommitTimer; };
+		void CommitTimersHandling(const uint8_t _colorIdx);
 	};
 }
 #endif // !DEV_IO_H
