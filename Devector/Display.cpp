@@ -187,6 +187,7 @@ auto dev::Display::GetFrame(const bool _vsync)
 }
 
 // Vector color format: uint8_t BBGGGRRR
+// Output Color: ABGR (Imgui Image)
 auto dev::Display::VectorColorToArgb(const uint8_t _vColor) 
 -> ColorI
 {
@@ -196,8 +197,8 @@ auto dev::Display::VectorColorToArgb(const uint8_t _vColor)
 
 	uint32_t color =
 		0xff000000 |
-		(r << (5 + 16)) |
+		(r << (5 + 0)) |
 		(g << (5 + 8 )) |
-		(b << (6 + 0 ));
+		(b << (6 + 16 ));
 	return color;
 }
