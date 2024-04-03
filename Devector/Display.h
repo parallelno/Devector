@@ -47,6 +47,7 @@ namespace dev
 	private:
 		static constexpr int SCAN_VSYNC = 22;
 		static constexpr int SCAN_VBLANK_TOP = 18;
+		static constexpr int SCAN_VBLANK_BOTTOM = 16;
 		static constexpr int SCAN_ACTIVE_AREA_TOP = SCAN_VSYNC + SCAN_VBLANK_TOP;
 		static constexpr int BORDER_LEFT = 128;				// left border in pxls
 		static constexpr int BORDER_RIGHT = BORDER_LEFT;	// right border in pxls

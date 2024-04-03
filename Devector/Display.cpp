@@ -84,18 +84,18 @@ void dev::Display::FillBorderWithPortHandling()
 
 // it takes 4 bytes, each from every screen buffer
 // then it swizzels the bits like this:
-// buffer8000_byte = qwertyui
-// bufferA000_byte = opasdfgh
-// bufferC000_byte = jklzxcvb
-// bufferE000_byte = nm?!@#$%
+// bufferE000_byte = qwertyui
+// bufferC000_byte = opasdfgh
+// bufferA000_byte = jklzxcvb
+// buffer8000_byte = nm?!@#$%
 // out uint32_t = %bhi $vgu #cfy @xdt !zsr ?lae mkpw njoq
 // an examble:
 //	input:	1111 1111 0111 1111 0000 0000 0000 0000
 //	the input's similar to:
-//		buffer8000_byte = 0000 0000
-//		bufferA000_byte = 0000 0000
-//		bufferC000_byte = 0111 1111
-//		bufferE000_byte = 1111 1111
+//		bufferE000_byte = 0000 0000
+//		bufferC000_byte = 0000 0000
+//		bufferA000_byte = 0111 1111
+//		buffer8000_byte = 1111 1111
 //	output: 1100 1100 1100 1100 1100 1100 1100 1000
 uint32_t dev::Display::BytesToColorIdxs()
 {
@@ -129,11 +129,6 @@ void dev::Display::FillActiveAreaMode256()
 
 		auto color = m_io.GetColor(colorIdx);
 		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = color;
-
-		colorIdx = colorIdxs & 0x0f;
-		colorIdxs >>= 4;
-
-		color = m_io.GetColor(colorIdx);
 		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = color;
 	}
 }
@@ -150,10 +145,6 @@ void dev::Display::FillActiveAreaMode256WithPortHandling()
 		m_io.CommitTimersHandling(colorIdxs);
 
 		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx /* & 0x03 */); // TODO: figure out why there's 0x03
-
-		colorIdx = colorIdxs & 0x0f;
-		colorIdxs >>= 4;
-
 		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx /* & 0x0c */); // TODO: figure out why there's 0x0c
 
 		if (m_rasterLine == SCAN_ACTIVE_AREA_TOP && m_rasterPixel == IO::SCROLL_COMMIT_PXL)

@@ -44,7 +44,7 @@ auto dev::Memory::GetScreenSpaceBytes(Addr _screenSpaceAddrOffset) const
 	auto byteC = m_data[_screenSpaceAddrOffset + 0xC000];
 	auto byteE = m_data[_screenSpaceAddrOffset + 0xE000];
 
-	return byteE << 24 | byteC << 16 | byteA << 8 | byte8;
+	return byte8 << 24 | byteA << 16 | byteC << 8 | byteE;
 }
 
 auto dev::Memory::GetRam() const
