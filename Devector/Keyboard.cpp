@@ -72,7 +72,7 @@ auto dev::Keyboard::Read(int _rows)
 		auto rowBit = 1 << row;
 		result |= (_rows & rowBit) == 0 ? m_encodingMatrix[row] : 0;
 	}
-	return result;
+	return ~result;
 }
 
 void dev::Keyboard::init_map()
