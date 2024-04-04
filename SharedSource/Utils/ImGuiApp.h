@@ -26,18 +26,19 @@ namespace dev {
     {
     public:
         enum class AppStatus {
-            not_inited,
-            inited,
-            init_failed,
-            create_window_failed,
-            opengl_init_failed
+            NOT_INITED,
+            INITED,
+            FAILED_INIT,
+            FAILED_CREATE_WINDOW,
+            FAILED_OPENGL_INIT,
+            EXIT
         };
 
         ImGuiApp(nlohmann::json _settingsJ, const std::string& _title = "New Window", int _width = 1280, int _heigth = 720);
         ~ImGuiApp();
 
         void Run();
-        bool Inited() const;
+        bool IsInited() const { return m_status == AppStatus::INITED; };
 
         virtual void Update() {};
 
@@ -47,8 +48,7 @@ namespace dev {
         int m_heigth;
         std::string m_title;
         ImVec4 m_backColor = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
-        AppStatus m_status = AppStatus::not_inited;
-        std::atomic_bool m_close_req = false;
+        AppStatus m_status = AppStatus::NOT_INITED;
 
         static void glfw_error_callback(int _error, const char* _description);
         GLFWwindow* m_window = nullptr;

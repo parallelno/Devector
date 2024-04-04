@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     auto mainWindowHeight = dev::GetJsonInt(settingsJ, "mainWindowHeight", false, dev::MAIN_WINDOW_H);
 
     auto app = dev::DevectorApp(settingsPath, settingsJ, mainWindowWidth, mainWindowHeight);
-    if (!app.Inited()) return dev::ERROR_UNSPECIFIED;
+    if (!app.IsInited()) return dev::ERROR_UNSPECIFIED;
     app.Run();
 
 	return dev::NO_ERRORS;

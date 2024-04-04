@@ -16,39 +16,18 @@
 
 #include "Utils.h"
 
-bool dev::ImGuiApp::Inited() const
-{
-    return m_status == AppStatus::inited;
-}
-
-void dev::ImGuiApp::AutoUpdate()
-{
-    for (; !m_close_req; dev::ThreadSleep(AUTO_UPDATE_COOLDOWN))
-    {
-        if (m_hWndMain) {
-            auto currendDpiScale = GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT;
-            bool isDpiUpdated = m_dpiScale != currendDpiScale;
-            if (m_req == static_cast<int32_t>(REQ::NONE) && isDpiUpdated)
-            {
-                Request(REQ::LOAD_FONT);
-            }
-        }
-    }
-}
-
 dev::ImGuiApp::ImGuiApp(
         nlohmann::json _settingsJ, const std::string& _title, int _width, int _heigth) :
     m_title(_title),
-    m_width(_width),
-    m_heigth(_heigth),
-    m_settingsJ(_settingsJ)
+    m_width(_width), m_heigth(_heigth),
+    m_settingsJ(_settingsJ), m_status(AppStatus::NOT_INITED)
 {
     m_autoUpdateThread = std::thread(&ImGuiApp::AutoUpdate, this);
 
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) {
-        m_status = AppStatus::init_failed;
+        m_status = AppStatus::FAILED_INIT;
         return;
     }
 
@@ -72,14 +51,14 @@ dev::ImGuiApp::ImGuiApp(
     // Create window with graphics context
     m_window = glfwCreateWindow(m_width, m_heigth, _title.c_str(), nullptr, nullptr);
     if (m_window == nullptr) {
-        m_status = AppStatus::create_window_failed;
+        m_status = AppStatus::FAILED_CREATE_WINDOW;
         return;
     }
 
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
 
-    m_status = AppStatus::inited;
+    m_status = AppStatus::INITED;
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -133,9 +112,7 @@ dev::ImGuiApp::ImGuiApp(
 
 dev::ImGuiApp::~ImGuiApp()
 {
-    //if (m_autoUpdateThread.joinable()) m_autoUpdateThread.join();
-
-    m_close_req = true;
+    m_status = AppStatus::EXIT;
     m_autoUpdateThread.join();
 
     // Cleanup
@@ -155,7 +132,7 @@ void dev::ImGuiApp::glfw_error_callback(int _error, const char* _description)
 
 void dev::ImGuiApp::Run()
 {
-    while (!glfwWindowShouldClose(m_window) && !m_close_req)
+    while (m_status != AppStatus::EXIT)
     {
 
         // Poll and handle events (inputs, window resize, etc.)
@@ -222,6 +199,23 @@ void dev::ImGuiApp::Run()
         }
 
         glfwSwapBuffers(m_window);
+
+        m_status = glfwWindowShouldClose(m_window) ? AppStatus::EXIT : m_status;
+    }
+}
+
+void dev::ImGuiApp::AutoUpdate()
+{
+    for (; m_status != AppStatus::EXIT; dev::ThreadSleep(AUTO_UPDATE_COOLDOWN))
+    {
+        if (m_hWndMain) {
+            auto currendDpiScale = GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT;
+            bool isDpiUpdated = m_dpiScale != currendDpiScale;
+            if (m_req == static_cast<int32_t>(REQ::NONE) && isDpiUpdated)
+            {
+                Request(REQ::LOAD_FONT);
+            }
+        }
     }
 }
 

@@ -126,7 +126,7 @@ void dev::DevectorApp::MainMenuUpdate()
 					if (ImGui::MenuItem(dev::StrWToStr(path).c_str()))
 					{
 						LoadRom(path);
-						break; // because m_recentFilePaths was modified
+						break; // because m_recentFilePaths were modified
 					}
 				}
 				ImGui::EndMenu();
@@ -134,7 +134,7 @@ void dev::DevectorApp::MainMenuUpdate()
 
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Quit", "Alt+F4")) { m_close_req = true; }
+			if (ImGui::MenuItem("Quit", "Alt+F4")) { m_status = AppStatus::EXIT; }
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Tools"))

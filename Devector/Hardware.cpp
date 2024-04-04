@@ -96,7 +96,7 @@ void dev::Hardware::Execution()
             dev::Log("elapsed cpu cycles: {}, elapsed frames: {}, elapsed seconds: {}", elapsedCC, elapsedFrames, timeDurationSec);
         }
 
-        while (m_status != Status::RUN)
+        while (m_status == Status::STOP)
         {
             ReqHandling(true);
         }
