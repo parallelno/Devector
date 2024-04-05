@@ -12,11 +12,9 @@
 #include <Utils/StringUtils.h>
 
 dev::DevectorApp::DevectorApp(
-	const std::string& _stringPath, nlohmann::json _settingsJ,
-	const int _mainWindowWidth, const int _mainWindowHeight)
+	const std::string& _stringPath, nlohmann::json _settingsJ)
 	:
-	ImGuiApp(_settingsJ, APP_NAME, _mainWindowWidth, _mainWindowHeight),
-	m_stringPath(_stringPath)
+	ImGuiApp(_settingsJ, _stringPath, APP_NAME)
 {
 	SettingsInit();
 	WindowsInit();
@@ -79,7 +77,7 @@ void dev::DevectorApp::Update()
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)
 {
-	auto labelsFilenamePostfix = dev::StrToStrW(dev::GetJsonString(m_settingsJ, "labelsFilenamePostfix", false, LABELS_FILENAME));
+	auto labelsFilenamePostfix = dev::StrToStrW(GetSettingsString("labelsFilenamePostfix", LABELS_FILENAME));
 	auto labelsDir = dev::GetDir(_path);
 	auto labelsPath = labelsDir + L"\\" + dev::GetFilename(_path) + labelsFilenamePostfix;
 	m_debuggerP->LoadLabels(labelsPath);
@@ -149,7 +147,7 @@ void dev::DevectorApp::MainMenuUpdate()
 
 void dev::DevectorApp::RecentFilesInit()
 {
-	auto recentFiles = dev::GetJsonObject(m_settingsJ, "recentFiles", false);
+	auto recentFiles = GetSettingsObject("recentFiles");
 	for (const auto& filePaths : recentFiles)
 	{
 		m_recentFilePaths.push_back(dev::StrToStrW(filePaths));
@@ -163,8 +161,8 @@ void dev::DevectorApp::RecentFilesStore()
 	{
 		recentFiles.push_back(dev::StrWToStr(recentFilePath));
 	}
-	m_settingsJ["recentFiles"] = recentFiles;
-	SaveJson(m_stringPath, m_settingsJ);
+	SettingsUpdate("recentFiles", recentFiles);
+	SettingsSave(m_stringPath);
 }
 
 void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path)

@@ -6,6 +6,8 @@ namespace dev
 {
 	constexpr static int MAIN_WINDOW_W = 800;
 	constexpr static int MAIN_WINDOW_H = 600;
+	constexpr static int MAIN_WINDOW_X = 0;
+	constexpr static int MAIN_WINDOW_Y = 0;
 }
 
 #endif // !DEV_CONSTS_H

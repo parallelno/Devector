@@ -6,6 +6,7 @@
 #include <string>
 #include <atomic>
 #include <thread>
+#include <mutex>
 #include <Windows.h>
 
 #include "imgui.h"
@@ -27,25 +28,30 @@ namespace dev {
     public:
         enum class AppStatus {
             NOT_INITED,
-            INITED,
             FAILED_INIT,
             FAILED_CREATE_WINDOW,
             FAILED_OPENGL_INIT,
+            INITED,
+            RUN,
             EXIT
         };
 
-        ImGuiApp(nlohmann::json _settingsJ, const std::string& _title = "New Window", int _width = 1280, int _heigth = 720);
+        ImGuiApp(nlohmann::json _settingsJ, const std::string& _stringPath, const std::string& _title = "New Window");
         ~ImGuiApp();
 
         void Run();
-        bool IsInited() const { return m_status == AppStatus::INITED; };
+        bool IsInited() const { return m_status == AppStatus::INITED || m_status == AppStatus::RUN; };
 
         virtual void Update() {};
 
     protected:
+        const std::string m_stringPath;
+
         HWND m_hWndMain;
         int m_width;
-        int m_heigth;
+        int m_height;
+        int m_posX;
+        int m_posY;
         std::string m_title;
         ImVec4 m_backColor = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
         AppStatus m_status = AppStatus::NOT_INITED;
@@ -57,8 +63,6 @@ namespace dev {
         static constexpr float WINDOW_DPI_DEFAULT = 96.0f;
         static constexpr double AUTO_UPDATE_COOLDOWN = 1.0;
 
-        nlohmann::json m_settingsJ;
-
         ImFont* m_font = nullptr;
         ImFont* m_fontItalic = nullptr;
         float m_fontSize = 10.0f;
@@ -68,6 +72,7 @@ namespace dev {
         {
             NONE,
             LOAD_FONT,
+            CHECK_WINDOW_SIZE_POS,
         };
         std::atomic_char32_t m_req;
 
@@ -77,8 +82,16 @@ namespace dev {
         void AutoUpdate();
         void Request(const REQ _req);
         void RequestHandler();
-
         void LoadFonts();
+        void SettingsUpdate(const std::string& _fieldName, nlohmann::json _json);
+        void SettingsSave(const std::string& _path);
+        auto GetSettingsString(const std::string& _fieldName, const std::string& _defaultValue) -> std::string;
+        auto GetSettingsObject(const std::string& _fieldName ) -> nlohmann::json;
+        int GetSettingsInt(const std::string& _fieldName, int _defaultValue);
+
+    private:
+        std::mutex m_settingsMutex;
+        nlohmann::json m_settingsJ;
     };
 }
 #endif // !DEV_IMGUI_APP_H

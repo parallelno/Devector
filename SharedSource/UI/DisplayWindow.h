@@ -16,7 +16,8 @@ namespace dev
 	class DisplayWindow : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 768;
-		static constexpr int DEFAULT_WINDOW_H = 312;
+		static constexpr float WINDOW_ASPECT = 3.0f / 4.0f;
+		static constexpr int DEFAULT_WINDOW_H = static_cast<int>(DEFAULT_WINDOW_W * WINDOW_ASPECT);
 
 		const std::string m_name = "Display";
 

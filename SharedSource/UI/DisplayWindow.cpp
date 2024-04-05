@@ -39,7 +39,7 @@ void dev::DisplayWindow::DrawDisplay()
 {
     if (m_frameTextureId)
     {
-        ImGui::Image((void*)(intptr_t)m_frameTextureId, ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
+        ImGui::Image((void*)(intptr_t)m_frameTextureId, ImVec2(DEFAULT_WINDOW_W, 500));
     }
 }
 

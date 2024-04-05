@@ -28,8 +28,6 @@ namespace dev
 		static constexpr int RECENT_FILES_MAX = 10;
 		const std::string LABELS_FILENAME = "debug.txt";
 
-		const std::string m_stringPath;
-
 		std::unique_ptr <dev::Hardware> m_hardwareP;
 		std::unique_ptr <dev::Debugger> m_debuggerP;
 		std::unique_ptr <dev::BreakpointsWindow>m_breakpointsWindowP;
@@ -49,8 +47,7 @@ namespace dev
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 
 	public:
-		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ,
-			const int _mainWindowWidth, const int _mainWindowHeight);
+		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ);
 
 		virtual void Update();
 

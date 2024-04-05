@@ -14,14 +14,21 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "Consts.h"
 #include "Utils.h"
 
 dev::ImGuiApp::ImGuiApp(
-        nlohmann::json _settingsJ, const std::string& _title, int _width, int _heigth) :
-    m_title(_title),
-    m_width(_width), m_heigth(_heigth),
-    m_settingsJ(_settingsJ), m_status(AppStatus::NOT_INITED)
+        nlohmann::json _settingsJ, const std::string& _stringPath, const std::string& _title) 
+    :
+    m_settingsJ(_settingsJ),
+    m_title(_title), m_stringPath(_stringPath),
+    m_status(AppStatus::NOT_INITED)
 {
+    m_width = dev::GetJsonInt(m_settingsJ, "mainWindowWidth", false, dev::MAIN_WINDOW_W);
+    m_height = dev::GetJsonInt(m_settingsJ, "mainWindowHeight", false, dev::MAIN_WINDOW_H);
+    m_posX = dev::GetJsonInt(m_settingsJ, "mainWindowX", false, dev::MAIN_WINDOW_X);
+    m_posY = dev::GetJsonInt(m_settingsJ, "mainWindowY", false, dev::MAIN_WINDOW_Y);
+
     m_autoUpdateThread = std::thread(&ImGuiApp::AutoUpdate, this);
 
     // Setup window
@@ -49,11 +56,24 @@ dev::ImGuiApp::ImGuiApp(
 
 
     // Create window with graphics context
-    m_window = glfwCreateWindow(m_width, m_heigth, _title.c_str(), nullptr, nullptr);
+    m_window = glfwCreateWindow(m_width, m_height, _title.c_str(), nullptr, nullptr);
     if (m_window == nullptr) {
         m_status = AppStatus::FAILED_CREATE_WINDOW;
         return;
     }
+
+    {
+        int screenWidthMM, screenHeightMM;
+        glfwGetMonitorPhysicalSize(glfwGetPrimaryMonitor(), &screenWidthMM, &screenHeightMM);
+
+        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        int screenWidth = mode->width;
+        int screenHeight = mode->height;
+
+        m_posX = m_posX < 0 ? (screenWidth - m_width) / 2 : m_posX;
+        m_posY = m_posY < 0 ? (screenHeight - m_height) / 2 : m_posY;
+    }
+    glfwSetWindowPos(m_window, m_posX, m_posY);
 
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
@@ -132,6 +152,8 @@ void dev::ImGuiApp::glfw_error_callback(int _error, const char* _description)
 
 void dev::ImGuiApp::Run()
 {
+    m_status = AppStatus::RUN;
+
     while (m_status != AppStatus::EXIT)
     {
 
@@ -149,7 +171,7 @@ void dev::ImGuiApp::Run()
         RequestHandler();
 
         ImGui::NewFrame();
-
+       
         
         //ImGui::DockSpaceOverViewport();
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
@@ -167,6 +189,13 @@ void dev::ImGuiApp::Run()
         static bool open = true;
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         ImGui::Begin("MainWindow", &open, window_flags);
+
+        m_width = (int)(ImGui::GetWindowWidth());
+        m_height = (int)(ImGui::GetWindowHeight());
+        auto size = ImGui::GetWindowPos();
+        m_posX = size.x;
+        m_posY = size.y;
+
         ImGui::PopStyleVar();
 
         // Create a DockSpace node where any window can be docked
@@ -215,7 +244,10 @@ void dev::ImGuiApp::AutoUpdate()
             {
                 Request(REQ::LOAD_FONT);
             }
+            
+            Request(REQ::CHECK_WINDOW_SIZE_POS);
         }
+
     }
 }
 
@@ -226,11 +258,43 @@ void dev::ImGuiApp::Request(const REQ _req)
 
 void dev::ImGuiApp::RequestHandler()
 {
-    if (m_req == static_cast<int32_t>(REQ::LOAD_FONT))
+    auto req = static_cast<REQ>(static_cast<int32_t>(m_req));
+
+    switch (req)
     {
+    case REQ::LOAD_FONT:
         LoadFonts();
-        m_req = static_cast<int32_t>(REQ::NONE);
+        break;
+    case REQ::CHECK_WINDOW_SIZE_POS:
+    {
+        auto width = GetSettingsInt("mainWindowWidth", dev::MAIN_WINDOW_W);
+        auto height = GetSettingsInt("mainWindowHeight", dev::MAIN_WINDOW_H);
+
+        if (width != m_width || height != m_height)
+        {
+            SettingsUpdate("mainWindowWidth", m_width);
+            SettingsUpdate("mainWindowHeight", m_height);
+
+            SettingsSave(m_stringPath);
+        }
+
+        auto posX = GetSettingsInt("mainWindowX", dev::MAIN_WINDOW_X);
+        auto posY = GetSettingsInt("mainWindowY", dev::MAIN_WINDOW_Y);
+
+        if (posX != m_posX || posY != m_posY)
+        {
+            SettingsUpdate("mainWindowX", m_posX);
+            SettingsUpdate("mainWindowY", m_posY);
+
+            SettingsSave(m_stringPath);
+        }
+        break;
     }
+    default:
+        return;
+    };
+
+    m_req = static_cast<int32_t>(REQ::NONE);
 }
 
 void dev::ImGuiApp::LoadFonts()
@@ -260,4 +324,35 @@ void dev::ImGuiApp::LoadFonts()
     }
 
     ImGui_ImplOpenGL3_CreateFontsTexture();
+}
+
+void dev::ImGuiApp::SettingsUpdate(const std::string& _fieldName, nlohmann::json _json)
+{
+    std::lock_guard<std::mutex> mlock(m_settingsMutex);
+    m_settingsJ[_fieldName] = _json;
+}
+
+void dev::ImGuiApp::SettingsSave(const std::string& _path)
+{
+    std::lock_guard<std::mutex> mlock(m_settingsMutex);
+    SaveJson(_path, m_settingsJ);
+}
+
+auto dev::ImGuiApp::GetSettingsString(const std::string& _fieldName, const std::string& _defaultValue)
+-> std::string
+{
+    std::lock_guard<std::mutex> mlock(m_settingsMutex);
+    return dev::GetJsonString(m_settingsJ, _fieldName, false, _defaultValue);
+}
+
+auto dev::ImGuiApp::GetSettingsObject(const std::string& _fieldName)
+-> nlohmann::json
+{
+    std::lock_guard<std::mutex> mlock(m_settingsMutex);
+    return dev::GetJsonObject(m_settingsJ, "recentFiles", false);
+}
+
+int dev::ImGuiApp::GetSettingsInt(const std::string& _fieldName, int _defaultValue)
+{
+    return dev::GetJsonInt(m_settingsJ, _fieldName, false, _defaultValue);
 }

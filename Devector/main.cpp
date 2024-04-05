@@ -29,10 +29,8 @@ int main(int argc, char** argv)
     }
 
     auto settingsJ = dev::LoadJson(settingsPath);
-    auto mainWindowWidth = dev::GetJsonInt(settingsJ, "mainWindowWidth", false, dev::MAIN_WINDOW_W);
-    auto mainWindowHeight = dev::GetJsonInt(settingsJ, "mainWindowHeight", false, dev::MAIN_WINDOW_H);
 
-    auto app = dev::DevectorApp(settingsPath, settingsJ, mainWindowWidth, mainWindowHeight);
+    auto app = dev::DevectorApp(settingsPath, settingsJ);
     if (!app.IsInited()) return dev::ERROR_UNSPECIFIED;
     app.Run();
 
