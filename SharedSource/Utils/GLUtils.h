@@ -20,8 +20,8 @@ namespace dev
 		struct ShaderData {
 			GLuint1 shaderProgram = 0;
 			GLuint1 ramTextures[RAM_TEXTURES] = {0};
-			GLuint1 framebufferTexture = 0;
-			GLuint1 framebuffer = 0;
+			GLuint1 framebufferTextures[RAM_TEXTURES] = {0};
+			GLuint1 framebuffers[RAM_TEXTURES] = {0};
 			GLuint1 vtxArrayObj = 0;
 			GLuint1 vtxBufferObj = 0;
 			GLuint1 globalColorBgId = -1;

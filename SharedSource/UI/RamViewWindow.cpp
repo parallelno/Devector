@@ -34,22 +34,21 @@ void dev::RamViewWindow::DrawDisplay()
     if (m_glUtils.IsShaderDataReady())
     {   
         ImVec2 imageSize(GLUtils::FRAME_BUFFER_W * m_scale, GLUtils::FRAME_BUFFER_H * m_scale);
+
         ImGui::SeparatorText("The Main Ram");
-        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
+        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTextures[0], imageSize);
         
         ImGui::SeparatorText("The Ram-Disk Page 0");
-        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
+        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTextures[1], imageSize);
         
         ImGui::SeparatorText("The Ram-Disk Page 1");
-        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
+        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTextures[2], imageSize);
         
         ImGui::SeparatorText("The Ram-Disk Page 2");
-        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
+        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTextures[3], imageSize);
         
         ImGui::SeparatorText("The Ram-Disk Page 3");
-        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTexture, imageSize);
-        
- 
+        ImGui::Image((void*)(intptr_t)m_glUtils.GetShaderData()->framebufferTextures[4], imageSize);
     }
 }
 

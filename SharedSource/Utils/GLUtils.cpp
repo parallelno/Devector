@@ -103,34 +103,36 @@ void dev::GLUtils::DrawDisplay()
 {
 
     if (IsShaderDataReady())
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffer);
-        glViewport(0, 0, m_frameSizeW, m_frameSizeH);
-        glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        for (int i = 0; i < RAM_TEXTURES; i++)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffers[i]);
+            glViewport(0, 0, m_frameSizeW, m_frameSizeH);
+            glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        // Render the quad
-        glUseProgram(m_shaderData.shaderProgram);
+            // Render the quad
+            glUseProgram(m_shaderData.shaderProgram);
 
-        // send the color
-        glUniform4f(m_shaderData.globalColorBgId, 0.2f, 0.2f, 0.2f, 1.0f);
-        glUniform4f(m_shaderData.globalColorFgId, 1.0f, 1.0f, 1.0f, 1.0f);
+            // send the color
+            glUniform4f(m_shaderData.globalColorBgId, 0.2f, 0.2f, 0.2f, 1.0f);
+            glUniform4f(m_shaderData.globalColorFgId, 1.0f, 1.0f, 1.0f, 1.0f);
 
-        // assign a texture
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_shaderData.ramTextures[0]);
+            // assign a texture
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, m_shaderData.ramTextures[i]);
 
-        glBindVertexArray(m_shaderData.vtxArrayObj);
-        glDrawArrays(GL_QUADS, 0, 4);
-        glBindVertexArray(0);
+            glBindVertexArray(m_shaderData.vtxArrayObj);
+            glDrawArrays(GL_QUADS, 0, 4);
+            glBindVertexArray(0);
         
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
 }
 
 void dev::GLUtils::CreateRamTextures()
 {
-    auto memP = m_hardware.GetRam();
+    auto memP = (m_hardware.GetRam()->data());
+    int imageSize = RAM_TEXTURE_W * RAM_TEXTURE_H;
 
     for (int i = 0; i < RAM_TEXTURES; i++)
     {
@@ -146,9 +148,8 @@ void dev::GLUtils::CreateRamTextures()
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, RAM_TEXTURE_W, RAM_TEXTURE_H, 0, GL_RED, GL_UNSIGNED_BYTE, memP);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, RAM_TEXTURE_W, RAM_TEXTURE_H, 0, GL_RED, GL_UNSIGNED_BYTE, memP + i * imageSize);
     }
-
 }
 
 
@@ -180,23 +181,28 @@ GLenum dev::GLUtils::Init()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+
     // Create and bind a framebuffer object (FBO)
-    glGenFramebuffers(1, &m_shaderData.framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffer);
+    glGenFramebuffers(RAM_TEXTURES, m_shaderData.framebuffers);
     // Create a texture to render to
-    glGenTextures(1, &m_shaderData.framebufferTexture);
-    glBindTexture(GL_TEXTURE_2D, m_shaderData.framebufferTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_frameSizeW, m_frameSizeH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shaderData.framebufferTexture, 0);
+    glGenTextures(RAM_TEXTURES, m_shaderData.framebufferTextures);
 
+    for (int i = 0; i < RAM_TEXTURES; i++) 
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffers[i]);
 
-    // Check framebuffer status
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        dev::Log("Framebuffer is not complete!");
-    // Unbind framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, m_shaderData.framebufferTextures[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_frameSizeW, m_frameSizeH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shaderData.framebufferTextures[i], 0);
+
+        // Check framebuffer status
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            dev::Log("Framebuffer is not complete!");
+        // Unbind framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 
     // Create shader program
     m_shaderData.shaderProgram = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
@@ -215,9 +221,9 @@ GLenum dev::GLUtils::Init()
 dev::GLUtils::~GLUtils()
 {
     // Clean up
-    glDeleteFramebuffers(1, &m_shaderData.framebuffer);
+    glDeleteFramebuffers(RAM_TEXTURES, m_shaderData.framebuffers);
     glDeleteTextures(RAM_TEXTURES, m_shaderData.ramTextures);
-    glDeleteTextures(1, &m_shaderData.framebufferTexture);
+    glDeleteTextures(RAM_TEXTURES, m_shaderData.framebufferTextures);
     glDeleteVertexArrays(1, &m_shaderData.vtxArrayObj);
     glDeleteBuffers(1, &m_shaderData.vtxBufferObj);
 
@@ -278,7 +284,7 @@ auto dev::GLUtils::GetShaderData()
 auto dev::GLUtils::IsShaderDataReady()
 -> const bool
 {
-    return m_shaderData.framebuffer && m_shaderData.framebufferTexture &&
+    return //m_shaderData.framebuffer && m_shaderData.framebufferTexture &&
         m_shaderData.shaderProgram && //m_shaderData.ramMainTexture && 
         m_shaderData.vtxArrayObj && m_shaderData.vtxBufferObj;
 }
