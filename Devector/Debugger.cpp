@@ -648,6 +648,12 @@ void dev::Debugger::DelBreakpoint(const GlobalAddr _globalAddr)
 	}
 }
 
+void dev::Debugger::DelBreakpoints()
+{
+	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+	m_breakpoints.clear();
+}
+
 bool dev::Debugger::CheckBreakpoints(const GlobalAddr _globalAddr)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
@@ -719,6 +725,12 @@ void dev::Debugger::DelWatchpoint(const Watchpoint::Id _id)
 	{
 		m_watchpoints.erase(bpI);
 	}
+}
+
+void dev::Debugger::DelWatchpoints()
+{
+	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
+	m_watchpoints.clear();
 }
 
 // a hardware thread

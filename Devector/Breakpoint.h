@@ -21,10 +21,12 @@ namespace dev
 			ACTIVE
 		};
 		Breakpoint(const GlobalAddr _globalAddr, const Status _status = Status::ACTIVE, const std::string& _comment = "");
-		auto CheckStatus() const -> const bool;
-		auto GetStatus() const -> const Status;
-		auto GetStatusI() const -> const int;
+		auto GetGlobalAddr() const -> GlobalAddr;
+		auto CheckStatus() const -> bool;
+		auto GetStatus() const -> Status;
+		auto GetStatusI() const -> int;
 		void SetStatus(const Status _status);
+		auto GetConditionS() const -> std::string;
 		auto GetComment() const -> const std::string&;
 		bool IsActive() const;
 		void Print() const;

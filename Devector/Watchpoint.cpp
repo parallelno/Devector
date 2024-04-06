@@ -36,12 +36,6 @@ void dev::Watchpoint::Update(const Access _access, const GlobalAddr _globalAddr,
 	m_comment = _comment;
 }
 
-auto dev::Watchpoint::IsActive() const
-->const bool
-{
-	return m_active;
-}
-
 auto dev::Watchpoint::Check(const Access _access, const GlobalAddr _globalAddr, const uint8_t _value)
 ->const bool
 {
@@ -94,16 +88,28 @@ auto dev::Watchpoint::Check(const Access _access, const GlobalAddr _globalAddr, 
 	return m_breakL && (m_size == VAL_BYTE_SIZE || m_breakH);
 }
 
-auto dev::Watchpoint::GetGlobalAddr() const
--> const GlobalAddr
+auto dev::Watchpoint::IsActive() const
+-> bool
+{
+	return m_active;
+}
+
+auto dev::Watchpoint::GetGlobalAddr() const 
+-> GlobalAddr
 {
 	return m_globalAddr;
 }
 
 auto dev::Watchpoint::GetAccess() const
--> const Access
+-> Access
 {
 	return m_access;
+}
+
+auto dev::Watchpoint::GetAccessI() const 
+-> int
+{ 
+	return static_cast<int>(m_access); 
 }
 
 auto dev::Watchpoint::GetAccessS() const
@@ -113,7 +119,7 @@ auto dev::Watchpoint::GetAccessS() const
 }
 
 auto dev::Watchpoint::GetCondition() const
--> const Condition
+-> Condition
 {
 	return m_cond;
 }
@@ -125,13 +131,13 @@ auto dev::Watchpoint::GetConditionS() const
 }
 
 auto dev::Watchpoint::GetValue() const
--> const uint16_t
+-> uint16_t
 {
 	return m_value;
 }
 
 auto dev::Watchpoint::GetSize() const
--> const size_t
+-> size_t
 {
 	return m_size;
 }
@@ -142,18 +148,19 @@ auto dev::Watchpoint::GetSizeS() const -> const char*
 }
 
 auto dev::Watchpoint::GetComment() const
-->const std::string&
+-> const std::string&
 {
 	return m_comment;
 }
 
-auto dev::Watchpoint::GetId() const -> Id
+auto dev::Watchpoint::GetId() const 
+-> Id
 {
 	return m_id;
 }
 
 auto dev::Watchpoint::CheckAddr(const GlobalAddr _globalAddr) const
--> const bool
+-> bool
 {
 	return (_globalAddr == m_globalAddr) || ((_globalAddr == m_globalAddr + 1) && (m_size == VAL_WORD_SIZE));
 }

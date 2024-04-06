@@ -75,7 +75,7 @@ void dev::WatchpointsWindow::DrawProperty2Size(
 }
 
 // should be called right after ImGui::EndTable();
-void dev::WatchpointsWindow::DrawContextMenu(const char* _itemID)
+void dev::WatchpointsWindow::DrawContextMenu(const char* _itemID, const Watchpoint* _wp = nullptr)
 {
 	static bool isActive = true;
 	static std::string globalAddrS = "0x100";
@@ -85,6 +85,16 @@ void dev::WatchpointsWindow::DrawContextMenu(const char* _itemID)
 	static int size = 0;
 	static std::string commentS = "";
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
+
+	if (_wp) {
+		isActive = _wp->IsActive();
+		globalAddrS = std::format("0x{:04X}", _wp->GetGlobalAddr());
+		access = _wp->GetAccessI();
+		conditionS = _wp->GetConditionS();
+		valueS = std::format("0x{:04X}", _wp->GetValue());
+		size = _wp->GetSize();
+		commentS = _wp->GetComment();
+	}
 
 	if (ImGui::BeginPopupContextItem(_itemID))
 	{

@@ -21,7 +21,7 @@ namespace dev
 		bool& m_reqDisasmUpdate;
 
 		void DrawTable();
-		void DrawContextMenu(const char* _itemID);
+		void DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Breakpoints& _pbs, int _addr);
 
 	public:
 		BreakpointsWindow(Debugger& m_debugger,

@@ -87,6 +87,7 @@ namespace dev
 		void AddBreakpoint(const GlobalAddr _globalAddr, 
 			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE, const std::string& _comment = "");
 		void DelBreakpoint(const GlobalAddr _globalAddr);
+		void DelBreakpoints();
 		bool CheckBreakpoints(const GlobalAddr _globalAddr);
 		auto GetBreakpoints() -> const Breakpoints;
 		auto GetBreakpointStatus(const GlobalAddr _globalAddr) -> const Breakpoint::Status;
@@ -96,6 +97,7 @@ namespace dev
 			const uint16_t _value, const size_t _valueSize = 1, 
 			const bool _active = true, const std::string& _comment = "");
 		void DelWatchpoint(const Watchpoint::Id _id);
+		void DelWatchpoints();
 		bool CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value);
 		void ResetWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;

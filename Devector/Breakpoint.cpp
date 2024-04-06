@@ -12,44 +12,27 @@ dev::Breakpoint::Breakpoint(const GlobalAddr _globalAddr, const Status _status, 
 	m_globalAddr(_globalAddr), m_status(_status), m_comment(_comment)
 {}
 
-auto dev::Breakpoint::GetStatus() const
-->const Status
+auto dev::Breakpoint::GetStatus() const -> Status { return m_status; }
+
+auto dev::Breakpoint::GetStatusI() const -> int { return static_cast<int>(m_status); }
+
+void dev::Breakpoint::SetStatus(const Status _status) {	m_status = _status; }
+
+auto dev::Breakpoint::GetComment() const ->const std::string& {	return m_comment; }
+
+auto dev::Breakpoint::GetConditionS() const
+->std::string
 {
-	return m_status;
+	return "";
 }
 
-auto dev::Breakpoint::GetStatusI() const
-->const int
-{
-	return static_cast<int>(m_status);
-}
+bool dev::Breakpoint::IsActive() const { return m_status == Status::ACTIVE; }
 
-void dev::Breakpoint::SetStatus(const Status _status)
-{
-	m_status = _status;
-}
+auto dev::Breakpoint::IsActiveS() const -> const char* { return m_status == Status::ACTIVE ? "X" : "-"; }
 
-auto dev::Breakpoint::GetComment() const
-->const std::string&
-{
-	return m_comment;
-}
+auto dev::Breakpoint::CheckStatus() const -> bool {	return m_status == Status::ACTIVE; }
 
-bool dev::Breakpoint::IsActive() const
-{
-	return m_status == Status::ACTIVE;
-}
-
-auto dev::Breakpoint::IsActiveS() const -> const char*
-{
-	return m_status == Status::ACTIVE ? "X" : "-";
-}
-
-auto dev::Breakpoint::CheckStatus() const
-->const bool
-{
-	return m_status == Status::ACTIVE;
-}
+auto dev::Breakpoint::GetGlobalAddr() const -> GlobalAddr { return m_globalAddr; }
 
 void dev::Breakpoint::Print() const
 {

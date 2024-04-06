@@ -40,18 +40,19 @@ namespace dev
 			const uint16_t _value, const size_t _size = VAL_BYTE_SIZE,
 			const bool _active = true, const std::string& _comment = "");
 		auto Check(const Access _access, const GlobalAddr _globalAddr, const uint8_t _value) -> const bool;
-		auto IsActive() const -> const bool;
-		auto GetGlobalAddr() const -> const GlobalAddr;
-		auto GetAccess() const -> const Access;
+		auto IsActive() const -> bool;
+		auto GetGlobalAddr() const -> GlobalAddr;
+		auto GetAccess() const -> Access;
+		auto GetAccessI() const -> int;
 		auto GetAccessS() const -> const std::string&;
-		auto GetCondition() const -> const Condition;
+		auto GetCondition() const -> Condition;
 		auto GetConditionS() const -> const std::string&;
-		auto GetValue() const -> const uint16_t;
-		auto GetSize() const -> const size_t;
+		auto GetValue() const -> uint16_t;
+		auto GetSize() const -> size_t;
 		auto GetSizeS() const -> const char*;
 		auto GetComment() const -> const std::string&;
 		auto GetId() const -> Id;
-		auto CheckAddr(const GlobalAddr _globalAddr) const -> const bool;
+		auto CheckAddr(const GlobalAddr _globalAddr) const -> bool;
 		static auto StrToCondition(const std::string& _condS) -> Watchpoint::Condition;
 		void Reset();
 		void Print() const;

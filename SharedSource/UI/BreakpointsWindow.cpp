@@ -31,82 +31,14 @@ void dev::BreakpointsWindow::DrawProperty(const std::string& _name, const ImVec2
 	ImGui::PopStyleColor();
 }
 
-// should be called right after ImGui::EndTable();
-void dev::BreakpointsWindow::DrawContextMenu(const char* _itemID)
-{
-	static bool isActive = true;
-	static std::string globalAddrS = "0x100";
-	static std::string conditionS = "";
-	static std::string commentS = "";
-	static ImVec2 buttonSize = { 65.0f, 25.0f };
-
-	if (ImGui::BeginPopupContextItem(_itemID))
-	{
-		static ImGuiTableFlags flags =
-			ImGuiTableFlags_ScrollY |
-			ImGuiTableFlags_SizingStretchSame |
-			ImGuiTableFlags_ContextMenuInBody;
-
-		if (ImGui::BeginTable("##BPContextMenu", 2, flags))
-		{
-			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
-			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
-			// status
-			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive);
-			// addr
-			DrawProperty2EditableS("Global Address", "##BPContextAddress", & globalAddrS, "0x100");
-			// condition
-			DrawProperty2EditableS("Condition", "##BPContextCondition", &conditionS, "");
-			// comment
-			DrawProperty2EditableS("Comment", "##BPContextComment", &commentS, "");
-
-			
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::TableNextColumn();
-			// warning
-			bool warning = false;
-			GlobalAddr globalAddr = dev::StrHexToInt(globalAddrS.c_str());
-			std::string warningS = "";
-			if (globalAddr > Memory::GLOBAL_MEMORY_LEN - 1) {
-				warningS = "Too large address";
-				warning = true;
-			}
-			//ImGui::SameLine(); 
-			ImGui::TextColored(COLOR_WARNING, warningS.c_str());
-			
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::TableNextColumn();
-
-			if (warning) {
-				ImGui::BeginDisabled();
-			}
-			// OK button
-			if (ImGui::Button("Ok", buttonSize) && !warning)
-			{
-				m_debugger.AddBreakpoint(globalAddr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, commentS);
-				m_reqDisasmUpdate = true;
-				ImGui::CloseCurrentPopup();
-			}
-			if (warning) {
-				ImGui::EndDisabled();
-			}
-
-			// Cancel button
-			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
-			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
-
-			ImGui::EndTable();
-		}
-
-		ImGui::EndPopup();
-	}
-}
-
 void dev::BreakpointsWindow::DrawTable()
 {
-	static int selectedAddr = 0;
+	static int selectedAddr = -1;
+	bool showItemContextMenu = false;
+	static int editedBreakpointAddr = -1;
+	bool showItemEditPopup = false;
+	bool showAddNewPopup = false;
+
 	const char* tableName = "##Breakpoints";
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
@@ -135,6 +67,7 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGui::TableNextColumn();
 			auto isActive = breakpoint.IsActive();
 			ImGui::Checkbox(std::format("##{:05X}", addr).c_str(), &isActive);
+
 			if (isActive != breakpoint.IsActive())
 			{
 				m_debugger.AddBreakpoint(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, breakpoint.GetComment());
@@ -148,17 +81,178 @@ void dev::BreakpointsWindow::DrawTable()
 			{
 				selectedAddr = addr;
 			}
+
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+				showItemContextMenu = true;
+				editedBreakpointAddr = addr;
+			}
+
 			ImGui::PopStyleColor();
 			// Condition
 			DrawProperty("");
+
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+				showItemContextMenu = true;
+				editedBreakpointAddr = addr;
+			}
+
 			// Comment
 			DrawProperty(breakpoint.GetComment());
+
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+				showItemContextMenu = true;
+				editedBreakpointAddr = addr;
+			}
 		}
 
 		PopStyleCompact();
 		ImGui::EndTable();
+
+		// the context menu
+		if (ImGui::BeginPopupContextItem("PbContextMenu",
+			ImGuiPopupFlags_NoOpenOverItems |
+			ImGuiPopupFlags_NoOpenOverExistingPopup |
+			ImGuiPopupFlags_MouseButtonRight))
+		{
+			if (ImGui::MenuItem("Add New")) {
+				showAddNewPopup = true;
+			}
+			else if (ImGui::MenuItem("Disable All")) 
+			{
+				for (const auto& [addr, breakpoint] : breakpoints) {
+					m_debugger.AddBreakpoint(addr, Breakpoint::Status::DISABLED, breakpoint.GetComment());
+				}
+				m_reqDisasmUpdate = true;
+			}
+			else if (ImGui::MenuItem("Delete All")) {
+				m_debugger.DelBreakpoints();
+				m_reqDisasmUpdate = true;
+			};
+			ImGui::EndPopup();
+		}
+
+		// the item context menu
+		if (showItemContextMenu) ImGui::OpenPopup("BpItemMenu");
+		if (ImGui::BeginPopup("BpItemMenu"))
+		{
+			if (editedBreakpointAddr >= 0)
+			{
+				const auto& bp = breakpoints.at(editedBreakpointAddr);
+
+				if (bp.IsActive()) {
+					if (ImGui::MenuItem("Disable")) {
+						m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::Status::DISABLED, bp.GetComment());
+						m_reqDisasmUpdate = true;
+					}
+				}
+				else {
+					if (ImGui::MenuItem("Enable")) {
+						m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::Status::ACTIVE, bp.GetComment());
+						m_reqDisasmUpdate = true;
+					}
+				}
+				if (ImGui::MenuItem("Delete")) {
+					m_debugger.DelBreakpoint(editedBreakpointAddr);
+					m_reqDisasmUpdate = true;
+				}
+				else if (ImGui::MenuItem("Edit")) {
+					showItemEditPopup = true;
+				};
+			}
+
+			ImGui::EndPopup();
+		}
+		
+		if (showItemEditPopup || showAddNewPopup) ImGui::OpenPopup("BpEdit");
+		DrawPopupEdit(showAddNewPopup, showItemEditPopup, breakpoints, editedBreakpointAddr);
+
 	}
-	DrawContextMenu(tableName);
 
 	ImGui::PopStyleVar(2);
+}
+
+void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Breakpoints& _pbs, int _addr)
+{
+	static bool isActive = true;
+	static GlobalAddr globalAddrOld = 0x100;
+	static std::string globalAddrS = "0x100";
+	static std::string conditionS = "";
+	static std::string commentS = "";
+	static ImVec2 buttonSize = { 65.0f, 25.0f };
+
+	if (!_addNew && _init && _addr >= 0)
+	{
+		const auto& bp = _pbs.at(_addr);
+		globalAddrOld = bp.GetGlobalAddr();
+		isActive = bp.IsActive();
+		globalAddrS = std::format("0x{:04X}", bp.GetGlobalAddr());
+		conditionS = bp.GetConditionS();
+		commentS = bp.GetComment();
+	}
+
+	if (ImGui::BeginPopup("BpEdit"))
+	{
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##BPContextMenu", 2, flags))
+		{
+			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
+			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
+			// status
+			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive);
+			// addr
+			DrawProperty2EditableS("Global Address", "##BPContextAddress", &globalAddrS, "0x100");
+			// condition
+			DrawProperty2EditableS("Condition", "##BPContextCondition", &conditionS, "");
+			// comment
+			DrawProperty2EditableS("Comment", "##BPContextComment", &commentS, "");
+
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+			// warning
+			bool warning = false;
+			GlobalAddr globalAddr = dev::StrHexToInt(globalAddrS.c_str());
+			std::string warningS = "";
+			if (globalAddr > Memory::GLOBAL_MEMORY_LEN - 1) {
+				warningS = "Too large address";
+				warning = true;
+			}
+			//ImGui::SameLine(); 
+			ImGui::TextColored(COLOR_WARNING, warningS.c_str());
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			if (warning) {
+				ImGui::BeginDisabled();
+			}
+			// OK button
+			if (ImGui::Button("Ok", buttonSize) && !warning)
+			{
+				if (!_addNew && globalAddrOld != globalAddr) {
+					m_debugger.DelBreakpoint(globalAddrOld);
+				}
+				m_debugger.AddBreakpoint(globalAddr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, commentS);
+				m_reqDisasmUpdate = true;
+				ImGui::CloseCurrentPopup();
+			}
+			if (warning) {
+				ImGui::EndDisabled();
+			}
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+
+		ImGui::EndPopup();
+	}
 }
