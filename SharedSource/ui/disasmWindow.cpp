@@ -324,11 +324,11 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     }
 
     // check the keys
-    if (!_isRunning && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    if (!_isRunning && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) &&
+        m_disasm.size() >= 1)
     {
         if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
         {
-            if (m_disasm.size() >= 1)
             {
                 m_selectedLineIdx--;
                 if (m_selectedLineIdx < 0) {
@@ -339,7 +339,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
         }
         else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
         {
-            if (m_disasm.size() >= 1)
             {
                 m_selectedLineIdx += 1;
                 if (m_selectedLineIdx > lineIdx - 1) {
@@ -351,25 +350,13 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
         if (ImGui::GetIO().MouseWheel > 0.0f)
         {
-            if (m_disasm.size() >= 1)
-            {
-                m_selectedLineIdx--;
-                if (m_selectedLineIdx < 0) {
-                    m_selectedLineIdx = 0;
-                    UpdateDisasm(m_disasm[0].addr, -2);
-                }
-            }
+            m_selectedLineIdx = min(m_selectedLineIdx + 2, lineIdx - 1);
+            UpdateDisasm(m_disasm[0].addr, -2);
         }
         else if (ImGui::GetIO().MouseWheel < 0.0f)
         {
-            if (m_disasm.size() >= 1)
-            {
-                m_selectedLineIdx += 1;
-                if (m_selectedLineIdx > lineIdx - 1) {
-                    m_selectedLineIdx = lineIdx - 1;
-                    UpdateDisasm(m_disasm[0].addr, 2);
-                }
-            }
+            m_selectedLineIdx = max(m_selectedLineIdx - 2, 0);
+            UpdateDisasm(m_disasm[0].addr, 2);
         }
     }
 
