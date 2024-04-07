@@ -82,6 +82,7 @@ namespace dev
 		void Init();
 		void Execution();
 		void ExecuteInstruction();
+		void ExecuteFrameNoBreaks();
 		void ReqHandling(const bool _waitReq = false);
 		void Reset();
 		void Restart();

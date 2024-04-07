@@ -6,13 +6,14 @@
 
 dev::DisasmWindow::DisasmWindow(
         dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
-        const float* const _fontSize, const float* const _dpiScale, bool& _reqDisasmUpdate)
+        const float* const _fontSize, const float* const _dpiScale, bool& _reqDisasmUpdate, bool& _reset)
     :
     BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
     m_hardware(_hardware),
     m_debugger(_debugger),
     m_fontCommentP(fontComment),
-    m_reqDisasmUpdate(_reqDisasmUpdate)
+    m_reqDisasmUpdate(_reqDisasmUpdate),
+    m_reset(_reset)
 {
     UpdateData(false);
 }
@@ -77,6 +78,7 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
     ImGui::SameLine();
     if (ImGui::Button("Reset"))
     {
+        m_reset = true;
         m_hardware.Request(Hardware::Req::STOP);
         m_hardware.Request(Hardware::Req::RESET);
         m_debugger.ReqLoadRomLast();

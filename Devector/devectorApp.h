@@ -44,6 +44,7 @@ namespace dev
 		std::list<std::wstring> m_recentFilePaths;
 
 		bool m_reqDisasmUpdate = false;
+		bool m_reset = false;
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 
 	public:

@@ -56,6 +56,7 @@ namespace dev
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		int m_selectedLineIdx = 0;
+		bool& m_reset;
 
 		void DrawDebugControls(const bool _isRunning);
 		void DrawSearch(const bool _isRunning);
@@ -65,7 +66,7 @@ namespace dev
 
 	public:
 
-		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate);
+		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate, bool& _reset);
 		void Update();
 		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = -DISASM_INSTRUCTION_OFFSET);
 	};

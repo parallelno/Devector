@@ -4,10 +4,11 @@
 #include "Utils/StringUtils.h"
 
 dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware, 
-		const float* const _fontSizeP, const float* const _dpiScaleP)
+		const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reset)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware)
+	m_hardware(_hardware),
+	m_reset(_reset)
 {
 	UpdateData(false);
 }
@@ -172,6 +173,10 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 {
 	if (_isRunning) return;
 
+	if (m_reset) {
+		m_ccLast = 0;
+		m_reset = false;
+	}
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& data = *res;
 

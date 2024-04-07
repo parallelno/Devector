@@ -16,6 +16,7 @@ namespace dev
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		Hardware& m_hardware;
+		bool& m_reset;
 		
 		////////////////////
 		// stats
@@ -62,7 +63,7 @@ namespace dev
 
 	public:
 		HardwareStatsWindow(Hardware& _hardware,
-			const float* const _fontSizeP, const float* const _dpiScaleP);
+			const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reset);
 		
 		void Update();
 

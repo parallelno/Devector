@@ -169,11 +169,11 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             break;
 
         case Req::EXECUTE_FRAME_NO_BREAKS:
-            do { ExecuteInstruction(); }
-            while (!m_display.IsIRQ());
+        {
+            ExecuteFrameNoBreaks();
             m_reqRes.emplace({});
             break;
-
+        }
         case Req::GET_REGS:
             m_reqRes.emplace(GetRegs());
             break;
@@ -302,4 +302,12 @@ auto dev::Hardware::GetFrame(const bool _vsync)
 ->const Display::FrameBuffer*
 {
     return m_display.GetFrame(_vsync);
+}
+
+void dev::Hardware::ExecuteFrameNoBreaks()
+{
+    auto frameNum = m_display.GetFrameNum();
+    do {
+        ExecuteInstruction();
+    } while (m_display.GetFrameNum() == frameNum);
 }
