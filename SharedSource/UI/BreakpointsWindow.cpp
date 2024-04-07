@@ -38,6 +38,7 @@ void dev::BreakpointsWindow::DrawTable()
 	static int editedBreakpointAddr = -1;
 	bool showItemEditPopup = false;
 	bool showAddNewPopup = false;
+	const int COLUMNS_COUNT = 4;
 
 	const char* tableName = "##Breakpoints";
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
@@ -47,13 +48,31 @@ void dev::BreakpointsWindow::DrawTable()
 		ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchSame |
 		ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Hideable;
-	if (ImGui::BeginTable(tableName, 4, flags))
+	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
 		ImGui::TableSetupColumn("##BPActive", ImGuiTableColumnFlags_WidthFixed, 25);
 		ImGui::TableSetupColumn("GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110);
 		ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 180);
 		ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch);
-		ImGui::TableHeadersRow();
+		
+		ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+		for (int column = 0; column < COLUMNS_COUNT; column++)
+		{
+			ImGui::TableSetColumnIndex(column);
+			const char* column_name = ImGui::TableGetColumnName(column); // Retrieve name passed to TableSetupColumn()
+			if (column == 0) {
+				DrawHelpMarker(
+					"Define an address and conditions; halts execution when the\n"
+					"program counter reaches it under specified conditions.\n\n"
+
+					"Left-click in empty space: Open context menu.\n"
+					"Left-click on item: Open item context menu.\n"
+					"Double left-click in empty space: Create a new breakpoint.");
+			}
+			else {
+				ImGui::TableHeader(column_name);
+			}
+		}
 
 		PushStyleCompact(1.0f, 0.0f);
 
@@ -107,6 +126,16 @@ void dev::BreakpointsWindow::DrawTable()
 
 		PopStyleCompact();
 		ImGui::EndTable();
+
+		// double-click to add a new item
+		ImVec2 tableMin = ImGui::GetItemRectMin();
+		ImVec2 tableMax = ImGui::GetItemRectMax();
+		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) &&
+			!ImGui::IsAnyItemHovered())
+			if (ImGui::IsMouseHoveringRect(tableMin, tableMax))
+			{
+				showAddNewPopup = true;
+			}
 
 		// the context menu
 		if (ImGui::BeginPopupContextItem("BpContextMenu",
@@ -200,11 +229,12 @@ void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 		if (ImGui::BeginTable("##BPContextMenu", 2, flags))
 		{
 			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
-			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
+			ImGui::TableSetupColumn("##BPContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 140);
 			// status
 			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive);
 			// addr
-			DrawProperty2EditableS("Global Address", "##BPContextAddress", &globalAddrS, "0x100");
+			DrawProperty2EditableS("Global Address", "##BPContextAddress", &globalAddrS, "0x100",
+				"A hexademical address in the format 0x100 or 100.");
 			// condition
 			DrawProperty2EditableS("Condition", "##BPContextCondition", &conditionS, "");
 			// comment

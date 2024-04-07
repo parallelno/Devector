@@ -49,7 +49,7 @@ void dev::WatchpointsWindow::DrawProperty2Access(
 
 	if (*_hint != '\0') {
 		ImGui::SameLine();
-		dev::DrawHelpMarker(_hint);
+		DrawHelpMarker(_hint);
 	}
 }
 
@@ -70,7 +70,7 @@ void dev::WatchpointsWindow::DrawProperty2Size(
 
 	if (*_hint != '\0') {
 		ImGui::SameLine();
-		dev::DrawHelpMarker(_hint);
+		DrawHelpMarker(_hint);
 	}
 }
 
@@ -81,6 +81,7 @@ void dev::WatchpointsWindow::DrawTable()
 	static int editedWatchpointId = -1;
 	bool showItemEditPopup = false;
 	bool showAddNewPopup = false;
+	const int COLUMNS_COUNT = 5;
 
 	const char* tableName = "##Watchpoints";
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
@@ -90,14 +91,33 @@ void dev::WatchpointsWindow::DrawTable()
 		ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchSame |
 		ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Hideable;
-	if (ImGui::BeginTable(tableName, 5, flags))
+	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
 		ImGui::TableSetupColumn("###WpActive", ImGuiTableColumnFlags_WidthFixed, 25);
 		ImGui::TableSetupColumn("GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110);
 		ImGui::TableSetupColumn("Access", ImGuiTableColumnFlags_WidthFixed, 50);
 		ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 110);
 		ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch);
-		ImGui::TableHeadersRow();
+
+		ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+		for (int column = 0; column < COLUMNS_COUNT; column++)
+		{
+			ImGui::TableSetColumnIndex(column);
+			const char* column_name = ImGui::TableGetColumnName(column); // Retrieve name passed to TableSetupColumn()
+			if (column == 0) {
+				DrawHelpMarker(
+					"Define address(es) and conditions; halts execution\n"
+					"when memory is accessed under specified conditions.\n\n"
+
+					"Left-click in empty space: Open context menu.\n"
+					"Left-click on item: Open item context menu.\n"
+					"Double left-click in empty space: Create a new watchpoint.");
+			}
+			else {
+				ImGui::TableHeader(column_name);
+			}
+		}
+
 
 		PushStyleCompact(1.0f, 0.0f);
 
@@ -170,6 +190,16 @@ void dev::WatchpointsWindow::DrawTable()
 
 		PopStyleCompact();
 		ImGui::EndTable();
+
+		// double-click to add a new item
+		ImVec2 tableMin = ImGui::GetItemRectMin();
+		ImVec2 tableMax = ImGui::GetItemRectMax();
+		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) &&
+			!ImGui::IsAnyItemHovered())
+			if (ImGui::IsMouseHoveringRect(tableMin, tableMax))
+		{
+			showAddNewPopup = true;
+		}
 
 		// the context menu
 		if (ImGui::BeginPopupContextItem("WpContextMenu",
@@ -273,14 +303,15 @@ void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 
 		if (ImGui::BeginTable("##WpContextMenu", 2, flags))
 		{
-			ImGui::TableSetupColumn("##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 200);
-			ImGui::TableSetupColumn("##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 200);
+			ImGui::TableSetupColumn("##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
+			ImGui::TableSetupColumn("##WpContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 200);
 			// status
 			DrawProperty2EditableCheckBox("Active", "##WpContextStatus", &isActive);
 			// addr
-			DrawProperty2EditableS("Global Address", "##WpContextAddress", &globalAddrS, "0x100");
+			DrawProperty2EditableS("Global Address", "##WpContextAddress", &globalAddrS, "0x100",
+				"A hexademical address in the format 0x100 or 100.");
 			// access
-			DrawProperty2Access("Access", &access, "R - read, W - write, RW - read and write\n");
+			DrawProperty2Access("Access", &access, "R - read, W - write, RW - read or write.");
 			// condition
 			DrawProperty2EditableS("Condition", "##WpContextCondition", &conditionS, "",
 				"Leave it empty to catch every change.\n"
@@ -289,7 +320,8 @@ void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 				"also works <, >=, <=, !=, ==\n"
 			);
 			// value
-			DrawProperty2EditableS("Value", "##WpContextValue", &valueS);
+			DrawProperty2EditableS("Value", "##WpContextValue", &valueS, "0xFF",
+				"A hexademical value in the format 0x100 or 100.");
 			// size
 			DrawProperty2Size("Size", &size);
 			// comment
