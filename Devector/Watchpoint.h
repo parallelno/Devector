@@ -21,7 +21,7 @@ namespace dev
 	class Watchpoint
 	{
 	public:
-		using Id = size_t;
+		using Id = int;
 		enum class Access : size_t { R = 0, W, RW, COUNT };
 		const std::string ACCESS_STR[3] = { "R-", "-W", "RW" };
 		static constexpr size_t VAL_BYTE_SIZE = sizeof(uint8_t);

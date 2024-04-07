@@ -86,8 +86,8 @@ void dev::BreakpointsWindow::DrawTable()
 				showItemContextMenu = true;
 				editedBreakpointAddr = addr;
 			}
-
 			ImGui::PopStyleColor();
+
 			// Condition
 			DrawProperty("");
 
@@ -109,7 +109,7 @@ void dev::BreakpointsWindow::DrawTable()
 		ImGui::EndTable();
 
 		// the context menu
-		if (ImGui::BeginPopupContextItem("PbContextMenu",
+		if (ImGui::BeginPopupContextItem("BpContextMenu",
 			ImGuiPopupFlags_NoOpenOverItems |
 			ImGuiPopupFlags_NoOpenOverExistingPopup |
 			ImGuiPopupFlags_MouseButtonRight))
@@ -119,8 +119,8 @@ void dev::BreakpointsWindow::DrawTable()
 			}
 			else if (ImGui::MenuItem("Disable All")) 
 			{
-				for (const auto& [addr, breakpoint] : breakpoints) {
-					m_debugger.AddBreakpoint(addr, Breakpoint::Status::DISABLED, breakpoint.GetComment());
+				for (const auto& [addr, bp] : breakpoints) {
+					m_debugger.AddBreakpoint(addr, Breakpoint::Status::DISABLED, bp.GetComment());
 				}
 				m_reqDisasmUpdate = true;
 			}

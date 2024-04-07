@@ -21,7 +21,7 @@ namespace dev
 		bool& m_reqDisasmUpdate;
 
 		void DrawTable();
-		void DrawContextMenu(const char* _itemID, const Watchpoint* _wp);
+		void DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Watchpoints& _wps, int _id = -1);
 
 	public:
 		WatchpointsWindow(Debugger& _debugger,

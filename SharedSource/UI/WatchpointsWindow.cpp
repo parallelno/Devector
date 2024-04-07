@@ -43,9 +43,9 @@ void dev::WatchpointsWindow::DrawProperty2Access(
 
 	ImGui::TableNextColumn();
 
-	ImGui::RadioButton("R ##wpAccessR", _access, 0); ImGui::SameLine();
-	ImGui::RadioButton("W ##wpAccessW", _access, 1); ImGui::SameLine();
-	ImGui::RadioButton("RW ##wpAccessRW", _access, 2);
+	ImGui::RadioButton("R ###WpAccessR", _access, 0); ImGui::SameLine();
+	ImGui::RadioButton("W ###WpAccessW", _access, 1); ImGui::SameLine();
+	ImGui::RadioButton("RW ###WpAccessRW", _access, 2);
 
 	if (*_hint != '\0') {
 		ImGui::SameLine();
@@ -65,8 +65,8 @@ void dev::WatchpointsWindow::DrawProperty2Size(
 
 	ImGui::TableNextColumn();
 	
-	ImGui::RadioButton("byte ##wpSizeB", _size, 0); ImGui::SameLine();
-	ImGui::RadioButton("word ##wpSizeW", _size, 1);
+	ImGui::RadioButton("byte ###WpSizeB", _size, 0); ImGui::SameLine();
+	ImGui::RadioButton("word ###WpSizeW", _size, 1);
 
 	if (*_hint != '\0') {
 		ImGui::SameLine();
@@ -74,10 +74,175 @@ void dev::WatchpointsWindow::DrawProperty2Size(
 	}
 }
 
-// should be called right after ImGui::EndTable();
-void dev::WatchpointsWindow::DrawContextMenu(const char* _itemID, const Watchpoint* _wp = nullptr)
+void dev::WatchpointsWindow::DrawTable()
+{
+	static int selectedAddr = 0;
+	bool showItemContextMenu = false;
+	static int editedWatchpointId = -1;
+	bool showItemEditPopup = false;
+	bool showAddNewPopup = false;
+
+	const char* tableName = "##Watchpoints";
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
+
+	static ImGuiTableFlags flags =
+		ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
+		ImGuiTableFlags_SizingStretchSame |
+		ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Hideable;
+	if (ImGui::BeginTable(tableName, 5, flags))
+	{
+		ImGui::TableSetupColumn("###WpActive", ImGuiTableColumnFlags_WidthFixed, 25);
+		ImGui::TableSetupColumn("GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110);
+		ImGui::TableSetupColumn("Access", ImGuiTableColumnFlags_WidthFixed, 50);
+		ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 110);
+		ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableHeadersRow();
+
+		PushStyleCompact(1.0f, 0.0f);
+
+		auto watchpoints = m_debugger.GetWatchpoints();
+
+		for (const auto& [id, wp] : watchpoints)
+		{
+			ImGui::TableNextRow(ImGuiTableRowFlags_None, 21.0f);
+			auto globalAddr = wp.GetGlobalAddr();
+			// isActive
+			ImGui::TableNextColumn();
+			auto isActive = wp.IsActive();
+			ImGui::Checkbox(std::format("##{:05X}", globalAddr).c_str(), &isActive);
+			if (isActive != wp.IsActive())
+			{
+				m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), globalAddr,
+					wp.GetCondition(), wp.GetValue(),
+					wp.GetSize(), isActive, wp.GetComment());
+				m_reqDisasmUpdate = true;
+			}
+			// GlobalAddr
+			ImGui::TableNextColumn();
+			ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+			const bool isSelected = selectedAddr == (int)globalAddr;
+			if (ImGui::Selectable(std::format("0x{:05X}", globalAddr).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
+			{
+				selectedAddr = globalAddr;
+			}
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+				showItemContextMenu = true;
+				editedWatchpointId = id;
+			}
+			ImGui::PopStyleColor();
+
+			// Access
+			DrawProperty(wp.GetAccessS());
+
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+				showItemContextMenu = true;
+				editedWatchpointId = id;
+			}
+
+			// Condition
+			std::string condS = wp.GetConditionS();
+
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+				showItemContextMenu = true;
+				editedWatchpointId = id;
+			}
+
+			// Value
+			if (wp.GetCondition() != Watchpoint::Condition::ANY) {
+				if (wp.GetSize() == Watchpoint::VAL_WORD_SIZE) {
+					condS += std::format(" {:02X}", wp.GetValue());
+				}
+				else {
+					condS += std::format(" {:04X}", wp.GetValue());
+				}
+			}
+			DrawProperty(condS + wp.GetSizeS());
+
+			// Comment
+			DrawProperty(wp.GetComment());
+
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+				showItemContextMenu = true;
+				editedWatchpointId = id;
+			}
+		}
+
+		PopStyleCompact();
+		ImGui::EndTable();
+
+		// the context menu
+		if (ImGui::BeginPopupContextItem("WpContextMenu",
+			ImGuiPopupFlags_NoOpenOverItems |
+			ImGuiPopupFlags_NoOpenOverExistingPopup |
+			ImGuiPopupFlags_MouseButtonRight))
+		{
+			if (ImGui::MenuItem("Add New")) {
+				showAddNewPopup = true;
+			}
+			else if (ImGui::MenuItem("Disable All"))
+			{
+				for (const auto& [id, wp] : watchpoints) {
+					m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
+						wp.GetCondition(), wp.GetValue(),
+						wp.GetSize(), false, wp.GetComment());
+				}
+				m_reqDisasmUpdate = true;
+			}
+			else if (ImGui::MenuItem("Delete All")) {
+				m_debugger.DelWatchpoints();
+				m_reqDisasmUpdate = true;
+			};
+			ImGui::EndPopup();
+		}
+
+		// the item context menu
+		if (showItemContextMenu) ImGui::OpenPopup("WpItemMenu");
+		if (ImGui::BeginPopup("WpItemMenu"))
+		{
+			if (editedWatchpointId >= 0)
+			{
+				const auto& wp = watchpoints.at(editedWatchpointId);
+
+				if (wp.IsActive()) {
+					if (ImGui::MenuItem("Disable")) {
+						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
+							wp.GetCondition(), wp.GetValue(),
+							wp.GetSize(), false, wp.GetComment());
+						m_reqDisasmUpdate = true;
+					}
+				}
+				else {
+					if (ImGui::MenuItem("Enable")) {
+						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
+							wp.GetCondition(), wp.GetValue(),
+							wp.GetSize(), true, wp.GetComment());
+						m_reqDisasmUpdate = true;
+					}
+				}
+				if (ImGui::MenuItem("Delete")) {
+					m_debugger.DelWatchpoint(editedWatchpointId);
+					m_reqDisasmUpdate = true;
+				}
+				else if (ImGui::MenuItem("Edit")) {
+					showItemEditPopup = true;
+				};
+			}
+
+			ImGui::EndPopup();
+		}
+
+		if (showItemEditPopup || showAddNewPopup) ImGui::OpenPopup("WpEdit");
+		DrawPopupEdit(showAddNewPopup, showItemEditPopup, watchpoints, editedWatchpointId);
+
+	}
+	ImGui::PopStyleVar(2);
+}
+
+void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Watchpoints& _wps, int _id)
 {
 	static bool isActive = true;
+	static int oldId = -1;
 	static std::string globalAddrS = "0x100";
 	static int access = static_cast<int>(Watchpoint::Access::RW);
 	static std::string conditionS = "ANY";
@@ -86,46 +251,49 @@ void dev::WatchpointsWindow::DrawContextMenu(const char* _itemID, const Watchpoi
 	static std::string commentS = "";
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
 
-	if (_wp) {
-		isActive = _wp->IsActive();
-		globalAddrS = std::format("0x{:04X}", _wp->GetGlobalAddr());
-		access = _wp->GetAccessI();
-		conditionS = _wp->GetConditionS();
-		valueS = std::format("0x{:04X}", _wp->GetValue());
-		size = _wp->GetSize();
-		commentS = _wp->GetComment();
+	if (!_addNew && _init && _id >= 0)
+	{
+		const auto& wp = _wps.at(_id);
+		oldId = _id;
+		isActive = wp.IsActive();
+		globalAddrS = std::format("0x{:04X}", wp.GetGlobalAddr());
+		access = wp.GetAccessI();
+		conditionS = wp.GetConditionS();
+		valueS = std::format("0x{:04X}", wp.GetValue());
+		size = wp.GetSize();
+		commentS = wp.GetComment();
 	}
 
-	if (ImGui::BeginPopupContextItem(_itemID))
+	if (ImGui::BeginPopup("WpEdit"))
 	{
 		static ImGuiTableFlags flags =
 			ImGuiTableFlags_ScrollY |
 			ImGuiTableFlags_SizingStretchSame |
 			ImGuiTableFlags_ContextMenuInBody;
 
-		if (ImGui::BeginTable("##BPContextMenu", 2, flags))
+		if (ImGui::BeginTable("##WpContextMenu", 2, flags))
 		{
-			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 200);
-			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 200);
+			ImGui::TableSetupColumn("##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 200);
+			ImGui::TableSetupColumn("##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 200);
 			// status
-			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive);
+			DrawProperty2EditableCheckBox("Active", "##WpContextStatus", &isActive);
 			// addr
-			DrawProperty2EditableS("Global Address", "##BPContextAddress", &globalAddrS, "0x100");
+			DrawProperty2EditableS("Global Address", "##WpContextAddress", &globalAddrS, "0x100");
 			// access
 			DrawProperty2Access("Access", &access, "R - read, W - write, RW - read and write\n");
 			// condition
-			DrawProperty2EditableS("Condition", "##BPContextCondition", &conditionS, "",
+			DrawProperty2EditableS("Condition", "##WpContextCondition", &conditionS, "",
 				"Leave it empty to catch every change.\n"
 				"= to break when it's equal to a value.\n"
 				"> to break when it's bigger than a value.\n"
 				"also works <, >=, <=, !=, ==\n"
 			);
 			// value
-			DrawProperty2EditableS("Value", "##BPContextValue", &valueS);
+			DrawProperty2EditableS("Value", "##WpContextValue", &valueS);
 			// size
 			DrawProperty2Size("Size", &size);
 			// comment
-			DrawProperty2EditableS("Comment", "##BPContextComment", &commentS, "");
+			DrawProperty2EditableS("Comment", "##WpContextComment", &commentS, "");
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
@@ -138,7 +306,7 @@ void dev::WatchpointsWindow::DrawContextMenu(const char* _itemID, const Watchpoi
 				warningS = "Too large address";
 				warning = true;
 			}
-			
+
 			auto cond = Watchpoint::StrToCondition(conditionS);
 			if (cond == Watchpoint::Condition::INVALID) {
 				warningS = "Unsupported condition";
@@ -161,7 +329,9 @@ void dev::WatchpointsWindow::DrawContextMenu(const char* _itemID, const Watchpoi
 			// OK button
 			if (ImGui::Button("Ok", buttonSize) && !warning)
 			{
-				m_debugger.AddWatchpoint(-1, static_cast<Watchpoint::Access>(access), globalAddr,
+				int id = _addNew ? -1 : oldId;
+
+				m_debugger.AddWatchpoint(id, static_cast<Watchpoint::Access>(access), globalAddr,
 					cond, value,
 					size + 1, isActive, commentS);
 
@@ -181,79 +351,4 @@ void dev::WatchpointsWindow::DrawContextMenu(const char* _itemID, const Watchpoi
 
 		ImGui::EndPopup();
 	}
-}
-
-void dev::WatchpointsWindow::DrawTable()
-{
-	static int selectedAddr = 0;
-	const char* tableName = "##Watchpoints";
-	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
-
-	static ImGuiTableFlags flags =
-		ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
-		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Hideable;
-	if (ImGui::BeginTable(tableName, 5, flags))
-	{
-			ImGui::TableSetupColumn("##WPActive", ImGuiTableColumnFlags_WidthFixed, 25);
-			ImGui::TableSetupColumn("GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110);
-			ImGui::TableSetupColumn("Access", ImGuiTableColumnFlags_WidthFixed, 50);
-			ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 110);
-			ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch);
-			ImGui::TableHeadersRow();
-
-			PushStyleCompact(1.0f, 0.0f);
-
-			auto watchpoints = m_debugger.GetWatchpoints();
-
-			for (const auto& [id, wp] : watchpoints)
-			{
-				ImGui::TableNextRow(ImGuiTableRowFlags_None, 21.0f);
-				auto globalAddr = wp.GetGlobalAddr();
-				// isActive
-				ImGui::TableNextColumn();
-				auto isActive = wp.IsActive();
-				ImGui::Checkbox(std::format("##{:05X}", globalAddr).c_str(), &isActive);
-				if (isActive != wp.IsActive())
-				{
-					m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), globalAddr,
-						wp.GetCondition(), wp.GetValue(),
-						wp.GetSize(), isActive, wp.GetComment());
-					m_reqDisasmUpdate = true;
-				}
-				// GlobalAddr
-				ImGui::TableNextColumn();
-				ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-				const bool isSelected = selectedAddr == (int)globalAddr;
-				if (ImGui::Selectable(std::format("0x{:05X}", globalAddr).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
-				{
-					selectedAddr = globalAddr;
-				}
-				ImGui::PopStyleColor();
-
-				// Access
-				DrawProperty(wp.GetAccessS());
-				// Condition
-				std::string condS = wp.GetConditionS();
-				// Value
-				if (wp.GetCondition() != Watchpoint::Condition::ANY) {
-					if (wp.GetSize() == Watchpoint::VAL_WORD_SIZE) {
-						condS += std::format(" {:02X}", wp.GetValue());
-					}
-					else {
-						condS += std::format(" {:04X}", wp.GetValue());
-					}
-				}
-				DrawProperty(condS + wp.GetSizeS());
-
-				// Comment
-				DrawProperty(wp.GetComment());
-		}
-
-		PopStyleCompact();
-		ImGui::EndTable();
-	}
-	DrawContextMenu(tableName);
-	ImGui::PopStyleVar(2);
 }
