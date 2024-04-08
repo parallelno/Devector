@@ -20,7 +20,10 @@ namespace dev
 			DISABLED,
 			ACTIVE
 		};
-		Breakpoint(const GlobalAddr _globalAddr, const Status _status = Status::ACTIVE, const std::string& _comment = "");
+
+		Breakpoint(const GlobalAddr _globalAddr, 
+			const Status _status = Status::ACTIVE, 
+			const bool _autoDel = false, const std::string& _comment = "");
 		auto GetGlobalAddr() const -> GlobalAddr;
 		auto CheckStatus() const -> bool;
 		auto GetStatus() const -> Status;
@@ -29,11 +32,13 @@ namespace dev
 		auto GetConditionS() const -> std::string;
 		auto GetComment() const -> const std::string&;
 		bool IsActive() const;
+		bool IsAutoDel() const;
 		void Print() const;
 
 	private:
 		Status m_status;
 		GlobalAddr m_globalAddr;
+		bool m_autoDel;
 		std::string m_comment;
 
 		auto IsActiveS() const -> const char*;

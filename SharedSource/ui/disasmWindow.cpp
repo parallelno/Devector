@@ -99,7 +99,7 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
     }
     ImGui::SameLine(); dev::DrawHelpMarker(
         "Search by a hexadecimal address in the format of 0x100 or 100,\n"
-        "or by a case-sensitive label name.");
+        "or by a case-sensitive label name");
     ImGui::PopItemWidth();
     if (_isRunning) ImGui::EndDisabled();
 }
@@ -115,8 +115,10 @@ bool dev::DisasmWindow::IsDisasmTableOutOfWindow() const
 void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 {
     auto res = m_hardware.Request(Hardware::Req::GET_REGS);
-    const auto& data = *res;
-    Addr regPC = data["pc"];
+    const auto& regs = *res;
+    Addr regPC = regs["pc"];
+    bool showItemContextMenu = false;
+    static int editedBreakpointAddr = -1;
 
     if (m_disasm.empty()) return;
 
@@ -184,7 +186,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                 }
 
 
-
                 // the addr column
                 ImGui::TableNextColumn();
                 ColumnClippingEnable(*m_dpiScaleP); // enable clipping
@@ -193,6 +194,9 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                     ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, line.addrS.c_str());
                 }
                 ColumnClippingDisable();
+
+                ImVec2 rowMin = ImGui::GetItemRectMin();
+                ImVec2 rowMax = { -1.0f, -1.0f };
 
 
                 // draw a comment
@@ -210,8 +214,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                     if (m_fontCommentP) {
                         ImGui::PopFont();
                     }
-
                 }
+
                 // draw labels
                 else if (!isCode)
                 {
@@ -310,11 +314,56 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                         ImGui::TextColored(DISASM_TBL_COLOR_ADDR, line.consts.c_str());
                     }
 
+                    rowMax = ImGui::GetItemRectMax();
+                }
+
+                // check if right-click on the row
+                if (!_isRunning && rowMax.x != -1.0f && rowMax.y != -1.0f &&
+                    ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+                {
+                    auto mousePos = ImGui::GetMousePos();
+                    if (mousePos.x >= rowMin.x && mousePos.x < rowMax.x &&
+                        mousePos.y >= rowMin.y && mousePos.y < rowMax.y)
+                    {
+                        showItemContextMenu = true;
+                        editedBreakpointAddr = addr;
+                    }
                 }
             }
        
         ImGui::EndTable();
         PopStyleCompact();
+
+        // the item context menu
+        if (showItemContextMenu) ImGui::OpenPopup("DisasmItemMenu");
+        if (ImGui::BeginPopup("DisasmItemMenu"))
+        {
+            if (ImGui::MenuItem("Show Current Break")) {
+                UpdateDisasm(regPC);
+            }
+            else if (ImGui::MenuItem("Run To Selected Line") && editedBreakpointAddr >= 0)
+            {
+                m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::Status::ACTIVE, true);   
+                m_reqDisasmUpdate = true;
+                m_hardware.Request(Hardware::Req::RUN);
+            }
+            else if (ImGui::MenuItem("Add/Remove Beakpoint")) {
+                auto status = m_debugger.GetBreakpointStatus(editedBreakpointAddr);
+                if (status == Breakpoint::Status::DELETED) {
+                    status = Breakpoint::Status::ACTIVE;
+                }
+                else {
+                    status = Breakpoint::Status::DELETED;
+                }
+                m_debugger.SetBreakpointStatus(editedBreakpointAddr, status);
+                m_reqDisasmUpdate = true;
+            }
+            else if (ImGui::MenuItem("Remove All Beakpoints")) {
+                m_debugger.DelBreakpoints();
+                m_reqDisasmUpdate = true;
+            };
+            ImGui::EndPopup();
+        }
     }
 
     ImGui::PopStyleVar(2);

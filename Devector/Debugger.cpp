@@ -617,16 +617,19 @@ void dev::Debugger::SetBreakpointStatus(const GlobalAddr _globalAddr, const Brea
 		DelBreakpoint(_globalAddr);
 		return;
 	}
-	auto bpI = m_breakpoints.find(_globalAddr);
-	if (bpI != m_breakpoints.end()) {
-		bpI->second.SetStatus(_status);
-		return;
+	{
+		std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+		auto bpI = m_breakpoints.find(_globalAddr);
+		if (bpI != m_breakpoints.end()) {
+			bpI->second.SetStatus(_status);
+			return;
+		}
 	}
 	AddBreakpoint(_globalAddr, _status);
 }
 
 void dev::Debugger::AddBreakpoint(const GlobalAddr _globalAddr, 
-	const Breakpoint::Status _status, const std::string& _comment)
+	const Breakpoint::Status _status, const bool _autoDel, const std::string& _comment)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 	auto bpI = m_breakpoints.find(_globalAddr);
@@ -635,7 +638,7 @@ void dev::Debugger::AddBreakpoint(const GlobalAddr _globalAddr,
 		m_breakpoints.erase(bpI);
 	}
 
-	m_breakpoints.emplace(_globalAddr, std::move(Breakpoint(_globalAddr, _status, _comment)));
+	m_breakpoints.emplace(_globalAddr, std::move(Breakpoint(_globalAddr, _status, _autoDel, _comment)));
 }
 
 void dev::Debugger::DelBreakpoint(const GlobalAddr _globalAddr)
@@ -659,7 +662,9 @@ bool dev::Debugger::CheckBreakpoints(const GlobalAddr _globalAddr)
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 	auto bpI = m_breakpoints.find(_globalAddr);
 	if (bpI == m_breakpoints.end()) return false;
-	return bpI->second.CheckStatus();
+	auto status = bpI->second.CheckStatus();
+	if (bpI->second.IsAutoDel()) m_breakpoints.erase(bpI);
+	return status;
 }
 /*
 void dev::Debugger::PrintBreakpoints()

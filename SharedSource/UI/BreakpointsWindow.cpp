@@ -63,11 +63,11 @@ void dev::BreakpointsWindow::DrawTable()
 			if (column == 0) {
 				DrawHelpMarker(
 					"Define an address and conditions; halts execution when the\n"
-					"program counter reaches it under specified conditions.\n\n"
+					"program counter reaches it under specified conditions\n\n"
 
-					"Left-click in empty space: Open context menu.\n"
-					"Left-click on item: Open item context menu.\n"
-					"Double left-click in empty space: Create a new breakpoint.");
+					"Left-click in empty space: Open context menu\n"
+					"Left-click on item: Open item context menu\n"
+					"Double left-click in empty space: Create a new breakpoint");
 			}
 			else {
 				ImGui::TableHeader(column_name);
@@ -78,18 +78,18 @@ void dev::BreakpointsWindow::DrawTable()
 
 		auto breakpoints = m_debugger.GetBreakpoints();
 
-		for (const auto& [addr, breakpoint] : breakpoints)
+		for (const auto& [addr, bp] : breakpoints)
 		{
 			ImGui::TableNextRow(ImGuiTableRowFlags_None, 21.0f);
 
 			// isActive
 			ImGui::TableNextColumn();
-			auto isActive = breakpoint.IsActive();
+			auto isActive = bp.IsActive();
 			ImGui::Checkbox(std::format("##{:05X}", addr).c_str(), &isActive);
 
-			if (isActive != breakpoint.IsActive())
+			if (isActive != bp.IsActive())
 			{
-				m_debugger.AddBreakpoint(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, breakpoint.GetComment());
+				m_debugger.AddBreakpoint(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, bp.IsAutoDel(), bp.GetComment());
 				m_reqDisasmUpdate = true;
 			}
 			// GlobalAddr
@@ -108,7 +108,8 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGui::PopStyleColor();
 
 			// Condition
-			DrawProperty("");
+			const char* cond = bp.IsAutoDel() ? "Auto delete" : "";
+			DrawProperty(cond);
 
 			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
 				showItemContextMenu = true;
@@ -116,7 +117,7 @@ void dev::BreakpointsWindow::DrawTable()
 			}
 
 			// Comment
-			DrawProperty(breakpoint.GetComment());
+			DrawProperty(bp.GetComment());
 
 			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
 				showItemContextMenu = true;
@@ -128,15 +129,16 @@ void dev::BreakpointsWindow::DrawTable()
 		ImGui::EndTable();
 
 		// double-click to add a new item
-		ImVec2 tableMin = ImGui::GetItemRectMin();
-		ImVec2 tableMax = ImGui::GetItemRectMax();
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) &&
 			!ImGui::IsAnyItemHovered())
+		{
+			ImVec2 tableMin = ImGui::GetItemRectMin();
+			ImVec2 tableMax = ImGui::GetItemRectMax();
 			if (ImGui::IsMouseHoveringRect(tableMin, tableMax))
 			{
 				showAddNewPopup = true;
 			}
-
+		}
 		// the context menu
 		if (ImGui::BeginPopupContextItem("BpContextMenu",
 			ImGuiPopupFlags_NoOpenOverItems |
@@ -149,7 +151,7 @@ void dev::BreakpointsWindow::DrawTable()
 			else if (ImGui::MenuItem("Disable All")) 
 			{
 				for (const auto& [addr, bp] : breakpoints) {
-					m_debugger.AddBreakpoint(addr, Breakpoint::Status::DISABLED, bp.GetComment());
+					m_debugger.AddBreakpoint(addr, Breakpoint::Status::DISABLED, bp.IsAutoDel(), bp.GetComment());
 				}
 				m_reqDisasmUpdate = true;
 			}
@@ -170,13 +172,13 @@ void dev::BreakpointsWindow::DrawTable()
 
 				if (bp.IsActive()) {
 					if (ImGui::MenuItem("Disable")) {
-						m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::Status::DISABLED, bp.GetComment());
+						m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::Status::DISABLED, bp.IsAutoDel(), bp.GetComment());
 						m_reqDisasmUpdate = true;
 					}
 				}
 				else {
 					if (ImGui::MenuItem("Enable")) {
-						m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::Status::ACTIVE, bp.GetComment());
+						m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::Status::ACTIVE, bp.IsAutoDel(), bp.GetComment());
 						m_reqDisasmUpdate = true;
 					}
 				}
@@ -188,7 +190,6 @@ void dev::BreakpointsWindow::DrawTable()
 					showItemEditPopup = true;
 				};
 			}
-
 			ImGui::EndPopup();
 		}
 		
@@ -203,6 +204,7 @@ void dev::BreakpointsWindow::DrawTable()
 void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Breakpoints& _pbs, int _addr)
 {
 	static bool isActive = true;
+	static bool isAutoDel = false;
 	static GlobalAddr globalAddrOld = 0x100;
 	static std::string globalAddrS = "0x100";
 	static std::string conditionS = "";
@@ -214,6 +216,7 @@ void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 		const auto& bp = _pbs.at(_addr);
 		globalAddrOld = bp.GetGlobalAddr();
 		isActive = bp.IsActive();
+		isAutoDel = bp.IsAutoDel();
 		globalAddrS = std::format("0x{:04X}", bp.GetGlobalAddr());
 		conditionS = bp.GetConditionS();
 		commentS = bp.GetComment();
@@ -231,12 +234,14 @@ void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
 			ImGui::TableSetupColumn("##BPContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 140);
 			// status
-			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive);
+			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive, "Disable the breakpoint");
 			// addr
 			DrawProperty2EditableS("Global Address", "##BPContextAddress", &globalAddrS, "0x100",
 				"A hexademical address in the format 0x100 or 100.");
 			// condition
 			DrawProperty2EditableS("Condition", "##BPContextCondition", &conditionS, "");
+			// auto delete
+			DrawProperty2EditableCheckBox("Auto Delete", "##BPContextAutoDel", &isAutoDel, "Removes the breakpoint when execution halts");
 			// comment
 			DrawProperty2EditableS("Comment", "##BPContextComment", &commentS, "");
 
@@ -268,7 +273,7 @@ void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 				if (!_addNew && globalAddrOld != globalAddr) {
 					m_debugger.DelBreakpoint(globalAddrOld);
 				}
-				m_debugger.AddBreakpoint(globalAddr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, commentS);
+				m_debugger.AddBreakpoint(globalAddr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, isAutoDel, commentS);
 				m_reqDisasmUpdate = true;
 				ImGui::CloseCurrentPopup();
 			}

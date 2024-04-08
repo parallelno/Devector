@@ -107,11 +107,11 @@ void dev::WatchpointsWindow::DrawTable()
 			if (column == 0) {
 				DrawHelpMarker(
 					"Define address(es) and conditions; halts execution\n"
-					"when memory is accessed under specified conditions.\n\n"
+					"when memory is accessed under specified conditions\n\n"
 
-					"Left-click in empty space: Open context menu.\n"
-					"Left-click on item: Open item context menu.\n"
-					"Double left-click in empty space: Create a new watchpoint.");
+					"Left-click in empty space: Open context menu\n"
+					"Left-click on item: Open item context menu\n"
+					"Double left-click in empty space: Create a new watchpoint");
 			}
 			else {
 				ImGui::TableHeader(column_name);
@@ -309,9 +309,9 @@ void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 			DrawProperty2EditableCheckBox("Active", "##WpContextStatus", &isActive);
 			// addr
 			DrawProperty2EditableS("Global Address", "##WpContextAddress", &globalAddrS, "0x100",
-				"A hexademical address in the format 0x100 or 100.");
+				"A hexademical address in the format 0x100 or 100");
 			// access
-			DrawProperty2Access("Access", &access, "R - read, W - write, RW - read or write.");
+			DrawProperty2Access("Access", &access, "R - read, W - write, RW - read or write");
 			// condition
 			DrawProperty2EditableS("Condition", "##WpContextCondition", &conditionS, "",
 				"Leave it empty to catch every change.\n"
@@ -321,7 +321,7 @@ void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 			);
 			// value
 			DrawProperty2EditableS("Value", "##WpContextValue", &valueS, "0xFF",
-				"A hexademical value in the format 0x100 or 100.");
+				"A hexademical value in the format 0x100 or 100");
 			// size
 			DrawProperty2Size("Size", &size);
 			// comment

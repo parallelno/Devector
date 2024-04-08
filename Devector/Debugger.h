@@ -85,7 +85,8 @@ namespace dev
 
 		void SetBreakpointStatus(const GlobalAddr _globalAddr, const Breakpoint::Status _status);
 		void AddBreakpoint(const GlobalAddr _globalAddr, 
-			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE, const std::string& _comment = "");
+			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE, 
+			const bool _autoDel = false, const std::string& _comment = "");
 		void DelBreakpoint(const GlobalAddr _globalAddr);
 		void DelBreakpoints();
 		bool CheckBreakpoints(const GlobalAddr _globalAddr);

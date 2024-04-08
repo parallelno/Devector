@@ -251,8 +251,8 @@ void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::str
 	}
 }
 
-
-void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val)
+void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label, 
+	bool* _val, const char* _help)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
 	ImGui::TableNextColumn();
@@ -263,4 +263,11 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label, b
 
 	ImGui::TableNextColumn();
 	ImGui::Checkbox(_label, _val);
+
+	if (*_help != '\0') {
+		ImGui::SameLine();
+		ImGui::Dummy({ 80,10 });
+		ImGui::SameLine();
+		dev::DrawHelpMarker(_help);
+	}
 }
