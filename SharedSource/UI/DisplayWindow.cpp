@@ -29,12 +29,31 @@ const char* fragmentShaderSource = R"(
 
     uniform sampler2D texture0;
     uniform ivec2 iresolution;
+    uniform vec4 m_shaderData_scrollVert;
 
     layout (location = 0) out vec4 out0;
 
     void main()
     {
-        vec3 color = texture(texture0, vec2(uv0.x, 1.0f - uv0.y)).rgb;
+        vec2 uv = vec2(uv0.x, 1.0f - uv0.y);
+        float scrollV = 0;
+        
+        vec2 texPxlSize = vec2(1.0f/768.0f , 1.0f/312.0f);
+
+        float borderLeft = texPxlSize.x * 128.0f;
+        float borderRight = borderLeft + texPxlSize.x * 512.0f;
+        float borderTop = texPxlSize.y * 40.0f;
+        float borderBottom = borderTop + texPxlSize.y * 256.0f;
+
+        if (uv.x >= borderLeft && 
+            uv.x < borderRight && 
+            uv.y >= borderTop && 
+            uv.y < borderBottom)
+        {
+            scrollV = 1.0f/255.0f * m_shaderData_scrollVert.x;
+        }
+        vec2 uvScrolled = vec2(uv.x, uv.y - scrollV);
+        vec3 color = texture(texture0, uvScrolled).rgb;
         out0 = vec4(color, 1.0f);
     }
 )";
@@ -45,14 +64,9 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
     m_hardware(_hardware), m_isHovered(false), m_glUtils(_glUtils)
 {
-    //CreateTexture(true);
-    //UpdateData(false);
+    GLUtils::ShaderParams shaderParams = { { "m_shaderData_scrollVert", &m_shaderData_scrollVert } };
 
-    m_shaderParamData = {};
-    //{ "globalColorBg", globalColorBg },
-    //{ "globalColorFg", globalColorFg } };
-
-    m_renderDataIdx = m_glUtils.InitRenderData(vertexShaderSource, fragmentShaderSource, FRAME_BUFFER_W, FRAME_BUFFER_H, {}, 1);
+    m_renderDataIdx = m_glUtils.InitRenderData(vertexShaderSource, fragmentShaderSource, FRAME_BUFFER_W, FRAME_BUFFER_H, shaderParams, 1);
 }
 
 void dev::DisplayWindow::Update()
@@ -80,7 +94,8 @@ void dev::DisplayWindow::DrawDisplay()
 {
     if (m_renderDataIdx >= 0 && m_glUtils.IsShaderDataReady(m_renderDataIdx))
     {
-        int scrollVert = m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert");
+        float scrollVert = m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert");
+        m_shaderData_scrollVert.x = scrollVert;
 
         auto& framebufferTextures = m_glUtils.GetFramebufferTextures(m_renderDataIdx);
 
@@ -130,6 +145,6 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
         auto frameP = m_hardware.GetFrame(_isRunning);
 
         m_glUtils.UpdateTextures(m_renderDataIdx, (uint8_t*)frameP->data(), Display::FRAME_W, Display::FRAME_H, 3);
-        m_glUtils.Draw(m_renderDataIdx, m_shaderParamData);
+        m_glUtils.Draw(m_renderDataIdx);
     }
 }

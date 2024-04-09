@@ -10,9 +10,9 @@ namespace dev
 	class GLUtils
 	{
 	public:
-		using ShaderParam = std::map<std::string, GLuint1>;
 		struct Vec4 { float x, y, z, w; };
-		using ShaderParamData = std::map<std::string, Vec4>;
+		using ShaderParamData = std::map<GLuint1, Vec4*>;
+		using ShaderParams = std::map<std::string, Vec4*>;
 		struct RenderData
 		{
 			GLuint1 shaderProgram = 0;
@@ -24,7 +24,7 @@ namespace dev
 			int textureW;
 			int textureH;
 			int textureCount;
-			ShaderParam params;
+			ShaderParamData params;
 
 			RenderData(const int _textureCount = 1):
 				textures(_textureCount, -1), framebufferTextures(_textureCount, -1), framebuffers(_textureCount, -1),
@@ -48,10 +48,10 @@ namespace dev
 		GLUtils();
 		~GLUtils();
 		auto InitRenderData(const std::string& _vtxShaderS, const std::string& _fragShaderS,
-			const int _framebufferW, const int _framebufferH, std::vector<std::string> _paramNames, 
+			const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams,
 			const int _textureCount = 1) -> int;
 
-		auto Draw(const int _renderDataIdx, const ShaderParamData& _paramData) const -> int;
+		auto Draw(const int _renderDataIdx) const -> int;
 		void UpdateTextures(const int _renderDataIdx, const uint8_t* _memP, const int _width, const int _height, const int _colorDepth);
 		auto GetFramebufferTextures(const int _renderDataIdx) const -> const std::vector<GLuint1>&;
 		bool IsShaderDataReady(const int _renderDataIdx) const;

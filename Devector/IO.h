@@ -74,7 +74,9 @@ namespace dev
 		inline auto GetColor(const size_t _colorIdx) const -> ColorI { return m_palette[_colorIdx]; };
 		inline auto GetBorderColor() const -> ColorI { return m_palette[m_borderColorIdx]; };
 		inline auto GetBorderColorIdx() const -> uint8_t { return m_borderColorIdx; };
-		inline auto GetScroll() const -> uint8_t { return m_portA; };
+		inline auto GetScroll() const -> uint8_t { 
+			return m_portA; 
+		};
 		inline auto GetDisplayMode() const -> bool { return m_displayMode; };
 		inline auto GetOutCommitTime() const -> int { return m_outCommitTimer; };
 		inline auto GetPaletteCommitTime() const -> int { return m_paletteCommitTimer; };

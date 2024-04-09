@@ -11,19 +11,12 @@ const char* rvShaderVtx = R"(
     
     layout (location = 0) in vec3 vtxPos;
     layout (location = 1) in vec2 vtxUV;
-
-    uniform vec4 globalColorBg;
-    uniform vec4 globalColorFg;
     
     out vec2 uv0;
-    out vec4 globalColorBg0;
-    out vec4 globalColorFg0;
 
     void main()
     {
         uv0 = vtxUV;
-        globalColorBg0 = globalColorBg;
-        globalColorFg0 = globalColorFg;
         gl_Position = vec4(vtxPos.xyz, 1.0f);
     }
 )";
@@ -34,11 +27,11 @@ const char* rvShaderFrag = R"(
     precision highp float;
 
     in vec2 uv0;
-    in vec4 globalColorBg0;
-    in vec4 globalColorFg0;
 
     uniform sampler2D texture0;
-    uniform ivec2 iresolution;
+    //uniform ivec2 iresolution;
+    uniform vec4 globalColorBg;
+    uniform vec4 globalColorFg;
 
     layout (location = 0) out vec4 out0;
 
@@ -57,17 +50,17 @@ const char* rvShaderFrag = R"(
 
         float isOdd8K = step(0.5, fract(uv0.x / 0.5));
         isOdd8K = mix(isOdd8K, 1.0 - isOdd8K, isAddrBelow32K);
-        vec3 bgColor = mix(globalColorBg0.xyz, globalColorBg0.xyz * BACK_COLOR_MULL, isOdd8K);
+        vec3 bgColor = mix(globalColorBg.xyz, globalColorBg.xyz * BACK_COLOR_MULL, isOdd8K);
 
         int bitIdx = 7 - int(uv0.x * 1023.0) & 7;
         int isBitOn = GetBit(byte, bitIdx);
 
         int isByteOdd = (int(uv0.x * 511.0)>>3) & 1;
-        vec3 byteColor = mix(globalColorFg0.xyz * BYTE_COLOR_MULL, globalColorFg0.xyz, float(isByteOdd));
+        vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
         vec3 color = mix(bgColor, byteColor, float(isBitOn));
 
-        out0 = vec4(color, globalColorBg0.a);
-        //out0 = vec4(byte,byte,byte, globalColorBg0.a);
+        out0 = vec4(color, globalColorBg.a);
+        //out0 = vec4(byte,byte,byte, globalColorBg.a);
     }
 )";
 
@@ -77,13 +70,10 @@ dev::RamViewWindow::RamViewWindow(Hardware& _hardware,
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
     m_hardware(_hardware), m_glUtils(_glUtils)
 {
-    auto globalColorBg = GLUtils::Vec4(0.2f, 0.2f, 0.2f, 1.0f);
-    auto globalColorFg = GLUtils::Vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-    m_shaderParamData = {
-        { "globalColorBg", globalColorBg },
-        { "globalColorFg", globalColorFg } };
-    m_renderDataIdx = m_glUtils.InitRenderData(rvShaderVtx, rvShaderFrag, FRAME_BUFFER_W, FRAME_BUFFER_H, { "globalColorBg", "globalColorFg" }, RAM_TEXTURES);
+    GLUtils::ShaderParams shaderParams = {
+        { "globalColorBg", &m_globalColorBg },
+        { "globalColorFg", &m_globalColorFg } };
+    m_renderDataIdx = m_glUtils.InitRenderData(rvShaderVtx, rvShaderFrag, FRAME_BUFFER_W, FRAME_BUFFER_H, shaderParams, RAM_TEXTURES);
 }
 
 void dev::RamViewWindow::Update()
@@ -145,7 +135,7 @@ void dev::RamViewWindow::UpdateData(const bool _isRunning)
     {
         auto memP = m_hardware.GetRam()->data();
         m_glUtils.UpdateTextures(m_renderDataIdx, memP, RAM_TEXTURE_W, RAM_TEXTURE_H, 1);
-        m_glUtils.Draw(m_renderDataIdx, m_shaderParamData);
+        m_glUtils.Draw(m_renderDataIdx);
     }
 }
 

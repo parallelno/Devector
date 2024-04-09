@@ -33,9 +33,9 @@ namespace dev
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		bool m_isHovered;
+		GLUtils::Vec4 m_shaderData_scrollVert = {255.0f, 0, 0, 0};
 
 		GLUtils& m_glUtils;
-		GLUtils::ShaderParamData m_shaderParamData;
 		int m_renderDataIdx = -1;
 
 		void DrawDisplay();

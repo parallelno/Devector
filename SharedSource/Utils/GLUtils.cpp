@@ -25,7 +25,7 @@ GLfloat vertices[] = {
  }
 
  auto dev::GLUtils::InitRenderData(const std::string& _vtxShaderS, const std::string& _fragShaderS,
-     const int _framebufferW, const int _framebufferH, std::vector<std::string> _paramNames, const int _textureCount)
+     const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams, const int _textureCount)
 -> int
  {
      if (m_glewInitCode != GLEW_OK) return -1;
@@ -82,9 +82,12 @@ GLfloat vertices[] = {
     renderData.shaderProgram = CreateShaderProgram(_vtxShaderS.c_str(), _fragShaderS.c_str());
 
     // get uniform vars ids
-    for (const auto& paramName : _paramNames)
+    for (const auto& [name, val] : _paramParams)
     {
-        renderData.params[paramName] = glGetUniformLocation(renderData.shaderProgram, paramName.c_str());
+        auto paramId = glGetUniformLocation(renderData.shaderProgram, name.c_str());
+        if (paramId < 0) continue;
+
+        renderData.params[paramId] = val;
     }
 
     // assign a texture
@@ -113,7 +116,7 @@ dev::GLUtils::~GLUtils()
     glDeleteBuffers(1, &vtxBufferObj);
 }
 
-int dev::GLUtils::Draw(const int _renderDataIdx, const ShaderParamData& _paramData) const
+int dev::GLUtils::Draw(const int _renderDataIdx) const
 {
     if (m_glewInitCode != GLEW_OK ||
         !IsShaderDataReady(_renderDataIdx)) return -1;
@@ -131,12 +134,9 @@ int dev::GLUtils::Draw(const int _renderDataIdx, const ShaderParamData& _paramDa
         glUseProgram(renderData.shaderProgram);
 
         // send the color
-        for (const auto& [paramName, paramValue] : _paramData)
+        for (const auto& [paramId, paramValue] : renderData.params)
         {
-            auto paramIdI = renderData.params.find(paramName);
-            if (paramIdI == renderData.params.end()) continue;
-
-            glUniform4f(paramIdI->second, paramValue.x, paramValue.y, paramValue.z, paramValue.w);
+            glUniform4f(paramId, paramValue->x, paramValue->y, paramValue->z, paramValue->w);
         }
 
         // assign a texture

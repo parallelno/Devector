@@ -40,7 +40,8 @@ namespace dev
 		float m_scale = 1.0f;
 
 		GLUtils& m_glUtils;
-		GLUtils::ShaderParamData m_shaderParamData;
+		GLUtils::Vec4 m_globalColorBg = { 0.2f, 0.2f, 0.2f, 1.0f };
+		GLUtils::Vec4 m_globalColorFg = { 1.0f, 1.0f, 1.0f, 1.0f };
 		int m_renderDataIdx = -1;
 
 		void DrawDisplay();
