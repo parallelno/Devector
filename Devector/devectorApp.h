@@ -8,6 +8,7 @@
 #include "Utils/Status.h"
 #include "Utils/JsonUtils.h"
 #include "Utils/ImGuiApp.h"
+#include "Utils/GLUtils.h"
 
 #include "UI/BreakpointsWindow.h"
 #include "UI/WatchpointsWindow.h"
@@ -46,6 +47,7 @@ namespace dev
 		bool m_reqDisasmUpdate = false;
 		bool m_reset = false;
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
+		GLUtils m_glUtils;
 
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ);

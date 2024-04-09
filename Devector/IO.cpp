@@ -19,9 +19,9 @@ void dev::IO::Init()
     m_portB = 0xFF;
     m_portC = 0xFF;
     CW2 = 0;
-    PA2 = 0xFF;
-    PB2 = 0xFF;
-    PC2 = 0xFF;
+    m_portA2 = 0xFF;
+    m_portB2 = 0xFF;
+    m_portC2 = 0xFF;
     outport = PORT_NO_COMMIT;
     outbyte = PORT_NO_COMMIT;
     palettebyte = PORT_NO_COMMIT;
@@ -79,13 +79,13 @@ auto dev::IO::PortIn(uint8_t _port)
         result = CW2;
         break;
     case 0x05:
-        result = PC2;
+        result = m_portC2;
         break;
     case 0x06:
-        result = PB2;
+        result = m_portB2;
         break;
     case 0x07:
-        result = PA2;
+        result = m_portA2;
         break;
 
         // Timer
@@ -194,6 +194,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         m_borderColorIdx = m_portB & 0x0f;
         m_displayMode = (m_portB & 0x10) != 0;
         break;
+        // vertical scroll
     case 0x03:
         m_portA = _value;
         break;
@@ -202,13 +203,13 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         CW2 = _value;
         break;
     case 0x05:
-        PC2 = _value;
+        m_portC2 = _value;
         break;
     case 0x06:
-        PB2 = _value;
+        m_portB2 = _value;
         break;
     case 0x07:
-        PA2 = _value;
+        m_portA2 = _value;
         break;
 
         // Timer

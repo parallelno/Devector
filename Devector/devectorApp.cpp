@@ -14,7 +14,8 @@
 dev::DevectorApp::DevectorApp(
 	const std::string& _stringPath, nlohmann::json _settingsJ)
 	:
-	ImGuiApp(_settingsJ, _stringPath, APP_NAME)
+	ImGuiApp(_settingsJ, _stringPath, APP_NAME),
+	m_glUtils()
 {
 	SettingsInit();
 	WindowsInit();
@@ -29,7 +30,7 @@ void dev::DevectorApp::WindowsInit()
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
-	m_ramViewWindowP = std::make_unique<dev::RamViewWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
+	m_ramViewWindowP = std::make_unique<dev::RamViewWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
 
 	// Set the key callback function
 	glfwSetWindowUserPointer(m_window, this);

@@ -219,6 +219,12 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             m_reqRes.emplace({});
             break;
 
+        case Req::SCROLL_VERT:
+            m_reqRes.emplace({
+                {"scrollVert", m_display.GetScrollVert()}
+                });
+            break;
+
         default:
             break;
         }

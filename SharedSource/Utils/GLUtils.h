@@ -10,43 +10,51 @@ namespace dev
 	class GLUtils
 	{
 	public:
-		static constexpr int FRAME_BUFFER_W = 1024;
-		static constexpr int FRAME_BUFFER_H = 512;
-
-		#define RAM_TEXTURES (Memory::GLOBAL_MEMORY_LEN / Memory::MEM_64K)
-		#define	RAM_TEXTURE_W 256
-		#define	RAM_TEXTURE_H (GLsizei)(Memory::MEMORY_MAIN_LEN / 256)
-
-		struct ShaderData {
+		using ShaderParam = std::map<std::string, GLuint1>;
+		struct Vec4 { float x, y, z, w; };
+		using ShaderParamData = std::map<std::string, Vec4>;
+		struct RenderData
+		{
 			GLuint1 shaderProgram = 0;
-			GLuint1 ramTextures[RAM_TEXTURES] = {0};
-			GLuint1 framebufferTextures[RAM_TEXTURES] = {0};
-			GLuint1 framebuffers[RAM_TEXTURES] = {0};
-			GLuint1 vtxArrayObj = 0;
-			GLuint1 vtxBufferObj = 0;
-			GLuint1 globalColorBgId = -1;
-			GLuint1 globalColorFgId = -1;
+			std::vector<GLuint1> textures;
+			std::vector<GLuint1> framebufferTextures;
+			std::vector<GLuint1> framebuffers;
+			int framebufferW;
+			int framebufferH;
+			int textureW;
+			int textureH;
+			int textureCount;
+			ShaderParam params;
+
+			RenderData(const int _textureCount = 1):
+				textures(_textureCount, -1), framebufferTextures(_textureCount, -1), framebuffers(_textureCount, -1),
+				textureCount(_textureCount)
+			{};
+			RenderData() = delete;
 		};
+
 	private:
-		int m_frameSizeW, m_frameSizeH;
+		std::vector<RenderData> m_renderDatas;
+		GLuint1 vtxArrayObj = 0;
+		GLuint1 vtxBufferObj = 0;
 
-		ShaderData m_shaderData;
-		Hardware& m_hardware;
+		GLenum1 m_glewInitCode;
 
-		GLenum1 Init();
-		void DrawDisplay();
-		void CreateRamTextures();
 		GLuint1 CompileShader(GLenum1 _shaderType, const char* _source);
 		GLuint1 CreateShaderProgram(const char* _vertexShaderSource, const char* _fragmentShaderSource);
-
+		GLuint1 GLCheckError(GLuint1 _obj, const std::string& _txt);
 
 	public:
-		GLUtils(Hardware& _hardware);
+		GLUtils();
 		~GLUtils();
-		void Update();
-		GLuint1 GLCheckError(GLuint1 _obj, const std::string& _txt);
-		auto GetShaderData() -> const ShaderData*;
-		auto IsShaderDataReady() -> const bool;
+		auto InitRenderData(const std::string& _vtxShaderS, const std::string& _fragShaderS,
+			const int _framebufferW, const int _framebufferH, std::vector<std::string> _paramNames, 
+			const int _textureCount = 1) -> int;
+
+		auto Draw(const int _renderDataIdx, const ShaderParamData& _paramData) const -> int;
+		void UpdateTextures(const int _renderDataIdx, const uint8_t* _memP, const int _width, const int _height, const int _colorDepth);
+		auto GetFramebufferTextures(const int _renderDataIdx) const -> const std::vector<GLuint1>&;
+		bool IsShaderDataReady(const int _renderDataIdx) const;
 	};
 }
 

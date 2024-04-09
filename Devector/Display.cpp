@@ -29,11 +29,15 @@ void dev::Display::Rasterize()
 	bool isPortPortHandling = m_rasterLine == 0 || m_rasterLine == 311 || isHorizBorder ||
 		outCommitTime >= IO::PORT_COMMIT_TIME || paletteCommitTime >= IO::PORT_COMMIT_TIME;
 
-	if (isBorder) {
-		if (isPortPortHandling) FillBorderWithPortHandling();
+	if (isBorder) 
+	{
+		if (isPortPortHandling) 
+			FillBorderWithPortHandling();
 		else FillBorder();
 	}
-	else if (isPortPortHandling) {
+	else 
+	if (isPortPortHandling)
+	{
 		if (m_io.GetDisplayMode() == IO::DISPLAY_MODE_256) FillActiveAreaMode256WithPortHandling();
 		else FillActiveAreaMode512WithPortHandling();
 	}
@@ -48,6 +52,11 @@ void dev::Display::Rasterize()
 	m_rasterLine = m_rasterPixel == 0 ? (m_rasterLine + 1) % FRAME_H : m_rasterLine;
 
 	m_irq = m_rasterLine == 0 && m_rasterPixel == IO::IRQ_COMMIT_PXL;
+
+	if (m_rasterLine == SCAN_ACTIVE_AREA_TOP && m_rasterPixel == IO::SCROLL_COMMIT_PXL)
+	{
+		m_scrollIdx = m_io.GetScroll();
+	}
 
 	if (m_rasterPixel + m_rasterLine == 0)
 	{
@@ -146,11 +155,6 @@ void dev::Display::FillActiveAreaMode256WithPortHandling()
 
 		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx /* & 0x03 */); // TODO: figure out why there's 0x03
 		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx /* & 0x0c */); // TODO: figure out why there's 0x0c
-
-		if (m_rasterLine == SCAN_ACTIVE_AREA_TOP && m_rasterPixel == IO::SCROLL_COMMIT_PXL)
-		{
-			m_scrollIdx = m_io.GetScroll();
-		}
 	}
 }
 

@@ -27,7 +27,7 @@ namespace dev
 		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
 		// it's calculated from the start of the third machine cycle (4 cpu cycles each)
 		static constexpr int PALETTE_COMMIT_TIME = 19 * 4;
-		static constexpr int SCROLL_COMMIT_PXL = 150; // when the OUTed scroll data is handled. time's counted by 12 MHz clock (equals amount of pixels in 512 mode)
+		static constexpr int SCROLL_COMMIT_PXL = 128; // when the OUTed scroll data is handled. time's counted by 12 MHz clock (equals amount of pixels in 512 mode)
 		static constexpr int IRQ_COMMIT_PXL = 176; // when apply the OUTed scroll data is handled. time's counted by 12 MHz clock (equals amount of pixels in 512 mode)
 		static constexpr int PALETTE_LEN = 16;
 
@@ -48,7 +48,7 @@ namespace dev
 		int m_paletteCommitTimer; // in pixels (12Mhz clock)
 
 		uint8_t CW, m_portA, m_portB, m_portC;
-		uint8_t CW2, PA2, PB2, PC2;
+		uint8_t CW2, m_portA2, m_portB2, m_portC2;
 
 		int outport;
 		int outbyte;

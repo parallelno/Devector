@@ -81,6 +81,7 @@ namespace dev
 		int GetRasterLine() const { return m_rasterLine; };
 		int GetRasterPixel() const { return m_rasterPixel; };
 		static ColorI VectorColorToArgb(const uint8_t _vColor);
+		auto GetScrollVert() const-> uint8_t { return m_scrollIdx; };
 	private:
 		uint32_t BytesToColorIdxs();
 		void FillActiveAreaMode256();

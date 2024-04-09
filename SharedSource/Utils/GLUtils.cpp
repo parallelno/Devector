@@ -1,142 +1,168 @@
 #include "GLUtils.h"
 
+#include "Result.h"
 #include <format>
 #include "GL/glew.h"
 
 // vertices of a quad with UV coordinates
 GLfloat vertices[] = {
     // Positions          // UV Coords
-    /*
-     -1.0f, -1.0f, 0.0f,  1.0f, 1.0f,
-     -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-      1.0f,  1.0f, 0.0f,  0.0f, 0.0f,
-      1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
-      */
      -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,
      -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,
       1.0f,  1.0f, 0.0f,  1.0f, 0.0f,
       1.0f, -1.0f, 0.0f,  1.0f, 1.0f,
 };
 
+// it is not initializing the Window and OpenGL 3.3 context
+// assumming ImGui and did it already
 
-// Vertex shader source code
-const char* vertexShaderSource = R"(
-    #version 330 core
-    precision highp float;
-    
-    layout (location = 0) in vec3 vtxPos;
-    layout (location = 1) in vec2 vtxUV;
+ dev::GLUtils::GLUtils()
+ {
+     m_glewInitCode = glewInit();
+     if (m_glewInitCode != GLEW_OK) {
+         dev::Log("Failed to initialize GLEW");
+     }
+ }
 
-    uniform vec4 globalColorBg;
-    uniform vec4 globalColorFg;
-    
-    out vec2 uv0;
-    out vec4 globalColorBg0;
-    out vec4 globalColorFg0;
+ auto dev::GLUtils::InitRenderData(const std::string& _vtxShaderS, const std::string& _fragShaderS,
+     const int _framebufferW, const int _framebufferH, std::vector<std::string> _paramNames, const int _textureCount)
+-> int
+ {
+     if (m_glewInitCode != GLEW_OK) return -1;
 
-    void main()
+     auto& renderData = m_renderDatas.emplace_back(RenderData{ _textureCount });
+     int renderDataIdx = m_renderDatas.size() - 1;
+
+    // Create a OpenGL texture identifiers
+    glGenTextures(_textureCount, renderData.textures.data());
+
+    // Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
+    glGenVertexArrays(1, &vtxArrayObj);
+    glGenBuffers(1, &vtxBufferObj);
+    glBindVertexArray(vtxArrayObj);
+    glBindBuffer(GL_ARRAY_BUFFER, vtxBufferObj);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+
+    // Create and bind a framebuffer object (FBO)
+    glGenFramebuffers(_textureCount, renderData.framebuffers.data());
+    // Create a framebuffer texturea to render to
+    glGenTextures(_textureCount, renderData.framebufferTextures.data());
+
+    for (int i = 0; i < _textureCount; i++)
     {
-        uv0 = vtxUV;
-        globalColorBg0 = globalColorBg;
-        globalColorFg0 = globalColorFg;
-        gl_Position = vec4(vtxPos.xyz, 1.0f);
-    }
-)";
+        glBindFramebuffer(GL_FRAMEBUFFER, renderData.framebuffers[i]);
 
-// Fragment shader source code
-const char* fragmentShaderSource = R"(
-    #version 330 core
-    precision highp float;
+        glBindTexture(GL_TEXTURE_2D, renderData.framebufferTextures[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _framebufferW, _framebufferH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData.framebufferTextures[i], 0);
 
-    in vec2 uv0;
-    in vec4 globalColorBg0;
-    in vec4 globalColorFg0;
-
-    uniform sampler2D texture0;
-    uniform ivec2 iresolution;
-
-    layout (location = 0) out vec4 out0;
-
-    #define BYTE_COLOR_MULL 0.6
-    #define BACK_COLOR_MULL 0.7
-
-    int GetBit(float _color, int _bitIdx) {
-        return (int(_color * 255.0) >> _bitIdx) & 1;
-    }
-
-    void main()
-    {
-        float isAddrBelow32K = 1.0 - step(0.5, uv0.y);
-        vec2 uv = vec2( uv0.y * 2.0, uv0.x / 2.0 + isAddrBelow32K * 0.5);
-        float byte = texture(texture0, uv).r;
-
-        float isOdd8K = step(0.5, fract(uv0.x / 0.5));
-        isOdd8K = mix(isOdd8K, 1.0 - isOdd8K, isAddrBelow32K);
-        vec3 bgColor = mix(globalColorBg0.xyz, globalColorBg0.xyz * BACK_COLOR_MULL, isOdd8K);
-
-        int bitIdx = 7 - int(uv0.x * 1023.0) & 7;
-        int isBitOn = GetBit(byte, bitIdx);
-
-        int isByteOdd = (int(uv0.x * 511.0)>>3) & 1;
-        vec3 byteColor = mix(globalColorFg0.xyz * BYTE_COLOR_MULL, globalColorFg0.xyz, float(isByteOdd));
-        vec3 color = mix(bgColor, byteColor, float(isBitOn));
-
-        out0 = vec4(color, globalColorBg0.a);
-        //out0 = vec4(byte,byte,byte, globalColorBg0.a);
-    }
-)";
-
-dev::GLUtils::GLUtils(Hardware& _hardware)
-    :
-    m_hardware(_hardware), m_frameSizeW(FRAME_BUFFER_W), m_frameSizeH(FRAME_BUFFER_H)
-{
-    Init();
-}
-
-void dev::GLUtils::Update()
-{
-    CreateRamTextures();
-    DrawDisplay();
-}
-
-void dev::GLUtils::DrawDisplay()
-{
-
-    if (IsShaderDataReady())
-        for (int i = 0; i < RAM_TEXTURES; i++)
+        // Check framebuffer status
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) 
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffers[i]);
-            glViewport(0, 0, m_frameSizeW, m_frameSizeH);
-            glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            // Render the quad
-            glUseProgram(m_shaderData.shaderProgram);
-
-            // send the color
-            glUniform4f(m_shaderData.globalColorBgId, 0.2f, 0.2f, 0.2f, 1.0f);
-            glUniform4f(m_shaderData.globalColorFgId, 1.0f, 1.0f, 1.0f, 1.0f);
-
-            // assign a texture
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, m_shaderData.ramTextures[i]);
-
-            glBindVertexArray(m_shaderData.vtxArrayObj);
-            glDrawArrays(GL_QUADS, 0, 4);
-            glBindVertexArray(0);
-        
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            dev::Log("Framebuffer is not complete!");
+            return -1;
         }
+        // Unbind framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    renderData.framebufferW = _framebufferW;
+    renderData.framebufferH = _framebufferH;
+
+    // Create shader program
+    renderData.shaderProgram = CreateShaderProgram(_vtxShaderS.c_str(), _fragShaderS.c_str());
+
+    // get uniform vars ids
+    for (const auto& paramName : _paramNames)
+    {
+        renderData.params[paramName] = glGetUniformLocation(renderData.shaderProgram, paramName.c_str());
+    }
+
+    // assign a texture
+    glUseProgram(renderData.shaderProgram);
+    glUniform1i(glGetUniformLocation(renderData.shaderProgram, "texture0"), 0);
+
+    if (!IsShaderDataReady(renderDataIdx)) return -1;
+
+    return renderDataIdx;
 }
 
-void dev::GLUtils::CreateRamTextures()
+dev::GLUtils::~GLUtils()
 {
-    auto memP = (m_hardware.GetRam()->data());
-    int imageSize = RAM_TEXTURE_W * RAM_TEXTURE_H;
-
-    for (int i = 0; i < RAM_TEXTURES; i++)
+    for (const auto& renderData : m_renderDatas)
     {
-        glBindTexture(GL_TEXTURE_2D, m_shaderData.ramTextures[i]);
+        // Clean up
+        glDeleteFramebuffers(renderData.textureCount, renderData.framebuffers.data());
+        glDeleteTextures(renderData.textureCount, renderData.textures.data());
+        glDeleteTextures(renderData.textureCount, renderData.framebufferTextures.data());
+
+        // Delete shader program
+        glDeleteProgram(renderData.shaderProgram);
+    }
+
+    glDeleteVertexArrays(1, &vtxArrayObj);
+    glDeleteBuffers(1, &vtxBufferObj);
+}
+
+int dev::GLUtils::Draw(const int _renderDataIdx, const ShaderParamData& _paramData) const
+{
+    if (m_glewInitCode != GLEW_OK ||
+        !IsShaderDataReady(_renderDataIdx)) return -1;
+
+    auto& renderData = m_renderDatas.at(_renderDataIdx);
+
+    for (int i = 0; i < renderData.textureCount; i++)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, renderData.framebuffers[i]);
+        glViewport(0, 0, renderData.framebufferW, renderData.framebufferH);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Render the quad
+        glUseProgram(renderData.shaderProgram);
+
+        // send the color
+        for (const auto& [paramName, paramValue] : _paramData)
+        {
+            auto paramIdI = renderData.params.find(paramName);
+            if (paramIdI == renderData.params.end()) continue;
+
+            glUniform4f(paramIdI->second, paramValue.x, paramValue.y, paramValue.z, paramValue.w);
+        }
+
+        // assign a texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, renderData.textures[i]);
+
+        glBindVertexArray(vtxArrayObj);
+        glDrawArrays(GL_QUADS, 0, 4);
+        glBindVertexArray(0);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    return 0;
+}
+
+void dev::GLUtils::UpdateTextures(const int _renderDataIdx, const uint8_t* _memP, const int _width, const int _height, const int _colorDepth)
+{
+    if (_renderDataIdx >= m_renderDatas.size()) return;
+    auto& renderData = m_renderDatas.at(_renderDataIdx);
+
+    int imageSize = _width * _height * _colorDepth;
+
+    for (int i = 0; i < renderData.textureCount; i++)
+    {
+        glBindTexture(GL_TEXTURE_2D, renderData.textures[i]);
 
         // Setup filtering parameters for display
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -148,90 +174,17 @@ void dev::GLUtils::CreateRamTextures()
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, RAM_TEXTURE_W, RAM_TEXTURE_H, 0, GL_RED, GL_UNSIGNED_BYTE, memP + i * imageSize);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, _width, _height, 0, GL_RED, GL_UNSIGNED_BYTE, _memP + i * imageSize);
     }
 }
 
-
-// it is not initializing the Window and OpenGL 3.3 context
-// assumming ImGui and did it already
-GLenum dev::GLUtils::Init()
+auto dev::GLUtils::GetFramebufferTextures(const int _renderDataIdx) const
+-> const std::vector<GLuint>&
 {
-    auto glewInitCode = glewInit();
-    if (glewInitCode != GLEW_OK) {
-        dev::Log("Failed to initialize GLEW");
-        return glewInitCode;
-    }
-
-    // texture init
-    // Create a OpenGL texture identifiers
-    glGenTextures(RAM_TEXTURES, m_shaderData.ramTextures);
-    CreateRamTextures();
-
-    // Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
-    glGenVertexArrays(1, &m_shaderData.vtxArrayObj);
-    glGenBuffers(1, &m_shaderData.vtxBufferObj);
-    glBindVertexArray(m_shaderData.vtxArrayObj);
-    glBindBuffer(GL_ARRAY_BUFFER, m_shaderData.vtxBufferObj);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-
-    // Create and bind a framebuffer object (FBO)
-    glGenFramebuffers(RAM_TEXTURES, m_shaderData.framebuffers);
-    // Create a texture to render to
-    glGenTextures(RAM_TEXTURES, m_shaderData.framebufferTextures);
-
-    for (int i = 0; i < RAM_TEXTURES; i++) 
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_shaderData.framebuffers[i]);
-
-        glBindTexture(GL_TEXTURE_2D, m_shaderData.framebufferTextures[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_frameSizeW, m_frameSizeH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shaderData.framebufferTextures[i], 0);
-
-        // Check framebuffer status
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            dev::Log("Framebuffer is not complete!");
-        // Unbind framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-
-    // Create shader program
-    m_shaderData.shaderProgram = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
-    
-    // get uniform vars ids
-    m_shaderData.globalColorBgId = glGetUniformLocation(m_shaderData.shaderProgram, "globalColorBg");
-    m_shaderData.globalColorFgId = glGetUniformLocation(m_shaderData.shaderProgram, "globalColorFg");
-    
-    // assign a texture
-    glUseProgram(m_shaderData.shaderProgram);
-    glUniform1i(glGetUniformLocation(m_shaderData.shaderProgram, "texture0"), 0);
-
-    return IsShaderDataReady() ? glewInitCode : -1;
+    return m_renderDatas.at(_renderDataIdx).framebufferTextures;
 }
 
-dev::GLUtils::~GLUtils()
-{
-    // Clean up
-    glDeleteFramebuffers(RAM_TEXTURES, m_shaderData.framebuffers);
-    glDeleteTextures(RAM_TEXTURES, m_shaderData.ramTextures);
-    glDeleteTextures(RAM_TEXTURES, m_shaderData.framebufferTextures);
-    glDeleteVertexArrays(1, &m_shaderData.vtxArrayObj);
-    glDeleteBuffers(1, &m_shaderData.vtxBufferObj);
-
-    // Delete shader program
-    glDeleteProgram(m_shaderData.shaderProgram);
-}
-
-GLuint dev::GLUtils::GLCheckError(GLuint1 _obj, const std::string& _txt)
+GLuint dev::GLUtils::GLCheckError(GLuint _obj, const std::string& _txt)
 {
     // Check for compilation errors
     GLint success;
@@ -275,16 +228,18 @@ GLuint dev::GLUtils::CreateShaderProgram(const char* _vertexShaderSource, const 
     return shaderProgram;
 }
 
-auto dev::GLUtils::GetShaderData() 
--> const ShaderData*
+bool dev::GLUtils::IsShaderDataReady(const int _renderDataIdx) const
 {
-    return &m_shaderData;
-}
+    auto& renderData = m_renderDatas.at(_renderDataIdx);
 
-auto dev::GLUtils::IsShaderDataReady()
--> const bool
-{
-    return //m_shaderData.framebuffer && m_shaderData.framebufferTexture &&
-        m_shaderData.shaderProgram && //m_shaderData.ramMainTexture && 
-        m_shaderData.vtxArrayObj && m_shaderData.vtxBufferObj;
+    bool ready = vtxArrayObj && vtxBufferObj && (renderData.shaderProgram >= 0);
+    auto textureCount = renderData.framebuffers.size();
+
+    for (int i = 0; i < textureCount; i++)
+    {
+        ready = ready && renderData.framebuffers[i] >= 0 &&
+            renderData.framebufferTextures[i] >= 0 &&
+            renderData.textures[i] >= 0;
+    }
+    return ready;
 }

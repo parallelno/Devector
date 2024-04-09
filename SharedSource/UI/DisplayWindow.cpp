@@ -39,6 +39,8 @@ void dev::DisplayWindow::DrawDisplay()
 {
     if (m_frameTextureId)
     {
+        int scrollVert = m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert");
+
         ImGui::Image((void*)(intptr_t)m_frameTextureId, ImVec2(DEFAULT_WINDOW_W, 500));
     }
 }

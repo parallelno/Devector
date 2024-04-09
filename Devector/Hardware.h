@@ -58,6 +58,7 @@ namespace dev
 			GET_MEMORY_MODES,
 			GET_GLOBAL_ADDR_RAM,
 			KEY_HANDLING,
+			SCROLL_VERT,
 		};
 
         Hardware();
