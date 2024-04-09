@@ -5,7 +5,7 @@
 #include "imgui_impl_opengl3_loader.h"
 
 // Vertex shader source code
-const char* vertexShaderSource = R"(
+const char* rvShaderVtx = R"(
     #version 330 core
     precision highp float;
     
@@ -29,7 +29,7 @@ const char* vertexShaderSource = R"(
 )";
 
 // Fragment shader source code
-const char* fragmentShaderSource = R"(
+const char* rvShaderFrag = R"(
     #version 330 core
     precision highp float;
 
@@ -83,7 +83,7 @@ dev::RamViewWindow::RamViewWindow(Hardware& _hardware,
     m_shaderParamData = {
         { "globalColorBg", globalColorBg },
         { "globalColorFg", globalColorFg } };
-    m_renderDataIdx = m_glUtils.InitRenderData(vertexShaderSource, fragmentShaderSource, FRAME_BUFFER_W, FRAME_BUFFER_H, { "globalColorBg", "globalColorFg" }, RAM_TEXTURES);
+    m_renderDataIdx = m_glUtils.InitRenderData(rvShaderVtx, rvShaderFrag, FRAME_BUFFER_W, FRAME_BUFFER_H, { "globalColorBg", "globalColorFg" }, RAM_TEXTURES);
 }
 
 void dev::RamViewWindow::Update()

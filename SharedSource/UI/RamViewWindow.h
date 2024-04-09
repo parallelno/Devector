@@ -35,13 +35,12 @@ namespace dev
 		static constexpr int RAM_TEXTURE_H = Memory::MEMORY_MAIN_LEN / 256;
 
 		Hardware& m_hardware;
-		GLUtils& m_glUtils;
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		float m_scale = 1.0f;
 
+		GLUtils& m_glUtils;
 		GLUtils::ShaderParamData m_shaderParamData;
-
 		int m_renderDataIdx = -1;
 
 		void DrawDisplay();

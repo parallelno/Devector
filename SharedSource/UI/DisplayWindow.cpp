@@ -3,15 +3,56 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3_loader.h"
 
+// Vertex shader source code
+const char* vertexShaderSource = R"(
+    #version 330 core
+    precision highp float;
+    
+    layout (location = 0) in vec3 vtxPos;
+    layout (location = 1) in vec2 vtxUV;
+    
+    out vec2 uv0;
+
+    void main()
+    {
+        uv0 = vtxUV;
+        gl_Position = vec4(vtxPos.xyz, 1.0f);
+    }
+)";
+
+// Fragment shader source code
+const char* fragmentShaderSource = R"(
+    #version 330 core
+    precision highp float;
+
+    in vec2 uv0;
+
+    uniform sampler2D texture0;
+    uniform ivec2 iresolution;
+
+    layout (location = 0) out vec4 out0;
+
+    void main()
+    {
+        vec3 color = texture(texture0, vec2(uv0.x, 1.0f - uv0.y)).rgb;
+        out0 = vec4(color, 1.0f);
+    }
+)";
 
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
-        const float* const _fontSizeP, const float* const _dpiScaleP)
+        const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-    m_hardware(_hardware), m_isHovered(false)
+    m_hardware(_hardware), m_isHovered(false), m_glUtils(_glUtils)
 {
-    CreateTexture(true);
-    UpdateData(false);
+    //CreateTexture(true);
+    //UpdateData(false);
+
+    m_shaderParamData = {};
+    //{ "globalColorBg", globalColorBg },
+    //{ "globalColorFg", globalColorFg } };
+
+    m_renderDataIdx = m_glUtils.InitRenderData(vertexShaderSource, fragmentShaderSource, FRAME_BUFFER_W, FRAME_BUFFER_H, {}, 1);
 }
 
 void dev::DisplayWindow::Update()
@@ -37,11 +78,13 @@ bool dev::DisplayWindow::IsHovered()
 
 void dev::DisplayWindow::DrawDisplay()
 {
-    if (m_frameTextureId)
+    if (m_renderDataIdx >= 0 && m_glUtils.IsShaderDataReady(m_renderDataIdx))
     {
         int scrollVert = m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert");
 
-        ImGui::Image((void*)(intptr_t)m_frameTextureId, ImVec2(DEFAULT_WINDOW_W, 500));
+        auto& framebufferTextures = m_glUtils.GetFramebufferTextures(m_renderDataIdx);
+
+        ImGui::Image((void*)(intptr_t)framebufferTextures[0], ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
     }
 }
 
@@ -80,5 +123,13 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
     if (ccDiff == 0) return;
 
     // update
-    CreateTexture(_isRunning);
+    //CreateTexture(_isRunning);
+    if (m_renderDataIdx >= 0)
+    {
+        //auto memP = m_hardware.GetRam()->data();
+        auto frameP = m_hardware.GetFrame(_isRunning);
+
+        m_glUtils.UpdateTextures(m_renderDataIdx, (uint8_t*)frameP->data(), Display::FRAME_W, Display::FRAME_H, 3);
+        m_glUtils.Draw(m_renderDataIdx, m_shaderParamData);
+    }
 }

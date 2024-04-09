@@ -174,7 +174,14 @@ void dev::GLUtils::UpdateTextures(const int _renderDataIdx, const uint8_t* _memP
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, _width, _height, 0, GL_RED, GL_UNSIGNED_BYTE, _memP + i * imageSize);
+        int glTexFormat;
+        if (_colorDepth == 1) {
+            glTexFormat = GL_RED;
+        }
+        else if (_colorDepth == 3) {
+            glTexFormat = GL_RGBA;
+        }
+        glTexImage2D(GL_TEXTURE_2D, 0, glTexFormat, _width, _height, 0, glTexFormat, GL_UNSIGNED_BYTE, _memP + i * imageSize);
     }
 }
 
