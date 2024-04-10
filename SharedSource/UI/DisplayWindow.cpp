@@ -21,6 +21,7 @@ const char* vertexShaderSource = R"(
 )";
 
 // Fragment shader source code
+
 const char* fragmentShaderSource = R"(
     #version 330 core
     precision highp float;
@@ -58,6 +59,38 @@ const char* fragmentShaderSource = R"(
     }
 )";
 
+const GLchar* vertex_shader_glsl_300_es = R"(
+    #version 330 core    
+
+    precision highp float;
+    layout(location = 0) in vec3 vtxPos;
+    layout(location = 1) in vec2 vtxUV;
+
+    out vec2 uv0;
+
+    void main()
+    {
+        uv0 = vec2(vtxUV.x, 1.0f - vtxUV.y);
+        gl_Position = vec4(vtxPos.xyz, 1.0f);
+    }
+)";
+
+const GLchar* fragment_shader_glsl_300_es = R"(
+    #version 330 core
+    precision mediump float;
+    
+    uniform sampler2D texture0;
+    
+    in vec2 uv0;
+
+    layout (location = 0) out vec4 Out_Color;
+
+    void main()
+    {
+        Out_Color = texture(texture0, uv0.st );
+    }
+)";
+
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
         const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
 	:
@@ -66,7 +99,7 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 {
     GLUtils::ShaderParams shaderParams = { { "m_shaderData_scrollVert", &m_shaderData_scrollVert } };
 
-    m_renderDataIdx = m_glUtils.InitRenderData(vertexShaderSource, fragmentShaderSource, FRAME_BUFFER_W, FRAME_BUFFER_H, shaderParams, 1);
+    m_renderDataIdx = m_glUtils.InitRenderData(vertex_shader_glsl_300_es, fragment_shader_glsl_300_es, Display::FRAME_W, Display::FRAME_H, shaderParams, 1, GL_NEAREST1);
 }
 
 void dev::DisplayWindow::Update()
@@ -100,6 +133,7 @@ void dev::DisplayWindow::DrawDisplay()
         auto& framebufferTextures = m_glUtils.GetFramebufferTextures(m_renderDataIdx);
 
         ImGui::Image((void*)(intptr_t)framebufferTextures[0], ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
+        //ImGui::Image((void*)(intptr_t)m_frameTextureId, ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
     }
 }
 
@@ -139,12 +173,13 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 
     // update
     //CreateTexture(_isRunning);
+
     if (m_renderDataIdx >= 0)
     {
         //auto memP = m_hardware.GetRam()->data();
         auto frameP = m_hardware.GetFrame(_isRunning);
 
-        m_glUtils.UpdateTextures(m_renderDataIdx, (uint8_t*)frameP->data(), Display::FRAME_W, Display::FRAME_H, 3);
+        m_glUtils.UpdateTextures(m_renderDataIdx, (uint8_t*)frameP->data(), Display::FRAME_W, Display::FRAME_H, sizeof(ColorI), GL_NEAREST1);
         m_glUtils.Draw(m_renderDataIdx);
     }
 }

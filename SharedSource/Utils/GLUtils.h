@@ -2,6 +2,7 @@
 #ifndef DEV_GL_UTILS_H
 #define DEV_GL_UTILS_H
 
+#include "Consts.h"
 #include "../Devector/Types.h"
 #include "../Devector/Hardware.h"
 
@@ -49,10 +50,11 @@ namespace dev
 		~GLUtils();
 		auto InitRenderData(const std::string& _vtxShaderS, const std::string& _fragShaderS,
 			const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams,
-			const int _textureCount = 1) -> int;
+			const int _textureCount = 1, const int framebufferTextureFilter = GL_NEAREST1) -> int;
 
 		auto Draw(const int _renderDataIdx) const -> int;
-		void UpdateTextures(const int _renderDataIdx, const uint8_t* _memP, const int _width, const int _height, const int _colorDepth);
+		void UpdateTextures(const int _renderDataIdx, const uint8_t* _memP, 
+			const int _width, const int _height, const int _colorDepth, const int textureFilter = GL_NEAREST1);
 		auto GetFramebufferTextures(const int _renderDataIdx) const -> const std::vector<GLuint1>&;
 		bool IsShaderDataReady(const int _renderDataIdx) const;
 	};

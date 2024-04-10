@@ -25,7 +25,7 @@ GLfloat vertices[] = {
  }
 
  auto dev::GLUtils::InitRenderData(const std::string& _vtxShaderS, const std::string& _fragShaderS,
-     const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams, const int _textureCount)
+     const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams, const int _textureCount, const int framebufferTextureFilter)
 -> int
  {
      if (m_glewInitCode != GLEW_OK) return -1;
@@ -52,7 +52,7 @@ GLfloat vertices[] = {
 
     // Create and bind a framebuffer object (FBO)
     glGenFramebuffers(_textureCount, renderData.framebuffers.data());
-    // Create a framebuffer texturea to render to
+    // Create a framebuffer texture to render to
     glGenTextures(_textureCount, renderData.framebufferTextures.data());
 
     for (int i = 0; i < _textureCount; i++)
@@ -61,8 +61,8 @@ GLfloat vertices[] = {
 
         glBindTexture(GL_TEXTURE_2D, renderData.framebufferTextures[i]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _framebufferW, _framebufferH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, framebufferTextureFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, framebufferTextureFilter);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData.framebufferTextures[i], 0);
 
         // Check framebuffer status
@@ -153,7 +153,7 @@ int dev::GLUtils::Draw(const int _renderDataIdx) const
     return 0;
 }
 
-void dev::GLUtils::UpdateTextures(const int _renderDataIdx, const uint8_t* _memP, const int _width, const int _height, const int _colorDepth)
+void dev::GLUtils::UpdateTextures(const int _renderDataIdx, const uint8_t* _memP, const int _width, const int _height, const int _colorDepth, const int textureFilter)
 {
     if (_renderDataIdx >= m_renderDatas.size()) return;
     auto& renderData = m_renderDatas.at(_renderDataIdx);
@@ -165,8 +165,8 @@ void dev::GLUtils::UpdateTextures(const int _renderDataIdx, const uint8_t* _memP
         glBindTexture(GL_TEXTURE_2D, renderData.textures[i]);
 
         // Setup filtering parameters for display
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, textureFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textureFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
@@ -178,7 +178,7 @@ void dev::GLUtils::UpdateTextures(const int _renderDataIdx, const uint8_t* _memP
         if (_colorDepth == 1) {
             glTexFormat = GL_RED;
         }
-        else if (_colorDepth == 3) {
+        else if (_colorDepth == 4) {
             glTexFormat = GL_RGBA;
         }
         glTexImage2D(GL_TEXTURE_2D, 0, glTexFormat, _width, _height, 0, glTexFormat, GL_UNSIGNED_BYTE, _memP + i * imageSize);
