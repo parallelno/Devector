@@ -36,6 +36,7 @@ namespace dev
 		// In MODE_256 it dups every 2 horizontal pxls.
 
 	public:
+
 		static constexpr int FRAME_W = 768;					// a frame resolution including borders
 		static constexpr int FRAME_H = 312;					// a frame resolution including borders
 		static constexpr int FRAME_LEN = FRAME_W * FRAME_H;	// the size of a frame buffer

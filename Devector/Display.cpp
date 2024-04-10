@@ -153,8 +153,8 @@ void dev::Display::FillActiveAreaMode256WithPortHandling()
 
 		m_io.CommitTimersHandling(colorIdxs);
 
-		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx /* & 0x03 */); // TODO: figure out why there's 0x03
-		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx /* & 0x0c */); // TODO: figure out why there's 0x0c
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx & 0x03); // TODO: figure out why there's 0x03
+		m_frameBuffer[m_rasterLine * FRAME_W + m_rasterPixel++] = m_io.GetColor(colorIdx & 0x0c); // TODO: figure out why there's 0x0c
 	}
 }
 

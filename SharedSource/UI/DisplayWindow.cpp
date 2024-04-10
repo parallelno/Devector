@@ -4,7 +4,7 @@
 #include "imgui_impl_opengl3_loader.h"
 
 // Vertex shader source code
-const char* vertexShaderSource = R"(
+const char* vtxShaderS = R"(
     #version 330 core
     precision highp float;
     
@@ -15,14 +15,29 @@ const char* vertexShaderSource = R"(
 
     void main()
     {
-        uv0 = vtxUV;
+        vec2 texPxlSize = vec2(1.0f/768.0f , 1.0f/312.0f);
+
+        float visibleAreaW = (512.0f + 32.0f * 2.0f) * texPxlSize.x;
+        
+        float visibleAreaH = (256.0f + 16.0f * 2.0f) * texPxlSize.y;
+
+
+
+        //vec2 uvScale = vec2(visibleAreaH / );
+
+        uv0 = vec2(vtxUV.x, 1.0f - vtxUV.y);
+        
+        uv0 -= vec2(0.5f, 0.5f) - vec2(0, 12.0f * texPxlSize.y);
+        uv0 *= vec2(visibleAreaW, visibleAreaH);
+        uv0 += vec2(0.5f, 0.5f);
+
         gl_Position = vec4(vtxPos.xyz, 1.0f);
     }
 )";
 
 // Fragment shader source code
 
-const char* fragmentShaderSource = R"(
+const char* fragShaderS = R"(
     #version 330 core
     precision highp float;
 
@@ -36,7 +51,7 @@ const char* fragmentShaderSource = R"(
 
     void main()
     {
-        vec2 uv = vec2(uv0.x, 1.0f - uv0.y);
+        vec2 uv = uv0;
         float scrollV = 0;
         
         vec2 texPxlSize = vec2(1.0f/768.0f , 1.0f/312.0f);
@@ -59,38 +74,6 @@ const char* fragmentShaderSource = R"(
     }
 )";
 
-const GLchar* vertex_shader_glsl_300_es = R"(
-    #version 330 core    
-
-    precision highp float;
-    layout(location = 0) in vec3 vtxPos;
-    layout(location = 1) in vec2 vtxUV;
-
-    out vec2 uv0;
-
-    void main()
-    {
-        uv0 = vec2(vtxUV.x, 1.0f - vtxUV.y);
-        gl_Position = vec4(vtxPos.xyz, 1.0f);
-    }
-)";
-
-const GLchar* fragment_shader_glsl_300_es = R"(
-    #version 330 core
-    precision mediump float;
-    
-    uniform sampler2D texture0;
-    
-    in vec2 uv0;
-
-    layout (location = 0) out vec4 Out_Color;
-
-    void main()
-    {
-        Out_Color = texture(texture0, uv0.st );
-    }
-)";
-
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
         const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
 	:
@@ -99,7 +82,7 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 {
     GLUtils::ShaderParams shaderParams = { { "m_shaderData_scrollVert", &m_shaderData_scrollVert } };
 
-    m_renderDataIdx = m_glUtils.InitRenderData(vertex_shader_glsl_300_es, fragment_shader_glsl_300_es, Display::FRAME_W, Display::FRAME_H, shaderParams, 1, GL_NEAREST1);
+    m_renderDataIdx = m_glUtils.InitRenderData(vtxShaderS, fragShaderS, FRAME_W, FRAME_H, shaderParams, 1, GL_NEAREST1);
 }
 
 void dev::DisplayWindow::Update()
@@ -133,31 +116,7 @@ void dev::DisplayWindow::DrawDisplay()
         auto& framebufferTextures = m_glUtils.GetFramebufferTextures(m_renderDataIdx);
 
         ImGui::Image((void*)(intptr_t)framebufferTextures[0], ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
-        //ImGui::Image((void*)(intptr_t)m_frameTextureId, ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
     }
-}
-
-// creates a textre
-void dev::DisplayWindow::CreateTexture(const bool _vsync)
-{
-    auto frameP = m_hardware.GetFrame(_vsync);
-
-    // Create a OpenGL texture identifier
-    if (!m_frameTextureId)
-    {
-        glGenTextures(1, &m_frameTextureId);
-    }
-    glBindTexture(GL_TEXTURE_2D, m_frameTextureId);
-
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Upload pixels into texture
-#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Display::FRAME_W, Display::FRAME_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, frameP->data());
 }
 
 void dev::DisplayWindow::UpdateData(const bool _isRunning)
@@ -172,11 +131,8 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
     if (ccDiff == 0) return;
 
     // update
-    //CreateTexture(_isRunning);
-
     if (m_renderDataIdx >= 0)
     {
-        //auto memP = m_hardware.GetRam()->data();
         auto frameP = m_hardware.GetFrame(_isRunning);
 
         m_glUtils.UpdateTextures(m_renderDataIdx, (uint8_t*)frameP->data(), Display::FRAME_W, Display::FRAME_H, sizeof(ColorI), GL_NEAREST1);
