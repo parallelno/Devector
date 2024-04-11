@@ -36,6 +36,8 @@ namespace dev
 		bool m_flagIFF = false;
 		bool m_flagHLTA = false;
 
+		std::string m_dataAddrN10S;
+		std::string m_dataAddrN8S;
 		std::string m_dataAddrN6S;
 		std::string m_dataAddrN4S;
 		std::string m_dataAddrN2S;
@@ -43,6 +45,8 @@ namespace dev
 		std::string m_dataAddrP2S;
 		std::string m_dataAddrP4S;
 		std::string m_dataAddrP6S;
+		std::string m_dataAddrP8S;
+		std::string m_dataAddrP10S;
 
 		std::string m_ccS;
 		std::string m_ccLastRunS;

@@ -81,7 +81,7 @@ void dev::RamViewWindow::Update()
 	BaseWindow::Update();
 
 	static bool open = true;
-	ImGui::Begin("Ram View", &open, ImGuiWindowFlags_NoCollapse);
+	ImGui::Begin("Ram View", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar);
 
     bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
     UpdateData(isRunning);

@@ -332,8 +332,8 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 				out.emplace_back(std::move(disasmLine));
 			}
 			
-			auto db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
-			auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
+			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
+			GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
 
 			auto breakpointStatus = GetBreakpointStatus(globalAddr);
 			DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], "", breakpointStatus);
@@ -365,7 +365,7 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 			consts = LabelsToStr(dataH << 8 | dataL, LABEL_TYPE_ALL);
 		}
 
-		auto globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
+		GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
 
 		auto disasmS = GetDisasmLine(opcode, dataL, dataH);
 		auto breakpointStatus = GetBreakpointStatus(globalAddr);

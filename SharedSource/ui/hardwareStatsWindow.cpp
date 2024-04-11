@@ -89,13 +89,17 @@ void dev::HardwareStatsWindow::DrawStack()
 		ImGui::TableSetupColumn("stackAddrs", ImGuiTableColumnFlags_WidthFixed, 30);
 
 		// Stack		
-		DrawProperty2("-4", m_dataAddrN6S);
+		DrawProperty2("-12", m_dataAddrN10S);
+		DrawProperty2("-10", m_dataAddrN8S);
+		DrawProperty2("-8", m_dataAddrN6S);
 		DrawProperty2("-6", m_dataAddrN4S);
 		DrawProperty2("-2", m_dataAddrN2S);
 		DrawProperty2("SP", m_dataAddr0S);
 		DrawProperty2("+2", m_dataAddrP2S);
 		DrawProperty2("+4", m_dataAddrP4S);
 		DrawProperty2("+6", m_dataAddrP6S);
+		DrawProperty2("+8", m_dataAddrP8S);
+		DrawProperty2("+10", m_dataAddrP10S);
 
 		ImGui::EndTable();
 	}
@@ -212,6 +216,8 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_flagHLTA = data["flagHLTA"];
 
 	// Stack
+	Addr dataAddrN10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 12 } })->at("data");
+	Addr dataAddrN8 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 10 } })->at("data");
 	Addr dataAddrN6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 8 } })->at("data");
 	Addr dataAddrN4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 6 } })->at("data");
 	Addr dataAddrN2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 4 } })->at("data");
@@ -219,7 +225,11 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	Addr dataAddrP2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP } })->at("data");
 	Addr dataAddrP4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 2 } })->at("data");
 	Addr dataAddrP6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 4 } })->at("data");
+	Addr dataAddrP8 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 6 } })->at("data");
+	Addr dataAddrP10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 8 } })->at("data");
 
+	m_dataAddrN10S = std::format("{:04X}", dataAddrN10);
+	m_dataAddrN8S = std::format("{:04X}", dataAddrN8);
 	m_dataAddrN6S = std::format("{:04X}", dataAddrN6);
 	m_dataAddrN4S = std::format("{:04X}", dataAddrN4);
 	m_dataAddrN2S = std::format("{:04X}", dataAddrN2);
@@ -227,6 +237,8 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_dataAddrP2S = std::format("{:04X}", dataAddrP2);
 	m_dataAddrP4S = std::format("{:04X}", dataAddrP4);
 	m_dataAddrP6S = std::format("{:04X}", dataAddrP6);
+	m_dataAddrP8S = std::format("{:04X}", dataAddrP8);
+	m_dataAddrP10S = std::format("{:04X}", dataAddrP10);
 
 	// Hardware
 	res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
@@ -245,11 +257,11 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_rasterPixel_rasterLineS = std::format("X: {:03} Y: {:03}", rasterPixel, rasterLine);
 
 	m_mappingRamModeS = "Off";
-	if ((mappingModeRam & (0x20 + 0x40 + 0x80)) > 0)
+	if ((mappingModeRam & Memory::MAPPING_RAM_MODE_MASK) > 0)
 	{
-		std::string mapping_ram_mode_a = (mappingModeRam & 0x20) > 0 ? "AC" : "--";
-		std::string mapping_ram_mode_8 = (mappingModeRam & 0x40) > 0 ? "8" : "-";
-		std::string mapping_ram_mode_e = (mappingModeRam & 0x80) > 0 ? "E" : "-";
+		std::string mapping_ram_mode_a = (mappingModeRam & Memory::MAPPING_RAM_MODE_A000) > 0 ? "AC" : "--";
+		std::string mapping_ram_mode_8 = (mappingModeRam & Memory::MAPPING_RAM_MODE_8000) > 0 ? "8" : "-";
+		std::string mapping_ram_mode_e = (mappingModeRam & Memory::MAPPING_RAM_MODE_E000) > 0 ? "E" : "-";
 		m_mappingRamModeS = mapping_ram_mode_8 + mapping_ram_mode_a + mapping_ram_mode_e;
 	}
 

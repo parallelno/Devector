@@ -174,7 +174,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                 auto bpStatus = line.breakpointStatus;
                 if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
                 {
-                    m_debugger.SetBreakpointStatus(addr, bpStatus);
+                    GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", editedBreakpointAddr } })->at("data");
+                    m_debugger.SetBreakpointStatus(globalAddr, bpStatus);
                     m_reqDisasmUpdate = true;
                 }
 
@@ -343,19 +344,23 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
             }
             else if (ImGui::MenuItem("Run To Selected Line") && editedBreakpointAddr >= 0)
             {
-                m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::Status::ACTIVE, true);   
+                GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", editedBreakpointAddr } })->at("data");
+                m_debugger.AddBreakpoint(globalAddr, Breakpoint::Status::ACTIVE, true);
                 m_reqDisasmUpdate = true;
                 m_hardware.Request(Hardware::Req::RUN);
             }
-            else if (ImGui::MenuItem("Add/Remove Beakpoint")) {
-                auto status = m_debugger.GetBreakpointStatus(editedBreakpointAddr);
+            else if (ImGui::MenuItem("Add/Remove Beakpoint")) 
+            {
+                GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", editedBreakpointAddr } })->at("data");
+                auto status = m_debugger.GetBreakpointStatus(globalAddr);
+
                 if (status == Breakpoint::Status::DELETED) {
                     status = Breakpoint::Status::ACTIVE;
                 }
                 else {
                     status = Breakpoint::Status::DELETED;
                 }
-                m_debugger.SetBreakpointStatus(editedBreakpointAddr, status);
+                m_debugger.SetBreakpointStatus(globalAddr, status);
                 m_reqDisasmUpdate = true;
             }
             else if (ImGui::MenuItem("Remove All Beakpoints")) {
