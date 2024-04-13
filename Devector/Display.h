@@ -51,10 +51,10 @@ namespace dev
 		static constexpr int SCAN_VBLANK_BOTTOM = 16;
 		static constexpr int SCAN_ACTIVE_AREA_TOP = SCAN_VSYNC + SCAN_VBLANK_TOP;
 		static constexpr int BORDER_LEFT = 128;				// left border in pxls
-		static constexpr int BORDER_RIGHT = BORDER_LEFT;	// right border in pxls
-		static constexpr int RES_W = 512;			// horizontal screen resolution in MODE_512
-		static constexpr int RES_H = 256;			// vertical screen resolution
+		static constexpr int ACTIVE_AREA_W = 512;			// horizontal screen resolution in MODE_512
+		static constexpr int ACTIVE_AREA_H = 256;			// vertical screen resolution
 		static constexpr int RASTERIZED_PXLS = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
+		static constexpr int COLORS_POLUTED_DELAY = 4; // this timer in pixels. if the palette is set inside the active area, the fourth and the fifth pixels get corrupted colors
 
 		bool m_irq; // interruption request
 		uint8_t m_scrollIdx; // vertical scrolling, 255 - no scroll
@@ -66,6 +66,8 @@ namespace dev
 
 		int m_rasterLine;	// currently rasterized scanline idx from the bottom
 		int m_rasterPixel;	// currently rasterized scanline pixel
+
+		int m_colorsPolutedTimer = -1;
 
 		uint64_t m_frameNum;
 
@@ -87,8 +89,8 @@ namespace dev
 		uint32_t BytesToColorIdxs();
 		void FillActiveAreaMode256();
 		void FillActiveAreaMode512();
-		void FillActiveAreaMode256WithPortHandling();
-		void FillActiveAreaMode512WithPortHandling();
+		void FillActiveAreaMode256WithPortHandling(const bool _isBorder);
+		void FillActiveAreaMode512WithPortHandling(const bool _isBorder);
 		void FillBorder();
 		void FillBorderWithPortHandling();
 	};

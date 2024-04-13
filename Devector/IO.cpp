@@ -255,22 +255,20 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     }
 }
 
-// should be called once for every to rasterized pixels
+// should be called once for every two rasterized pixels
 void dev::IO::CommitTimersHandling(const uint8_t _colorIdx)
 {
-    if (m_outCommitTimer == PORT_COMMIT_TIME)
+    if (m_outCommitTimer == 0)
     {
-        m_outCommitTimer = IO::PORT_NO_COMMIT;
         PortOutCommit();
     }
-    m_outCommitTimer -= m_outCommitTimer < PORT_COMMIT_TIME ? 0 : 2;
+    m_outCommitTimer -= m_outCommitTimer < 0 ? 0 : 2;
 
-    if (m_paletteCommitTimer == PORT_COMMIT_TIME)
+    if (m_paletteCommitTimer == 0)
     {
-        m_paletteCommitTimer = IO::PORT_NO_COMMIT;
         PaletteCommit(_colorIdx);
     }
-    m_paletteCommitTimer -= m_paletteCommitTimer < PORT_COMMIT_TIME ? 0 : 2;
+    m_paletteCommitTimer -= m_paletteCommitTimer < 0 ? 0 : 2;
 
     return;
 }
