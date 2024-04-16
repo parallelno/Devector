@@ -12,21 +12,22 @@
 
 namespace dev
 {
+		// determines when the OUT command sends data into the port
+		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
+		// it's calculated from the start of the third machine cycle (4 cpu cycles each)
+		static int OUT_COMMIT_TIME = 1;
+		// determines when the color sent from the port is stored in the palette memory
+		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
+		// it's calculated from the start of the third machine cycle (4 cpu cycles each)
+		static int PALETTE_COMMIT_TIME = 15 * 4;
+		static int IRQ_COMMIT_PXL = 72;//128; // interrupt request. time's counted by 12 MHz clock (equals amount of pixels in 512 mode)
+
 	class IO
 	{
 	public:
 		static constexpr int PORT_OUT_BORDER_COLOR = 0x0c; // OUT 0x0c
 		static constexpr int PORT_NO_COMMIT = -1; // no-data to process
 		
-		// determines when the OUT command sends data into the port
-		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
-		// it's calculated from the start of the third machine cycle (4 cpu cycles each)
-		static constexpr int OUT_COMMIT_TIME = 0;
-		// determines when the color sent from the port is stored in the palette memory
-		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
-		// it's calculated from the start of the third machine cycle (4 cpu cycles each)
-		static constexpr int PALETTE_COMMIT_TIME = 15 * 4;//19 * 4;
-		static constexpr int IRQ_COMMIT_PXL = 64; // interrupt request. time's counted by 12 MHz clock (equals amount of pixels in 512 mode)
 		static constexpr int PALETTE_LEN = 16;
 
 		// TODO: make it working
@@ -78,7 +79,7 @@ namespace dev
 		inline auto GetDisplayMode() const -> bool { return m_displayMode; };
 		inline auto GetOutCommitTimer() const -> int { return m_outCommitTimer; };
 		inline auto GetPaletteCommitTimer() const -> int { return m_paletteCommitTimer; };
-		void CommitTimersHandling(const uint8_t _colorIdx);
+		void TryToCommit(const uint8_t _colorIdx);
 	};
 }
 #endif // !DEV_IO_H

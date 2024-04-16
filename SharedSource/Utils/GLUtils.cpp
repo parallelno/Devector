@@ -133,7 +133,7 @@ int dev::GLUtils::Draw(const int _renderDataIdx) const
         // Render the quad
         glUseProgram(renderData.shaderProgram);
 
-        // send the color
+        // send the params to the shader
         for (const auto& [paramId, paramValue] : renderData.params)
         {
             glUniform4f(paramId, paramValue->x, paramValue->y, paramValue->z, paramValue->w);

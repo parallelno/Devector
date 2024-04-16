@@ -219,7 +219,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     case 0x0b:
         //timer.write((~port & 3), _value);
         break;
-        
+
         // palette (all of them below???)
     case PORT_OUT_BORDER_COLOR:
     case 0x0d:
@@ -255,20 +255,19 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     }
 }
 
-// should be called once for every two rasterized pixels
-void dev::IO::CommitTimersHandling(const uint8_t _colorIdx)
+void dev::IO::TryToCommit(const uint8_t _colorIdx)
 {
-    if (m_outCommitTimer == 0)
-    {
-        PortOutCommit();
+    if (m_outCommitTimer >= 0){
+        if (--m_outCommitTimer == 0)
+        {
+            PortOutCommit();
+        }
     }
-    m_outCommitTimer -= m_outCommitTimer < 0 ? 0 : 2;
 
-    if (m_paletteCommitTimer == 0)
-    {
-        PaletteCommit(_colorIdx);
+    if (m_paletteCommitTimer >= 0) {
+        if (--m_paletteCommitTimer == 0)
+        {
+            PaletteCommit(_colorIdx);
+        }
     }
-    m_paletteCommitTimer -= m_paletteCommitTimer < 0 ? 0 : 2;
-
-    return;
 }
