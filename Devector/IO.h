@@ -15,12 +15,12 @@ namespace dev
 		// determines when the OUT command sends data into the port
 		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
 		// it's calculated from the start of the third machine cycle (4 cpu cycles each)
-		static int OUT_COMMIT_TIME = 1;
+		static int OUT_COMMIT_TIME = 3;
 		// determines when the color sent from the port is stored in the palette memory
 		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
 		// it's calculated from the start of the third machine cycle (4 cpu cycles each)
 		static int PALETTE_COMMIT_TIME = 15 * 4;
-		static int IRQ_COMMIT_PXL = 72;//128; // interrupt request. time's counted by 12 MHz clock (equals amount of pixels in 512 mode)
+		static int IRQ_COMMIT_PXL = 128; // interrupt request. time's counted by 12 MHz clock (equals amount of pixels in 512 mode)
 
 	class IO
 	{

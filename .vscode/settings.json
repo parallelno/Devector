@@ -2,6 +2,12 @@
     "files.associations": {
         "*.asm": "retroasm_8080",
         "*.dasm": "retroasm_8080",
-        "functional": "cpp"
+        "functional": "cpp",
+        "algorithm": "cpp",
+        "chrono": "cpp",
+        "limits": "cpp",
+        "utility": "cpp",
+        "valarray": "cpp",
+        "xutility": "cpp"
     }
 }

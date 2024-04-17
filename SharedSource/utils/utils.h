@@ -126,6 +126,18 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		return rnd(0.0, _max);
 	}
 
+	template <typename T>
+	inline T Max(T a, T b)
+	{
+		return (a > b) ? a : b;
+	}
+
+	template <typename T>
+	inline T Min(T a, T b)
+	{
+		return (a < b) ? a : b;
+	}
+
 	//--------------------------------------------------------------
 	//
 	// FILES

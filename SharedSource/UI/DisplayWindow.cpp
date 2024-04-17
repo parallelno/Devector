@@ -98,10 +98,10 @@ void dev::DisplayWindow::Update()
 
 	static int dev_IRQ_COMMIT_PXL = 72;
 
-	ImGui::SliderInt("OUT_COMMIT_TIME", &(dev::OUT_COMMIT_TIME), 0, 512);
-	ImGui::SliderInt("PALETTE_COMMIT_TIME", &(dev::PALETTE_COMMIT_TIME), 0, 512);
-	ImGui::SliderInt("IRQ_COMMIT_PXL", &dev_IRQ_COMMIT_PXL, 0, 512);
-	ImGui::SliderInt("BORDER_LEFT", &(dev::BORDER_LEFT), 0, 512);
+	//ImGui::SliderInt("OUT_COMMIT_TIME", &(dev::OUT_COMMIT_TIME), 0, 512);
+	//ImGui::SliderInt("PALETTE_COMMIT_TIME", &(dev::PALETTE_COMMIT_TIME), 0, 512);
+	//ImGui::SliderInt("IRQ_COMMIT_PXL", &dev_IRQ_COMMIT_PXL, 0, 512);
+	//ImGui::SliderInt("BORDER_LEFT", &(Display::BORDER_LEFT), 0, 512);
 
 	//TODO: why dev::IRQ_COMMIT_PXL is not changing???
 	dev::IRQ_COMMIT_PXL = dev_IRQ_COMMIT_PXL;
@@ -124,7 +124,7 @@ void dev::DisplayWindow::DrawDisplay()
 {
 	if (m_renderDataIdx >= 0 && m_glUtils.IsShaderDataReady(m_renderDataIdx))
 	{
-		m_shaderData_bordL_bordB_visBord.x = (float)dev::BORDER_LEFT;
+		m_shaderData_bordL_bordB_visBord.x = (float)Display::BORDER_LEFT;
 
 		float scrollVert = m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert");
 		m_shaderData_scrollVert.x = scrollVert;

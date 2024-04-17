@@ -26,7 +26,7 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_W = 1024;
 		static constexpr int DEFAULT_WINDOW_H = 512;
 
-		static constexpr float SCALE_MAX = 3.0f;
+		static constexpr float SCALE_MAX = 5.0f;
 		static constexpr float SCALE_MIN = 0.3f;
 		static constexpr float SCALE_INC = 0.2f;
 

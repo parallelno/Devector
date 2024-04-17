@@ -15,8 +15,6 @@ namespace dev
 {
 	using namespace std::chrono_literals;
 
-		static int BORDER_LEFT = 128;				// left border in pxls
-
 	class Display
 	{
 	private:
@@ -51,8 +49,10 @@ namespace dev
 		static constexpr int SCAN_ACTIVE_AREA_TOP = SCAN_VSYNC + SCAN_VBLANK_TOP;
 		static constexpr int ACTIVE_AREA_W = 512;			// horizontal screen resolution in MODE_512
 		static constexpr int ACTIVE_AREA_H = 256;			// vertical screen resolution
+		static constexpr int BORDER_LEFT = 128;				// left border in pxls		
+		static constexpr int BORDER_RIGHT = BORDER_LEFT + ACTIVE_AREA_W;
 		static constexpr int BORDER_VISIBLE = 16; // border visible on the screen in pxls in 256 mode
-		static constexpr int RASTERIZED_PXLS = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
+		static constexpr int RASTERIZED_PXLS_MAX = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
 		static constexpr int COLORS_POLUTED_DELAY = 4; // this timer in pixels. if the palette is set inside the active area, the fourth and the fifth pixels get corrupted colors
 
 		using FrameBuffer = std::array <ColorI, FRAME_LEN>;
@@ -87,12 +87,12 @@ namespace dev
 		uint32_t BytesToColorIdxs();
 		uint32_t GetScreenBytes();
 		uint32_t BytesToColorIdx(uint32_t _screenBytes, uint8_t _bitIdx);
-		void FillActiveAreaMode256(const int _rasterizedPixels = RASTERIZED_PXLS);
-		void FillActiveAreaMode512(const int _rasterizedPixels = RASTERIZED_PXLS);
-		void FillActiveAreaMode256WithPortHandling(const int _rasterizedPixels = RASTERIZED_PXLS);
-		void FillActiveAreaMode512WithPortHandling(const int _rasterizedPixels = RASTERIZED_PXLS);
-		void FillBorder(const int _rasterizedPixels = RASTERIZED_PXLS);
-		void FillBorderWithPortHandling(const int _rasterizedPixels = RASTERIZED_PXLS);
+		void FillActiveArea256(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
+		void FillActiveArea512(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
+		void FillActiveArea256PortHandling(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
+		void FillActiveArea512PortHandling(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
+		void FillBorder(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
+		void FillBorderPortHandling(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 	};
 }
 #endif // !DEV_DISPLAY_H

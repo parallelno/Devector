@@ -31,7 +31,7 @@ namespace dev
 		int64_t m_ccLastRun = 0;
 		bool m_isHovered;
 		GLUtils::Vec4 m_shaderData_scrollVert = {255.0f, 0, 0, 0};
-		GLUtils::Vec4 m_shaderData_bordL_bordB_visBord = {(float)dev::BORDER_LEFT, static_cast<float>(Display::SCAN_VBLANK_BOTTOM), static_cast<float>(Display::BORDER_VISIBLE), 0};
+		GLUtils::Vec4 m_shaderData_bordL_bordB_visBord = {(float)Display::BORDER_LEFT, static_cast<float>(Display::SCAN_VBLANK_BOTTOM), static_cast<float>(Display::BORDER_VISIBLE), 0};
 
 		GLUtils& m_glUtils;
 		int m_renderDataIdx = -1;

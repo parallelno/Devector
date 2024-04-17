@@ -55,7 +55,7 @@ const char* rvShaderFrag = R"(
         int bitIdx = 7 - int(uv0.x * 1023.0) & 7;
         int isBitOn = GetBit(byte, bitIdx);
 
-        int isByteOdd = (int(uv0.x * 511.0)>>3) & 1;
+        int isByteOdd = (int(uv0.x * 511.0)>>2) & 1;
         vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
         vec3 color = mix(bgColor, byteColor, float(isBitOn));
 
@@ -150,11 +150,11 @@ void dev::RamViewWindow::ScaleView()
 
             if (ImGui::GetIO().MouseWheel > 0.0f)
             {
-                m_scale = m_scale > SCALE_MAX ? SCALE_MAX : m_scale + scaleAdjusted;
+                m_scale = dev::Min( m_scale + scaleAdjusted, SCALE_MAX);
             }
             else if (ImGui::GetIO().MouseWheel < 0.0f)
             {
-                m_scale = m_scale < SCALE_MIN ? SCALE_MIN : m_scale - scaleAdjusted;
+                m_scale = dev::Max(m_scale - scaleAdjusted, SCALE_MIN);
             }
         }
     }
