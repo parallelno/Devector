@@ -91,12 +91,13 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 {
     if (_isRunning) ImGui::BeginDisabled();
     ImGui::PushItemWidth(-100);
-    if (ImGui::InputTextWithHint("##empty 1", "0x100", m_searchText, IM_ARRAYSIZE(m_searchText))) 
+    if (ImGui::InputTextWithHint("##disasmSearch", "0x100", m_searchText, IM_ARRAYSIZE(m_searchText), ImGuiInputTextFlags_EnterReturnsTrue))
     {
         Addr addr = (Addr)dev::StrHexToInt(m_searchText);
         UpdateDisasm(addr);
         m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
     }
+
     ImGui::SameLine(); dev::DrawHelpMarker(
         "Search by a hexadecimal address in the format of 0x100 or 100,\n"
         "or by a case-sensitive label name");
@@ -174,7 +175,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                 auto bpStatus = line.breakpointStatus;
                 if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
                 {
-                    GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", editedBreakpointAddr } })->at("data");
+                    GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
                     m_debugger.SetBreakpointStatus(globalAddr, bpStatus);
                     m_reqDisasmUpdate = true;
                 }
@@ -346,7 +347,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
             {
                 GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", editedBreakpointAddr } })->at("data");
                 m_debugger.AddBreakpoint(globalAddr, Breakpoint::Status::ACTIVE, true);
-                m_reqDisasmUpdate = true;
+                //m_reqDisasmUpdate = true;
                 m_hardware.Request(Hardware::Req::RUN);
             }
             else if (ImGui::MenuItem("Add/Remove Beakpoint")) 
@@ -373,25 +374,22 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
     ImGui::PopStyleVar(2);
 
-    if (m_reqDisasmUpdate && m_disasm.size() >= 1)
+    if (m_reqDisasmUpdate && m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
     {
-        UpdateDisasm(m_disasm[0].addr, 0);
+        UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr);
         m_reqDisasmUpdate = false;
     }
 
     // check the keys
     if (!_isRunning && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) &&
-        m_disasm.size() >= 1)
+        m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
     {
-        if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
+        // TODO: make arrow keys working correctly. the code below only handles it once for some reason
+        /*
+        if (ImGui::IsKeyDown(ImGuiKey_PageUp))
         {
-            {
-                m_selectedLineIdx--;
-                if (m_selectedLineIdx < 0) {
-                    m_selectedLineIdx = 0;
-                    UpdateDisasm(m_disasm[0].addr, -1);
-                }
-            }
+            m_selectedLineIdx = dev::Min(m_selectedLineIdx + 1, lineIdx - 1);
+            UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, -1 - DISASM_INSTRUCTION_OFFSET);
         }
         else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
         {
@@ -403,16 +401,16 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                 }
             }
         }
-
+        */
         if (ImGui::GetIO().MouseWheel > 0.0f)
         {
-            m_selectedLineIdx = min(m_selectedLineIdx + 2, lineIdx - 1);
-            UpdateDisasm(m_disasm[0].addr, -2);
+            m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, lineIdx - 1);
+            UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, -2 - DISASM_INSTRUCTION_OFFSET);
         }
         else if (ImGui::GetIO().MouseWheel < 0.0f)
         {
-            m_selectedLineIdx = max(m_selectedLineIdx - 2, 0);
-            UpdateDisasm(m_disasm[0].addr, 2);
+            m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
+            UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, 2 - DISASM_INSTRUCTION_OFFSET);
         }
     }
 
