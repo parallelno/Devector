@@ -14,6 +14,38 @@ void dev::Display::Init()
 	m_frameBuffer.fill(0xff000000);
 }
 
+void dev::Display::RasterizeActiveArea(const int _rasterizedPixels)
+{
+	int rasterLine = GetRasterLine();
+	int rasterPixel = GetRasterPixel();
+	auto commitTime = m_io.GetOutCommitTimer() >= 0 || m_io.GetPaletteCommitTimer() >= 0;
+
+	bool scrollTime = rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel < BORDER_LEFT + RASTERIZED_PXLS_MAX;
+	if (commitTime || scrollTime)
+	{
+		if (m_io.GetDisplayMode() == IO::DISPLAY_MODE_256) FillActiveArea256PortHandling(_rasterizedPixels);
+		else FillActiveArea512PortHandling(_rasterizedPixels);
+	}
+	else {
+		if (m_io.GetDisplayMode() == IO::DISPLAY_MODE_256) FillActiveArea256(_rasterizedPixels);
+		else FillActiveArea512(_rasterizedPixels);
+	}
+}
+
+void dev::Display::RasterizeBorder(const int _rasterizedPixels)
+{
+	int rasterLine = GetRasterLine();
+	auto commitTime = m_io.GetOutCommitTimer() >= 0 || m_io.GetPaletteCommitTimer() >= 0;
+
+	if (commitTime || rasterLine == 0 || rasterLine == 311)
+	{
+		FillBorderPortHandling(_rasterizedPixels);
+	}
+	else {
+		FillBorder(_rasterizedPixels);
+	}
+}
+
 // renders 16 pixels (in the 512 mode) from left to right
 void dev::Display::Rasterize()
 {
@@ -22,36 +54,35 @@ void dev::Display::Rasterize()
 
 	int rasterLine = GetRasterLine();
 	int rasterPixel = GetRasterPixel();
-	int rasterizedPixels = RASTERIZED_PXLS_MAX;
 	
 	bool isActiveScan = rasterLine >= SCAN_ACTIVE_AREA_TOP && rasterLine < SCAN_ACTIVE_AREA_TOP + ACTIVE_AREA_H;
 	bool isActiveArea = isActiveScan &&
 					rasterPixel >= BORDER_LEFT && rasterPixel < BORDER_RIGHT;
 
-	auto commitTime = m_io.GetOutCommitTimer() >= 0 || m_io.GetPaletteCommitTimer() >= 0;
-
+	// Rasterize the Active Area
 	if (isActiveArea)
 	{
-		rasterizedPixels = dev::Min(BORDER_RIGHT - rasterPixel, RASTERIZED_PXLS_MAX);
-		if (commitTime) 
+		int rasterizedPixels = dev::Min(BORDER_RIGHT - rasterPixel, RASTERIZED_PXLS_MAX);
+		RasterizeActiveArea(rasterizedPixels);
+		// Rasterize the border if there is a leftover
+		if (rasterizedPixels < RASTERIZED_PXLS_MAX)
 		{
-			if (m_io.GetDisplayMode() == IO::DISPLAY_MODE_256) FillActiveArea256PortHandling(rasterizedPixels);
-			else FillActiveArea512PortHandling(rasterizedPixels);
+			rasterizedPixels = RASTERIZED_PXLS_MAX - rasterizedPixels;
+			RasterizeBorder(rasterizedPixels);
 		}
-		else {
-			if (m_io.GetDisplayMode() == IO::DISPLAY_MODE_256) FillActiveArea256(rasterizedPixels);
-			else FillActiveArea512(rasterizedPixels);
-		}
-	} 
+	}
+	// Border
 	else {
-		rasterizedPixels = !isActiveScan || rasterPixel >= BORDER_RIGHT ? RASTERIZED_PXLS_MAX :
+		int rasterizedPixels = !isActiveScan || rasterPixel >= BORDER_RIGHT ? RASTERIZED_PXLS_MAX :
 						dev::Min(BORDER_LEFT - rasterPixel, RASTERIZED_PXLS_MAX);
-		if (commitTime || rasterLine == 0 || rasterLine == 311)
+
+		RasterizeBorder(rasterizedPixels);
+
+		// Rasterize the Active Area if there is a leftover
+		if (rasterizedPixels < RASTERIZED_PXLS_MAX)
 		{
-			FillBorderPortHandling(rasterizedPixels);
-		}
-		else {
-			FillBorder(rasterizedPixels);
+			rasterizedPixels = RASTERIZED_PXLS_MAX - rasterizedPixels;
+			RasterizeActiveArea(rasterizedPixels);
 		}
 	}
 }
@@ -96,6 +127,9 @@ void dev::Display::FillActiveArea256(const int _rasterizedPixels)
 
 	for (int i = 0; i < _rasterizedPixels; i += 2)
 	{
+		int rasterLine = GetRasterLine();
+		int rasterPixel = GetRasterPixel();
+
 		auto colorIdx = BytesToColorIdx(screenBytes, bitIdx);
 		auto color = m_io.GetColor(colorIdx);
 
@@ -125,12 +159,13 @@ void dev::Display::FillActiveArea256PortHandling(const int _rasterizedPixels)
 
 		int rasterLine = GetRasterLine();
 		int rasterPixel = GetRasterPixel();
+
 		if (rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel == BORDER_LEFT)
 		{
 			m_scrollIdx = m_io.GetScroll();
 		}
-		
-		bitIdx--;
+
+		bitIdx -= i % 2;
 		if (bitIdx < 0){
 			bitIdx = 7;
 			screenBytes = GetScreenBytes();

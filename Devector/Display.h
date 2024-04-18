@@ -49,7 +49,7 @@ namespace dev
 		static constexpr int SCAN_ACTIVE_AREA_TOP = SCAN_VSYNC + SCAN_VBLANK_TOP;
 		static constexpr int ACTIVE_AREA_W = 512;			// horizontal screen resolution in MODE_512
 		static constexpr int ACTIVE_AREA_H = 256;			// vertical screen resolution
-		static constexpr int BORDER_LEFT = 128;				// left border in pxls		
+		static constexpr int BORDER_LEFT = 137;				// left border in pxls		
 		static constexpr int BORDER_RIGHT = BORDER_LEFT + ACTIVE_AREA_W;
 		static constexpr int BORDER_VISIBLE = 16; // border visible on the screen in pxls in 256 mode
 		static constexpr int RASTERIZED_PXLS_MAX = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
@@ -87,10 +87,12 @@ namespace dev
 		uint32_t BytesToColorIdxs();
 		uint32_t GetScreenBytes();
 		uint32_t BytesToColorIdx(uint32_t _screenBytes, uint8_t _bitIdx);
+		void RasterizeActiveArea(const int _rasterizedPixels);
 		void FillActiveArea256(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 		void FillActiveArea512(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 		void FillActiveArea256PortHandling(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 		void FillActiveArea512PortHandling(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
+		void RasterizeBorder(const int _rasterizedPixels);
 		void FillBorder(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 		void FillBorderPortHandling(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 	};
