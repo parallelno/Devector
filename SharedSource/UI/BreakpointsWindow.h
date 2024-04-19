@@ -22,6 +22,7 @@ namespace dev
 
 		void DrawTable();
 		void DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Breakpoints& _pbs, int _addr);
+		//void DrawProperty2EditableMapping(const char* _name, Breakpoint::Data* _val, const char* _help);
 
 	public:
 		BreakpointsWindow(Debugger& m_debugger,

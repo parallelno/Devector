@@ -83,15 +83,16 @@ namespace dev
 
 		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) ->Disasm;
 
-		void SetBreakpointStatus(const GlobalAddr _globalAddr, const Breakpoint::Status _status);
-		void AddBreakpoint(const GlobalAddr _globalAddr, 
-			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE, 
+		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
+		void AddBreakpoint(const Addr _addr, const
+			const uint8_t _mappingPages = Breakpoint::MAPPING_PAGES_ALL,
+			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE,
 			const bool _autoDel = false, const std::string& _comment = "");
-		void DelBreakpoint(const GlobalAddr _globalAddr);
+		void DelBreakpoint(const Addr _addr);
 		void DelBreakpoints();
-		bool CheckBreakpoints(const GlobalAddr _globalAddr);
+		bool CheckBreakpoints(const Addr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam);
 		auto GetBreakpoints() -> const Breakpoints;
-		auto GetBreakpointStatus(const GlobalAddr _globalAddr) -> const Breakpoint::Status;
+		auto GetBreakpointStatus(const Addr _addr) -> const Breakpoint::Status;
 
 		void AddWatchpoint(const Watchpoint::Id _id, const Watchpoint::Access _access, 
 			const GlobalAddr _globalAddr, const Watchpoint::Condition _cond, 
@@ -103,7 +104,7 @@ namespace dev
 		void ResetWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;
 
-		bool CheckBreak(GlobalAddr _globalAddr);
+		bool CheckBreak(const Addr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam);
 
 		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> std::string;
 		void LoadLabels(const std::wstring& _path);

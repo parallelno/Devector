@@ -30,7 +30,7 @@ void dev::DisasmWindow::Update()
     DrawDebugControls(isRunning);
 	DrawSearch(isRunning);
     
-    isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the status in DrawDebugControls
+    isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the bpStatus in DrawDebugControls
     UpdateData(isRunning);
 
     DrawDisasm(isRunning);
@@ -170,23 +170,26 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                     m_selectedLineIdx = lineIdx;
                 }
 
-                // draw breakpoints
-                ImGui::SameLine();
-                auto bpStatus = line.breakpointStatus;
-                if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
-                {
-                    GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
-                    m_debugger.SetBreakpointStatus(globalAddr, bpStatus);
-                    m_reqDisasmUpdate = true;
-                }
-
-                // draw program counter icon
-                if (isCode && addr == regPC && !_isRunning)
-                {
+                if (!_isRunning) {
+                    // draw breakpoints
                     ImGui::SameLine();
-                    dev::DrawProgramCounter(DISASM_TBL_COLOR_PC, ImGuiDir_Right, *m_dpiScaleP);
-                }
+                    auto bpStatus = line.breakpointStatus;
+                    if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
+                    {
+                        if (bpStatus == Breakpoint::Status::DELETED) {
+                            m_debugger.DelBreakpoint(addr);
+                        }
+                        else m_debugger.SetBreakpointStatus(addr, bpStatus);
+                        m_reqDisasmUpdate = true;
+                    }
 
+                    // draw program counter icon
+                    if (isCode && addr == regPC)
+                    {
+                        ImGui::SameLine();
+                        dev::DrawProgramCounter(DISASM_TBL_COLOR_PC, ImGuiDir_Right, *m_dpiScaleP);
+                    }
+                }
 
                 // the addr column
                 ImGui::TableNextColumn();
@@ -345,23 +348,19 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
             }
             else if (ImGui::MenuItem("Run To Selected Line") && editedBreakpointAddr >= 0)
             {
-                GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", editedBreakpointAddr } })->at("data");
-                m_debugger.AddBreakpoint(globalAddr, Breakpoint::Status::ACTIVE, true);
-                //m_reqDisasmUpdate = true;
+                m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
                 m_hardware.Request(Hardware::Req::RUN);
             }
             else if (ImGui::MenuItem("Add/Remove Beakpoint")) 
             {
-                GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", editedBreakpointAddr } })->at("data");
-                auto status = m_debugger.GetBreakpointStatus(globalAddr);
+                auto bpStatus = m_debugger.GetBreakpointStatus(editedBreakpointAddr);
 
-                if (status == Breakpoint::Status::DELETED) {
-                    status = Breakpoint::Status::ACTIVE;
+                if (bpStatus == Breakpoint::Status::DELETED) {
+                    m_debugger.AddBreakpoint(editedBreakpointAddr);
                 }
                 else {
-                    status = Breakpoint::Status::DELETED;
+                    m_debugger.DelBreakpoint(editedBreakpointAddr);
                 }
-                m_debugger.SetBreakpointStatus(globalAddr, status);
                 m_reqDisasmUpdate = true;
             }
             else if (ImGui::MenuItem("Remove All Beakpoints")) {

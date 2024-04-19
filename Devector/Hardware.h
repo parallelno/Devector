@@ -36,7 +36,7 @@ namespace dev
 		};
 
 	public:
-		using CheckBreakFunc = std::function<bool(GlobalAddr)>;
+		using CheckBreakFunc = std::function<bool(const GlobalAddr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam)>;
 
 		enum class Req: int {
 			NONE = 0,

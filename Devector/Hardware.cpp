@@ -68,9 +68,7 @@ void dev::Hardware::Execution()
                 ReqHandling();
 
                 auto CheckBreak = m_checkBreak.load();
-                auto pcGlobalAddr = m_memory.GetGlobalAddr(m_cpu.GetPC(), Memory::RAM);
-
-                if (CheckBreak && *CheckBreak && (*CheckBreak)(pcGlobalAddr)) 
+                if (CheckBreak && *CheckBreak && (*CheckBreak)(m_cpu.GetPC(), m_memory.m_mappingModeRam, m_memory.m_mappingPageRam))
                 {
                     m_status = Status::STOP;
                 }
