@@ -12,6 +12,15 @@ auto dev::LoadJson(const std::string& _path) -> nlohmann::json
 	return json;
 }
 
+auto dev::LoadJson(const std::wstring& _path) -> nlohmann::json
+{
+	std::ifstream file(_path);
+	nlohmann::json json;
+	file >> json;
+
+	return json;
+}
+
 void dev::SaveJson(const std::string& _path, const nlohmann::json& _json)
 {
 	std::ofstream file(_path);

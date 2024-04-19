@@ -275,17 +275,18 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                             }
 
                             // draw an operand
-                            auto operands = dev::Split(cmd_parts, '=');
+                            auto operands = dev::Split(cmd_parts, ';');
 
+                            int operandIdx = 0;
                             for (const auto& operand : operands)
                             {
-                                if (operand[0] == '0')
+                                if (operand[0] == '0' && operands.size() == 1)
                                 {
                                     // draw a hexadecimal literal
                                     ImGui::SameLine();
                                     ImGui::TextColored(DISASM_TBL_COLOR_NUMBER, "%s", operand.c_str());
                                 }
-                                else if (cmd_parts.size() <= 2)
+                                else if (cmd_parts.size() <= 2 || cmd_parts == "PSW")
                                 {
                                     // draw a reg
                                     ImGui::SameLine();
@@ -293,11 +294,18 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                                 }
                                 else
                                 {
-                                    // draw a const
-                                    ImGui::SameLine();
-                                    ImGui::TextColored(DISASM_TBL_COLOR_CONST, "%s = ", operand.c_str());
+                                    // draw a const value
+                                    if (operand[0] == '0') {
+                                        ImGui::SameLine();
+                                        ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, ";%s", operand.c_str());
+                                    }
+                                    else {
+                                        // draw a const
+                                        ImGui::SameLine();
+                                        ImGui::TextColored(DISASM_TBL_COLOR_CONST, "%s ", operand.c_str());
+                                    }
                                 }
-
+                                operandIdx++;
                             }
                         }
                         i++;
@@ -346,12 +354,14 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
             if (ImGui::MenuItem("Show Current Break")) {
                 UpdateDisasm(regPC);
             }
-            else if (ImGui::MenuItem("Run To Selected Line") && editedBreakpointAddr >= 0)
+            ImGui::SeparatorText("");
+            if (ImGui::MenuItem("Run To Selected Line") && editedBreakpointAddr >= 0)
             {
                 m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
                 m_hardware.Request(Hardware::Req::RUN);
             }
-            else if (ImGui::MenuItem("Add/Remove Beakpoint")) 
+            ImGui::SeparatorText("");
+            if (ImGui::MenuItem("Add/Remove Beakpoint")) 
             {
                 auto bpStatus = m_debugger.GetBreakpointStatus(editedBreakpointAddr);
 
@@ -363,7 +373,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                 }
                 m_reqDisasmUpdate = true;
             }
-            else if (ImGui::MenuItem("Remove All Beakpoints")) {
+            if (ImGui::MenuItem("Remove All Beakpoints")) {
                 m_debugger.DelBreakpoints();
                 m_reqDisasmUpdate = true;
             };

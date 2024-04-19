@@ -84,7 +84,7 @@ namespace dev
 		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) ->Disasm;
 
 		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
-		void AddBreakpoint(const Addr _addr, const
+		void AddBreakpoint(const Addr _addr,
 			const uint8_t _mappingPages = Breakpoint::MAPPING_PAGES_ALL,
 			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE,
 			const bool _autoDel = false, const std::string& _comment = "");
@@ -107,16 +107,16 @@ namespace dev
 		bool CheckBreak(const Addr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam);
 
 		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> std::string;
-		void LoadLabels(const std::wstring& _path);
+		void LoadDebugData(const std::wstring& _path);
 		void ResetLabels();
 
 		void ReqLoadRom(const std::wstring& _path);
 		void ReqLoadRomLast();
 
 	private:
-		auto GetDisasmLine(const uint8_t _opcode, const uint8_t _data_l, const uint8_t _data_h) const ->const std::string;
+		auto GetDisasmLine(const uint8_t _opcode, 
+			const uint8_t _dataL, const uint8_t _dataH) const ->const std::string;
 		auto GetDisasmLineDb(const uint8_t _data) const ->const std::string;
-		auto GetCmdLen(const uint8_t _addr) const -> const uint8_t;
 		auto GetAddr(const Addr _endAddr, const int _instructionOffset) const -> Addr;
 		auto WatchpointsFind(const GlobalAddr _globalAddr) -> Watchpoints::iterator;
 
@@ -154,13 +154,10 @@ namespace dev
 		int m_traceLogIdxViewOffset = 0;
 
 		using AddrLabels = std::vector<std::string>;
-		using Labels = std::map<size_t, AddrLabels>;
-		// labels names combined by their associated addr
-		Labels m_labels;
-		// labels used as constants combined by their associated addr
-		Labels m_consts;
-		// labels with a prefix "__" called externals and used in the code libraries in the ram-disk. they're combined by their associated addr
-		Labels m_externalLabels;
+		using Labels = std::map<GlobalAddr, AddrLabels>;
+		Labels m_labels;		// labels
+		Labels m_consts;		// labels used as constants only
+		Labels m_externalLabels;// labels with a prefix "__" called externals and used in the code libraries in the ram-disk
 
 		Hardware& m_hardware;
 

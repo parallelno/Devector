@@ -137,7 +137,7 @@ static const char* mnemonics[0x100] =
 // define the maximum number of bytes in a command
 #define CMD_LEN_MAX 3
 
-// array containing lengths of commands, indexed by an opcode
+// array containing instruction lengths, indexed by an opcode
 static const uint8_t cmd_lens[0x100] =
 {
 	1,3,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
@@ -158,15 +158,8 @@ static const uint8_t cmd_lens[0x100] =
 	1,1,3,1,3,1,2,1,1,1,3,1,3,1,2,1
 };
 
-// returns the instruction length in bytes
-auto dev::Debugger::GetCmdLen(const uint8_t _opcode) const -> const uint8_t
-{
-	return cmd_lens[_opcode];
-}
-
-// returns the mnemonic for an instruction
-auto GetMnemonic(const uint8_t _opcode, const uint8_t _dataL, const uint8_t _dataH)
--> const std::string
+auto GetMnemonic(const uint8_t _opcode,
+	const uint8_t _dataL, const uint8_t _dataH)
 {
 	std::string out(mnemonics[_opcode]);
 
@@ -178,6 +171,48 @@ auto GetMnemonic(const uint8_t _opcode, const uint8_t _dataL, const uint8_t _dat
 	{
 		auto dataW = _dataH << 8 | _dataL;
 		out += std::format(" 0x{:04X}", dataW);
+	}
+	return out;
+}
+
+auto dev::Debugger::GetDisasmLine(const uint8_t _opcode,
+	const uint8_t _dataL, const uint8_t _dataH) const
+-> const std::string
+{
+	std::string out(mnemonics[_opcode]);
+
+	if (cmd_lens[_opcode] == 2)
+	{
+		auto labelI = m_labels.find(_dataL);
+		if (labelI != m_labels.end() && labelI->second.size() == 1) 
+		{
+			out += std::format(" {};0x{:02X}", labelI->second[0], _dataL);
+		}
+		else {
+			out += std::format(" 0x{:02X}", _dataL);
+		}
+	}
+	else if (cmd_lens[_opcode] == 3)
+	{
+		auto dataW = _dataH << 8 | _dataL;
+		std::string constant;
+
+		auto labelI = m_labels.find(dataW);
+		auto constI = m_consts.find(dataW);
+		if (labelI != m_labels.end() && labelI->second.size() == 1) {
+			constant = labelI->second[0];
+		}
+		else if (constI != m_consts.end() && constI->second.size() == 1)
+		{
+			constant = constI->second[0];
+		}
+		if (!constant.empty()) 
+		{
+			out += std::format(" {};0x{:04X}", constant, dataW);
+		}
+		else {
+			out += std::format(" 0x{:04X}", dataW);
+		}
 	}
 	return out;
 }
@@ -230,13 +265,6 @@ auto dev::Debugger::GetDisasmLineDb(const uint8_t _data) const
 	return std::format("DB 0x{:02X}", _data);
 }
 
-// disassembles an instruction
-auto dev::Debugger::GetDisasmLine(const uint8_t _opcode, const uint8_t _dataL, const uint8_t _dataH) const
-->const std::string
-{
-	return GetMnemonic(_opcode, _dataL, _dataH);
-}
-
 // shifts the addr by _instructionsOffset instruction counter
 // if _instructionsOffset=3, it returns the addr of a third instruction after _addr, and vice versa
 #define MAX_ATTEMPTS 41 // max attemts to find an addr of an instruction before _addr 
@@ -252,7 +280,7 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 		{
 			auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 
-			auto cmdLen = GetCmdLen(opcode);
+			auto cmdLen = cmd_lens[opcode];
 			addr = addr + cmdLen;
 		}
 		return addr;
@@ -272,7 +300,7 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 			{
 				auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 
-				auto cmdLen = GetCmdLen(opcode);
+				auto cmdLen = cmd_lens[opcode];
 				addr = addr + cmdLen;
 				currentInstruction++;
 			}
@@ -293,7 +321,7 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 		if (possibleDisasmStartAddrs.empty()) return _addr;
 
 		// get the best result basing on the execution counter
-		for (const auto& possibleDisasmStartAddr : possibleDisasmStartAddrs)
+		for (const auto possibleDisasmStartAddr : possibleDisasmStartAddrs)
 		{
 			if (m_memRuns[possibleDisasmStartAddr] > 0) return possibleDisasmStartAddr;
 		}
@@ -348,7 +376,7 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 		auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 		auto dataL = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 1 } })->at("data");
 		auto dataH = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 2 } })->at("data");
-
+		auto data = dataH << 8 | dataL;
 		if (m_labels.contains(addr))
 		{
 			DisasmLine disasmLine(DisasmLine::Type::LABELS, addr, GetDisasmLabels(addr));
@@ -356,13 +384,13 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 		}
 
 		std::string consts;
-		if (GetCmdLen(opcode) == 2)
+		if (cmd_lens[opcode] == 2)
 		{
 			consts = LabelsToStr(dataL, LABEL_TYPE_CONST);
 		}
-		else if (GetCmdLen(opcode) == 3)
+		else if (cmd_lens[opcode] == 3)
 		{
-			consts = LabelsToStr(dataH << 8 | dataL, LABEL_TYPE_ALL);
+			consts = LabelsToStr(data, LABEL_TYPE_ALL);
 		}
 
 		GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
@@ -372,7 +400,7 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 		DisasmLine lineS(DisasmLine::Type::CODE, addr, disasmS, m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], consts, breakpointStatus);
 		out.emplace_back(lineS);
 
-		addr = addr + GetCmdLen(opcode);
+		addr = addr + cmd_lens[opcode];
 	}
 	return out;
 }
@@ -390,41 +418,35 @@ bool IsConstLabel(const char* _s)
 	return true; // All characters are capital letters or underscores
 }
 
-void dev::Debugger::LoadLabels(const std::wstring& _path)
+void dev::Debugger::LoadDebugData(const std::wstring& _path)
 {
 	ResetLabels();
 
 	if (!dev::IsFileExist(_path)) return;
-
-	// load labels
-	auto lines = dev::LoadTextFile(_path);
-	if (lines.empty()) return;
 	
-	for( const auto& line : lines)
-	{
-		//char* labelBeforePeriod_c = strtok_s(label_c, " .&\n", &labelContext);
-		auto label_addr = dev::Split(line, ' ');
-		if (label_addr.size() != 2) continue;
+	auto debugDataJ = LoadJson(_path);
 
-		const auto& labelName = label_addr[0];
-		auto addr = StrHexToInt(label_addr[1].c_str()+1); // +1 to skip the '$' char
-		// skip if the label name is empty or the addr is not valid
-		if (labelName.empty() ||  addr < 0 || addr > Memory::GLOBAL_MEMORY_LEN) continue;
-		// skip if the label name contains '.' meaning it is a labl in the Macro. Macros are not supported in the disasm, so skip it.
-		if (labelName.find('.') != std::string::npos) continue;
-
-		if (IsConstLabel(labelName.c_str()))
+	// add labels
+	if (debugDataJ.contains("labels")){
+		for(auto& [labelName, addrS] : debugDataJ["labels"].items())
 		{
+			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
+			// check if it is an __external_label
+			if (labelName.size() >= 2 && labelName[0] == '_' && labelName[1] == '_')
+			{
+				m_externalLabels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
+			}
+			else {
+				m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
+			}
+		}
+	}
+
+	if (debugDataJ.contains("consts")){
+		for(auto& [labelName, addrS] : debugDataJ["consts"].items())
+		{
+			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
 			m_consts.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
-		}
-		// check if it is an __external_label
-		else if (labelName.size() >= 2 && labelName[0] == '_' && labelName[1] == '_')
-		{
-			m_externalLabels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
-		}
-		else
-		{
-			m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
 		}
 	}
 }
@@ -701,7 +723,7 @@ void dev::Debugger::AddWatchpoint(
 		wpI->second.Update(_access, _globalAddr, _cond, _value, _value_size, _active, _comment);
 	}
 	else {
-		const auto wp = Watchpoint(_access, _globalAddr, _cond, _value, _value_size, _active, _comment);
+		auto wp = Watchpoint(_access, _globalAddr, _cond, _value, _value_size, _active, _comment);
 		m_watchpoints.emplace(wp.GetId(), std::move(wp));
 	}
 }

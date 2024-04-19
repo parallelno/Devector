@@ -78,17 +78,16 @@ void dev::DevectorApp::Update()
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)
 {
-	auto labelsFilenamePostfix = dev::StrToStrW(GetSettingsString("labelsFilenamePostfix", LABELS_FILENAME));
-	auto labelsDir = dev::GetDir(_path);
-	auto labelsPath = labelsDir + L"\\" + dev::GetFilename(_path) + labelsFilenamePostfix;
-	m_debuggerP->LoadLabels(labelsPath);
-
 	m_hardwareP->Request(Hardware::Req::STOP);
+
+	auto romDir = dev::GetDir(_path);
+	auto debugPath = romDir + L"\\" + dev::GetFilename(_path) + L".json";
+	m_debuggerP->LoadDebugData(debugPath);
+
 	m_hardwareP->Request(Hardware::Req::RESET);
 	m_debuggerP->ReqLoadRom(_path);
 	m_debuggerP->Reset();
 	m_hardwareP->Request(Hardware::Req::RUN);
-
 	RecentFilesUpdate(_path);
 	RecentFilesStore();
 }

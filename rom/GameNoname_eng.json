@@ -1,0 +1,13 @@
+{
+    "labels": {
+        "main_start" : "0x100",
+        "loop" : "0x14A",
+        "unpacker_start" : "0x11B",
+        "ram_disk_init" : "0x257"
+    },
+    "consts":{
+        "OPCODE_JMP" : "0xC3",
+        "RESTART_ADDR" : "0x0",
+        "INT_ADDR" : "0x38"
+    }
+}

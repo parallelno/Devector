@@ -157,8 +157,8 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		}
 		return false;
 	}
-	auto LoadTextFile(const std::wstring& _path) 
-		->std::vector<std::string>;
+
+	auto LoadTextFile(const std::wstring& _path) ->std::string;
 
 	auto LoadFile(const std::wstring& _path)
 		->dev::Result<std::vector<uint8_t>>;

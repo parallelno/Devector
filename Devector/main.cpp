@@ -5,6 +5,7 @@
 #include "Utils/JsonUtils.h"
 #include "Utils/Consts.h"
 #include "DevectorApp.h"
+#include <format>
 
 int main(int argc, char** argv)
 {

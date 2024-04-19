@@ -20,8 +20,8 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_W = 768;
 		static constexpr float WINDOW_ASPECT = 3.0f / 4.0f;
 		static constexpr int DEFAULT_WINDOW_H = static_cast<int>(DEFAULT_WINDOW_W * WINDOW_ASPECT);
-		static constexpr int FRAME_W = 512.0f + 32.0f * 2.0f;
-		static constexpr int FRAME_H = 256.0 + 16.0 * 2.0;
+		static constexpr int FRAME_W = 512 + 32 * 2;
+		static constexpr int FRAME_H = 256 + 16 * 2;
 
 		const std::string m_name = "Display";
 

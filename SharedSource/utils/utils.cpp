@@ -25,16 +25,16 @@ void dev::ThreadSleep(double _seconds)
 }
 
 auto dev::LoadTextFile(const std::wstring& _path)
--> std::vector<std::string>
+-> std::string
 {	
 	if (!IsFileExist(_path)) {
 		return {};
 	}
 	std::ifstream ifs(_path);
-	std::string fileStr = std::string(std::istreambuf_iterator<char>(ifs),
+	std::string data = std::string(std::istreambuf_iterator<char>(ifs),
 		std::istreambuf_iterator<char>());
 
-	return dev::Split(fileStr, '\n');
+	return data;
 }
 
 auto dev::LoadFile(const std::wstring& _path)

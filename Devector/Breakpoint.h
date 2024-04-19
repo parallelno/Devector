@@ -49,11 +49,11 @@ namespace dev
 			inline bool IsActive() const { return status == Breakpoint::Status::ACTIVE; };
 		};
 
-		Breakpoint(const Addr _addr, const 
+		Breakpoint(const Addr _addr,
 			const uint8_t _mappingPages = MAPPING_PAGES_ALL,
 			const Status _status = Status::ACTIVE, 
 			const bool _autoDel = false, const std::string& _comment = "");
-		void Update(const Addr _addr, const
+		void Update(const Addr _addr,
 			const uint8_t _mappingPages = MAPPING_PAGES_ALL,
 			const Status _status = Status::ACTIVE,
 			const bool _autoDel = false, const std::string& _comment = "");
