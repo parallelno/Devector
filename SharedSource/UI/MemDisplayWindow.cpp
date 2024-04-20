@@ -1,4 +1,4 @@
-#include "RamViewWindow.h"
+#include "MemDisplayWindow.h"
 
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
@@ -65,7 +65,7 @@ const char* rvShaderFrag = R"(
 	}
 )";
 
-dev::RamViewWindow::RamViewWindow(Hardware& _hardware,
+dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware,
 		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
@@ -77,12 +77,12 @@ dev::RamViewWindow::RamViewWindow(Hardware& _hardware,
 	m_renderDataIdx = m_glUtils.InitRenderData(rvShaderVtx, rvShaderFrag, FRAME_BUFFER_W, FRAME_BUFFER_H, shaderParams, RAM_TEXTURES);
 }
 
-void dev::RamViewWindow::Update()
+void dev::MemDisplayWindow::Update()
 {
 	BaseWindow::Update();
 
 	static bool open = true;
-	ImGui::Begin("Ram View", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar);
+	ImGui::Begin("Memory Display", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar);
 
 	bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 	UpdateData(isRunning);
@@ -116,7 +116,7 @@ dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale)
 	return addr;
 }
 
-void dev::RamViewWindow::DrawDisplay()
+void dev::MemDisplayWindow::DrawDisplay()
 {
 	ImVec2 mousePos = ImGui::GetMousePos();
 	static ImVec2 imgPixelPos;
@@ -159,7 +159,7 @@ void dev::RamViewWindow::DrawDisplay()
 	ImGui::EndChild();
 }
 
-void dev::RamViewWindow::UpdateData(const bool _isRunning)
+void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
 {
 	// check if the hardware updated its state
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
@@ -181,7 +181,7 @@ void dev::RamViewWindow::UpdateData(const bool _isRunning)
 }
 
 // check the keys, scale the view
-void dev::RamViewWindow::ScaleView()
+void dev::MemDisplayWindow::ScaleView()
 {
 	if (ImGui::IsWindowHovered())
 	{

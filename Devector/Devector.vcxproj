@@ -115,7 +115,8 @@
     <ClCompile Include="..\SharedSource\UI\DisasmWindow.cpp" />
     <ClCompile Include="..\SharedSource\UI\DisplayWindow.cpp" />
     <ClCompile Include="..\SharedSource\UI\HardwareStatsWindow.cpp" />
-    <ClCompile Include="..\SharedSource\UI\RamViewWindow.cpp" />
+    <ClCompile Include="..\SharedSource\UI\MemDisplayWindow.cpp" />
+    <ClCompile Include="..\SharedSource\UI\MemViewerWindow.cpp" />
     <ClCompile Include="..\SharedSource\UI\WatchpointsWindow.cpp" />
     <ClCompile Include="..\SharedSource\Utils\ArgsParser.cpp" />
     <ClCompile Include="..\SharedSource\Utils\GLUtils.cpp" />
@@ -154,7 +155,8 @@
     <ClInclude Include="..\SharedSource\UI\DisasmWindow.h" />
     <ClInclude Include="..\SharedSource\UI\DisplayWindow.h" />
     <ClInclude Include="..\SharedSource\UI\HardwareStatsWindow.h" />
-    <ClInclude Include="..\SharedSource\UI\RamViewWindow.h" />
+    <ClInclude Include="..\SharedSource\UI\MemDisplayWindow.h" />
+    <ClInclude Include="..\SharedSource\UI\MemViewerWindow.h" />
     <ClInclude Include="..\SharedSource\UI\WatchpointsWindow.h" />
     <ClInclude Include="..\SharedSource\Utils\ArgsParser.h" />
     <ClInclude Include="..\SharedSource\Utils\Consts.h" />

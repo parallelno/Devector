@@ -30,7 +30,8 @@ void dev::DevectorApp::WindowsInit()
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate, m_reqDisasmUpdateData);
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
-	m_ramViewWindowP = std::make_unique<dev::RamViewWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
+	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
+	m_memViewerWindowP = std::make_unique<dev::MemViewerWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
 
 	// Set the key callback function
 	glfwSetWindowUserPointer(m_window, this);
@@ -73,7 +74,8 @@ void dev::DevectorApp::Update()
 	m_displayWindowP->Update();
 	m_breakpointsWindowP->Update();
 	m_watchpointsWindowP->Update();
-	m_ramViewWindowP->Update();
+	m_memDisplayWindowP->Update();
+	m_memViewerWindowP->Update();
 }
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)

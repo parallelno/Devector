@@ -1,11 +1,11 @@
 #pragma once
-#ifndef DEV_RAM_VIEW_WINDOW_H
-#define DEV_RAM_VIEW_WINDOW_H
-
+#ifndef DEV_MEM_DISPLAY_WINDOW_H
+#define DEV_MEM_DISPLAY_WINDOW_H
+/*
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
-
+*/
 #include <vector>
 
 #include "../Devector/Types.h"
@@ -18,7 +18,7 @@
 
 namespace dev
 {
-	class RamViewWindow : public BaseWindow
+	class MemDisplayWindow : public BaseWindow
 	{
 		static constexpr int FRAME_BUFFER_W = 1024;
 		static constexpr int FRAME_BUFFER_H = 512;
@@ -46,14 +46,13 @@ namespace dev
 
 		void DrawDisplay();
 		void UpdateData(const bool _isRunning);
-		void Init();
 		void ScaleView();
 
 	public:
-		RamViewWindow(Hardware& _hardware, const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils);
+		MemDisplayWindow(Hardware& _hardware, const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils);
 		void Update();
 	};
 
 };
 
-#endif // !DEV_RAM_VIEW_WINDOW_H
+#endif // !DEV_MEM_DISPLAY_WINDOW_H

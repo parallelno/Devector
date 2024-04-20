@@ -77,13 +77,16 @@
     <ClCompile Include="..\SharedSource\UI\DisplayWindow.cpp">
       <Filter>SharedSource\UI</Filter>
     </ClCompile>
-    <ClCompile Include="..\SharedSource\UI\RamViewWindow.cpp">
+    <ClCompile Include="..\SharedSource\UI\MemDisplayWindow.cpp">
       <Filter>SharedSource\UI</Filter>
     </ClCompile>
     <ClCompile Include="..\SharedSource\Utils\GLUtils.cpp">
       <Filter>SharedSource\Utils</Filter>
     </ClCompile>
     <ClCompile Include="Keyboard.cpp" />
+    <ClCompile Include="..\SharedSource\UI\MemViewerWindow.cpp">
+      <Filter>SharedSource\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -180,7 +183,7 @@
     <ClInclude Include="..\SharedSource\UI\DisplayWindow.h">
       <Filter>SharedSource\UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\SharedSource\UI\RamViewWindow.h">
+    <ClInclude Include="..\SharedSource\UI\MemDisplayWindow.h">
       <Filter>SharedSource\UI</Filter>
     </ClInclude>
     <ClInclude Include="..\SharedSource\3rdParty\glew\include\GL\glew.h">
@@ -190,6 +193,9 @@
       <Filter>SharedSource\Utils</Filter>
     </ClInclude>
     <ClInclude Include="Keyboard.h" />
+    <ClInclude Include="..\SharedSource\UI\MemViewerWindow.h">
+      <Filter>SharedSource\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="SharedSource">

@@ -15,7 +15,8 @@
 #include "UI/DisasmWindow.h"
 #include "UI/HardwareStatsWindow.h"
 #include "UI/DisplayWindow.h"
-#include "UI/RamViewWindow.h"
+#include "UI/MemDisplayWindow.h"
+#include "UI/MemViewerWindow.h"
 
 #include "Hardware.h"
 #include "Debugger.h"
@@ -36,7 +37,8 @@ namespace dev
 		std::unique_ptr <dev::DisasmWindow> m_disasmWindowP;
 		std::unique_ptr <dev::WatchpointsWindow>m_watchpointsWindowP;
 		std::unique_ptr <dev::DisplayWindow>m_displayWindowP;
-		std::unique_ptr <dev::RamViewWindow>m_ramViewWindowP;
+		std::unique_ptr <dev::MemDisplayWindow>m_memDisplayWindowP;
+		std::unique_ptr <dev::MemViewerWindow>m_memViewerWindowP;
 
 		bool m_hardwareStatsWindowShow = true;
 		bool m_disasmWindowShow = true;
