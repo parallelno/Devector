@@ -43,7 +43,7 @@ namespace dev
 	public:
 		DisplayWindow(Hardware& _hardware, const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils);
 		void Update();
-		bool IsHovered();
+		bool IsHovered() const;
 	};
 
 };

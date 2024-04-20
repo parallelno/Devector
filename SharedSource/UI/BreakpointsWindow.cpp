@@ -61,7 +61,7 @@ void dev::BreakpointsWindow::DrawTable()
 		for (int column = 0; column < COLUMNS_COUNT; column++)
 		{
 			ImGui::TableSetColumnIndex(column);
-			const char* column_name = ImGui::TableGetColumnName(column); // Retrieve name passed to TableSetupColumn()
+			const char* column_name = ImGui::TableGetColumnName(column); // Retrieve the name passed to TableSetupColumn()
 			if (column == 0) {
 				DrawHelpMarker(
 					"Define an address and conditions; halts execution when the\n"

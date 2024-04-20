@@ -115,7 +115,7 @@ void dev::DisplayWindow::Update()
 	ImGui::End();
 }
 
-bool dev::DisplayWindow::IsHovered()
+bool dev::DisplayWindow::IsHovered() const
 {
 	return m_isHovered;
 }

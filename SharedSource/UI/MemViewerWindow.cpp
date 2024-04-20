@@ -68,7 +68,7 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 		for (int column = 0; column < COLUMNS_COUNT; column++)
 		{
 			ImGui::TableSetColumnIndex(column);
-			const char* column_name = ImGui::TableGetColumnName(column); // Retrieve name passed to TableSetupColumn()
+			const char* column_name = ImGui::TableGetColumnName(column); // Retrieve the name passed to TableSetupColumn()
 			if (column == 0) {
 				dev::DrawHelpMarker(
 					"Shows the current values of the memory data.\n\n"
@@ -86,16 +86,11 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 		// addr & data
 		int idx = 0;
 		ImGuiListClipper clipper;
-		clipper.Begin(m_ram.size() / (COLUMNS_COUNT - 1));
+		clipper.Begin(int(m_ram.size()) / (COLUMNS_COUNT - 1));
 		while (clipper.Step())
 		{
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
-				//for (auto val : m_ram)
 			{
-				//int column = idx % (COLUMNS_COUNT - 1);
-				//int row = idx / (COLUMNS_COUNT - 1);
-
-				//if (column == 0)
 				{
 					ImGui::TableNextRow();
 					// addr
@@ -103,11 +98,11 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, BG_COLOR_ADDR);
 					ImGui::TextColored(COLOR_ADDR, std::format("{:04X}", row * (COLUMNS_COUNT - 1)).c_str());
 				}
-				for (int row = 0; row < 16; row++)
+				for (int col = 0; col < 16; col++)
 				{
 					// the row of data
 					ImGui::TableNextColumn();
-					ImGui::TextColored(COLOR_VALUE, std::format("{:02X}", m_ram[row * (COLUMNS_COUNT - 1) + row]).c_str());
+					ImGui::TextColored(COLOR_VALUE, std::format("{:02X}", m_ram[row * (COLUMNS_COUNT - 1) + col]).c_str());
 					idx++;
 				}
 			}
