@@ -98,12 +98,21 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
         UpdateDisasm(addr);
         m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
     }
+    if (_isRunning) ImGui::EndDisabled();
 
     ImGui::SameLine(); dev::DrawHelpMarker(
         "Search by a hexadecimal address in the format of 0x100 or 100,\n"
-        "or by a case-sensitive label name");
+        "or by a case-sensitive label name\n\n"
+
+        "In the disasm window below:\n"
+        "Left click in the left border to add/remove breakpoints.\n"
+        "Left Ctrl + left click in the left border to disable/enable breakpoints.\n"
+        "Click on the highlighted instruction address/label to navigate to it.\n"
+        "Left Alt + left arrow key to navigate back.\n"
+        "Left Alt + right arrow key to navigate forward.\n"
+        "Use the mouse wheel to scroll the program.\n"
+        );
     ImGui::PopItemWidth();
-    if (_isRunning) ImGui::EndDisabled();
 }
 
 bool dev::DisasmWindow::IsDisasmTableOutOfWindow() const

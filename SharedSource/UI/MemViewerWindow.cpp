@@ -48,8 +48,6 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 {
 	constexpr auto headerColumn = "00\0 01\0 02\0 03\0 04\0 05\0 06\0 07\0 08\0 09\0 0A\0 0B\0 0C\0 0D\0 0E\0 0F\0";
 	
-	if (_isRunning) ImGui::BeginDisabled();
-	
 	const int COLUMNS_COUNT = 17;
 	const char* tableName = "##MemViewer";
 
@@ -82,7 +80,6 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 				ImGui::PopStyleColor();
 			}
 		}
-		
 		// addr & data
 		int idx = 0;
 		ImGuiListClipper clipper;
@@ -91,24 +88,23 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 		{
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
 			{
-				{
-					ImGui::TableNextRow();
-					// addr
-					ImGui::TableNextColumn();
-					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, BG_COLOR_ADDR);
-					ImGui::TextColored(COLOR_ADDR, std::format("{:04X}", row * (COLUMNS_COUNT - 1)).c_str());
-				}
+				ImGui::TableNextRow();
+				// addr. left header 
+				ImGui::TableNextColumn();
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, BG_COLOR_ADDR);
+				ImGui::TextColored(COLOR_ADDR, std::format("{:04X}", row * (COLUMNS_COUNT - 1)).c_str());
+
+				// the row of data
+				if (_isRunning) ImGui::BeginDisabled();
 				for (int col = 0; col < 16; col++)
 				{
-					// the row of data
 					ImGui::TableNextColumn();
 					ImGui::TextColored(COLOR_VALUE, std::format("{:02X}", m_ram[row * (COLUMNS_COUNT - 1) + col]).c_str());
 					idx++;
 				}
+				if (_isRunning) ImGui::EndDisabled();
 			}
 		}
 		ImGui::EndTable();
 	}
-
-	if (_isRunning) ImGui::EndDisabled();
 }

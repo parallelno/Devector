@@ -131,28 +131,38 @@ void dev::MemDisplayWindow::DrawDisplay()
 	ImGui::Text(labelText.c_str());
 
 	ImVec2 remainingSize = ImGui::GetContentRegionAvail();
+	ImVec2 windowPos = ImGui::GetWindowPos();
+	ImVec2 windowSize = ImGui::GetWindowSize();
+	ImVec2 windowEndPos = ImVec2(windowPos.x + windowSize.x, windowPos.y + windowSize.y);
+	ImVec2 windowBottomRight = ImVec2(windowEndPos.x, windowPos.y + windowSize.y);
+
 	ImGui::BeginChild("ScrollingFrame", ImVec2(remainingSize.x, remainingSize.y), true, ImGuiWindowFlags_HorizontalScrollbar);
 
 	if (m_renderDataIdx >= 0 && m_glUtils.IsShaderDataReady(m_renderDataIdx))
-	{   
+	{
 		auto& framebufferTextures = m_glUtils.GetFramebufferTextures(m_renderDataIdx);
-
 		ImVec2 imageSize(FRAME_BUFFER_W * m_scale, FRAME_BUFFER_H * m_scale);
-
 		imageHoveredId = -1;
+
 		for (int i = 0; i < 5; i++)
 		{
 			ImGui::SeparatorText(separatorsS[i]);
 			ImVec2 imagePos = ImGui::GetCursorScreenPos();
-			ImGui::Image((void*)(intptr_t)framebufferTextures[i], imageSize);
-			ImVec2 currentImgPixelPos = ImVec2(mousePos.x - imagePos.x, mousePos.y - imagePos.y);
+			ImVec2 imageEndPos = ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y);
 
-			if (currentImgPixelPos.x >= 0.0f && currentImgPixelPos.x < imageSize.x &&
-				currentImgPixelPos.y >= 0.0f && currentImgPixelPos.y < imageSize.y)
+			bool isInsideImg = mousePos.x >= imagePos.x && mousePos.x < imageEndPos.x &&
+				mousePos.y >= imagePos.y && mousePos.y < imageEndPos.y;
+
+			bool isInsideWindow = mousePos.x >= windowPos.x && mousePos.x < windowEndPos.x &&
+				mousePos.y >= windowPos.y && mousePos.y < windowBottomRight.y;
+
+			if (isInsideWindow && isInsideImg)
 			{
-				imgPixelPos = currentImgPixelPos;
+				imgPixelPos = ImVec2(mousePos.x - imagePos.x, mousePos.y - imagePos.y);
 				imageHoveredId = i;
 			}
+
+			ImGui::Image((void*)(intptr_t)framebufferTextures[i], imageSize);
 		}
 	}
 	ScaleView();
