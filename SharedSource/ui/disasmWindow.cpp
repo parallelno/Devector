@@ -121,6 +121,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     Addr regPC = regs["pc"];
     bool showItemContextMenu = false;
     static int editedBreakpointAddr = -1;
+    int reqUpdateAddr = -1;
 
     if (m_disasm.empty()) return;
 
@@ -283,9 +284,37 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                             {
                                 if (operand[0] == '0' && operands.size() == 1)
                                 {
-                                    // draw a hexadecimal literal
+                                    // check if the hexadecimal literal is hovered
                                     ImGui::SameLine();
-                                    ImGui::TextColored(DISASM_TBL_COLOR_NUMBER, "%s", operand.c_str());
+                                    bool drawNormalLiteral = true;
+                                    if (!_isRunning)
+                                    {
+                                        ImVec2 textPos = ImGui::GetCursorScreenPos();
+                                        ImVec2 textSize = ImGui::CalcTextSize(operand.c_str());
+                                        if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
+                                        {
+                                            ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
+                                            // draw a highlighted hexadecimal literal
+                                            ImGui::TextColored(dev::IM_VEC4(0xFFFFFFFF), "%s", operand.c_str());
+                                            // if it's cliched, scroll the disasm to highlighted addr
+                                            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                                            {
+                                                reqUpdateAddr = dev::StrHexToInt(operand.c_str() + 2);
+                                                if (m_navigateAddrs.empty()) {
+                                                    m_navigateAddrs.push_back(line.addr);
+                                                    m_navigateAddrsIdx = 0;
+                                                }
+                                                m_navigateAddrs.push_back(reqUpdateAddr);
+                                                m_navigateAddrsIdx++;
+                                            }
+                                            drawNormalLiteral = false;
+                                        }
+                                    }
+                                    if (drawNormalLiteral)
+                                    {
+                                        // draw a hexadecimal literal
+                                        ImGui::TextColored(DISASM_TBL_COLOR_NUMBER, "%s", operand.c_str());
+                                    }                                    
                                 }
                                 else if (cmd_parts.size() <= 2 || cmd_parts == "PSW")
                                 {
@@ -348,6 +377,10 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
         ImGui::EndTable();
         PopStyleCompact();
 
+        // update the disasm if the addr was clicked
+        if (reqUpdateAddr >= 0) {
+            UpdateDisasm(reqUpdateAddr);
+        }
         // the item context menu
         if (showItemContextMenu) ImGui::OpenPopup("DisasmItemMenu");
         if (ImGui::BeginPopup("DisasmItemMenu"))
@@ -402,7 +435,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     if (!_isRunning && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) &&
         m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
     {
-        // TODO: make arrow keys working correctly. the code below only handles it once for some reason
+        // TODO: BUG: the code below only handles up and down arrow keys once for some reason
         /*
         if (ImGui::IsKeyDown(ImGuiKey_PageUp))
         {
@@ -430,6 +463,21 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
             m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
             UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, 2 - DISASM_INSTRUCTION_OFFSET);
         }
+    }
+
+    // Alt + Left navigation
+    if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && 
+        m_navigateAddrsIdx - 1 >= 0)
+    {
+        auto addr = m_navigateAddrs[--m_navigateAddrsIdx];
+        UpdateDisasm(addr);
+    } 
+    // Alt + Right navigation
+    else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_RightArrow) && 
+        m_navigateAddrsIdx + 1 < m_navigateAddrs.size() )
+    {
+        auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
+        UpdateDisasm(addr);
     }
 
     if (_isRunning) ImGui::EndDisabled();

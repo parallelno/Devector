@@ -58,6 +58,8 @@ namespace dev
 		int64_t m_ccLastRun = 0;
 		int m_selectedLineIdx = 0;
 		bool& m_reset;
+		std::vector<Addr> m_navigateAddrs;
+		int m_navigateAddrsIdx = 0;
 
 		void DrawDebugControls(const bool _isRunning);
 		void DrawSearch(const bool _isRunning);
