@@ -18,14 +18,14 @@ namespace dev
 		static constexpr ImVec4 COLOR_WARNING = dev::IM_VEC4(0xFF2020FF);
 
 		Debugger& m_debugger;
-		bool& m_reqDisasmUpdate;
+		int& m_reqDisasmUpdate;
 
 		void DrawTable();
 		void DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Watchpoints& _wps, int _id = -1);
 
 	public:
 		WatchpointsWindow(Debugger& _debugger,
-			const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate);
+			const float* const _fontSizeP, const float* const _dpiScaleP, int& _reqDisasmUpdate);
 
 		void Update();
 

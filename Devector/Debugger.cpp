@@ -711,7 +711,7 @@ auto dev::Debugger::GetBreakpointStatus(const Addr _addr)
 //////////////////////////////////////////////////////////////
 
 void dev::Debugger::AddWatchpoint(
-	const Watchpoint::Id _id, const Watchpoint::Access _access, 
+	const dev::Id _id, const Watchpoint::Access _access, 
 	const GlobalAddr _globalAddr, const Watchpoint::Condition _cond,
 	const uint16_t _value, const size_t _value_size, const bool _active, const std::string& _comment)
 {
@@ -728,7 +728,7 @@ void dev::Debugger::AddWatchpoint(
 	}
 }
 
-void dev::Debugger::DelWatchpoint(const Watchpoint::Id _id)
+void dev::Debugger::DelWatchpoint(const dev::Id _id)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
 

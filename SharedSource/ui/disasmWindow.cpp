@@ -6,13 +6,14 @@
 
 dev::DisasmWindow::DisasmWindow(
         dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
-        const float* const _fontSize, const float* const _dpiScale, bool& _reqDisasmUpdate, bool& _reset)
+        const float* const _fontSize, const float* const _dpiScale, int& _reqDisasmUpdate, int& _reqDisasmUpdateData, bool& _reset)
     :
     BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
     m_hardware(_hardware),
     m_debugger(_debugger),
     m_fontCommentP(fontComment),
     m_reqDisasmUpdate(_reqDisasmUpdate),
+    m_reqDisasmUpdateData(_reqDisasmUpdateData),
     m_reset(_reset)
 {
     UpdateData(false);
@@ -180,7 +181,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                             m_debugger.DelBreakpoint(addr);
                         }
                         else m_debugger.SetBreakpointStatus(addr, bpStatus);
-                        m_reqDisasmUpdate = true;
+                        m_reqDisasmUpdate = REQ_DISASM_DRAW;
                     }
 
                     // draw program counter icon
@@ -371,11 +372,11 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                 else {
                     m_debugger.DelBreakpoint(editedBreakpointAddr);
                 }
-                m_reqDisasmUpdate = true;
+                m_reqDisasmUpdate = REQ_DISASM_DRAW;
             }
             if (ImGui::MenuItem("Remove All Beakpoints")) {
                 m_debugger.DelBreakpoints();
-                m_reqDisasmUpdate = true;
+                m_reqDisasmUpdate = REQ_DISASM_DRAW;
             };
             ImGui::EndPopup();
         }
@@ -383,10 +384,18 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
     ImGui::PopStyleVar(2);
 
-    if (m_reqDisasmUpdate && m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
+    if (!_isRunning && m_reqDisasmUpdate != REQ_DISASM_NONE && m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
     {
-        UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr);
-        m_reqDisasmUpdate = false;
+        Addr addr = 0;
+        if (m_reqDisasmUpdate == REQ_DISASM_DRAW)
+        {
+            addr = m_disasm[DISASM_INSTRUCTION_OFFSET].addr;
+        }
+        else if (m_reqDisasmUpdate == REQ_DISASM_BRK){
+            addr = m_reqDisasmUpdateData;
+        }
+        UpdateDisasm(addr);
+        m_reqDisasmUpdate = REQ_DISASM_NONE;
     }
 
     // check the keys

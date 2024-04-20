@@ -193,8 +193,8 @@ void dev::ImGuiApp::Run()
         m_width = (int)(ImGui::GetWindowWidth());
         m_height = (int)(ImGui::GetWindowHeight());
         auto size = ImGui::GetWindowPos();
-        m_posX = size.x;
-        m_posY = size.y;
+        m_posX = int(size.x);
+        m_posY = int(size.y);
 
         ImGui::PopStyleVar();
 

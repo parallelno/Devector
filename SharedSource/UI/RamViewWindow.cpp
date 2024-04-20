@@ -6,74 +6,75 @@
 
 // Vertex shader source code
 const char* rvShaderVtx = R"(
-    #version 330 core
-    precision highp float;
-    
-    layout (location = 0) in vec3 vtxPos;
-    layout (location = 1) in vec2 vtxUV;
-    
-    out vec2 uv0;
+	#version 330 core
+	precision highp float;
+	
+	layout (location = 0) in vec3 vtxPos;
+	layout (location = 1) in vec2 vtxUV;
+	
+	out vec2 uv0;
 
-    void main()
-    {
-        uv0 = vtxUV;
-        gl_Position = vec4(vtxPos.xyz, 1.0f);
-    }
+	void main()
+	{
+		uv0 = vtxUV;
+		gl_Position = vec4(vtxPos.xyz, 1.0f);
+	}
 )";
 
 // Fragment shader source code
 const char* rvShaderFrag = R"(
-    #version 330 core
-    precision highp float;
+	#version 330 core
+	precision highp float;
+	precision highp int;
 
-    in vec2 uv0;
+	in vec2 uv0;
 
-    uniform sampler2D texture0;
-    //uniform ivec2 iresolution;
-    uniform vec4 globalColorBg;
-    uniform vec4 globalColorFg;
+	uniform sampler2D texture0;
+	//uniform ivec2 iresolution;
+	uniform vec4 globalColorBg;
+	uniform vec4 globalColorFg;
 
-    layout (location = 0) out vec4 out0;
+	layout (location = 0) out vec4 out0;
 
-    #define BYTE_COLOR_MULL 0.6
-    #define BACK_COLOR_MULL 0.7
+	#define BYTE_COLOR_MULL 0.6
+	#define BACK_COLOR_MULL 0.7
 
-    int GetBit(float _color, int _bitIdx) {
-        return (int(_color * 255.0) >> _bitIdx) & 1;
-    }
+	int GetBit(float _color, int _bitIdx) {
+		return (int(_color * 255.0) >> _bitIdx) & 1;
+	}
 
-    void main()
-    {
-        float isAddrBelow32K = 1.0 - step(0.5, uv0.y);
-        vec2 uv = vec2( uv0.y * 2.0, uv0.x / 2.0 + isAddrBelow32K * 0.5);
-        float byte = texture(texture0, uv).r;
+	void main()
+	{
+		float isAddrBelow32K = 1.0 - step(0.5, uv0.y);
+		vec2 uv = vec2( uv0.y * 2.0, uv0.x / 2.0 + isAddrBelow32K * 0.5);
+		float byte = texture(texture0, uv).r;
 
-        float isOdd8K = step(0.5, fract(uv0.x / 0.5));
-        isOdd8K = mix(isOdd8K, 1.0 - isOdd8K, isAddrBelow32K);
-        vec3 bgColor = mix(globalColorBg.xyz, globalColorBg.xyz * BACK_COLOR_MULL, isOdd8K);
+		float isOdd8K = step(0.5, fract(uv0.x / 0.5));
+		isOdd8K = mix(isOdd8K, 1.0 - isOdd8K, isAddrBelow32K);
+		vec3 bgColor = mix(globalColorBg.xyz, globalColorBg.xyz * BACK_COLOR_MULL, isOdd8K);
 
-        int bitIdx = 7 - int(uv0.x * 1023.0) & 7;
-        int isBitOn = GetBit(byte, bitIdx);
+		int bitIdx = 7 - int(uv0.x * 1024.0) & 7;
+		int isBitOn = GetBit(byte, bitIdx);
 
-        int isByteOdd = (int(uv0.x * 511.0)>>2) & 1;
-        vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
-        vec3 color = mix(bgColor, byteColor, float(isBitOn));
+		int isByteOdd = (int(uv0.x * 512.0)>>2) & 1;
+		vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
+		vec3 color = mix(bgColor, byteColor, float(isBitOn));
 
-        out0 = vec4(color, globalColorBg.a);
-        //out0 = vec4(byte,byte,byte, globalColorBg.a);
-    }
+		out0 = vec4(color, globalColorBg.a);
+		//out0 = vec4(byte,byte,byte, globalColorBg.a);
+	}
 )";
 
 dev::RamViewWindow::RamViewWindow(Hardware& _hardware,
-        const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
+		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-    m_hardware(_hardware), m_glUtils(_glUtils)
+	m_hardware(_hardware), m_glUtils(_glUtils)
 {
-    GLUtils::ShaderParams shaderParams = {
-        { "globalColorBg", &m_globalColorBg },
-        { "globalColorFg", &m_globalColorFg } };
-    m_renderDataIdx = m_glUtils.InitRenderData(rvShaderVtx, rvShaderFrag, FRAME_BUFFER_W, FRAME_BUFFER_H, shaderParams, RAM_TEXTURES);
+	GLUtils::ShaderParams shaderParams = {
+		{ "globalColorBg", &m_globalColorBg },
+		{ "globalColorFg", &m_globalColorFg } };
+	m_renderDataIdx = m_glUtils.InitRenderData(rvShaderVtx, rvShaderFrag, FRAME_BUFFER_W, FRAME_BUFFER_H, shaderParams, RAM_TEXTURES);
 }
 
 void dev::RamViewWindow::Update()
@@ -83,79 +84,119 @@ void dev::RamViewWindow::Update()
 	static bool open = true;
 	ImGui::Begin("Ram View", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar);
 
-    bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-    UpdateData(isRunning);
+	bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+	UpdateData(isRunning);
 
 	DrawDisplay();
 
-    ScaleView();
 	ImGui::End();
+}
+
+static const char* separatorsS[] = {
+	"The Main Ram",
+	"The Ram-Disk Page 0",
+	"The Ram-Disk Page 1",
+	"The Ram-Disk Page 2",
+	"The Ram-Disk Page 3"
+};
+
+dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale) 
+{
+	int imgX = int(_pos.x / _scale);
+	int imgY = int(_pos.y / _scale);
+
+	int addrOffsetH = imgY / 256; // if the cursor hovers the bottom part of the img, the addr is >= 32K
+	int eigthKBankIdx = imgX / 256 + 4 * addrOffsetH;
+
+	int eigthKBankPosX = imgX % 256;
+	int eigthKBankPosY = imgY % 256;
+
+	int addr = ((eigthKBankPosX>>3) * 256 + (255 - eigthKBankPosY)) + eigthKBankIdx * 1024 * 8;
+
+	return addr;
 }
 
 void dev::RamViewWindow::DrawDisplay()
 {
+	ImVec2 mousePos = ImGui::GetMousePos();
+	static ImVec2 imgPixelPos;
+	static int imageHoveredId = 0;
 
-    if (m_renderDataIdx >= 0 && m_glUtils.IsShaderDataReady(m_renderDataIdx))
-    {   
-        auto& framebufferTextures = m_glUtils.GetFramebufferTextures(m_renderDataIdx);
+	std::string labelText = "Hovered Addr: ";
+	if (imageHoveredId >= 0) 
+	{
+		Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
+		labelText += std::format("0x{:04X}, {}", addr, separatorsS[imageHoveredId]);
+	}
+	ImGui::Text(labelText.c_str());
 
-        ImVec2 imageSize(FRAME_BUFFER_W * m_scale, FRAME_BUFFER_H * m_scale);
+	ImVec2 remainingSize = ImGui::GetContentRegionAvail();
+	ImGui::BeginChild("ScrollingFrame", ImVec2(remainingSize.x, remainingSize.y), true, ImGuiWindowFlags_HorizontalScrollbar);
 
-        ImGui::SeparatorText("The Main Ram");
-        ImGui::Image((void*)(intptr_t)framebufferTextures[0], imageSize);
-        
-        ImGui::SeparatorText("The Ram-Disk Page 0");
-        ImGui::Image((void*)(intptr_t)framebufferTextures[1], imageSize);
-        
-        ImGui::SeparatorText("The Ram-Disk Page 1");
-        ImGui::Image((void*)(intptr_t)framebufferTextures[2], imageSize);
-        
-        ImGui::SeparatorText("The Ram-Disk Page 2");
-        ImGui::Image((void*)(intptr_t)framebufferTextures[3], imageSize);
-        
-        ImGui::SeparatorText("The Ram-Disk Page 3");
-        ImGui::Image((void*)(intptr_t)framebufferTextures[4], imageSize);
-    }
+	if (m_renderDataIdx >= 0 && m_glUtils.IsShaderDataReady(m_renderDataIdx))
+	{   
+		auto& framebufferTextures = m_glUtils.GetFramebufferTextures(m_renderDataIdx);
+
+		ImVec2 imageSize(FRAME_BUFFER_W * m_scale, FRAME_BUFFER_H * m_scale);
+
+		imageHoveredId = -1;
+		for (int i = 0; i < 5; i++)
+		{
+			ImGui::SeparatorText(separatorsS[i]);
+			ImVec2 imagePos = ImGui::GetCursorScreenPos();
+			ImGui::Image((void*)(intptr_t)framebufferTextures[i], imageSize);
+			ImVec2 currentImgPixelPos = ImVec2(mousePos.x - imagePos.x, mousePos.y - imagePos.y);
+
+			if (currentImgPixelPos.x >= 0.0f && currentImgPixelPos.x < imageSize.x &&
+				currentImgPixelPos.y >= 0.0f && currentImgPixelPos.y < imageSize.y)
+			{
+				imgPixelPos = currentImgPixelPos;
+				imageHoveredId = i;
+			}
+		}
+	}
+	ScaleView();
+	ImGui::EndChild();
 }
 
 void dev::RamViewWindow::UpdateData(const bool _isRunning)
 {
-    // check if the hardware updated its state
-    auto res = m_hardware.Request(Hardware::Req::GET_REGS);
-    const auto& data = *res;
+	// check if the hardware updated its state
+	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+	const auto& data = *res;
 
-    uint64_t cc = data["cc"];
-    auto ccDiff = cc - m_ccLast;
-    m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
-    m_ccLast = cc;
-    if (ccDiff == 0) return;
+	uint64_t cc = data["cc"];
+	auto ccDiff = cc - m_ccLast;
+	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
+	m_ccLast = cc;
+	if (ccDiff == 0) return;
 
-    // update
-    if (m_renderDataIdx >= 0) 
-    {
-        auto memP = m_hardware.GetRam()->data();
-        m_glUtils.UpdateTextures(m_renderDataIdx, memP, RAM_TEXTURE_W, RAM_TEXTURE_H, 1);
-        m_glUtils.Draw(m_renderDataIdx);
-    }
+	// update
+	if (m_renderDataIdx >= 0) 
+	{
+		auto memP = m_hardware.GetRam()->data();
+		m_glUtils.UpdateTextures(m_renderDataIdx, memP, RAM_TEXTURE_W, RAM_TEXTURE_H, 1);
+		m_glUtils.Draw(m_renderDataIdx);
+	}
 }
 
 // check the keys, scale the view
 void dev::RamViewWindow::ScaleView()
 {
-    if (ImGui::IsWindowHovered())
-    {
-        if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
-        {
-            float scaleAdjusted = m_scale < 1.0f ? SCALE_INC : m_scale * SCALE_INC;
+	if (ImGui::IsWindowHovered())
+	{
+		if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
+		{
+			float scaleAdjusted = m_scale < 1.0f ? SCALE_INC : m_scale * SCALE_INC;
 
-            if (ImGui::GetIO().MouseWheel > 0.0f)
-            {
-                m_scale = dev::Min( m_scale + scaleAdjusted, SCALE_MAX);
-            }
-            else if (ImGui::GetIO().MouseWheel < 0.0f)
-            {
-                m_scale = dev::Max(m_scale - scaleAdjusted, SCALE_MIN);
-            }
-        }
-    }
+			if (ImGui::GetIO().MouseWheel > 0.0f)
+			{
+				m_scale = dev::Min( m_scale + scaleAdjusted, SCALE_MAX);
+			}
+			else if (ImGui::GetIO().MouseWheel < 0.0f)
+			{
+				m_scale = dev::Max(m_scale - scaleAdjusted, SCALE_MIN);
+			}
+		}
+	}
 }

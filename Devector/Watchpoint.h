@@ -16,12 +16,11 @@ namespace dev
 {
 	#define WATCHPOINT_CONDITIONS_LEN 7
 	const std::string WATCHPOINT_CONDITION_STR[WATCHPOINT_CONDITIONS_LEN] = { "ANY", "==", "<", ">", "<=", ">=", "!=" };
-	static size_t watchpointId = 0;
+	static Id watchpointId = 0;
 
 	class Watchpoint
 	{
 	public:
-		using Id = int;
 		enum class Access : size_t { R = 0, W, RW, COUNT };
 		const std::string ACCESS_STR[3] = { "R-", "-W", "RW" };
 		static constexpr size_t VAL_BYTE_SIZE = sizeof(uint8_t);

@@ -44,7 +44,8 @@ namespace dev
 
 		std::list<std::wstring> m_recentFilePaths;
 
-		bool m_reqDisasmUpdate = false;
+		int m_reqDisasmUpdate = REQ_DISASM_NONE;
+		int m_reqDisasmUpdateData = 0;
 		bool m_reset = false;
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 		GLUtils m_glUtils;

@@ -177,7 +177,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
             PortOutHandling(2, 0);
             PortOutHandling(3, 0);
         }
-        if (((m_portC & 8) != ruslat) && onruslat) {
+        if (((m_portC & 8 > 0) != ruslat) && onruslat) {
             onruslat((m_portC & 8) == 0);
         }
         break;
@@ -185,7 +185,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         ruslat = m_portC & 8;
         m_portC = _value;
         //ontapeoutchange(m_portC & 1);
-        if (((m_portC & 8) != ruslat) && onruslat) {
+        if (((m_portC & 8 > 0) != ruslat) && onruslat) {
             onruslat((m_portC & 8) == 0);
         }
         break;

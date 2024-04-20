@@ -13,5 +13,7 @@ namespace dev
 	// TODO: replace it with GLuint
 	using GLuint1 = unsigned int;
 	using GLenum1 = unsigned int;
+
+	using Id = int;
 }
 #endif // !DEV_TYPES_H

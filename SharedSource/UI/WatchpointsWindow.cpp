@@ -4,7 +4,7 @@
 #include "Utils/StringUtils.h"
 
 dev::WatchpointsWindow::WatchpointsWindow(Debugger& _debugger,
-	const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate)
+	const float* const _fontSizeP, const float* const _dpiScaleP, int& _reqDisasmUpdate)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_debugger(_debugger),
@@ -136,7 +136,7 @@ void dev::WatchpointsWindow::DrawTable()
 				m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), globalAddr,
 					wp.GetCondition(), wp.GetValue(),
 					wp.GetSize(), isActive, wp.GetComment());
-				m_reqDisasmUpdate = true;
+				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 			}
 			// GlobalAddr
 			ImGui::TableNextColumn();
@@ -217,11 +217,11 @@ void dev::WatchpointsWindow::DrawTable()
 						wp.GetCondition(), wp.GetValue(),
 						wp.GetSize(), false, wp.GetComment());
 				}
-				m_reqDisasmUpdate = true;
+				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 			}
 			else if (ImGui::MenuItem("Delete All")) {
 				m_debugger.DelWatchpoints();
-				m_reqDisasmUpdate = true;
+				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 			};
 			ImGui::EndPopup();
 		}
@@ -239,7 +239,7 @@ void dev::WatchpointsWindow::DrawTable()
 						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
 							wp.GetCondition(), wp.GetValue(),
 							wp.GetSize(), false, wp.GetComment());
-						m_reqDisasmUpdate = true;
+						m_reqDisasmUpdate = REQ_DISASM_DRAW;
 					}
 				}
 				else {
@@ -247,15 +247,15 @@ void dev::WatchpointsWindow::DrawTable()
 						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
 							wp.GetCondition(), wp.GetValue(),
 							wp.GetSize(), true, wp.GetComment());
-						m_reqDisasmUpdate = true;
+						m_reqDisasmUpdate = REQ_DISASM_DRAW;
 					}
 				}
 				if (ImGui::MenuItem("Delete")) {
 					m_debugger.DelWatchpoint(editedWatchpointId);
-					m_reqDisasmUpdate = true;
+					m_reqDisasmUpdate = REQ_DISASM_DRAW;
 				}
 				else if (ImGui::MenuItem("Edit")) {
-					showItemEditPopup = true;
+					showItemEditPopup = REQ_DISASM_DRAW;
 				};
 			}
 
@@ -290,7 +290,7 @@ void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 		access = wp.GetAccessI();
 		conditionS = wp.GetConditionS();
 		valueS = std::format("0x{:04X}", wp.GetValue());
-		size = wp.GetSize();
+		size = static_cast<int>(wp.GetSize());
 		commentS = wp.GetComment();
 	}
 
@@ -367,7 +367,7 @@ void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 					cond, value,
 					size + 1, isActive, commentS);
 
-				m_reqDisasmUpdate = true;
+				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 				ImGui::CloseCurrentPopup();
 			}
 			if (warning) {

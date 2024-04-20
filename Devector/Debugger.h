@@ -67,7 +67,7 @@ namespace dev
 			{};
 		};
 		using Disasm = std::vector<DisasmLine>;
-		using Watchpoints = std::map<Watchpoint::Id, Watchpoint>;
+		using Watchpoints = std::map<dev::Id, Watchpoint>;
 		using Breakpoints = std::map<GlobalAddr, Breakpoint>;
 
 		Debugger(Hardware& _hardware);
@@ -94,11 +94,11 @@ namespace dev
 		auto GetBreakpoints() -> const Breakpoints;
 		auto GetBreakpointStatus(const Addr _addr) -> const Breakpoint::Status;
 
-		void AddWatchpoint(const Watchpoint::Id _id, const Watchpoint::Access _access, 
+		void AddWatchpoint(const dev::Id _id, const Watchpoint::Access _access, 
 			const GlobalAddr _globalAddr, const Watchpoint::Condition _cond, 
 			const uint16_t _value, const size_t _valueSize = 1, 
 			const bool _active = true, const std::string& _comment = "");
-		void DelWatchpoint(const Watchpoint::Id _id);
+		void DelWatchpoint(const dev::Id _id);
 		void DelWatchpoints();
 		bool CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value);
 		void ResetWatchpoints();

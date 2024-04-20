@@ -50,7 +50,8 @@ namespace dev
 		Hardware& m_hardware;
 		Debugger& m_debugger;
 		ImFont* m_fontCommentP = nullptr;
-		bool& m_reqDisasmUpdate;
+		int& m_reqDisasmUpdate;
+		int& m_reqDisasmUpdateData;
 		char m_searchText[255] = "";
 		Debugger::Disasm m_disasm;
 		int64_t m_ccLast = -1; // to force the first stats update
@@ -66,7 +67,7 @@ namespace dev
 
 	public:
 
-		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate, bool& _reset);
+		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP, int& _reqDisasmUpdate, int& _reqDisasmUpdateData, bool& _reset);
 		void Update();
 		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = -DISASM_INSTRUCTION_OFFSET);
 	};

@@ -31,7 +31,7 @@ GLfloat vertices[] = {
      if (m_glewInitCode != GLEW_OK) return -1;
 
      auto& renderData = m_renderDatas.emplace_back(RenderData{ _textureCount });
-     int renderDataIdx = m_renderDatas.size() - 1;
+     int renderDataIdx = static_cast<int>(m_renderDatas.size() - 1);
 
     // Create a OpenGL texture identifiers
     glGenTextures(_textureCount, renderData.textures.data());

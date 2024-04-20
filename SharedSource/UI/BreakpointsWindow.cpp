@@ -1,14 +1,15 @@
 #include <format>
 #include "BreakpointsWindow.h"
+#include "Utils/Consts.h"
 #include "Utils/ImGuiUtils.h"
 #include "Utils/StringUtils.h"
 
 dev::BreakpointsWindow::BreakpointsWindow(Debugger& _debugger,
-	const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reqDisasmUpdate)
+	const float* const _fontSizeP, const float* const _dpiScaleP, int& _reqDisasmUpdate, int& _reqDisasmUpdateData)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_debugger(_debugger),
-	m_reqDisasmUpdate(_reqDisasmUpdate)
+	m_reqDisasmUpdate(_reqDisasmUpdate), m_reqDisasmUpdateData(_reqDisasmUpdateData)
 {}
 
 void dev::BreakpointsWindow::Update()
@@ -31,13 +32,14 @@ void dev::BreakpointsWindow::DrawProperty(const std::string& _name, const ImVec2
 	ImGui::PopStyleColor();
 }
 
+#define CHECK_IF_ITEM_CLICKED		if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {showItemContextMenu = true; editedBreakpointAddr = addr; }
+
 void dev::BreakpointsWindow::DrawTable()
 {
 	static int selectedAddr = -1;
 	bool showItemContextMenu = false;
 	static int editedBreakpointAddr = -1;
-	bool showItemEditPopup = false;
-	bool showAddNewPopup = false;
+	static ReqPopup reqPopup = ReqPopup::NONE;
 	const int COLUMNS_COUNT = 4;
 
 	const char* tableName = "##Breakpoints";
@@ -85,45 +87,38 @@ void dev::BreakpointsWindow::DrawTable()
 
 			// isActive
 			ImGui::TableNextColumn();
+						
 			bool isActive = (bool)bpData.status;
 			ImGui::Checkbox(std::format("##0x{:04X}", addr).c_str(), &isActive);
 
 			if (isActive != (bool)bpData.status)
 			{
 				m_debugger.SetBreakpointStatus(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED);
-				m_reqDisasmUpdate = true;
+				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 			}
 			// Addr
 			ImGui::TableNextColumn();
 			ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
 			const bool isSelected = selectedAddr == (int)addr;
-			if (ImGui::Selectable(bpData.GetAddrMappingS(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
+			if (ImGui::Selectable(bpData.GetAddrMappingS(), isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				selectedAddr = addr;
-			}
 
-			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-				showItemContextMenu = true;
-				editedBreakpointAddr = addr;
+				m_reqDisasmUpdate = REQ_DISASM_BRK;
+				m_reqDisasmUpdateData = addr;
 			}
+			CHECK_IF_ITEM_CLICKED
+
 			ImGui::PopStyleColor();
 
 			// Condition
 			const char* cond = bpData.autoDel ? "Auto delete" : "";
 			DrawProperty(cond);
-
-			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-				showItemContextMenu = true;
-				editedBreakpointAddr = addr;
-			}
+			CHECK_IF_ITEM_CLICKED
 
 			// Comment
 			DrawProperty(bp.GetComment());
-
-			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-				showItemContextMenu = true;
-				editedBreakpointAddr = addr;
-			}
+			CHECK_IF_ITEM_CLICKED
 		}
 
 		PopStyleCompact();
@@ -137,7 +132,7 @@ void dev::BreakpointsWindow::DrawTable()
 			ImVec2 tableMax = ImGui::GetItemRectMax();
 			if (ImGui::IsMouseHoveringRect(tableMin, tableMax))
 			{
-				showAddNewPopup = true;
+				reqPopup = ReqPopup::INIT_ADD;
 			}
 		}
 		// the context menu
@@ -147,19 +142,19 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGuiPopupFlags_MouseButtonRight))
 		{
 			if (ImGui::MenuItem("Add New")) {
-				showAddNewPopup = true;
+				reqPopup = ReqPopup::INIT_ADD;
 			}
 			else if (ImGui::MenuItem("Disable All")) 
 			{
 				for (const auto& [addr, bp] : breakpoints) {
 					m_debugger.SetBreakpointStatus(addr, Breakpoint::Status::DISABLED);
 				}
-				m_reqDisasmUpdate = true;
+				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 			}
 			else if (ImGui::MenuItem("Delete All")) {
 				m_debugger.DelBreakpoints();
-				m_reqDisasmUpdate = true;
-			};
+				m_reqDisasmUpdate = REQ_DISASM_DRAW;
+			}
 			ImGui::EndPopup();
 		}
 
@@ -174,48 +169,61 @@ void dev::BreakpointsWindow::DrawTable()
 				if (bp.GetData().IsActive()) {
 					if (ImGui::MenuItem("Disable")) {
 						m_debugger.SetBreakpointStatus(editedBreakpointAddr, Breakpoint::Status::DISABLED);
-						m_reqDisasmUpdate = true;
+						m_reqDisasmUpdate = REQ_DISASM_DRAW;
 					}
 				}
 				else {
 					if (ImGui::MenuItem("Enable")) {
 						m_debugger.SetBreakpointStatus(editedBreakpointAddr, Breakpoint::Status::ACTIVE);
-						m_reqDisasmUpdate = true;
+						m_reqDisasmUpdate = REQ_DISASM_DRAW;
 					}
 				}
 				if (ImGui::MenuItem("Delete")) {
 					m_debugger.DelBreakpoint(editedBreakpointAddr);
-					m_reqDisasmUpdate = true;
+					m_reqDisasmUpdate = REQ_DISASM_DRAW;
 				}
 				else if (ImGui::MenuItem("Edit")) {
-					showItemEditPopup = true;
+					reqPopup = ReqPopup::INIT_EDIT;
 				};
 			}
 			ImGui::EndPopup();
 		}
 		
-		if (showItemEditPopup || showAddNewPopup) ImGui::OpenPopup("BpEdit");
-		DrawPopupEdit(showAddNewPopup, showItemEditPopup, breakpoints, editedBreakpointAddr);
-
+		DrawPopupEdit(reqPopup, breakpoints, editedBreakpointAddr);
 	}
 
 	ImGui::PopStyleVar(2);
 }
 
-void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Breakpoints& _pbs, int _addr)
+void dev::BreakpointsWindow::DrawPopupEdit(ReqPopup& _reqPopup, const Debugger::Breakpoints& _pbs, int _addr)
 {
+	if (_reqPopup == ReqPopup::NONE) {
+		return;
+	}
+	else if (_reqPopup == ReqPopup::INIT_ADD || _reqPopup == ReqPopup::INIT_EDIT) {
+		ImGui::OpenPopup("BpEdit");
+	}
+
 	static auto bpData = Breakpoint::Data(0x100);
 	static uint8_t mappingPages = bpData.mappingPages;
 	static bool isActive = bpData.IsActive();
 	static bool isAutoDel = bpData.autoDel;
 	static GlobalAddr addrOld = 0x100;
 	static std::string addrS = "0x100";
-	static std::string conditionS = "";
+	//static std::string conditionS = "";
 	static std::string commentS = "";
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
 
-	if (!_addNew && _init && _addr >= 0)
+	// update the req after init
+	if (_reqPopup == ReqPopup::INIT_ADD) {
+		_reqPopup = ReqPopup::ADD;
+		commentS = "";
+	}
+	// update static vars if we are editing the breakpoint
+	if (_reqPopup == ReqPopup::INIT_EDIT && _addr >= 0)
 	{
+		_reqPopup = ReqPopup::EDIT;
+
 		const auto& bp = _pbs.at(_addr);
 		bpData = bp.GetData();
 		isActive = bpData.status == Breakpoint::Status::ACTIVE;
@@ -223,7 +231,6 @@ void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 		mappingPages = bpData.mappingPages;
 		isAutoDel = bpData.autoDel;
 		addrS = bpData.GetAddrS();
-
 		//conditionS = bp.GetConditionS();
 		commentS = bp.GetComment();
 	}
@@ -256,7 +263,11 @@ void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 			DrawProperty2EditableCheckBox("Ram Disk Page 1", "##BPContextAccessRamDiskP1", &mainRamDiskP1, "To check the Ram-Disk page 1");
 			DrawProperty2EditableCheckBox("Ram Disk Page 2", "##BPContextAccessRamDiskP2", &mainRamDiskP2, "To check the Ram-Disk page 2");
 			DrawProperty2EditableCheckBox("Ram Disk Page 3", "##BPContextAccessRamDiskP3", &mainRamDiskP3, "To check the Ram-Disk page 3");
-			mappingPages = mainRam | mainRamDiskP0 << 1 | mainRamDiskP1 << 2 | mainRamDiskP2 << 3 | mainRamDiskP3 << 4;
+			mappingPages = static_cast<int>(mainRam) | 
+				(static_cast<int>(mainRamDiskP0)<< 1) |
+				(static_cast<int>(mainRamDiskP1)<< 2) |
+				(static_cast<int>(mainRamDiskP2)<< 3) |
+				(static_cast<int>(mainRamDiskP3)<< 4);
 
 			// condition
 			//DrawProperty2EditableS("Condition", "##BPContextCondition", &conditionS, "");
@@ -290,12 +301,14 @@ void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 			// OK button
 			if (ImGui::Button("Ok", buttonSize) && !warning)
 			{
-				if (!_addNew && addrOld != addr) {
+				if (_reqPopup == ReqPopup::EDIT && addrOld != addr) 
+				{
 					m_debugger.DelBreakpoint(addrOld);
 				}
 				m_debugger.AddBreakpoint(addr, mappingPages, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, isAutoDel, commentS);
-				m_reqDisasmUpdate = true;
+				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 				ImGui::CloseCurrentPopup();
+				_reqPopup = ReqPopup::NONE;
 			}
 			if (warning) {
 				ImGui::EndDisabled();
@@ -303,7 +316,11 @@ void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 
 			// Cancel button
 			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
-			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+			if (ImGui::Button("Cancel", buttonSize)) 
+			{
+				ImGui::CloseCurrentPopup();
+				_reqPopup = ReqPopup::NONE;
+			}
 
 			ImGui::EndTable();
 		}
@@ -311,36 +328,3 @@ void dev::BreakpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 		ImGui::EndPopup();
 	}
 }
-/*
-void dev::BreakpointsWindow::DrawProperty2EditableMapping(const char* _name, Breakpoint::Data* _val, const char* _help)
-{
-	static bool mainRam = _val->mappingPages & Breakpoint::MAPPING_RAM;
-	static bool mainRamDiskP0 = _val->mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE0;
-	static bool mainRamDiskP1 = _val->mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE1;
-	static bool mainRamDiskP2 = _val->mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE2;
-	static bool mainRamDiskP3 = _val->mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE3;
-
-	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
-	ImGui::TableNextColumn();
-
-	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name, { 1.0f, 0.5f });
-	ImGui::PopStyleColor();
-
-	ImGui::TableNextColumn();
-	ImGui::Checkbox("##BPContextMappingRam", &mainRam);
-	ImGui::SameLine(); ImGui::Checkbox(" ##BPContextMappingRamDiskP0", &mainRamDiskP0);
-	ImGui::SameLine(); ImGui::Checkbox("##BPContextMappingRamDiskP1", &mainRamDiskP1);
-	ImGui::SameLine(); ImGui::Checkbox("##BPContextMappingRamDiskP2", &mainRamDiskP2);
-	ImGui::SameLine(); ImGui::Checkbox("##BPContextMappingRamDiskP3", &mainRamDiskP3);
-
-	if (*_help != '\0') {
-		ImGui::SameLine();
-		ImGui::Dummy({ 80,10 });
-		ImGui::SameLine();
-		dev::DrawHelpMarker(_help);
-	}
-
-	_val->mappingPages = mainRam | mainRamDiskP0 << 1 | mainRamDiskP1 << 2 | mainRamDiskP2 << 3 | mainRamDiskP3 << 4;
-}
-*/

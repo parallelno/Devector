@@ -63,7 +63,7 @@ auto dev::Memory::GetGlobalAddr(GlobalAddr _globalAddr, const AddrSpace _addrSpa
 
 	if (m_mappingModeStack && _addrSpace == AddrSpace::STACK)
 	{
-		return _globalAddr + (m_mappingPageStack + 1) * RAM_DISK_PAGE_LEN;
+		return _globalAddr + static_cast<GlobalAddr>(m_mappingPageStack + 1) * RAM_DISK_PAGE_LEN;
 	}
 	else if (IsRamMapped((Addr)_globalAddr))
 	{
