@@ -151,19 +151,18 @@ void dev::Display::FillActiveArea256PortHandling(const int _rasterizedPixels)
 
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
+		int rasterLine = GetRasterLine();
+		int rasterPixel = GetRasterPixel();
+		if (rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel == BORDER_LEFT)
+		{
+			m_scrollIdx = m_io.GetScroll();
+		}
+
 		auto colorIdx = BytesToColorIdx(screenBytes, bitIdx);
 		m_io.TryToCommit(colorIdx);
 		auto color = m_io.GetColor(colorIdx);
 
 		m_frameBuffer[m_framebufferIdx++] = color;
-
-		int rasterLine = GetRasterLine();
-		int rasterPixel = GetRasterPixel();
-
-		if (rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel == BORDER_LEFT)
-		{
-			m_scrollIdx = m_io.GetScroll();
-		}
 
 		bitIdx -= i % 2;
 		if (bitIdx < 0){
