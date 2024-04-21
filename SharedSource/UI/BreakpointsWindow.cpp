@@ -189,38 +189,38 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGui::EndPopup();
 		}
 		
-		DrawPopupEdit(reqPopup, breakpoints, editedBreakpointAddr);
+		DrawPopup(reqPopup, breakpoints, editedBreakpointAddr);
 	}
 
 	ImGui::PopStyleVar(2);
 }
 
-void dev::BreakpointsWindow::DrawPopupEdit(ReqPopup& _reqPopup, const Debugger::Breakpoints& _pbs, int _addr)
+void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Breakpoints& _pbs, int _addr)
 {
 	if (_reqPopup == ReqPopup::NONE) {
 		return;
 	}
 	else if (_reqPopup == ReqPopup::INIT_ADD || _reqPopup == ReqPopup::INIT_EDIT) {
-		ImGui::OpenPopup("BpEdit");
+		ImGui::OpenPopup("##BpEdit");
 	}
 
-	static auto bpData = Breakpoint::Data(0x100);
+	static auto bpData = Breakpoint::Data(0xFF);
 	static uint8_t mappingPages = bpData.mappingPages;
 	static bool isActive = bpData.IsActive();
 	static bool isAutoDel = bpData.autoDel;
-	static GlobalAddr addrOld = 0x100;
-	static std::string addrS = "0x100";
+	static GlobalAddr addrOld = 0xFF;
+	static std::string addrS = "0xFF";
 	//static std::string conditionS = "";
 	static std::string commentS = "";
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
 
-	// update the req after init
+	// Init for a new BP
 	if (_reqPopup == ReqPopup::INIT_ADD) {
 		_reqPopup = ReqPopup::ADD;
 		commentS = "";
 	}
-	// update static vars if we are editing the breakpoint
-	if (_reqPopup == ReqPopup::INIT_EDIT && _addr >= 0)
+	// Init for editing BP
+	if (_reqPopup == ReqPopup::INIT_EDIT)
 	{
 		_reqPopup = ReqPopup::EDIT;
 
@@ -235,7 +235,7 @@ void dev::BreakpointsWindow::DrawPopupEdit(ReqPopup& _reqPopup, const Debugger::
 		commentS = bp.GetComment();
 	}
 
-	if (ImGui::BeginPopup("BpEdit"))
+	if (ImGui::BeginPopup("##BpEdit"))
 	{
 		static ImGuiTableFlags flags =
 			ImGuiTableFlags_ScrollY |
@@ -249,7 +249,7 @@ void dev::BreakpointsWindow::DrawPopupEdit(ReqPopup& _reqPopup, const Debugger::
 			// status
 			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive, "Disable the breakpoint");
 			// addr
-			DrawProperty2EditableS("Address", "##BPContextAddress", &addrS, "0x100",
+			DrawProperty2EditableS("Address", "##BPContextAddress", &addrS, "FFFF",
 				"A hexademical address in the format 0x100 or 100.");
 			// mapping
 			//DrawProperty2EditableMapping("Mapping", &bpData, "");
@@ -281,12 +281,10 @@ void dev::BreakpointsWindow::DrawPopupEdit(ReqPopup& _reqPopup, const Debugger::
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
 			// warning
-			bool warning = false;
 			int addr = dev::StrHexToInt(addrS.c_str());
 			std::string warningS = "";
 			if (addr > Memory::MEMORY_MAIN_LEN - 1) {
 				warningS = "Too large address";
-				warning = true;
 			}
 			//ImGui::SameLine(); 
 			ImGui::TextColored(COLOR_WARNING, warningS.c_str());
@@ -295,11 +293,11 @@ void dev::BreakpointsWindow::DrawPopupEdit(ReqPopup& _reqPopup, const Debugger::
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
 
-			if (warning) {
+			if (warningS.empty()) {
 				ImGui::BeginDisabled();
 			}
 			// OK button
-			if (ImGui::Button("Ok", buttonSize) && !warning)
+			if (ImGui::Button("Ok", buttonSize) && !warningS.empty())
 			{
 				if (_reqPopup == ReqPopup::EDIT && addrOld != addr) 
 				{
@@ -310,7 +308,7 @@ void dev::BreakpointsWindow::DrawPopupEdit(ReqPopup& _reqPopup, const Debugger::
 				ImGui::CloseCurrentPopup();
 				_reqPopup = ReqPopup::NONE;
 			}
-			if (warning) {
+			if (warningS.empty()) {
 				ImGui::EndDisabled();
 			}
 

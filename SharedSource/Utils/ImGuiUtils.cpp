@@ -1,5 +1,7 @@
 #include "ImGuiUtils.h"
 
+#include "Utils.h"
+
 #include "..\3rdParty\imgui\imgui_internal.h"
 #include "..\3rdParty\imgui\imgui.h"
 #include "..\3rdParty\imgui\misc\cpp\imgui_stdlib.h"
@@ -229,6 +231,27 @@ void dev::DrawSeparator2(const std::string& _text)
 	ImGui::SeparatorText(_text.c_str());
 	ImGui::TableNextColumn();
 	ImGui::SeparatorText("");
+}
+
+void dev::DrawProperty2EditableI(const char* _name, const char* _label, int* _value, 
+	const char* _help)
+{
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name, { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
+	ImGui::TableNextColumn();
+	ImGui::InputInt(_label, _value);
+	if (*_help != '\0') {
+		ImGui::SameLine();
+		ImGui::Dummy({12,10});
+		ImGui::SameLine();
+		dev::DrawHelpMarker(_help);
+	}
+	*_value = dev::Max(1, *_value);
 }
 
 void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 

@@ -96,7 +96,7 @@ namespace dev
 
 		void AddWatchpoint(const dev::Id _id, const Watchpoint::Access _access, 
 			const GlobalAddr _globalAddr, const Watchpoint::Condition _cond, 
-			const uint16_t _value, const size_t _valueSize = 1, 
+			const uint16_t _value, const Watchpoint::Type _type, const int _len = 1, 
 			const bool _active = true, const std::string& _comment = "");
 		void DelWatchpoint(const dev::Id _id);
 		void DelWatchpoints();
@@ -118,7 +118,6 @@ namespace dev
 			const uint8_t _dataL, const uint8_t _dataH) const ->const std::string;
 		auto GetDisasmLineDb(const uint8_t _data) const ->const std::string;
 		auto GetAddr(const Addr _endAddr, const int _instructionOffset) const -> Addr;
-		auto WatchpointsFind(const GlobalAddr _globalAddr) -> Watchpoints::iterator;
 
 		void TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _opcode, 
 			const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);

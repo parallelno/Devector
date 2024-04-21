@@ -53,8 +53,8 @@ void dev::WatchpointsWindow::DrawProperty2Access(
 	}
 }
 
-void dev::WatchpointsWindow::DrawProperty2Size(
-	const char* _name, int* _size, const char* _hint)
+void dev::WatchpointsWindow::DrawProperty2Type(
+	const char* _name, int* _type, const char* _hint)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
 	ImGui::TableNextColumn();
@@ -65,8 +65,8 @@ void dev::WatchpointsWindow::DrawProperty2Size(
 
 	ImGui::TableNextColumn();
 	
-	ImGui::RadioButton("byte ###WpSizeB", _size, 0); ImGui::SameLine();
-	ImGui::RadioButton("word ###WpSizeW", _size, 1);
+	ImGui::RadioButton("byte ###WpSizeB", _type, 0); ImGui::SameLine();
+	ImGui::RadioButton("word ###WpSizeW", _type, 1);
 
 	if (*_hint != '\0') {
 		ImGui::SameLine();
@@ -74,13 +74,14 @@ void dev::WatchpointsWindow::DrawProperty2Size(
 	}
 }
 
+#define CHECK_IF_ITEM_CLICKED		if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) { showItemContextMenu = true; editedWatchpointId = id; }
+
 void dev::WatchpointsWindow::DrawTable()
 {
 	static int selectedAddr = 0;
 	bool showItemContextMenu = false;
 	static int editedWatchpointId = -1;
-	bool showItemEditPopup = false;
-	bool showAddNewPopup = false;
+	static ReqPopup reqPopup = ReqPopup::NONE;
 	const int COLUMNS_COUNT = 5;
 
 	const char* tableName = "##Watchpoints";
@@ -118,7 +119,6 @@ void dev::WatchpointsWindow::DrawTable()
 			}
 		}
 
-
 		PushStyleCompact(1.0f, 0.0f);
 
 		auto watchpoints = m_debugger.GetWatchpoints();
@@ -134,8 +134,8 @@ void dev::WatchpointsWindow::DrawTable()
 			if (isActive != wp.IsActive())
 			{
 				m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), globalAddr,
-					wp.GetCondition(), wp.GetValue(),
-					wp.GetSize(), isActive, wp.GetComment());
+					wp.GetCondition(), wp.GetValue(), wp.GetType(),
+					wp.GetLen(), isActive, wp.GetComment());
 				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 			}
 			// GlobalAddr
@@ -146,46 +146,32 @@ void dev::WatchpointsWindow::DrawTable()
 			{
 				selectedAddr = globalAddr;
 			}
-			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-				showItemContextMenu = true;
-				editedWatchpointId = id;
-			}
+			CHECK_IF_ITEM_CLICKED
 			ImGui::PopStyleColor();
 
 			// Access
 			DrawProperty(wp.GetAccessS());
-
-			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-				showItemContextMenu = true;
-				editedWatchpointId = id;
-			}
+			CHECK_IF_ITEM_CLICKED
 
 			// Condition
 			std::string condS = wp.GetConditionS();
-
-			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-				showItemContextMenu = true;
-				editedWatchpointId = id;
-			}
-
-			// Value
 			if (wp.GetCondition() != Watchpoint::Condition::ANY) {
-				if (wp.GetSize() == Watchpoint::VAL_WORD_SIZE) {
-					condS += std::format(" {:02X}", wp.GetValue());
+				if (wp.GetType() == Watchpoint::Type::LEN) 
+				{
+					condS += std::format("{:02X}", wp.GetValue());
 				}
 				else {
-					condS += std::format(" {:04X}", wp.GetValue());
+					condS += std::format("{:04X}", wp.GetValue());
 				}
 			}
-			DrawProperty(condS + wp.GetSizeS());
+			condS = std::format("{} l:{}", condS, wp.GetLen());
+			//DrawProperty();
+			DrawProperty(condS);
+			CHECK_IF_ITEM_CLICKED
 
 			// Comment
 			DrawProperty(wp.GetComment());
-
-			if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-				showItemContextMenu = true;
-				editedWatchpointId = id;
-			}
+			CHECK_IF_ITEM_CLICKED
 		}
 
 		PopStyleCompact();
@@ -198,7 +184,7 @@ void dev::WatchpointsWindow::DrawTable()
 			!ImGui::IsAnyItemHovered())
 			if (ImGui::IsMouseHoveringRect(tableMin, tableMax))
 		{
-			showAddNewPopup = true;
+			reqPopup = ReqPopup::INIT_ADD;
 		}
 
 		// the context menu
@@ -208,14 +194,14 @@ void dev::WatchpointsWindow::DrawTable()
 			ImGuiPopupFlags_MouseButtonRight))
 		{
 			if (ImGui::MenuItem("Add New")) {
-				showAddNewPopup = true;
+				reqPopup = ReqPopup::INIT_ADD;
 			}
 			else if (ImGui::MenuItem("Disable All"))
 			{
 				for (const auto& [id, wp] : watchpoints) {
 					m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
-						wp.GetCondition(), wp.GetValue(),
-						wp.GetSize(), false, wp.GetComment());
+						wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
+						false, wp.GetComment());
 				}
 				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 			}
@@ -237,16 +223,16 @@ void dev::WatchpointsWindow::DrawTable()
 				if (wp.IsActive()) {
 					if (ImGui::MenuItem("Disable")) {
 						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
-							wp.GetCondition(), wp.GetValue(),
-							wp.GetSize(), false, wp.GetComment());
+							wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
+							false, wp.GetComment());
 						m_reqDisasmUpdate = REQ_DISASM_DRAW;
 					}
 				}
 				else {
 					if (ImGui::MenuItem("Enable")) {
 						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
-							wp.GetCondition(), wp.GetValue(),
-							wp.GetSize(), true, wp.GetComment());
+							wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
+							true, wp.GetComment());
 						m_reqDisasmUpdate = REQ_DISASM_DRAW;
 					}
 				}
@@ -255,46 +241,69 @@ void dev::WatchpointsWindow::DrawTable()
 					m_reqDisasmUpdate = REQ_DISASM_DRAW;
 				}
 				else if (ImGui::MenuItem("Edit")) {
-					showItemEditPopup = REQ_DISASM_DRAW;
+					reqPopup = ReqPopup::INIT_EDIT;
 				};
 			}
 
 			ImGui::EndPopup();
 		}
 
-		if (showItemEditPopup || showAddNewPopup) ImGui::OpenPopup("WpEdit");
-		DrawPopupEdit(showAddNewPopup, showItemEditPopup, watchpoints, editedWatchpointId);
+		DrawPopup(reqPopup, watchpoints, editedWatchpointId);
 
 	}
 	ImGui::PopStyleVar(2);
 }
 
-void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Watchpoints& _wps, int _id)
+void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watchpoints& _wps, int _id)
 {
+	if (_reqPopup == ReqPopup::NONE) {
+		return;
+	}
+	else if (_reqPopup == ReqPopup::INIT_ADD || _reqPopup == ReqPopup::INIT_EDIT) {
+		ImGui::OpenPopup("##WpEdit");
+	}
+
 	static bool isActive = true;
 	static int oldId = -1;
-	static std::string globalAddrS = "0x100";
+	static std::string globalAddrS = "FF";
 	static int access = static_cast<int>(Watchpoint::Access::RW);
 	static std::string conditionS = "ANY";
 	static std::string valueS = "";
-	static int size = 0;
+	static int type = static_cast<int>(Watchpoint::Type::LEN);
+	static int len = 1;
 	static std::string commentS = "";
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
 
-	if (!_addNew && _init && _id >= 0)
+	// Init for a new WP
+	if (_reqPopup == ReqPopup::INIT_ADD) {
+		_reqPopup = ReqPopup::ADD;
+		commentS = "";
+	}
+
+	// Init for editing WP
+	if (_reqPopup == ReqPopup::INIT_EDIT)
 	{
+		_reqPopup = ReqPopup::EDIT;
+
 		const auto& wp = _wps.at(_id);
 		oldId = _id;
 		isActive = wp.IsActive();
 		globalAddrS = std::format("0x{:04X}", wp.GetGlobalAddr());
 		access = wp.GetAccessI();
 		conditionS = wp.GetConditionS();
-		valueS = std::format("0x{:04X}", wp.GetValue());
-		size = static_cast<int>(wp.GetSize());
+		type = static_cast<int>(wp.GetType());
+		if (type == static_cast<int>(Watchpoint::Type::WORD)) {
+			valueS = std::format("0x{:04X}", wp.GetValue());
+		}
+		else {
+			valueS = std::format("0x{:02X}", wp.GetValue());
+		}
+		
+		len = wp.GetLen();
 		commentS = wp.GetComment();
 	}
 
-	if (ImGui::BeginPopup("WpEdit"))
+	if (ImGui::BeginPopup("##WpEdit"))
 	{
 		static ImGuiTableFlags flags =
 			ImGuiTableFlags_ScrollY |
@@ -319,11 +328,25 @@ void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 				"> to break when it's bigger than a value.\n"
 				"also works <, >=, <=, !=, ==\n"
 			);
+			auto cond = Watchpoint::StrToCondition(conditionS);
+
 			// value
-			DrawProperty2EditableS("Value", "##WpContextValue", &valueS, "0xFF",
+			if (cond == Watchpoint::Condition::ANY) ImGui::BeginDisabled();
+			DrawProperty2EditableS("Value", "##WpContextValue", &valueS, type == static_cast<int>(Watchpoint::Type::LEN) ? "FF" : "FFFF",
 				"A hexademical value in the format 0x100 or 100");
-			// size
-			DrawProperty2Size("Size", &size);
+			if (cond == Watchpoint::Condition::ANY) ImGui::EndDisabled();
+
+			// type
+			DrawProperty2Type("Type", &type);
+			
+			// len
+			if (type == static_cast<int>(Watchpoint::Type::WORD)) {
+				ImGui::BeginDisabled();
+				len = 2;
+			}
+			DrawProperty2EditableI("Length", "##WpContextLen", &len);
+			if (type == static_cast<int>(Watchpoint::Type::WORD)) ImGui::EndDisabled();
+
 			// comment
 			DrawProperty2EditableS("Comment", "##WpContextComment", &commentS, "");
 
@@ -331,23 +354,18 @@ void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
 			// warnings
-			bool warning = false;
 			GlobalAddr globalAddr = dev::StrHexToInt(globalAddrS.c_str());
 			std::string warningS = "";
 			if (globalAddr > Memory::GLOBAL_MEMORY_LEN - 1) {
 				warningS = "Too large address";
-				warning = true;
 			}
 
-			auto cond = Watchpoint::StrToCondition(conditionS);
 			if (cond == Watchpoint::Condition::INVALID) {
 				warningS = "Unsupported condition";
-				warning = true;
 			}
 			GlobalAddr value = dev::StrHexToInt(valueS.c_str());
 			if (globalAddr > Memory::GLOBAL_MEMORY_LEN - 1) {
 				warningS = "Too large address";
-				warning = true;
 			}
 			ImGui::TextColored(COLOR_WARNING, warningS.c_str());
 
@@ -355,24 +373,20 @@ void dev::WatchpointsWindow::DrawPopupEdit(const bool _addNew, const bool _init,
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
 
-			if (warning) {
-				ImGui::BeginDisabled();
-			}
 			// OK button
-			if (ImGui::Button("Ok", buttonSize) && !warning)
+			if (!warningS.empty()) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize))
 			{
-				int id = _addNew ? -1 : oldId;
+				int id = _reqPopup == ReqPopup::ADD ? -1 : oldId;
 
 				m_debugger.AddWatchpoint(id, static_cast<Watchpoint::Access>(access), globalAddr,
-					cond, value,
-					size + 1, isActive, commentS);
+					cond, value, static_cast<Watchpoint::Type>(type),
+					len, isActive, commentS);
 
 				m_reqDisasmUpdate = REQ_DISASM_DRAW;
 				ImGui::CloseCurrentPopup();
 			}
-			if (warning) {
-				ImGui::EndDisabled();
-			}
+			if (!warningS.empty()) ImGui::EndDisabled();
 
 			// Cancel button
 			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();

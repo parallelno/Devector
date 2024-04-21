@@ -24,6 +24,14 @@ namespace dev
 #define DEV_COL32_B_SHIFT    8
 #define DEV_COL32_A_SHIFT    0
 
+	enum class ReqPopup : int {
+		NONE = 0,
+		INIT_ADD,
+		INIT_EDIT,
+		ADD,
+		EDIT
+	};
+
 	// 0xRRGGBBAA
 	static constexpr ImVec4 IM_VEC4(const uint32_t _color)
 	{
@@ -86,6 +94,7 @@ namespace dev
 	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, const float _posXOffset = -0.2f, const bool _itemHasSize = false);
 	void DrawProperty2(const std::string& _name, const std::string& _value);
 	void DrawSeparator2(const std::string& _text);
+	void DrawProperty2EditableI(const char* _name, const char* _label, int* _value, const char* _help = "");
 	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
 		const char* _hint = "", const char* _help = "");
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val, const char* _help = "");

@@ -87,6 +87,9 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 
 		// addr & data
 		int idx = 0;
+		static int addrHovered = -1;
+		ImU32 bgColorHeadrHovered = BG_COLOR_ADDR;
+
 		ImGuiListClipper clipper;
 		clipper.Begin(int(m_ram.size()) / (COLUMNS_COUNT - 1));
 		while (clipper.Step())
@@ -94,34 +97,49 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
 			{
 				ImGui::TableNextRow();
+				
 				// addr. left header 
 				ImGui::TableNextColumn();
-				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, BG_COLOR_ADDR);
+				Addr headerAddr = row * (COLUMNS_COUNT - 1);
+				if ((addrHovered & 0xFFFF0) == headerAddr){
+					bgColorHeadrHovered = BG_COLOR_ADDR_HOVER;
+					addrHovered = -1; // reset the highlighting
+				}
+				else {
+					bgColorHeadrHovered = BG_COLOR_ADDR;
+				}
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bgColorHeadrHovered);
 				ImGui::TextColored(COLOR_ADDR, std::format("{:04X}", row * (COLUMNS_COUNT - 1)).c_str());
 
 				// the row of data
-				if (_isRunning) ImGui::BeginDisabled();
 				for (int col = 0; col < 16; col++)
 				{
 					Addr addr = row * (COLUMNS_COUNT - 1) + col;
 					ImGui::TableNextColumn();
 
 					// highlight the hovered data
-					ImVec2 textPos = ImGui::GetCursorScreenPos();
+					float offsetX = 4;
+					float offsetY = 2;
+					ImVec2 highlightPos = ImGui::GetCursorScreenPos();
+					highlightPos.x -= offsetX;
+					highlightPos.y -= offsetY;
 					ImVec2 textSize = ImGui::CalcTextSize("FF");
-					if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
+					ImVec2 highlightEnd = ImVec2(highlightPos.x + textSize.x + offsetX * 2 + 1, highlightPos.y + textSize.y + offsetY * 2);
+					if (ImGui::IsMouseHoveringRect(highlightPos, highlightEnd) &&
+						!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
 					{
-						ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
+						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 10, 150, 255));
 						ImGui::BeginTooltip();
 						ImGui::Text("Address: 0x%04X\n", addr);
 						ImGui::EndTooltip();
+						addrHovered = addr;
 					}
-
+					if (_isRunning) ImGui::BeginDisabled();
 					ImGui::TextColored(COLOR_VALUE, std::format("{:02X}", m_ram[addr]).c_str());
+					if (_isRunning) ImGui::EndDisabled();
 
 					idx++;
 				}
-				if (_isRunning) ImGui::EndDisabled();
 			}
 		}
 		ImGui::EndTable();

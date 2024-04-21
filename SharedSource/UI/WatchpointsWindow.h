@@ -21,7 +21,7 @@ namespace dev
 		int& m_reqDisasmUpdate;
 
 		void DrawTable();
-		void DrawPopupEdit(const bool _addNew, const bool _init, const Debugger::Watchpoints& _wps, int _id = -1);
+		void DrawPopup(ReqPopup& _reqPopup, const Debugger::Watchpoints& _wps, int _id = -1);
 
 	public:
 		WatchpointsWindow(Debugger& _debugger,
@@ -31,7 +31,7 @@ namespace dev
 
 		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });
 		void DrawProperty2Access(const char* _name, int* _access, const char* _hint = "");
-		void DrawProperty2Size(const char* _name, int* _size, const char* _hint = "");
+		void DrawProperty2Type(const char* _name, int* _type, const char* _hint = "");
 	};
 
 };

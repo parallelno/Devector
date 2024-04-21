@@ -10,7 +10,7 @@
 #include "Ui/BaseWindow.h"
 #include "../Devector/Hardware.h"
 
-namespace dev
+namespace dev 
 {
 	class MemViewerWindow : public BaseWindow
 	{
@@ -18,6 +18,7 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_H = 512;
 
 		static constexpr ImU32 BG_COLOR_ADDR = dev::IM_U32(0x303030FF);
+		static constexpr ImU32 BG_COLOR_ADDR_HOVER = dev::IM_U32(0x1E4D8CFF);
 
 		static constexpr ImVec4 COLOR_ADDR = dev::IM_VEC4(0x909090FF); 
 		static constexpr ImVec4 COLOR_VALUE = dev::IM_VEC4(0xD4D4D4FF);

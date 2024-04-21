@@ -713,17 +713,17 @@ auto dev::Debugger::GetBreakpointStatus(const Addr _addr)
 void dev::Debugger::AddWatchpoint(
 	const dev::Id _id, const Watchpoint::Access _access, 
 	const GlobalAddr _globalAddr, const Watchpoint::Condition _cond,
-	const uint16_t _value, const size_t _value_size, const bool _active, const std::string& _comment)
+	const uint16_t _value, const Watchpoint::Type _type, const int _len, const bool _active, const std::string& _comment)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
 	
 	auto wpI = m_watchpoints.find(_id);
 	if (wpI != m_watchpoints.end())
 	{
-		wpI->second.Update(_access, _globalAddr, _cond, _value, _value_size, _active, _comment);
+		wpI->second.Update(_access, _globalAddr, _cond, _value, _type, _len, _active, _comment);
 	}
 	else {
-		auto wp = Watchpoint(_access, _globalAddr, _cond, _value, _value_size, _active, _comment);
+		auto wp = Watchpoint(_access, _globalAddr, _cond, _value, _type, _len, _active, _comment);
 		m_watchpoints.emplace(wp.GetId(), std::move(wp));
 	}
 }
@@ -749,17 +749,16 @@ void dev::Debugger::DelWatchpoints()
 bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	auto wpI = WatchpointsFind(_globalAddr);
+	
+	auto wpI = std::find_if(m_watchpoints.begin(), m_watchpoints.end(), 
+		[_access, _globalAddr, _value](Watchpoints::value_type& pair) 
+		{
+			return pair.second.Check(_access, _globalAddr, _value);
+		});
+
 	if (wpI == m_watchpoints.end()) return false;
 
-	auto out = wpI->second.Check(_access, _globalAddr, _value);
-	/*
-	if (out) {
-		auto data = m_memory.GetWord(_addr, Memory::AddrSpace::RAM);
-		std::printf("wp break = true. addr: 0x%05x, word: 0x%02x \n", _addr, data);
-	}
-	*/
-	return out;
+	return true;
 }
 
 void dev::Debugger::ResetWatchpoints()
@@ -769,27 +768,6 @@ void dev::Debugger::ResetWatchpoints()
 	{
 		watchpoint.Reset();
 	}
-}
-/*
-void dev::Debugger::PrintWatchpoints()
-{
-	std::printf("watchpoints:\n");
-	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	for (const auto& wp : m_watchpoints)
-	{
-		wp.Print();
-	}
-}
-*/
-
-auto dev::Debugger::WatchpointsFind(const GlobalAddr _globalAddr)
-->Watchpoints::iterator
-{
-	return std::find_if(m_watchpoints.begin(), m_watchpoints.end(), 
-		[_globalAddr](const Watchpoints::value_type& pair) 
-		{
-			return pair.second.CheckAddr(_globalAddr);
-		});
 }
 
 auto dev::Debugger::GetWatchpoints() -> const Watchpoints
