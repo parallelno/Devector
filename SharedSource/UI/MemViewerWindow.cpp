@@ -52,10 +52,14 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 	const char* tableName = "##MemViewer";
 
 	static ImGuiTableFlags flags =
+		ImGuiTableFlags_ScrollY |
+		ImGuiTableFlags_HighlightHoveredColumn |
 		ImGuiTableFlags_BordersOuter | 
 		ImGuiTableFlags_Hideable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
+		ImGui::TableSetupScrollFreeze(0, 1);
+
 		ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 40);
 		for (int column = 0; column < COLUMNS_COUNT - 1; column++)
 		{
@@ -80,6 +84,7 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 				ImGui::PopStyleColor();
 			}
 		}
+
 		// addr & data
 		int idx = 0;
 		ImGuiListClipper clipper;
@@ -98,8 +103,22 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 				if (_isRunning) ImGui::BeginDisabled();
 				for (int col = 0; col < 16; col++)
 				{
+					Addr addr = row * (COLUMNS_COUNT - 1) + col;
 					ImGui::TableNextColumn();
-					ImGui::TextColored(COLOR_VALUE, std::format("{:02X}", m_ram[row * (COLUMNS_COUNT - 1) + col]).c_str());
+
+					// highlight the hovered data
+					ImVec2 textPos = ImGui::GetCursorScreenPos();
+					ImVec2 textSize = ImGui::CalcTextSize("FF");
+					if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
+					{
+						ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
+						ImGui::BeginTooltip();
+						ImGui::Text("Address: 0x%04X\n", addr);
+						ImGui::EndTooltip();
+					}
+
+					ImGui::TextColored(COLOR_VALUE, std::format("{:02X}", m_ram[addr]).c_str());
+
 					idx++;
 				}
 				if (_isRunning) ImGui::EndDisabled();
