@@ -4,7 +4,7 @@
 #include <string>
 #include "GLFW/glfw3.h"
 
-#include "Types.h"
+#include "Utils/Types.h"
 #include "Utils/Status.h"
 #include "Utils/JsonUtils.h"
 #include "Utils/ImGuiApp.h"
@@ -18,8 +18,8 @@
 #include "UI/MemDisplayWindow.h"
 #include "UI/MemViewerWindow.h"
 
-#include "Hardware.h"
-#include "Debugger.h"
+#include "Core/Hardware.h"
+#include "Core/Debugger.h"
 
 namespace dev
 {
@@ -46,8 +46,9 @@ namespace dev
 
 		std::list<std::wstring> m_recentFilePaths;
 
-		int m_reqDisasmUpdate = REQ_DISASM_NONE;
-		int m_reqDisasmUpdateData = 0;
+		ReqMemViewer m_reqMemViewer;
+		ReqDisasm m_reqDisasm;
+
 		bool m_reset = false;
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 		GLUtils m_glUtils;

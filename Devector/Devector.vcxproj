@@ -60,7 +60,7 @@
       <PreprocessorDefinitions>GLEW_STATIC;_MBCS;ZMQ_STATIC;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\zeromq\include\;$(SolutionDir)SharedSource\3rdParty\cppzmq\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\;$(SolutionDir)SharedSource\3rdParty\glew\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Devector\;$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\zeromq\include\;$(SolutionDir)SharedSource\3rdParty\cppzmq\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\;$(SolutionDir)SharedSource\3rdParty\glew\include\</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -110,32 +110,32 @@
     <ClCompile Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\shell.c" />
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\sqlite3.c" />
-    <ClCompile Include="..\SharedSource\UI\BaseWindow.cpp" />
-    <ClCompile Include="..\SharedSource\UI\BreakpointsWindow.cpp" />
-    <ClCompile Include="..\SharedSource\UI\DisasmWindow.cpp" />
-    <ClCompile Include="..\SharedSource\UI\DisplayWindow.cpp" />
-    <ClCompile Include="..\SharedSource\UI\HardwareStatsWindow.cpp" />
-    <ClCompile Include="..\SharedSource\UI\MemDisplayWindow.cpp" />
-    <ClCompile Include="..\SharedSource\UI\MemViewerWindow.cpp" />
-    <ClCompile Include="..\SharedSource\UI\WatchpointsWindow.cpp" />
-    <ClCompile Include="..\SharedSource\Utils\ArgsParser.cpp" />
-    <ClCompile Include="..\SharedSource\Utils\GLUtils.cpp" />
-    <ClCompile Include="..\SharedSource\Utils\ImGuiApp.cpp" />
-    <ClCompile Include="..\SharedSource\Utils\ImGuiUtils.cpp" />
-    <ClCompile Include="..\SharedSource\Utils\JsonUtils.cpp" />
-    <ClCompile Include="..\SharedSource\Utils\StringUtils.cpp" />
-    <ClCompile Include="..\SharedSource\Utils\Utils.cpp" />
-    <ClCompile Include="Breakpoint.cpp" />
-    <ClCompile Include="Debugger.cpp" />
-    <ClCompile Include="Display.cpp" />
-    <ClCompile Include="Hardware.cpp" />
-    <ClCompile Include="I8080.cpp" />
-    <ClCompile Include="IO.cpp" />
-    <ClCompile Include="Keyboard.cpp" />
+    <ClCompile Include="Core\Breakpoint.cpp" />
+    <ClCompile Include="Core\Debugger.cpp" />
+    <ClCompile Include="Core\Display.cpp" />
+    <ClCompile Include="Core\Hardware.cpp" />
+    <ClCompile Include="Core\I8080.cpp" />
+    <ClCompile Include="Core\IO.cpp" />
+    <ClCompile Include="Core\Keyboard.cpp" />
+    <ClCompile Include="Core\Memory.cpp" />
+    <ClCompile Include="Core\Watchpoint.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="DevectorApp.cpp" />
-    <ClCompile Include="Memory.cpp" />
-    <ClCompile Include="Watchpoint.cpp" />
+    <ClCompile Include="UI\BaseWindow.cpp" />
+    <ClCompile Include="UI\BreakpointsWindow.cpp" />
+    <ClCompile Include="UI\DisasmWindow.cpp" />
+    <ClCompile Include="UI\DisplayWindow.cpp" />
+    <ClCompile Include="UI\HardwareStatsWindow.cpp" />
+    <ClCompile Include="UI\MemDisplayWindow.cpp" />
+    <ClCompile Include="UI\MemViewerWindow.cpp" />
+    <ClCompile Include="UI\WatchpointsWindow.cpp" />
+    <ClCompile Include="Utils\ArgsParser.cpp" />
+    <ClCompile Include="Utils\GLUtils.cpp" />
+    <ClCompile Include="Utils\ImGuiApp.cpp" />
+    <ClCompile Include="Utils\ImGuiUtils.cpp" />
+    <ClCompile Include="Utils\JsonUtils.cpp" />
+    <ClCompile Include="Utils\StringUtils.cpp" />
+    <ClCompile Include="Utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\SharedSource\3rdParty\glew\include\GL\glew.h" />
@@ -150,37 +150,36 @@
     <ClInclude Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.h" />
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3.h" />
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3ext.h" />
-    <ClInclude Include="..\SharedSource\UI\BaseWindow.h" />
-    <ClInclude Include="..\SharedSource\UI\BreakpointsWindow.h" />
-    <ClInclude Include="..\SharedSource\UI\DisasmWindow.h" />
-    <ClInclude Include="..\SharedSource\UI\DisplayWindow.h" />
-    <ClInclude Include="..\SharedSource\UI\HardwareStatsWindow.h" />
-    <ClInclude Include="..\SharedSource\UI\MemDisplayWindow.h" />
-    <ClInclude Include="..\SharedSource\UI\MemViewerWindow.h" />
-    <ClInclude Include="..\SharedSource\UI\WatchpointsWindow.h" />
-    <ClInclude Include="..\SharedSource\Utils\ArgsParser.h" />
-    <ClInclude Include="..\SharedSource\Utils\Consts.h" />
-    <ClInclude Include="..\SharedSource\Utils\Globals.h" />
-    <ClInclude Include="..\SharedSource\Utils\GLUtils.h" />
-    <ClInclude Include="..\SharedSource\Utils\ImGuiApp.h" />
-    <ClInclude Include="..\SharedSource\Utils\ImGuiUtils.h" />
-    <ClInclude Include="..\SharedSource\Utils\JsonUtils.h" />
-    <ClInclude Include="..\SharedSource\Utils\Result.h" />
-    <ClInclude Include="..\SharedSource\Utils\Status.h" />
-    <ClInclude Include="..\SharedSource\Utils\StringUtils.h" />
-    <ClInclude Include="..\SharedSource\Utils\TQueue.h" />
-    <ClInclude Include="..\SharedSource\Utils\Utils.h" />
-    <ClInclude Include="Breakpoint.h" />
-    <ClInclude Include="Debugger.h" />
-    <ClInclude Include="Hardware.h" />
-    <ClInclude Include="I8080.h" />
-    <ClInclude Include="Keyboard.h" />
-    <ClInclude Include="Types.h" />
+    <ClInclude Include="Core\Breakpoint.h" />
+    <ClInclude Include="Core\Debugger.h" />
+    <ClInclude Include="Core\Display.h" />
+    <ClInclude Include="Core\Hardware.h" />
+    <ClInclude Include="Core\I8080.h" />
+    <ClInclude Include="Core\IO.h" />
+    <ClInclude Include="Core\Keyboard.h" />
+    <ClInclude Include="Core\Memory.h" />
+    <ClInclude Include="Core\Watchpoint.h" />
     <ClInclude Include="DevectorApp.h" />
-    <ClInclude Include="Display.h" />
-    <ClInclude Include="IO.h" />
-    <ClInclude Include="Memory.h" />
-    <ClInclude Include="Watchpoint.h" />
+    <ClInclude Include="UI\BaseWindow.h" />
+    <ClInclude Include="UI\BreakpointsWindow.h" />
+    <ClInclude Include="UI\DisasmWindow.h" />
+    <ClInclude Include="UI\DisplayWindow.h" />
+    <ClInclude Include="UI\HardwareStatsWindow.h" />
+    <ClInclude Include="UI\MemDisplayWindow.h" />
+    <ClInclude Include="UI\MemViewerWindow.h" />
+    <ClInclude Include="UI\WatchpointsWindow.h" />
+    <ClInclude Include="Utils\ArgsParser.h" />
+    <ClInclude Include="Utils\Consts.h" />
+    <ClInclude Include="Utils\GLUtils.h" />
+    <ClInclude Include="Utils\ImGuiApp.h" />
+    <ClInclude Include="Utils\ImGuiUtils.h" />
+    <ClInclude Include="Utils\JsonUtils.h" />
+    <ClInclude Include="Utils\Result.h" />
+    <ClInclude Include="Utils\Status.h" />
+    <ClInclude Include="Utils\StringUtils.h" />
+    <ClInclude Include="Utils\TQueue.h" />
+    <ClInclude Include="Utils\Types.h" />
+    <ClInclude Include="Utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SharedSource\3rdParty\imgui\misc\debuggers\imgui.natstepfilter" />

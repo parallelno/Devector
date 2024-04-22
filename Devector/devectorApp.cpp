@@ -9,7 +9,7 @@
 #include "DevectorApp.h"
 #include "Utils/Utils.h"
 #include "Utils/JsonUtils.h"
-#include <Utils/StringUtils.h>
+#include "Utils/StringUtils.h"
 
 dev::DevectorApp::DevectorApp(
 	const std::string& _stringPath, nlohmann::json _settingsJ)
@@ -26,12 +26,12 @@ void dev::DevectorApp::WindowsInit()
 	m_hardwareP = std::make_unique < dev::Hardware>();
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reset);
-	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate, m_reqDisasmUpdateData, m_reset);
+	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasm, m_reset);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
-	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate, m_reqDisasmUpdateData);
-	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasmUpdate);
+	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasm);
+	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqMemViewer);
 	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
-	m_memViewerWindowP = std::make_unique<dev::MemViewerWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale);
+	m_memViewerWindowP = std::make_unique<dev::MemViewerWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqMemViewer);
 
 	// Set the key callback function
 	glfwSetWindowUserPointer(m_window, this);

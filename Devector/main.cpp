@@ -1,5 +1,5 @@
 #include "Utils/ArgsParser.h"
-#include "Utils/Globals.h"
+#include "Utils/Consts.h"
 #include "Utils/Utils.h"
 #include "Utils/StringUtils.h"
 #include "Utils/JsonUtils.h"
