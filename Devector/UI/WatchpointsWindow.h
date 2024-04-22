@@ -23,6 +23,8 @@ namespace dev
 
 		void DrawTable();
 		void DrawPopup(ReqPopup& _reqPopup, const Debugger::Watchpoints& _wps, int _id = -1);
+		void CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
+			const int _id, int& _editedWatchpointId, ReqPopup& _reqPopup);
 
 	public:
 		WatchpointsWindow(Debugger& _debugger,

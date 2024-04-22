@@ -22,6 +22,8 @@ namespace dev
 
 		void DrawTable();
 		void DrawPopup(ReqPopup& _reqPopup, const Debugger::Breakpoints& _pbs, int _addr);
+		void CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
+			const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup);
 
 	public:
 		BreakpointsWindow(Debugger& m_debugger,

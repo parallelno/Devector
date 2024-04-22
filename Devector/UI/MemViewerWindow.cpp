@@ -117,7 +117,7 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 					Addr addr = row * (COLUMNS_COUNT - 1) + col;
 					ImGui::TableNextColumn();
 
-					// highlight the hovered data
+					// calc the cell pos & size
 					float offsetX = 4;
 					float offsetY = 2;
 					ImVec2 highlightPos = ImGui::GetCursorScreenPos();
@@ -125,6 +125,16 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 					highlightPos.y -= offsetY;
 					ImVec2 textSize = ImGui::CalcTextSize("FF");
 					ImVec2 highlightEnd = ImVec2(highlightPos.x + textSize.x + offsetX * 2 + 1, highlightPos.y + textSize.y + offsetY * 2);
+
+					// highlight a selected watchpoint
+					if (m_reqMemViewer.type != ReqMemViewer::Type::NONE && 
+						addr >= m_reqMemViewer.globalAddr && addr < m_reqMemViewer.len + m_reqMemViewer.globalAddr){
+						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 100, 100, 255));
+					}
+
+					// highlight the hovered data
+
+
 					if (ImGui::IsMouseHoveringRect(highlightPos, highlightEnd) &&
 						!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
 					{

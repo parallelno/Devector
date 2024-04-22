@@ -74,7 +74,27 @@ void dev::WatchpointsWindow::DrawProperty2Type(
 	}
 }
 
-#define CHECK_IF_ITEM_CLICKED		if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) { showItemContextMenu = true; editedWatchpointId = id; }
+void dev::WatchpointsWindow::CheckIfItemClicked(const ImVec2& _rowMin, 
+	bool& _showItemContextMenu, const int _id, int& _editedWatchpointId, ReqPopup& _reqPopup)
+{
+	if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) 
+	{ 
+		_showItemContextMenu = true;
+		_editedWatchpointId = _id;
+	}
+
+	// if double clicked, open the wp edit window
+	if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+	{
+		ImVec2 rowMax = ImGui::GetItemRectMax();
+
+		if (ImGui::IsMouseHoveringRect(_rowMin, rowMax))
+		{
+			_editedWatchpointId = _id;
+			_reqPopup = ReqPopup::INIT_EDIT;
+		}
+	}
+}
 
 void dev::WatchpointsWindow::DrawTable()
 {
@@ -129,6 +149,7 @@ void dev::WatchpointsWindow::DrawTable()
 			auto globalAddr = wp.GetGlobalAddr();
 			// isActive
 			ImGui::TableNextColumn();
+
 			auto isActive = wp.IsActive();
 			ImGui::Checkbox(std::format("##{:05X}", globalAddr).c_str(), &isActive);
 			if (isActive != wp.IsActive())
@@ -147,13 +168,17 @@ void dev::WatchpointsWindow::DrawTable()
 			if (ImGui::Selectable(std::format("0x{:05X}", globalAddr).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
 				selectedAddr = globalAddr;
+				m_reqMemViewer.type = ReqMemViewer::Type::UPDATE;
+				m_reqMemViewer.globalAddr = selectedAddr;
+				m_reqMemViewer.len = wp.GetLen();
 			}
-			CHECK_IF_ITEM_CLICKED
+			ImVec2 rowMin = ImGui::GetItemRectMin();
+			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
 			ImGui::PopStyleColor();
 
 			// Access
 			DrawProperty(wp.GetAccessS());
-			CHECK_IF_ITEM_CLICKED
+			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
 
 			// Condition
 			std::string condS = wp.GetConditionS();
@@ -167,13 +192,13 @@ void dev::WatchpointsWindow::DrawTable()
 				}
 			}
 			condS = std::format("{} l:{}", condS, wp.GetLen());
-			//DrawProperty();
 			DrawProperty(condS);
-			CHECK_IF_ITEM_CLICKED
+			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
+
 
 			// Comment
 			DrawProperty(wp.GetComment());
-			CHECK_IF_ITEM_CLICKED
+			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
 		}
 
 		PopStyleCompact();

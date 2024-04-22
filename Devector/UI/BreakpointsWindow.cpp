@@ -33,7 +33,30 @@ void dev::BreakpointsWindow::DrawProperty(const std::string& _name, const ImVec2
 	ImGui::PopStyleColor();
 }
 
-#define CHECK_IF_ITEM_CLICKED		if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {showItemContextMenu = true; editedBreakpointAddr = addr; }
+void dev::BreakpointsWindow::CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
+	const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup)
+{
+	if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+	{
+		_showItemContextMenu = true; 
+		_editedBreakpointAddr = _addr;
+	}
+
+	// if double clicked, open the wp edit window
+	if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+	{
+		ImVec2 rowMax = ImGui::GetItemRectMax();
+
+		if (ImGui::IsMouseHoveringRect(_rowMin, rowMax))
+		{
+			_editedBreakpointAddr = _addr;
+			_reqPopup = ReqPopup::INIT_EDIT;
+		}
+	}
+}
+
+
+//#define CHECK_IF_ITEM_CLICKED		if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {showItemContextMenu = true; editedBreakpointAddr = addr; }
 
 void dev::BreakpointsWindow::DrawTable()
 {
@@ -107,18 +130,19 @@ void dev::BreakpointsWindow::DrawTable()
 				m_reqDisasm.type = ReqDisasm::Type::UPDATE_ADDR;
 				m_reqDisasm.addr = addr;
 			}
-			CHECK_IF_ITEM_CLICKED
+			ImVec2 rowMin = ImGui::GetItemRectMin();
+			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
 
 			ImGui::PopStyleColor();
 
 			// Condition
 			const char* cond = bpData.autoDel ? "Auto delete" : "";
 			DrawProperty(cond);
-			CHECK_IF_ITEM_CLICKED
+			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
 
 			// Comment
 			DrawProperty(bp.GetComment());
-			CHECK_IF_ITEM_CLICKED
+			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
 		}
 
 		PopStyleCompact();
@@ -293,11 +317,9 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
 
-			if (warningS.empty()) {
-				ImGui::BeginDisabled();
-			}
+			if (!warningS.empty()) ImGui::BeginDisabled();
 			// OK button
-			if (ImGui::Button("Ok", buttonSize) && !warningS.empty())
+			if (ImGui::Button("Ok", buttonSize))
 			{
 				if (_reqPopup == ReqPopup::EDIT && addrOld != addr) 
 				{
@@ -308,9 +330,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 				ImGui::CloseCurrentPopup();
 				_reqPopup = ReqPopup::NONE;
 			}
-			if (warningS.empty()) {
-				ImGui::EndDisabled();
-			}
+			if (!warningS.empty()) ImGui::EndDisabled();
 
 			// Cancel button
 			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
