@@ -85,11 +85,19 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 			}
 		}
 
+		// Set the scroll position to the selected watchpoint addr
+		if (m_reqMemViewer.type == ReqMemViewer::Type::INIT_UPDATE)
+		{
+			m_reqMemViewer.type = ReqMemViewer::Type::UPDATE;
+			float cellPaddingY = ImGui::GetStyle().CellPadding.y;
+			float offset = 2.0f;
+			ImGui::SetScrollY((m_reqMemViewer.globalAddr >> 4) * (*m_fontSizeP + cellPaddingY + offset) * (*m_dpiScaleP));
+		}
+
 		// addr & data
 		int idx = 0;
 		static int addrHovered = -1;
 		ImU32 bgColorHeadrHovered = BG_COLOR_ADDR;
-
 		ImGuiListClipper clipper;
 		clipper.Begin(int(m_ram.size()) / (COLUMNS_COUNT - 1));
 		while (clipper.Step())
@@ -132,9 +140,7 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 100, 100, 255));
 					}
 
-					// highlight the hovered data
-
-
+					// highlight the hovered byte
 					if (ImGui::IsMouseHoveringRect(highlightPos, highlightEnd) &&
 						!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
 					{

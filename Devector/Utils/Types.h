@@ -20,10 +20,11 @@ namespace dev
 	using Id = int;
 
 	struct ReqMemViewer{
-		enum class Type : int { NONE = 0, UPDATE };
-		Type type;
+		enum class Type : int { NONE = 0, INIT_UPDATE, UPDATE };
 		GlobalAddr globalAddr;
 		GlobalAddr len;
+		Type type;
+		bool isActive;
 	};
 	struct ReqDisasm {
 		enum class Type : int { 

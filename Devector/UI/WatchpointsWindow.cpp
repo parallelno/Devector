@@ -157,7 +157,7 @@ void dev::WatchpointsWindow::DrawTable()
 				m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), globalAddr,
 					wp.GetCondition(), wp.GetValue(), wp.GetType(),
 					wp.GetLen(), isActive, wp.GetComment());
-				m_reqMemViewer.type = ReqMemViewer::Type::UPDATE;
+				m_reqMemViewer.type = ReqMemViewer::Type::INIT_UPDATE;
 				m_reqMemViewer.globalAddr = globalAddr;
 				m_reqMemViewer.len = wp.GetLen();
 			}
@@ -168,7 +168,7 @@ void dev::WatchpointsWindow::DrawTable()
 			if (ImGui::Selectable(std::format("0x{:05X}", globalAddr).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
 				selectedAddr = globalAddr;
-				m_reqMemViewer.type = ReqMemViewer::Type::UPDATE;
+				m_reqMemViewer.type = ReqMemViewer::Type::INIT_UPDATE;
 				m_reqMemViewer.globalAddr = selectedAddr;
 				m_reqMemViewer.len = wp.GetLen();
 			}
@@ -253,7 +253,7 @@ void dev::WatchpointsWindow::DrawTable()
 							wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
 							false, wp.GetComment());
 
-						m_reqMemViewer.type = ReqMemViewer::Type::UPDATE;
+						m_reqMemViewer.type = ReqMemViewer::Type::INIT_UPDATE;
 						m_reqMemViewer.globalAddr = wp.GetGlobalAddr();
 						m_reqMemViewer.len = wp.GetLen();
 					}
@@ -263,7 +263,7 @@ void dev::WatchpointsWindow::DrawTable()
 						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
 							wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
 							true, wp.GetComment());
-						m_reqMemViewer.type = ReqMemViewer::Type::UPDATE;
+						m_reqMemViewer.type = ReqMemViewer::Type::INIT_UPDATE;
 						m_reqMemViewer.globalAddr = wp.GetGlobalAddr();
 						m_reqMemViewer.len = wp.GetLen();
 					}
@@ -415,7 +415,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 					cond, value, static_cast<Watchpoint::Type>(type),
 					len, isActive, commentS);
 
-				m_reqMemViewer.type = ReqMemViewer::Type::UPDATE;
+				m_reqMemViewer.type = ReqMemViewer::Type::INIT_UPDATE;
 				m_reqMemViewer.globalAddr = globalAddr;
 				m_reqMemViewer.len = len;
 				ImGui::CloseCurrentPopup();
