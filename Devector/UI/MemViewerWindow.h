@@ -9,6 +9,7 @@
 #include "Utils/ImGuiUtils.h"
 #include "Ui/BaseWindow.h"
 #include "Core/Hardware.h"
+#include "Core/Debugger.h"
 
 namespace dev 
 {
@@ -28,12 +29,13 @@ namespace dev
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		std::array<uint8_t, Memory::MEMORY_MAIN_LEN> m_ram;
+		Debugger& m_debugger;
 
 		void UpdateData(const bool _isRunning);
 		void DrawHex(const bool _isRunning);
 
 	public:
-		MemViewerWindow(Hardware& _hardware, const float* const _fontSizeP, const float* const _dpiScaleP, ReqMemViewer& _reqMemViewer);
+		MemViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, const float* const _dpiScaleP, ReqMemViewer& _reqMemViewer);
 		void Update();
 	};
 

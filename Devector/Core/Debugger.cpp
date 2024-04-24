@@ -12,7 +12,8 @@ dev::Debugger::Debugger(Hardware& _hardware)
 	m_hardware(_hardware),
 	m_wpBreak(false),
 	m_traceLog(),
-	m_pathLast()
+	m_pathLast(),
+	m_lastWritesAddrs(), m_lastReadsAddrs(), m_memLastReads(), m_memLastWrites(), m_lastReadsAddrsOld(), m_lastWritesAddrsOld()
 {
     Init();
 }
@@ -51,6 +52,13 @@ void dev::Debugger::Reset()
 	m_memReads.fill(0);
 	m_memWrites.fill(0);
 
+	m_lastWritesAddrs.fill(-1);
+	m_lastReadsAddrs.fill(-1);
+	m_lastWritesIdx = 0;
+	m_lastReadsIdx = 0;
+	m_memLastReads.fill(0);
+	m_memLastWrites.fill(0);
+
 	for (size_t i = 0; i < TRACE_LOG_SIZE; i++)
 	{
 		m_traceLog[i].Clear();
@@ -65,6 +73,12 @@ void dev::Debugger::ReadInstr(
 {
 	m_memRuns[_globalAddr]++;
 	TraceLogUpdate(_globalAddr, _val, _dataH, _dataL, _hl);
+	
+	/*
+	std::lock_guard<std::mutex> mlock(m_lastReadsInstrMutex);
+	m_lastReadsInstr[m_lastReadsInstrIdx++] = _globalAddr;
+	m_lastReadsIdx %= LAST_READS_MAX;
+	*/
 }
 
 // a hardware thread
@@ -73,12 +87,20 @@ void dev::Debugger::Read(
 {
 	m_memReads[_globalAddr]++;
     m_wpBreak |= CheckWatchpoint(Watchpoint::Access::R, _globalAddr, _val);
+
+	std::lock_guard<std::mutex> mlock(m_lastReadsMutex);
+	m_lastReadsAddrs[m_lastReadsIdx++] = _globalAddr;
+	m_lastReadsIdx %= LAST_RW_MAX;
 }
 // a hardware thread
 void dev::Debugger::Write(const GlobalAddr _globalAddr, const uint8_t _val)
 {
     m_memWrites[_globalAddr]++;
     m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, _globalAddr, _val);
+	
+	std::lock_guard<std::mutex> mlock(m_lastWritesMutex);
+	m_lastWritesAddrs[m_lastWritesIdx++] = _globalAddr;
+	m_lastWritesIdx %= LAST_RW_MAX;
 }
 
 
@@ -877,3 +899,46 @@ void dev::Debugger::ReqLoadRomLast()
 
 	ReqLoadRom(m_pathLast);
 }
+
+void dev::Debugger::UpdateLastReads()
+{
+	// remove old stats
+	for (auto globalAddr : m_lastReadsAddrsOld){
+		if (globalAddr >= 0) {
+			m_memLastReads[globalAddr] = 0;
+		}
+	}
+	// copy new stats
+	std::lock_guard<std::mutex> mlock(m_lastReadsMutex);
+	uint16_t readsIdx = m_lastReadsIdx;
+	for (auto globalAddr : m_lastReadsAddrs){
+		if (globalAddr >= 0) {
+			m_memLastReads[globalAddr] = (LAST_RW_MAX - readsIdx) % LAST_RW_MAX;
+		}
+		readsIdx--;
+	}
+	m_lastReadsAddrsOld = m_lastReadsAddrs;
+}
+
+void dev::Debugger::UpdateLastWrites()
+{
+	// remove old stats
+	for (auto globalAddr : m_lastWritesAddrsOld){
+		if (globalAddr >= 0) {
+			m_memLastWrites[globalAddr] = 0;
+		}
+	}
+	// copy new stats
+	std::lock_guard<std::mutex> mlock(m_lastWritesMutex);
+	uint16_t writesIdx = m_lastWritesIdx;
+	for (auto globalAddr : m_lastWritesAddrs){
+		if (globalAddr >= 0) {
+			m_memLastWrites[globalAddr] = (LAST_RW_MAX - writesIdx) % LAST_RW_MAX;
+		}
+		writesIdx--;
+	}
+	m_lastWritesAddrsOld = m_lastWritesAddrs;
+}
+
+auto dev::Debugger::GetLastReads() -> MemLastRW* { return &m_memLastReads; }
+auto dev::Debugger::GetLastWrites() -> MemLastRW* {	return &m_memLastWrites; }

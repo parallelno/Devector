@@ -3,11 +3,11 @@
 #include "Utils/ImGuiUtils.h"
 #include "imgui.h"
 
-dev::MemViewerWindow::MemViewerWindow(Hardware& _hardware,
+dev::MemViewerWindow::MemViewerWindow(Hardware& _hardware, Debugger& _debugger,
 		const float* const _fontSizeP, const float* const _dpiScaleP, ReqMemViewer& _reqMemViewer)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware), m_ram(), m_reqMemViewer(_reqMemViewer)
+	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqMemViewer(_reqMemViewer)
 {}
 
 void dev::MemViewerWindow::Update()
@@ -42,10 +42,16 @@ void dev::MemViewerWindow::UpdateData(const bool _isRunning)
 	// update
 	auto memP = m_hardware.GetRam()->data();
 	std::copy(memP, memP + Memory::MEMORY_MAIN_LEN, m_ram.begin());
+	m_debugger.UpdateLastReads();
+	m_debugger.UpdateLastWrites();
 }
 
 void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 {
+	static int memAccessType = 0;
+	ImGui::RadioButton("Read ###MemAccessR", &memAccessType, 0); ImGui::SameLine();
+	ImGui::RadioButton("Write ###MemAccessW", &memAccessType, 1);
+
 	constexpr auto headerColumn = "00\0 01\0 02\0 03\0 04\0 05\0 06\0 07\0 08\0 09\0 0A\0 0B\0 0C\0 0D\0 0E\0 0F\0";
 	
 	const int COLUMNS_COUNT = 17;
@@ -138,6 +144,24 @@ void dev::MemViewerWindow::DrawHex(const bool _isRunning)
 					if (m_reqMemViewer.type != ReqMemViewer::Type::NONE && 
 						addr >= m_reqMemViewer.globalAddr && addr < m_reqMemViewer.len + m_reqMemViewer.globalAddr){
 						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 100, 100, 255));
+					}
+
+					// highlight the last reads
+					int lastReadsIdx = m_debugger.GetLastReads()->at(addr);
+					int lastWritesIdx = m_debugger.GetLastWrites()->at(addr);
+					if (memAccessType == 0 && lastReadsIdx > 0)
+					{
+						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(
+							20 * lastReadsIdx / Debugger::LAST_RW_MAX, 
+							20 * lastReadsIdx / Debugger::LAST_RW_MAX, 
+							255 * lastReadsIdx / Debugger::LAST_RW_MAX, 255));
+					}
+					if (memAccessType == 1 && lastWritesIdx > 0)
+					{
+						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(
+							255 * lastWritesIdx / Debugger::LAST_RW_MAX, 
+							20 * lastWritesIdx / Debugger::LAST_RW_MAX, 
+							20 * lastWritesIdx / Debugger::LAST_RW_MAX, 255));
 					}
 
 					// highlight the hovered byte

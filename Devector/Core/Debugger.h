@@ -21,6 +21,8 @@ namespace dev
 	{
 	public:
 		static const constexpr size_t TRACE_LOG_SIZE = 100000;
+		static constexpr int LAST_RW_MAX = 256;
+		using MemLastRW = std::array<uint16_t, Memory::GLOBAL_MEMORY_LEN>;
 
 		struct DisasmLine 
 		{
@@ -113,6 +115,11 @@ namespace dev
 		void ReqLoadRom(const std::wstring& _path);
 		void ReqLoadRomLast();
 
+		auto GetLastWrites() -> MemLastRW*;
+		auto GetLastReads() -> MemLastRW*;
+		void UpdateLastReads();
+		void UpdateLastWrites();
+
 	private:
 		auto GetDisasmLine(const uint8_t _opcode, 
 			const uint8_t _dataL, const uint8_t _dataH) const ->const std::string;
@@ -172,6 +179,19 @@ namespace dev
 		I8080::DebugOnWriteFunc m_debugOnWriteFunc;
 
 		std::wstring m_pathLast;
+
+		std::mutex m_lastReadsMutex;
+		std::mutex m_lastWritesMutex;
+		using LastReadAddrs = std::array<int, LAST_RW_MAX>;
+		LastReadAddrs m_lastReadsAddrs;
+		LastReadAddrs m_lastWritesAddrs;
+		LastReadAddrs m_lastReadsAddrsOld;
+		LastReadAddrs m_lastWritesAddrsOld;
+		int m_lastReadsIdx = 0; // points to the next element after the most recently read. because it's a circular buffer, that element is the oldest read
+		int m_lastWritesIdx = 0; // points to the next element after the most recently written. because it's a circular buffer, that element is the oldest written		
+		using MemLastRW = std::array<uint16_t, Memory::GLOBAL_MEMORY_LEN>;
+		MemLastRW m_memLastReads; // each element is the read index for that address. the read index = 255 is the most recent
+		MemLastRW m_memLastWrites; // each element is the write index for that address. the write index = 255 is the most recent
 	};
 }
 #endif // !DEV_DEBUGGER_H
