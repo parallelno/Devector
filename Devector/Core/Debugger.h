@@ -183,15 +183,15 @@ namespace dev
 		std::mutex m_lastReadsMutex;
 		std::mutex m_lastWritesMutex;
 		using LastReadAddrs = std::array<int, LAST_RW_MAX>;
-		LastReadAddrs m_lastReadsAddrs;
-		LastReadAddrs m_lastWritesAddrs;
-		LastReadAddrs m_lastReadsAddrsOld;
-		LastReadAddrs m_lastWritesAddrsOld;
-		int m_lastReadsIdx = 0; // points to the next element after the most recently read. because it's a circular buffer, that element is the oldest read
-		int m_lastWritesIdx = 0; // points to the next element after the most recently written. because it's a circular buffer, that element is the oldest written		
+		LastReadAddrs m_lastReadsAddrs; // a circular buffer that contains addresses
+		LastReadAddrs m_lastWritesAddrs; // ...
+		LastReadAddrs m_lastReadsAddrsOld; // ... used to clean up m_memLastReads
+		LastReadAddrs m_lastWritesAddrsOld; // ... ...
+		int m_lastReadsIdx = 0; // index to m_memLastReads, points to the least recently read. because it's a circular buffer, that element before it is the most recently read
+		int m_lastWritesIdx = 0; // ...
 		using MemLastRW = std::array<uint16_t, Memory::GLOBAL_MEMORY_LEN>;
-		MemLastRW m_memLastReads; // each element is the read index for that address. the read index = 255 is the most recent
-		MemLastRW m_memLastWrites; // each element is the write index for that address. the write index = 255 is the most recent
+		MemLastRW m_memLastReads; // each element contains the order of reading. 255 is the most recently read, 0 - the least recently read
+		MemLastRW m_memLastWrites; // ...
 	};
 }
 #endif // !DEV_DEBUGGER_H

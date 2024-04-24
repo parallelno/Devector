@@ -255,7 +255,7 @@ void dev::DrawProperty2EditableI(const char* _name, const char* _label, int* _va
 }
 
 void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
-	const char* _hint, const char* _help)
+	const char* _hint, const char* _help, const ImGuiInputTextFlags _flags)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
 	ImGui::TableNextColumn();
@@ -265,7 +265,7 @@ void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::str
 	ImGui::PopStyleColor();
 
 	ImGui::TableNextColumn();
-	ImGui::InputTextWithHint(_label, _hint, _value);
+	ImGui::InputTextWithHint(_label, _hint, _value, _flags);
 	if (*_help != '\0') {
 		ImGui::SameLine();
 		ImGui::Dummy({12,10});

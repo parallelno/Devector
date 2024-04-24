@@ -233,7 +233,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 	static bool isActive = bpData.IsActive();
 	static bool isAutoDel = bpData.autoDel;
 	static GlobalAddr addrOld = 0xFF;
-	static std::string addrS = "0xFF";
+	static std::string addrS = "FF";
 	//static std::string conditionS = "";
 	static std::string commentS = "";
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
@@ -254,7 +254,8 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 		addrOld = bpData.addr;
 		mappingPages = bpData.mappingPages;
 		isAutoDel = bpData.autoDel;
-		addrS = bpData.GetAddrS();
+		addrS = std::format("{:04X}", bpData.GetAddr());
+		
 		//conditionS = bp.GetConditionS();
 		commentS = bp.GetComment();
 	}

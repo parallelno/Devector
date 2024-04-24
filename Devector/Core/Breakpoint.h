@@ -44,7 +44,7 @@ namespace dev
 			Status status : 2;
 			bool autoDel : 1;
 			
-			auto GetAddrS() const -> std::string { return std::format("0x{:04X}", addr); };
+			auto GetAddr() const -> Addr { return addr; };
 			auto GetAddrMappingS() const -> const char*;
 			inline bool IsActive() const { return status == Breakpoint::Status::ACTIVE; };
 		};

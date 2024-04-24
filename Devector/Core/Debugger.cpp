@@ -913,7 +913,7 @@ void dev::Debugger::UpdateLastReads()
 	uint16_t readsIdx = m_lastReadsIdx;
 	for (auto globalAddr : m_lastReadsAddrs){
 		if (globalAddr >= 0) {
-			m_memLastReads[globalAddr] = (LAST_RW_MAX - readsIdx) % LAST_RW_MAX;
+			m_memLastReads[globalAddr] = static_cast<uint16_t>(LAST_RW_MAX - readsIdx) % LAST_RW_MAX;
 		}
 		readsIdx--;
 	}
@@ -933,9 +933,15 @@ void dev::Debugger::UpdateLastWrites()
 	uint16_t writesIdx = m_lastWritesIdx;
 	for (auto globalAddr : m_lastWritesAddrs){
 		if (globalAddr >= 0) {
-			m_memLastWrites[globalAddr] = (LAST_RW_MAX - writesIdx) % LAST_RW_MAX;
+			m_memLastWrites[globalAddr] = static_cast<uint16_t>(LAST_RW_MAX - writesIdx) % LAST_RW_MAX;
 		}
 		writesIdx--;
+
+		auto aa = static_cast<uint16_t>(LAST_RW_MAX - writesIdx) % LAST_RW_MAX;
+		if (aa < 0 || aa >= LAST_RW_MAX)
+		{
+			int t = 1;
+		}
 	}
 	m_lastWritesAddrsOld = m_lastWritesAddrs;
 }
