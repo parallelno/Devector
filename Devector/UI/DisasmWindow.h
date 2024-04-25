@@ -56,8 +56,10 @@ namespace dev
 		int64_t m_ccLastRun = 0;
 		int m_selectedLineIdx = 0;
 		bool& m_reset;
-		std::vector<Addr> m_navigateAddrs;
+		static constexpr int NAVIGATE_ADDRS_LEN = 256;
+		std::array<Addr, NAVIGATE_ADDRS_LEN> m_navigateAddrs;
 		int m_navigateAddrsIdx = 0;
+		int m_navigateAddrsSize = 0;
 
 		void DrawDebugControls(const bool _isRunning);
 		void DrawSearch(const bool _isRunning);

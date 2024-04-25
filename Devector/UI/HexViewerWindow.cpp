@@ -1,16 +1,16 @@
-#include "MemViewerWindow.h"
+#include "HexViewerWindow.h"
 
 #include "Utils/ImGuiUtils.h"
 #include "imgui.h"
 
-dev::MemViewerWindow::MemViewerWindow(Hardware& _hardware, Debugger& _debugger,
+dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 		const float* const _fontSizeP, const float* const _dpiScaleP, ReqMemViewer& _reqMemViewer)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqMemViewer(_reqMemViewer)
 {}
 
-void dev::MemViewerWindow::Update()
+void dev::HexViewerWindow::Update()
 {
 	BaseWindow::Update();
 
@@ -25,7 +25,7 @@ void dev::MemViewerWindow::Update()
 	ImGui::End();
 }
 
-void dev::MemViewerWindow::UpdateData(const bool _isRunning)
+void dev::HexViewerWindow::UpdateData(const bool _isRunning)
 {
 	if (_isRunning) return;
 
@@ -35,18 +35,17 @@ void dev::MemViewerWindow::UpdateData(const bool _isRunning)
 
 	uint64_t cc = data["cc"];
 	auto ccDiff = cc - m_ccLast;
-	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
-	m_ccLast = cc;
 	if (ccDiff == 0) return;
+	m_ccLast = cc;
 
 	// update
 	auto memP = m_hardware.GetRam()->data();
 	std::copy(memP, memP + Memory::MEMORY_MAIN_LEN, m_ram.begin());
-	m_debugger.UpdateLastReads();
-	m_debugger.UpdateLastWrites();
+	//m_debugger.UpdateLastReads();
+	//m_debugger.UpdateLastWrites();
 }
 
-void dev::MemViewerWindow::DrawHex(const bool _isRunning)
+void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 {
 	constexpr auto headerColumn = "00\0 01\0 02\0 03\0 04\0 05\0 06\0 07\0 08\0 09\0 0A\0 0B\0 0C\0 0D\0 0E\0 0F\0";
 	

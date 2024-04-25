@@ -13,7 +13,7 @@ dev::DisasmWindow::DisasmWindow(
     m_debugger(_debugger),
     m_fontCommentP(fontComment),
     m_reqDisasm(_reqDisasm),
-    m_reset(_reset)
+    m_reset(_reset), m_navigateAddrs()
 {
     UpdateData(false);
 }
@@ -304,16 +304,18 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
                                             ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
                                             // draw a highlighted hexadecimal literal
                                             ImGui::TextColored(dev::IM_VEC4(0xFFFFFFFF), "%s", operand.c_str());
-                                            // if it's cliched, scroll the disasm to highlighted addr
+                                            // if it's clicked, scroll the disasm to highlighted addr
                                             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                                             {
                                                 reqUpdateAddr = dev::StrHexToInt(operand.c_str() + 2);
-                                                if (m_navigateAddrs.empty()) {
-                                                    m_navigateAddrs.push_back(line.addr);
-                                                    m_navigateAddrsIdx = 0;
+                                                if (m_navigateAddrsIdx == 0) {
+                                                    m_navigateAddrs[m_navigateAddrsIdx] = line.addr;
+                                                    m_navigateAddrsSize++;
                                                 }
-                                                m_navigateAddrs.push_back(reqUpdateAddr);
-                                                m_navigateAddrsIdx++;
+                                                if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
+                                                    m_navigateAddrs[++m_navigateAddrsIdx] = reqUpdateAddr;
+                                                    m_navigateAddrsSize = m_navigateAddrsIdx + 1;
+                                                }
                                             }
                                             drawNormalLiteral = false;
                                         }
@@ -483,7 +485,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
     } 
     // Alt + Right navigation
     else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_RightArrow) && 
-        m_navigateAddrsIdx + 1 < m_navigateAddrs.size() )
+        m_navigateAddrsIdx + 1 < m_navigateAddrsSize)
     {
         auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
         UpdateDisasm(addr);

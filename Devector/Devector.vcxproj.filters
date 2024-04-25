@@ -75,7 +75,7 @@
     <ClCompile Include="UI\MemDisplayWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\MemViewerWindow.cpp">
+    <ClCompile Include="UI\HexViewerWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="UI\WatchpointsWindow.cpp">
@@ -189,7 +189,7 @@
     <ClInclude Include="UI\MemDisplayWindow.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\MemViewerWindow.h">
+    <ClInclude Include="UI\HexViewerWindow.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\WatchpointsWindow.h">

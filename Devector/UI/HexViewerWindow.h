@@ -1,6 +1,6 @@
 #pragma once
-#ifndef DEV_MEM_VIEWER_WINDOW_H
-#define DEV_MEM_VIEWER_WINDOW_H
+#ifndef DEV_HEX_VIEWER_WINDOW_H
+#define DEV_HEX_VIEWER_WINDOW_H
 
 #include <vector>
 
@@ -13,7 +13,7 @@
 
 namespace dev 
 {
-	class MemViewerWindow : public BaseWindow
+	class HexViewerWindow : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 512;
 		static constexpr int DEFAULT_WINDOW_H = 512;
@@ -27,7 +27,6 @@ namespace dev
 		Hardware& m_hardware;
 		ReqMemViewer& m_reqMemViewer;
 		int64_t m_ccLast = -1; // to force the first stats update
-		int64_t m_ccLastRun = 0;
 		std::array<uint8_t, Memory::MEMORY_MAIN_LEN> m_ram;
 		Debugger& m_debugger;
 
@@ -35,10 +34,10 @@ namespace dev
 		void DrawHex(const bool _isRunning);
 
 	public:
-		MemViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, const float* const _dpiScaleP, ReqMemViewer& _reqMemViewer);
+		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, const float* const _dpiScaleP, ReqMemViewer& _reqMemViewer);
 		void Update();
 	};
 
 };
 
-#endif // !DEV_MEM_VIEWER_WINDOW_H
+#endif // !DEV_HEX_VIEWER_WINDOW_H

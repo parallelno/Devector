@@ -13,6 +13,7 @@
 #include "Ui/BaseWindow.h"
 #include "Utils/Result.h"
 #include "Core/Hardware.h"
+#include "Core/Debugger.h"
 #include "Utils/GLUtils.h"
 
 namespace dev
@@ -35,20 +36,20 @@ namespace dev
 
 		Hardware& m_hardware;
 		int64_t m_ccLast = -1; // to force the first stats update
-		int64_t m_ccLastRun = 0;
 		float m_scale = 1.0f;
 
 		GLUtils& m_glUtils;
 		GLUtils::Vec4 m_globalColorBg = { 0.2f, 0.2f, 0.2f, 1.0f };
 		GLUtils::Vec4 m_globalColorFg = { 1.0f, 1.0f, 1.0f, 1.0f };
 		int m_renderDataIdx = -1;
+		Debugger& m_debugger;
 
 		void DrawDisplay();
 		void UpdateData(const bool _isRunning);
 		void ScaleView();
 
 	public:
-		MemDisplayWindow(Hardware& _hardware, const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils);
+		MemDisplayWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils);
 		void Update();
 	};
 

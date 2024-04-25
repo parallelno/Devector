@@ -83,7 +83,7 @@
       <PreprocessorDefinitions>GLEW_STATIC;_MBCS;ZMQ_STATIC;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\zeromq\include\;$(SolutionDir)SharedSource\3rdParty\cppzmq\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\;$(SolutionDir)SharedSource\3rdParty\glew\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Devector\;$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\zeromq\include\;$(SolutionDir)SharedSource\3rdParty\cppzmq\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\;$(SolutionDir)SharedSource\3rdParty\glew\include\</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -127,7 +127,7 @@
     <ClCompile Include="UI\DisplayWindow.cpp" />
     <ClCompile Include="UI\HardwareStatsWindow.cpp" />
     <ClCompile Include="UI\MemDisplayWindow.cpp" />
-    <ClCompile Include="UI\MemViewerWindow.cpp" />
+    <ClCompile Include="UI\HexViewerWindow.cpp" />
     <ClCompile Include="UI\WatchpointsWindow.cpp" />
     <ClCompile Include="Utils\ArgsParser.cpp" />
     <ClCompile Include="Utils\GLUtils.cpp" />
@@ -166,7 +166,7 @@
     <ClInclude Include="UI\DisplayWindow.h" />
     <ClInclude Include="UI\HardwareStatsWindow.h" />
     <ClInclude Include="UI\MemDisplayWindow.h" />
-    <ClInclude Include="UI\MemViewerWindow.h" />
+    <ClInclude Include="UI\HexViewerWindow.h" />
     <ClInclude Include="UI\WatchpointsWindow.h" />
     <ClInclude Include="Utils\ArgsParser.h" />
     <ClInclude Include="Utils\Consts.h" />
