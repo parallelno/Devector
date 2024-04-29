@@ -1,16 +1,17 @@
 #include "GLUtils.h"
 
 #include "Result.h"
+#include "Utils/StringUtils.h"
 #include <format>
 #include "GL/glew.h"
 
 // vertices of a quad with UV coordinates
 GLfloat vertices[] = {
-    // Positions          // UV Coords
-     -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,
-     -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,
-      1.0f,  1.0f, 0.0f,  1.0f, 0.0f,
-      1.0f, -1.0f, 0.0f,  1.0f, 1.0f,
+	// Positions          // UV Coords
+	 -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,
+	 -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,
+	  1.0f,  1.0f, 0.0f,  1.0f, 0.0f,
+	  1.0f, -1.0f, 0.0f,  1.0f, 1.0f,
 };
 
 // it is not initializing the Window and OpenGL 3.3 context
@@ -18,235 +19,273 @@ GLfloat vertices[] = {
 
  dev::GLUtils::GLUtils()
  {
-     m_glewInitCode = glewInit();
-     if (m_glewInitCode != GLEW_OK) {
-         dev::Log("Failed to initialize GLEW");
-     }
- }
+	 m_glewInitCode = glewInit();
+	 if (m_glewInitCode != GLEW_OK) {
+		 dev::Log("Failed to initialize GLEW");
+	 }
 
- auto dev::GLUtils::InitRenderData(const std::string& _vtxShaderS, const std::string& _fragShaderS,
-     const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams, const int _textureCount, const int framebufferTextureFilter)
--> int
- {
-     if (m_glewInitCode != GLEW_OK) return -1;
+	// Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
+	glGenVertexArrays(1, &vtxArrayObj);
+	glGenBuffers(1, &vtxBufferObj);
+	glBindVertexArray(vtxArrayObj);
+	glBindBuffer(GL_ARRAY_BUFFER, vtxBufferObj);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
 
-     auto& renderData = m_renderDatas.emplace_back(RenderData{ _textureCount });
-     int renderDataIdx = static_cast<int>(m_renderDatas.size() - 1);
+auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const int _framebufferH, 
+		const TextureIds& _textureIds, const ShaderParams& _paramParams, 
+		const int _framebufferTextureFilter)
+-> dev::Result<MaterialId>
+{
+	if (m_glewInitCode != GLEW_OK) return {};
+	
+	MaterialId materialId = m_materialId++;
+	auto& material = m_materials.emplace(materialId, Material{_shaderId, _framebufferW, _framebufferH, _paramParams}).first->second;
 
-    // Create a OpenGL texture identifiers
-    glGenTextures(_textureCount, renderData.textures.data());
+	// Create and bind a framebuffer object (FBO)
+	glGenFramebuffers(1, &material.framebuffer);
+	
+	// Create a framebuffer texture to render to
+	glGenTextures(1, &material.framebufferTexture);
+	glBindFramebuffer(GL_FRAMEBUFFER, material.framebuffer);
+	glBindTexture(GL_TEXTURE_2D, material.framebufferTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _framebufferW, _framebufferH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _framebufferTextureFilter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _framebufferTextureFilter);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, material.framebufferTexture, 0);
 
-    // Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
-    glGenVertexArrays(1, &vtxArrayObj);
-    glGenBuffers(1, &vtxBufferObj);
-    glBindVertexArray(vtxArrayObj);
-    glBindBuffer(GL_ARRAY_BUFFER, vtxBufferObj);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+	// Check framebuffer status
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		dev::Log("Framebuffer is not complete!");
+		return {};
+	}
+	// Unbind framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	// activate texture slots
+	glUseProgram(_shaderId);
+	for (int i = 0; i < _textureIds.size(); i++) 
+	{
+		auto paramId = glGetUniformLocation(_shaderId, std::format("texture{}", i).c_str());
+		if (paramId < 0) continue;
+		glUniform1i(paramId, i);
+		material.textureParams.emplace(GL_TEXTURE0 + i, _textureIds[i]);
+	}
 
-    // Create and bind a framebuffer object (FBO)
-    glGenFramebuffers(_textureCount, renderData.framebuffers.data());
-    // Create a framebuffer texture to render to
-    glGenTextures(_textureCount, renderData.framebufferTextures.data());
+	if (!IsMaterialReady(materialId)) return {};
 
-    for (int i = 0; i < _textureCount; i++)
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, renderData.framebuffers[i]);
-
-        glBindTexture(GL_TEXTURE_2D, renderData.framebufferTextures[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _framebufferW, _framebufferH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, framebufferTextureFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, framebufferTextureFilter);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderData.framebufferTextures[i], 0);
-
-        // Check framebuffer status
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) 
-        {
-            dev::Log("Framebuffer is not complete!");
-            return -1;
-        }
-        // Unbind framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-
-    renderData.framebufferW = _framebufferW;
-    renderData.framebufferH = _framebufferH;
-
-    // Create shader program
-    renderData.shaderProgram = CreateShaderProgram(_vtxShaderS.c_str(), _fragShaderS.c_str());
-
-    // get uniform vars ids
-    for (const auto& [name, val] : _paramParams)
-    {
-        auto paramId = glGetUniformLocation(renderData.shaderProgram, name.c_str());
-        if (paramId < 0) continue;
-
-        renderData.params[paramId] = val;
-    }
-
-    // assign a texture
-    glUseProgram(renderData.shaderProgram);
-    glUniform1i(glGetUniformLocation(renderData.shaderProgram, "texture0"), 0);
-
-    if (!IsShaderDataReady(renderDataIdx)) return -1;
-
-    return renderDataIdx;
+	return materialId;
 }
 
 dev::GLUtils::~GLUtils()
 {
-    for (const auto& renderData : m_renderDatas)
-    {
-        // Clean up
-        glDeleteFramebuffers(renderData.textureCount, renderData.framebuffers.data());
-        glDeleteTextures(renderData.textureCount, renderData.textures.data());
-        glDeleteTextures(renderData.textureCount, renderData.framebufferTextures.data());
+	for (const auto& [id, material] : m_materials)
+	{
+		glDeleteFramebuffers(1, &material.framebuffer);
+		glDeleteTextures(1, &material.framebufferTexture);
+	}
 
-        // Delete shader program
-        glDeleteProgram(renderData.shaderProgram);
-    }
+	for (const auto& [id, texture] : m_textures){
+		glDeleteTextures(1, &id);
+	}
+	
+	for (const auto id : m_shaders){
+		glDeleteProgram(id);
+	}
 
-    glDeleteVertexArrays(1, &vtxArrayObj);
-    glDeleteBuffers(1, &vtxBufferObj);
+	glDeleteVertexArrays(1, &vtxArrayObj);
+	glDeleteBuffers(1, &vtxBufferObj);
 }
 
-int dev::GLUtils::Draw(const int _renderDataIdx) const
+int dev::GLUtils::Draw(const MaterialId _materialId) const
 {
-    if (m_glewInitCode != GLEW_OK ||
-        !IsShaderDataReady(_renderDataIdx)) return -1;
+	if (m_glewInitCode != GLEW_OK ||
+		!IsMaterialReady(_materialId)) return -1;
 
-    auto& renderData = m_renderDatas.at(_renderDataIdx);
+	auto& material = m_materials.at(_materialId);
 
-    for (int i = 0; i < renderData.textureCount; i++)
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, renderData.framebuffers[i]);
-        glViewport(0, 0, renderData.framebufferW, renderData.framebufferH);
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+	glBindFramebuffer(GL_FRAMEBUFFER, material.framebuffer);
+	glViewport(0, 0, material.framebufferW, material.framebufferH);
+	glClearColor(material.backColor.x, material.backColor.y, material.backColor.z, material.backColor.w);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-        // Render the quad
-        glUseProgram(renderData.shaderProgram);
+	glUseProgram(material.shaderId);
 
-        // send the params to the shader
-        for (const auto& [paramId, paramValue] : renderData.params)
-        {
-            glUniform4f(paramId, paramValue->x, paramValue->y, paramValue->z, paramValue->w);
-        }
+	// send the params to the shader
+	for (const auto& [paramId, paramValue] : material.params)
+	{
+		glUniform4f(paramId, paramValue->x, paramValue->y, paramValue->z, paramValue->w);
+	}
 
-        // assign a texture
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renderData.textures[i]);
+	// bind texture
+	for (const auto& [activateId, id] : material.textureParams)
+	{
+		glActiveTexture(activateId);
+		glBindTexture(GL_TEXTURE_2D, id);
+	}
+	// draw the quad
+	glBindVertexArray(vtxArrayObj);
+	glDrawArrays(GL_QUADS, 0, 4);
+	glBindVertexArray(0);
 
-        glBindVertexArray(vtxArrayObj);
-        glDrawArrays(GL_QUADS, 0, 4);
-        glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-
-    return 0;
+	return GLEW_OK;
 }
 
-void dev::GLUtils::UpdateTextures(const int _renderDataIdx, const uint8_t* _memP, const int _width, const int _height, const int _colorDepth, const int textureFilter)
+void dev::GLUtils::UpdateTexture(const int _texureId, const uint8_t* _memP)
 {
-    if (_renderDataIdx >= m_renderDatas.size()) return;
-    auto& renderData = m_renderDatas.at(_renderDataIdx);
+	//if (_materialId >= m_renderDatas.size()) return;
+	auto& texture = m_textures.at(_texureId);
 
-    int imageSize = _width * _height * _colorDepth;
+	glBindTexture(GL_TEXTURE_2D, texture.id);
 
-    for (int i = 0; i < renderData.textureCount; i++)
-    {
-        glBindTexture(GL_TEXTURE_2D, renderData.textures[i]);
+	// Setup filtering parameters for display
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture.filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture.filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        // Setup filtering parameters for display
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, textureFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textureFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        // Upload pixels into texture
+	// Upload pixels into texture
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
-        int glTexFormat;
-        if (_colorDepth == 1) {
-            glTexFormat = GL_RED;
-        }
-        else if (_colorDepth == 4) {
-            glTexFormat = GL_RGBA;
-        }
-        glTexImage2D(GL_TEXTURE_2D, 0, glTexFormat, _width, _height, 0, glTexFormat, GL_UNSIGNED_BYTE, _memP + i * imageSize);
-    }
+	glTexImage2D(GL_TEXTURE_2D, 0, texture.internalFormat, texture.w, texture.h, 0, texture.internalFormat, texture.type, _memP);
 }
 
-auto dev::GLUtils::GetFramebufferTextures(const int _renderDataIdx) const
--> const std::vector<GLuint>&
+auto dev::GLUtils::GetFramebufferTexture(const int _materialId) const
+-> GLuint
 {
-    return m_renderDatas.at(_renderDataIdx).framebufferTextures;
+	return m_materials.at(_materialId).framebufferTexture;
 }
 
-GLuint dev::GLUtils::GLCheckError(GLuint _obj, const std::string& _txt)
+auto dev::GLUtils::GLCheckError(GLuint1 _obj, const std::string& _txt)
+-> Result<GLuint>
 {
-    // Check for compilation errors
-    GLint success;
-    glGetShaderiv(_obj, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        GLchar infoLog[512];
-        glGetShaderInfoLog(_obj, 512, NULL, infoLog);
-        dev::Log("{}:\n {}", _txt, std::string(infoLog));
-        return 0;
-    }
-    return _obj;
+	// Check for compilation errors
+	GLint success;
+	glGetShaderiv(_obj, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		GLchar infoLog[512];
+		glGetShaderInfoLog(_obj, 512, NULL, infoLog);
+		dev::Log("{}:\n {}", _txt, std::string(infoLog));
+		return {};
+	}
+	return _obj;
 }
 
-GLuint dev::GLUtils::CompileShader(GLenum _shaderType, const char* _source) 
+auto dev::GLUtils::CompileShader(GLenum _shaderType, const char* _source)
+-> Result<GLuint>
 {
-    GLuint shader = glCreateShader(_shaderType);
-    glShaderSource(shader, 1, &_source, NULL);
-    glCompileShader(shader);
+	GLuint shader = glCreateShader(_shaderType);
+	glShaderSource(shader, 1, &_source, NULL);
+	glCompileShader(shader);
 
-    return GLCheckError(shader, std::format("Shader compilation failed:\n {}", _source));
+	return GLCheckError(shader, std::format("Shader compilation failed:\n {}", _source));
 }
 
-GLuint dev::GLUtils::CreateShaderProgram(const char* _vertexShaderSource, const char* _fragmentShaderSource)
+auto dev::GLUtils::InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource)
+-> Result<GLuint>
 {
-    // Compile vertex and fragment shaders
-    GLuint vertexShader = CompileShader(GL_VERTEX_SHADER, _vertexShaderSource);
-    GLuint fragmentShader = CompileShader(GL_FRAGMENT_SHADER, _fragmentShaderSource);
+	// Compile vertex and fragment shaders
+	auto vertexShaderRes = CompileShader(GL_VERTEX_SHADER, _vertexShaderSource);
+	if (!vertexShaderRes) return {};
+	GLuint vertexShader = *vertexShaderRes;
 
-    // Create shader program
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+	auto fragmentShaderRes = CompileShader(GL_FRAGMENT_SHADER, _fragmentShaderSource);
+	if (!fragmentShaderRes) return {};
+	GLuint fragmentShader = *fragmentShaderRes;
 
-    shaderProgram = GLCheckError(shaderProgram, "Shader program linking failed:\n");
+	// Create shader program
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
 
-    // Delete shaders
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+	auto shaderProgramRes = GLCheckError(shaderProgram, "Shader program linking failed:\n");
+	if (!shaderProgramRes) return {};
 
-    return shaderProgram;
+	// Delete shaders
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	m_shaders.push_back(*shaderProgramRes);
+
+	return shaderProgram;
 }
 
-bool dev::GLUtils::IsShaderDataReady(const int _renderDataIdx) const
+bool dev::GLUtils::IsMaterialReady(const int _materialId) const
 {
-    auto& renderData = m_renderDatas.at(_renderDataIdx);
+	auto& material = m_materials.at(_materialId);
 
-    bool ready = vtxArrayObj && vtxBufferObj && (renderData.shaderProgram >= 0);
-    auto textureCount = renderData.framebuffers.size();
+	bool ready = vtxArrayObj && vtxBufferObj && material.shaderId >= 0 &&
+				material.framebuffer >= 0 && material.framebufferTexture >= 0;
 
-    for (int i = 0; i < textureCount; i++)
-    {
-        ready = ready && renderData.framebuffers[i] >= 0 &&
-            renderData.framebufferTextures[i] >= 0 &&
-            renderData.textures[i] >= 0;
-    }
-    return ready;
+	return ready;
 }
+
+dev::GLUtils::Texture::Texture(GLsizei _w, GLsizei _h, Format _format, GLint _filter) 
+	: format(_format), w(_w), h(_h), filter(_filter), internalFormat(GL_RGB), type(GL_UNSIGNED_BYTE)
+{
+	switch (_format)
+	{
+	case Format::RGB:
+		internalFormat = GL_RGB;
+		type = GL_UNSIGNED_BYTE;
+		break;
+	case Format::RGBA:
+		internalFormat = GL_RGBA;
+		type = GL_UNSIGNED_BYTE;
+		break;
+	case Format::R8:
+		internalFormat = GL_RED;
+		type = GL_UNSIGNED_BYTE;
+		break;
+	case Format::R32:
+		internalFormat = GL_R32UI;
+		type = GL_UNSIGNED_INT;
+		break;
+	}
+
+	glGenTextures(1, &id);
+}
+
+auto dev::GLUtils::InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, 
+		const GLint _filter) -> Result<GLuint>
+{
+	if (_w <= 0 || _h <= 0) 
+	{
+		return {};
+	}
+
+	Texture texture{_w, _h, _format, _filter};
+	auto id = texture.id;
+	auto p = std::pair{ id , std::move(texture) };
+
+	m_textures.emplace(std::move(p));
+
+	return id;
+}
+
+dev::GLUtils::Material::Material(GLuint1 _shaderId, 
+		const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams,
+		const Vec4& _backColor) 
+	:
+	shaderId(_shaderId), textureParams(), framebufferTexture(0), framebuffer(0),
+	framebufferW(_framebufferW), framebufferH(_framebufferH), backColor(_backColor)
+{
+	// get uniform vars ids
+	for (const auto& [name, val] : _paramParams)
+	{
+		auto paramId = glGetUniformLocation(_shaderId, name.c_str());
+		if (paramId < 0) continue;
+
+		params[paramId] = val;
+	}
+};

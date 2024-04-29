@@ -57,7 +57,7 @@ void dev::Keyboard::KeyHandling(int _key, int _action)
 			}
 		}
 		else {
-			dev::Log("unknown keycode: {}\n", _key);
+			//dev::Log("unknown keycode: {}\n", _key);
 		}
 		break;
 	}

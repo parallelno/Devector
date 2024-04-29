@@ -97,3 +97,16 @@ auto dev::StrHexToInt(const char* _str)
 	return strtol(_str, &end, 16);
 }
 
+auto dev::GetSubstringCount(const std::string& _str, const std::string& _substr) 
+-> int
+{
+    int count = 0;
+    size_t pos = 0;
+
+    while ((pos = _str.find(_substr, pos)) != std::string::npos) {
+        ++count;
+        pos += _str.length();
+    }
+
+    return count;
+}

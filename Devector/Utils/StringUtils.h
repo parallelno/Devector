@@ -20,5 +20,6 @@ namespace dev
 	auto BoolToStrC(const bool _val, bool _text = false) -> const char*;
 	auto BoolToStr(const bool _val, bool _text = false) -> const std::string;
 	auto StrHexToInt(const char* _str) -> int;
+	auto GetSubstringCount(const std::string& _str, const std::string& _substr) -> int;
 }
 #endif // !DEV_STRING_UTILS_H

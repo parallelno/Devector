@@ -21,8 +21,12 @@ namespace dev
 	{
 	public:
 		static const constexpr size_t TRACE_LOG_SIZE = 100000;
-		static constexpr int LAST_RW_MAX = 256;
+		static constexpr int LAST_RW_W = 16;
+		static constexpr int LAST_RW_H = 16;
+		static constexpr int LAST_RW_MAX = LAST_RW_W * LAST_RW_H; // should be squared because it is sent to GPU
+		static constexpr uint32_t LAST_RW_NO_DATA = uint32_t(-1);
 		using MemLastRW = std::array<uint16_t, Memory::GLOBAL_MEMORY_LEN>;
+		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
 		struct DisasmLine 
 		{
@@ -115,10 +119,12 @@ namespace dev
 		void ReqLoadRom(const std::wstring& _path);
 		void ReqLoadRomLast();
 
-		auto GetLastWrites() -> MemLastRW*;
-		auto GetLastReads() -> MemLastRW*;
+		auto GetLastWrites() -> const MemLastRW*;
+		auto GetLastReads() -> const MemLastRW*;
 		void UpdateLastReads();
 		void UpdateLastWrites();
+		auto GetLastReadsAddrs() -> const LastRWAddrs*;
+		auto GetLastWritesAddrs() -> const LastRWAddrs*;
 
 	private:
 		auto GetDisasmLine(const uint8_t _opcode, 
@@ -182,14 +188,13 @@ namespace dev
 
 		std::mutex m_lastReadsMutex;
 		std::mutex m_lastWritesMutex;
-		using LastReadAddrs = std::array<int, LAST_RW_MAX>;
-		LastReadAddrs m_lastReadsAddrs; // a circular buffer that contains addresses
-		LastReadAddrs m_lastWritesAddrs; // ...
-		LastReadAddrs m_lastReadsAddrsOld; // ... used to clean up m_memLastReads
-		LastReadAddrs m_lastWritesAddrsOld; // ... ...
+		LastRWAddrs m_lastReadsAddrs; // a circular buffer that contains addresses
+		LastRWAddrs m_lastWritesAddrs; // ...
+		LastRWAddrs m_lastReadsAddrsOld; // ... used to clean up m_memLastReads
+		LastRWAddrs m_lastWritesAddrsOld; // ... ...
+		LastRWAddrs m_lastRWAddrsOut; // used to sent the data out of this thread
 		int m_lastReadsIdx = 0; // index to m_memLastReads, points to the least recently read. because it's a circular buffer, that element before it is the most recently read
 		int m_lastWritesIdx = 0; // ...
-		using MemLastRW = std::array<uint16_t, Memory::GLOBAL_MEMORY_LEN>;
 		MemLastRW m_memLastReads; // each element contains the order of reading. 255 is the most recently read, 0 - the least recently read
 		MemLastRW m_memLastWrites; // ...
 	};

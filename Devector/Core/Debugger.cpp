@@ -13,7 +13,10 @@ dev::Debugger::Debugger(Hardware& _hardware)
 	m_wpBreak(false),
 	m_traceLog(),
 	m_pathLast(),
-	m_lastWritesAddrs(), m_lastReadsAddrs(), m_memLastReads(), m_memLastWrites(), m_lastReadsAddrsOld(), m_lastWritesAddrsOld()
+	m_lastReadsAddrs(), m_lastWritesAddrs(),
+	m_memLastReads(), m_memLastWrites(), 
+	m_lastReadsAddrsOld(), m_lastWritesAddrsOld(), 
+	m_lastRWAddrsOut()
 {
     Init();
 }
@@ -52,8 +55,8 @@ void dev::Debugger::Reset()
 	m_memReads.fill(0);
 	m_memWrites.fill(0);
 
-	m_lastWritesAddrs.fill(-1);
-	m_lastReadsAddrs.fill(-1);
+	m_lastWritesAddrs.fill(uint32_t(LAST_RW_NO_DATA));
+	m_lastReadsAddrs.fill(uint32_t(LAST_RW_NO_DATA));
 	m_lastWritesIdx = 0;
 	m_lastReadsIdx = 0;
 	m_memLastReads.fill(0);
@@ -904,7 +907,7 @@ void dev::Debugger::UpdateLastReads()
 {
 	// remove old stats
 	for (auto globalAddr : m_lastReadsAddrsOld){
-		if (globalAddr >= 0) {
+		if (globalAddr != LAST_RW_NO_DATA) {
 			m_memLastReads[globalAddr] = 0;
 		}
 	}
@@ -912,7 +915,7 @@ void dev::Debugger::UpdateLastReads()
 	std::lock_guard<std::mutex> mlock(m_lastReadsMutex);
 	uint16_t readsIdx = m_lastReadsIdx;
 	for (auto globalAddr : m_lastReadsAddrs){
-		if (globalAddr >= 0) {
+		if (globalAddr != LAST_RW_NO_DATA) {
 			m_memLastReads[globalAddr] = static_cast<uint16_t>(LAST_RW_MAX - readsIdx) % LAST_RW_MAX;
 		}
 		readsIdx--;
@@ -924,7 +927,7 @@ void dev::Debugger::UpdateLastWrites()
 {
 	// remove old stats
 	for (auto globalAddr : m_lastWritesAddrsOld){
-		if (globalAddr >= 0) {
+		if (globalAddr != LAST_RW_NO_DATA) {
 			m_memLastWrites[globalAddr] = 0;
 		}
 	}
@@ -932,19 +935,29 @@ void dev::Debugger::UpdateLastWrites()
 	std::lock_guard<std::mutex> mlock(m_lastWritesMutex);
 	uint16_t writesIdx = m_lastWritesIdx;
 	for (auto globalAddr : m_lastWritesAddrs){
-		if (globalAddr >= 0) {
+		if (globalAddr != LAST_RW_NO_DATA) {
 			m_memLastWrites[globalAddr] = static_cast<uint16_t>(LAST_RW_MAX - writesIdx) % LAST_RW_MAX;
 		}
 		writesIdx--;
-
-		auto aa = static_cast<uint16_t>(LAST_RW_MAX - writesIdx) % LAST_RW_MAX;
-		if (aa < 0 || aa >= LAST_RW_MAX)
-		{
-			int t = 1;
-		}
 	}
 	m_lastWritesAddrsOld = m_lastWritesAddrs;
 }
 
-auto dev::Debugger::GetLastReads() -> MemLastRW* { return &m_memLastReads; }
-auto dev::Debugger::GetLastWrites() -> MemLastRW* {	return &m_memLastWrites; }
+auto dev::Debugger::GetLastReads() -> const MemLastRW* { return &m_memLastReads; }
+auto dev::Debugger::GetLastWrites() -> const MemLastRW* { return &m_memLastWrites; }
+
+auto dev::Debugger::GetLastReadsAddrs() 
+-> const LastRWAddrs*
+{
+	std::lock_guard<std::mutex> mlock(m_lastReadsMutex);
+	m_lastRWAddrsOut = m_lastReadsAddrs;
+	return &m_lastRWAddrsOut;
+}
+
+auto dev::Debugger::GetLastWritesAddrs()
+-> const LastRWAddrs*
+{
+	std::lock_guard<std::mutex> mlock(m_lastReadsMutex);
+	m_lastRWAddrsOut = m_lastWritesAddrs;
+	return &m_lastRWAddrsOut;
+}

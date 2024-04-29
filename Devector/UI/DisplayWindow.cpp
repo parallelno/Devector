@@ -81,12 +81,28 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware), m_isHovered(false), m_glUtils(_glUtils)
 {
+	m_isGLInited = Init();
+}
+
+bool dev::DisplayWindow::Init()
+{
+	auto vramShaderRes = m_glUtils.InitShader(vtxShaderS, fragShaderS);
+	if (!vramShaderRes) return false;
+	m_vramShaderId = *vramShaderRes;
+
+	auto m_vramTexRes = m_glUtils.InitTexture(Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
+	if (!m_vramTexRes) return false;
+	m_vramTexId = *m_vramTexRes;
+
 	GLUtils::ShaderParams shaderParams = {
 		{ "m_shaderData_scrollVert", &m_shaderData_scrollVert },
-		{ "m_shaderData_bordL_bordB_visBord", &m_shaderData_bordL_bordB_visBord },
-		};
+		{ "m_shaderData_bordL_bordB_visBord", &m_shaderData_bordL_bordB_visBord }};
+	auto vramMatRes = m_glUtils.InitMaterial(m_vramShaderId, FRAME_W, FRAME_H,
+			{m_vramTexRes}, shaderParams);
+	if (!vramMatRes) return false;
+	m_vramMatId = *vramMatRes;
 
-	m_renderDataIdx = m_glUtils.InitRenderData(vtxShaderS, fragShaderS, FRAME_W, FRAME_H, shaderParams, 1, GL_NEAREST1);
+	return true;
 }
 
 void dev::DisplayWindow::Update()
@@ -122,16 +138,10 @@ bool dev::DisplayWindow::IsHovered() const
 
 void dev::DisplayWindow::DrawDisplay()
 {
-	if (m_renderDataIdx >= 0 && m_glUtils.IsShaderDataReady(m_renderDataIdx))
+	if (m_isGLInited)
 	{
-		m_shaderData_bordL_bordB_visBord.x = (float)Display::BORDER_LEFT;
-
-		float scrollVert = m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert");
-		m_shaderData_scrollVert.x = scrollVert;
-
-		auto& framebufferTextures = m_glUtils.GetFramebufferTextures(m_renderDataIdx);
-
-		ImGui::Image((void*)(intptr_t)framebufferTextures[0], ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
+		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
+		ImGui::Image((void*)(intptr_t)framebufferTex, ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
 	}
 }
 
@@ -147,11 +157,13 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 	if (ccDiff == 0) return;
 
 	// update
-	if (m_renderDataIdx >= 0)
+	if (m_isGLInited)
 	{
-		auto frameP = m_hardware.GetFrame(_isRunning);
+		m_shaderData_bordL_bordB_visBord.x = (float)Display::BORDER_LEFT;
+		m_shaderData_scrollVert.x = static_cast<uint8_t>(m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert") + 1); // adding +1 offset because the default is 255
 
-		m_glUtils.UpdateTextures(m_renderDataIdx, (uint8_t*)frameP->data(), Display::FRAME_W, Display::FRAME_H, sizeof(ColorI), GL_NEAREST1);
-		m_glUtils.Draw(m_renderDataIdx);
+		auto frameP = m_hardware.GetFrame(_isRunning);
+		m_glUtils.UpdateTexture(m_vramTexId, (uint8_t*)frameP->data());
+		m_glUtils.Draw(m_vramMatId);
 	}
 }

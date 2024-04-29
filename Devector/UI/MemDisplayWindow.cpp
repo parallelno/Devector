@@ -4,8 +4,7 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_opengl3_loader.h"
 
-// Vertex shader source code
-const char* rvShaderVtx = R"(
+const char* highlightShaderVtx = R"(
 	#version 330 core
 	precision highp float;
 	
@@ -21,8 +20,66 @@ const char* rvShaderVtx = R"(
 	}
 )";
 
-// Fragment shader source code
-const char* rvShaderFrag = R"(
+const char* highlightShaderFrag = R"(
+	#version 330 core
+	precision highp float;
+	precision highp int;
+
+	in vec2 uv0;
+
+	uniform sampler2D texture0;
+	//uniform ivec2 iresolution;
+	uniform vec4 globalColorBg;
+	uniform vec4 globalColorFg;
+
+	layout (location = 0) out vec4 out0;
+
+	#define BYTE_COLOR_MULL 0.6
+	#define BACK_COLOR_MULL 0.7
+
+	int GetBit(float _color, int _bitIdx) {
+		return (int(_color * 255.0) >> _bitIdx) & 1;
+	}
+
+	void main()
+	{
+		float isAddrBelow32K = 1.0 - step(0.5, uv0.y);
+		vec2 uv = vec2( uv0.y * 2.0, uv0.x / 2.0 + isAddrBelow32K * 0.5);
+		float byte = texture(texture0, uv).r;
+
+		float isOdd8K = step(0.5, fract(uv0.x / 0.5));
+		isOdd8K = mix(isOdd8K, 1.0 - isOdd8K, isAddrBelow32K);
+		vec3 bgColor = mix(globalColorBg.xyz, globalColorBg.xyz * BACK_COLOR_MULL, isOdd8K);
+
+		int bitIdx = 7 - int(uv0.x * 1024.0) & 7;
+		int isBitOn = GetBit(byte, bitIdx);
+
+		int isByteOdd = (int(uv0.x * 512.0)>>2) & 1;
+		vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
+		vec3 color = mix(bgColor, byteColor, float(isBitOn));
+
+		out0 = vec4(color, globalColorBg.a);
+		//out0 = vec4(byte,byte,byte, globalColorBg.a);
+	}
+)";
+
+const char* memViewShaderVtx = R"(
+	#version 330 core
+	precision highp float;
+	
+	layout (location = 0) in vec3 vtxPos;
+	layout (location = 1) in vec2 vtxUV;
+	
+	out vec2 uv0;
+
+	void main()
+	{
+		uv0 = vtxUV;
+		gl_Position = vec4(vtxPos.xyz, 1.0f);
+	}
+)";
+
+const char* memViewShaderFrag = R"(
 	#version 330 core
 	precision highp float;
 	precision highp int;
@@ -71,10 +128,54 @@ dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils)
 {
-	GLUtils::ShaderParams shaderParams = {
+	m_isGLInited = Init();
+}
+
+bool dev::MemDisplayWindow::Init()
+{
+	auto memViewShaderRes = m_glUtils.InitShader(memViewShaderVtx, memViewShaderFrag);
+	if (!memViewShaderRes) return false;
+	m_memViewShaderId = *memViewShaderRes;
+
+	auto highlightShaderRes = m_glUtils.InitShader(highlightShaderVtx, highlightShaderFrag);
+	if (!highlightShaderRes) return false;
+	m_highlightShaderId = *highlightShaderRes;
+
+	for (int i = 0; i < RAM_TEXTURES; i++){
+		auto res = m_glUtils.InitTexture(RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::R8);
+		if (!res) return false;
+		m_memViewTexIds[i] = *res;
+	}
+
+	auto lastReadsRes = m_glUtils.InitTexture(Debugger::LAST_RW_W, Debugger::LAST_RW_H, GLUtils::Texture::Format::R32);
+	if (!lastReadsRes) return false;
+	m_lastReadsTexId = *lastReadsRes;
+
+	auto lastWritesRes = m_glUtils.InitTexture(Debugger::LAST_RW_W, Debugger::LAST_RW_H, GLUtils::Texture::Format::R32);
+	if (!lastWritesRes) return false;
+	m_lastWritesTexId = *lastWritesRes;
+
+	// setting up the mem highlight rendering. the resulted testure will be used in the mem view rendering below
+	GLUtils::ShaderParams hightlightShaderParams = {
+		{ "highlightRead", &m_highlightRead },
+		{ "highlightWrite", &m_highlightWrite } };
+	for (int i = 0; i < RAM_TEXTURES; i++){
+		auto res = m_glUtils.InitMaterial(m_highlightShaderId, FRAME_BUFFER_W, FRAME_BUFFER_H, 
+			{m_lastReadsTexId, m_lastWritesTexId}, hightlightShaderParams);
+		if (!res) return false;
+		m_highlightMatIds[i] = *res;
+	}
+
+	// setting up the mem view rendering
+	GLUtils::ShaderParams memViewShaderParams = {
 		{ "globalColorBg", &m_globalColorBg },
 		{ "globalColorFg", &m_globalColorFg } };
-	m_renderDataIdx = m_glUtils.InitRenderData(rvShaderVtx, rvShaderFrag, FRAME_BUFFER_W, FRAME_BUFFER_H, shaderParams, RAM_TEXTURES);
+	for (int i = 0; i < RAM_TEXTURES; i++){
+		auto res = m_glUtils.InitMaterial(m_memViewShaderId, FRAME_BUFFER_W, FRAME_BUFFER_H, 
+			{m_memViewTexIds[i]}, memViewShaderParams);		
+		if (!res) return false;
+		m_memViewMatIds[i] = *res;
+	}
 }
 
 void dev::MemDisplayWindow::Update()
@@ -86,7 +187,6 @@ void dev::MemDisplayWindow::Update()
 
 	bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 	UpdateData(isRunning);
-
 	DrawDisplay();
 
 	ImGui::End();
@@ -138,13 +238,12 @@ void dev::MemDisplayWindow::DrawDisplay()
 
 	ImGui::BeginChild("ScrollingFrame", ImVec2(remainingSize.x, remainingSize.y), true, ImGuiWindowFlags_HorizontalScrollbar);
 
-	if (m_renderDataIdx >= 0 && m_glUtils.IsShaderDataReady(m_renderDataIdx))
+	if (m_isGLInited)
 	{
-		auto& framebufferTextures = m_glUtils.GetFramebufferTextures(m_renderDataIdx);
 		ImVec2 imageSize(FRAME_BUFFER_W * m_scale, FRAME_BUFFER_H * m_scale);
 		imageHoveredId = -1;
 
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < RAM_TEXTURES; i++)
 		{
 			ImGui::SeparatorText(separatorsS[i]);
 			ImVec2 imagePos = ImGui::GetCursorScreenPos();
@@ -162,7 +261,8 @@ void dev::MemDisplayWindow::DrawDisplay()
 				imageHoveredId = i;
 			}
 
-			ImGui::Image((void*)(intptr_t)framebufferTextures[i], imageSize);
+			auto framebufferTex = m_glUtils.GetFramebufferTexture(m_memViewMatIds[i]);
+			ImGui::Image((void*)(intptr_t)framebufferTex, imageSize);
 		}
 	}
 	ScaleView();
@@ -181,15 +281,25 @@ void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
 	m_ccLast = cc;
 
 	// update
-	if (m_renderDataIdx >= 0)
+	if (m_isGLInited)
 	{
+		/*
+		// update reads & writes textures
+		auto lastReadsAddrsP = m_debugger.GetLastReadsAddrs()->data();
+		auto lastWritesAddrsP = m_debugger.GetLastWritesAddrs()->data();
+		m_glUtils.UpdateTextures(m_memViewHighlightRenderDataId, (const uint8_t*)(lastReadsAddrsP), GL_UNSIGNED_INT, Debugger::LAST_RW_W, Debugger::LAST_RW_H, 1);
+		m_glUtils.Draw(m_memViewHighlightRenderDataId);
+		*/
+		
+		// update vram texture
 		auto memP = m_hardware.GetRam()->data();
-		m_glUtils.UpdateTextures(m_renderDataIdx, memP, RAM_TEXTURE_W, RAM_TEXTURE_H, 1);
-		m_glUtils.Draw(m_renderDataIdx);
-	}
+		for (int i = 0; i < RAM_TEXTURES; i++){
+			m_glUtils.UpdateTexture(m_memViewTexIds[i], memP + i * Memory::MEM_64K);
+			m_glUtils.Draw(m_memViewMatIds[i]);
+		}
+		
 
-	m_debugger.UpdateLastReads();
-	m_debugger.UpdateLastWrites();
+	}
 }
 
 // check the keys, scale the view

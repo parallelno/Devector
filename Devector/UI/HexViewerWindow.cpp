@@ -41,8 +41,8 @@ void dev::HexViewerWindow::UpdateData(const bool _isRunning)
 	// update
 	auto memP = m_hardware.GetRam()->data();
 	std::copy(memP, memP + Memory::MEMORY_MAIN_LEN, m_ram.begin());
-	//m_debugger.UpdateLastReads();
-	//m_debugger.UpdateLastWrites();
+	m_debugger.UpdateLastReads();
+	m_debugger.UpdateLastWrites();
 }
 
 void dev::HexViewerWindow::DrawHex(const bool _isRunning)
@@ -141,25 +141,28 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 100, 100, 255));
 					}
 
-					// highlight the last reads
-					int lastReadsIdx = m_debugger.GetLastReads()->at(addr);
-					if (lastReadsIdx > 0)
-					{
-						ImU32 color = IM_COL32(
-							20 * lastReadsIdx / Debugger::LAST_RW_MAX,
-							20 * lastReadsIdx / Debugger::LAST_RW_MAX,
-							255 * lastReadsIdx / Debugger::LAST_RW_MAX, 150);
+					if (!_isRunning) {
+						// highlight the last reads
+						int lastReadsIdx = m_debugger.GetLastReads()->at(addr);
+						if (lastReadsIdx > 0)
+						{
+							ImU32 color = IM_COL32(
+								20 * lastReadsIdx / Debugger::LAST_RW_MAX,
+								20 * lastReadsIdx / Debugger::LAST_RW_MAX,
+								255 * lastReadsIdx / Debugger::LAST_RW_MAX, 150);
 
-						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, color);
-					}
-					int lastWritesIdx = m_debugger.GetLastWrites()->at(addr);
-					if (lastWritesIdx > 0)
-					{
-						ImU32 color = IM_COL32(
-							255 * lastWritesIdx / Debugger::LAST_RW_MAX,
-							20 * lastWritesIdx / Debugger::LAST_RW_MAX,
-							20 * lastWritesIdx / Debugger::LAST_RW_MAX, 150);
-						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, color);
+							ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, color);
+						}
+						// highlight the last writes
+						int lastWritesIdx = m_debugger.GetLastWrites()->at(addr);
+						if (lastWritesIdx > 0)
+						{
+							ImU32 color = IM_COL32(
+								255 * lastWritesIdx / Debugger::LAST_RW_MAX,
+								20 * lastWritesIdx / Debugger::LAST_RW_MAX,
+								20 * lastWritesIdx / Debugger::LAST_RW_MAX, 150);
+							ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, color);
+						}
 					}
 
 					// highlight the hovered byte

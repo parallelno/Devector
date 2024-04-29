@@ -29,12 +29,19 @@ namespace dev
 			m_result(std::move(_res)),
 			m_error(_error)
 		{}
-		Result(Result<T>&& _other) 
+		Result(Result<T>&& _other)
 			: 
 			m_error(std::move(_other.m_error)),
 			m_result(std::move(_other.m_result))
 		{}
-
+		/*
+		template<typename U, typename = std::enable_if_t<std::is_integral_v<T>>>
+		Result(U&& _res, const dev::ErrCode _error = dev::NO_ERRORS)
+			:
+			m_result(_res),
+			m_error(_error)
+		{}
+		*/
 		inline auto HasValue() const
 			->const bool
 		{
@@ -63,7 +70,13 @@ namespace dev
 		{
 			return std::move(m_result.value());
 		}
-		
+		/*
+		template<typename U, typename = std::enable_if_t<std::is_integral_v<T>>>
+		inline U&& operator*()
+		{
+			return m_result.value();
+		}
+		*/
 		inline T* operator->()
 		{
 			return &m_result.value();
