@@ -163,9 +163,9 @@ void dev::MemDisplayWindow::DrawDisplay()
 {
 	static int highlightMode = 0; // 0 - RW, 1 - R, 2 - W
 	ImGui::Text("Highlight: "); ImGui::SameLine();
-	if (ImGui::RadioButton("RW", &highlightMode, 0)); ImGui::SameLine();
-	if (ImGui::RadioButton("R", &highlightMode, 1)); ImGui::SameLine();
-	if (ImGui::RadioButton("W", &highlightMode, 2)); ImGui::SameLine();
+	ImGui::RadioButton("RW", &highlightMode, 0); ImGui::SameLine();
+	ImGui::RadioButton("R", &highlightMode, 1); ImGui::SameLine();
+	ImGui::RadioButton("W", &highlightMode, 2); ImGui::SameLine();
 	dev::DrawHelpMarker(
 		"Blue highlights represent reads.\n"
 		"Red highlights represent writes.\n"
@@ -184,6 +184,7 @@ void dev::MemDisplayWindow::DrawDisplay()
 	case 2:
 		m_highlightRead.w = 0.0f;
 		m_highlightWrite.w = 1.0f;
+		break;
 	default:
 		break;
 	}

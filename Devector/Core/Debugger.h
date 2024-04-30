@@ -112,10 +112,10 @@ namespace dev
 
 		bool CheckBreak(const Addr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam);
 
-		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> std::string;
+		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> Disasm;
+
 		void LoadDebugData(const std::wstring& _path);
 		void ResetLabels();
-
 		void ReqLoadRom(const std::wstring& _path);
 		void ReqLoadRomLast();
 

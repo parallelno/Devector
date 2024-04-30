@@ -32,6 +32,7 @@ void dev::DevectorApp::WindowsInit()
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqHexViewer);
 	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_glUtils, m_reqHexViewer);
 	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqHexViewer);
+	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqHexViewer);
 
 	// Set the key callback function
 	glfwSetWindowUserPointer(m_window, this);
@@ -76,6 +77,7 @@ void dev::DevectorApp::Update()
 	m_watchpointsWindowP->Update();
 	m_memDisplayWindowP->Update();
 	m_hexViewerWindowP->Update();
+	m_traceLogWindowP->Update();
 }
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)

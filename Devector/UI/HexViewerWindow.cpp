@@ -19,7 +19,6 @@ void dev::HexViewerWindow::Update()
 
 	bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 	UpdateData(isRunning);
-
 	DrawHex(isRunning);
 
 	ImGui::End();
@@ -64,9 +63,9 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 	// select the highlight mode (RW/R/W)
 	static int highlightMode = 0; // 0 - RW, 1 - R, 2 - W
 	ImGui::Text("Highlight: "); ImGui::SameLine();
-	if (ImGui::RadioButton("RW", &highlightMode, 0)); ImGui::SameLine();
-	if (ImGui::RadioButton("R", &highlightMode, 1)); ImGui::SameLine();
-	if (ImGui::RadioButton("W", &highlightMode, 2)); ImGui::SameLine();
+	ImGui::RadioButton("RW", &highlightMode, 0); ImGui::SameLine();
+	ImGui::RadioButton("R", &highlightMode, 1); ImGui::SameLine();
+	ImGui::RadioButton("W", &highlightMode, 2); ImGui::SameLine();
 	dev::DrawHelpMarker(
 		"Blue highlights represent reads.\n"
 		"Red highlights represent writes.\n"

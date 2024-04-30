@@ -17,6 +17,7 @@
 #include "UI/DisplayWindow.h"
 #include "UI/MemDisplayWindow.h"
 #include "UI/HexViewerWindow.h"
+#include "UI/TraceLogWindow.h"
 
 #include "Core/Hardware.h"
 #include "Core/Debugger.h"
@@ -39,6 +40,7 @@ namespace dev
 		std::unique_ptr <dev::DisplayWindow>m_displayWindowP;
 		std::unique_ptr <dev::MemDisplayWindow>m_memDisplayWindowP;
 		std::unique_ptr <dev::HexViewerWindow>m_hexViewerWindowP;
+		std::unique_ptr <dev::TraceLogWindow>m_traceLogWindowP;
 
 		bool m_hardwareStatsWindowShow = true;
 		bool m_disasmWindowShow = true;

@@ -75,12 +75,6 @@ void dev::Debugger::ReadInstr(
 {
 	m_memRuns[_globalAddr]++;
 	TraceLogUpdate(_globalAddr, _val, _dataH, _dataL, _hl);
-	
-	/*
-	std::lock_guard<std::mutex> mlock(m_lastReadsInstrMutex);
-	m_lastReadsInstr[m_lastReadsInstrIdx++] = _globalAddr;
-	m_lastReadsIdx %= LAST_READS_MAX;
-	*/
 }
 
 // a hardware thread
@@ -281,6 +275,7 @@ inline uint8_t get_opcode_type(const uint8_t _opcode)
 }
 
 #define OPCODE_PCHL 0xE9
+#define OPCODE_HLT 0x76
 
 // disassembles a data byte
 auto dev::Debugger::GetDisasmLineDb(const uint8_t _data) const
@@ -356,7 +351,8 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 }
 
 // _instructionsOffset defines the start address of the disasm. 
-// -5 means the start address is 5 instructions prior the _addr, and vise versa.
+// 				_instructionsOffset = 0 means the start address is the _addr, 
+//				_instructionsOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
 auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset)
 ->Disasm
 {
@@ -491,6 +487,10 @@ void dev::Debugger::ResetLabels()
 // a hardware thread
 void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _opcode, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl)
 {
+	if (_opcode == OPCODE_HLT && m_traceLog[m_traceLogIdx].m_opcode == OPCODE_HLT) {
+		return;
+	}
+
 	m_traceLogIdx = (m_traceLogIdx - 1) % TRACE_LOG_SIZE;
 	m_traceLog[m_traceLogIdx].m_globalAddr = _globalAddr;
 	m_traceLog[m_traceLogIdx].m_opcode = _opcode;
@@ -507,12 +507,12 @@ void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _
 }
 
 auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const size_t _filter)
-->std::string
+->Disasm
 {
-	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
-	size_t offset = _offset < 0 ? -_offset : _offset;
+	size_t filter = dev::Min(_filter, OPCODE_TYPE_MAX);
+	size_t offset = dev::Max(_offset, 0);
 
-	std::string out;
+	Disasm out;
 
 	for (int i = 0; i < offset; i++)
 	{
@@ -527,31 +527,19 @@ auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const si
 
 	for (; idx <= idx_last && line < _lines; idx++)
 	{
-		if (m_traceLog[idx % TRACE_LOG_SIZE].m_globalAddr < 0) break;
+		auto globalAddr = m_traceLog[idx % TRACE_LOG_SIZE].m_globalAddr;
+
+		if (globalAddr < 0) break;
 
 		if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
 		{
-			std::string lineS;
-
-			if (idx == first_line_idx)
-			{
-				lineS += ">";
-			}
-			else
-			{
-				lineS += " ";
-			}
-			lineS += m_traceLog[idx % TRACE_LOG_SIZE].ToStr();
+			std::string lineS = m_traceLog[idx % TRACE_LOG_SIZE].ToStr();
 
 			const Addr operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
+			std::string constsS = LabelsToStr(operand_addr, LABEL_TYPE_ALL);
 
-			lineS += LabelsToStr(operand_addr, LABEL_TYPE_ALL);
-			if (line != 0)
-			{
-				lineS += "\n";
-			}
-
-			out = lineS + out;
+			DisasmLine lineDisasm(DisasmLine::Type::CODE, globalAddr, lineS, 0,0,0, constsS);
+			out.emplace_back(std::move(lineDisasm));
 
 			line++;
 		}
@@ -563,7 +551,7 @@ auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const si
 auto dev::Debugger::TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const
 ->int
 {
-	size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
+	size_t filter = dev::Min(_filter, OPCODE_TYPE_MAX);
 
 	size_t idx = m_traceLogIdx + _idxOffset;
 	size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
@@ -615,7 +603,7 @@ auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _
 auto dev::Debugger::TraceLog::ToStr() const
 ->std::string
 {
-	return std::format("0x{:05X}: {}", m_globalAddr, GetMnemonic(m_opcode, m_dataL, m_dataH));
+	return GetMnemonic(m_opcode, m_dataL, m_dataH);
 }
 
 void dev::Debugger::TraceLog::Clear()

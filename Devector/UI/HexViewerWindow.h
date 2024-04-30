@@ -16,7 +16,7 @@ namespace dev
 	class HexViewerWindow : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 512;
-		static constexpr int DEFAULT_WINDOW_H = 512;
+		static constexpr int DEFAULT_WINDOW_H = 300;
 
 		static constexpr ImU32 BG_COLOR_ADDR = dev::IM_U32(0x303030FF);
 		static constexpr ImU32 BG_COLOR_ADDR_HOVER = dev::IM_U32(0x1E4D8CFF);
@@ -37,10 +37,10 @@ namespace dev
 		void DrawHex(const bool _isRunning);
 
 	public:
-		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer);
+		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, 
+				const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer);
 		void Update();
 	};
-
 };
 
 #endif // !DEV_HEX_VIEWER_WINDOW_H
