@@ -21,11 +21,11 @@ namespace dev
 	{
 	public:
 		static const constexpr size_t TRACE_LOG_SIZE = 100000;
-		static constexpr int LAST_RW_W = 16;
-		static constexpr int LAST_RW_H = 16;
+		static constexpr int LAST_RW_W = 32;
+		static constexpr int LAST_RW_H = 32;
 		static constexpr int LAST_RW_MAX = LAST_RW_W * LAST_RW_H; // should be squared because it is sent to GPU
 		static constexpr uint32_t LAST_RW_NO_DATA = uint32_t(-1);
-		using MemLastRW = std::array<uint16_t, Memory::GLOBAL_MEMORY_LEN>;
+		using MemLastRW = std::array<uint32_t, Memory::GLOBAL_MEMORY_LEN>;
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
 		struct DisasmLine 
@@ -119,12 +119,8 @@ namespace dev
 		void ReqLoadRom(const std::wstring& _path);
 		void ReqLoadRomLast();
 
-		auto GetLastWrites() -> const MemLastRW*;
-		auto GetLastReads() -> const MemLastRW*;
-		void UpdateLastReads();
-		void UpdateLastWrites();
-		auto GetLastReadsAddrs() -> const LastRWAddrs*;
-		auto GetLastWritesAddrs() -> const LastRWAddrs*;
+		auto GetLastRW() -> const MemLastRW*;
+		void UpdateLastRW();
 
 	private:
 		auto GetDisasmLine(const uint8_t _opcode, 
@@ -186,8 +182,7 @@ namespace dev
 
 		std::wstring m_pathLast;
 
-		std::mutex m_lastReadsMutex;
-		std::mutex m_lastWritesMutex;
+		std::mutex m_lastRWMutex;
 		LastRWAddrs m_lastReadsAddrs; // a circular buffer that contains addresses
 		LastRWAddrs m_lastWritesAddrs; // ...
 		LastRWAddrs m_lastReadsAddrsOld; // ... used to clean up m_memLastReads
@@ -195,8 +190,8 @@ namespace dev
 		LastRWAddrs m_lastRWAddrsOut; // used to sent the data out of this thread
 		int m_lastReadsIdx = 0; // index to m_memLastReads, points to the least recently read. because it's a circular buffer, that element before it is the most recently read
 		int m_lastWritesIdx = 0; // ...
-		MemLastRW m_memLastReads; // each element contains the order of reading. 255 is the most recently read, 0 - the least recently read
-		MemLastRW m_memLastWrites; // ...
+		MemLastRW m_memLastRW; // low 2 bytes of each element contains the order of readings. 255 is the most recently read, 0 - the least recently read
+								// high 2 bytes contains the order of writings. 255 is the most recently written, 0 - the least recently written
 	};
 }
 #endif // !DEV_DEBUGGER_H

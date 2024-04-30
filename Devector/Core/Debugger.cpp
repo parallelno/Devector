@@ -14,7 +14,7 @@ dev::Debugger::Debugger(Hardware& _hardware)
 	m_traceLog(),
 	m_pathLast(),
 	m_lastReadsAddrs(), m_lastWritesAddrs(),
-	m_memLastReads(), m_memLastWrites(), 
+	m_memLastRW(),
 	m_lastReadsAddrsOld(), m_lastWritesAddrsOld(), 
 	m_lastRWAddrsOut()
 {
@@ -59,8 +59,7 @@ void dev::Debugger::Reset()
 	m_lastReadsAddrs.fill(uint32_t(LAST_RW_NO_DATA));
 	m_lastWritesIdx = 0;
 	m_lastReadsIdx = 0;
-	m_memLastReads.fill(0);
-	m_memLastWrites.fill(0);
+	m_memLastRW.fill(0);
 
 	for (size_t i = 0; i < TRACE_LOG_SIZE; i++)
 	{
@@ -91,7 +90,7 @@ void dev::Debugger::Read(
 	m_memReads[_globalAddr]++;
     m_wpBreak |= CheckWatchpoint(Watchpoint::Access::R, _globalAddr, _val);
 
-	std::lock_guard<std::mutex> mlock(m_lastReadsMutex);
+	std::lock_guard<std::mutex> mlock(m_lastRWMutex);
 	m_lastReadsAddrs[m_lastReadsIdx++] = _globalAddr;
 	m_lastReadsIdx %= LAST_RW_MAX;
 }
@@ -101,7 +100,7 @@ void dev::Debugger::Write(const GlobalAddr _globalAddr, const uint8_t _val)
     m_memWrites[_globalAddr]++;
     m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, _globalAddr, _val);
 	
-	std::lock_guard<std::mutex> mlock(m_lastWritesMutex);
+	std::lock_guard<std::mutex> mlock(m_lastRWMutex);
 	m_lastWritesAddrs[m_lastWritesIdx++] = _globalAddr;
 	m_lastWritesIdx %= LAST_RW_MAX;
 }
@@ -903,61 +902,46 @@ void dev::Debugger::ReqLoadRomLast()
 	ReqLoadRom(m_pathLast);
 }
 
-void dev::Debugger::UpdateLastReads()
+void dev::Debugger::UpdateLastRW()
 {
 	// remove old stats
-	for (auto globalAddr : m_lastReadsAddrsOld){
-		if (globalAddr != LAST_RW_NO_DATA) {
-			m_memLastReads[globalAddr] = 0;
+	for (int i = 0; i < m_lastReadsAddrsOld.size(); i++) 
+	{
+		auto globalAddrLastRead = m_lastReadsAddrsOld[i];
+		if (globalAddrLastRead != LAST_RW_NO_DATA) {
+			m_memLastRW[globalAddrLastRead] = 0;
+		}
+		auto globalAddrLastWrite = m_lastWritesAddrsOld[i];
+		if (globalAddrLastWrite != LAST_RW_NO_DATA) {
+			m_memLastRW[globalAddrLastWrite] = 0;
 		}
 	}
-	// copy new stats
-	std::lock_guard<std::mutex> mlock(m_lastReadsMutex);
+
+	// copy new reads stats
+	std::lock_guard<std::mutex> mlock(m_lastRWMutex);
 	uint16_t readsIdx = m_lastReadsIdx;
 	for (auto globalAddr : m_lastReadsAddrs){
-		if (globalAddr != LAST_RW_NO_DATA) {
-			m_memLastReads[globalAddr] = static_cast<uint16_t>(LAST_RW_MAX - readsIdx) % LAST_RW_MAX;
+		if (globalAddr != LAST_RW_NO_DATA) 
+		{
+			auto val = m_memLastRW[globalAddr] & 0xFFFF0000; // remove reads, keep writes
+			m_memLastRW[globalAddr] = val | static_cast<uint16_t>(LAST_RW_MAX - readsIdx) % LAST_RW_MAX;
 		}
 		readsIdx--;
 	}
-	m_lastReadsAddrsOld = m_lastReadsAddrs;
-}
 
-void dev::Debugger::UpdateLastWrites()
-{
-	// remove old stats
-	for (auto globalAddr : m_lastWritesAddrsOld){
-		if (globalAddr != LAST_RW_NO_DATA) {
-			m_memLastWrites[globalAddr] = 0;
-		}
-	}
-	// copy new stats
-	std::lock_guard<std::mutex> mlock(m_lastWritesMutex);
+	// copy new writes stats
 	uint16_t writesIdx = m_lastWritesIdx;
 	for (auto globalAddr : m_lastWritesAddrs){
-		if (globalAddr != LAST_RW_NO_DATA) {
-			m_memLastWrites[globalAddr] = static_cast<uint16_t>(LAST_RW_MAX - writesIdx) % LAST_RW_MAX;
+		if (globalAddr != LAST_RW_NO_DATA) 
+		{
+			auto val = m_memLastRW[globalAddr] & 0x0000FFFF; // remove writes, keep reads
+			m_memLastRW[globalAddr] = val | (static_cast<uint16_t>(LAST_RW_MAX - writesIdx) % LAST_RW_MAX)<<16;
 		}
 		writesIdx--;
 	}
+	
+	m_lastReadsAddrsOld = m_lastReadsAddrs;
 	m_lastWritesAddrsOld = m_lastWritesAddrs;
 }
 
-auto dev::Debugger::GetLastReads() -> const MemLastRW* { return &m_memLastReads; }
-auto dev::Debugger::GetLastWrites() -> const MemLastRW* { return &m_memLastWrites; }
-
-auto dev::Debugger::GetLastReadsAddrs() 
--> const LastRWAddrs*
-{
-	std::lock_guard<std::mutex> mlock(m_lastReadsMutex);
-	m_lastRWAddrsOut = m_lastReadsAddrs;
-	return &m_lastRWAddrsOut;
-}
-
-auto dev::Debugger::GetLastWritesAddrs()
--> const LastRWAddrs*
-{
-	std::lock_guard<std::mutex> mlock(m_lastReadsMutex);
-	m_lastRWAddrsOut = m_lastWritesAddrs;
-	return &m_lastRWAddrsOut;
-}
+auto dev::Debugger::GetLastRW() -> const MemLastRW* { return &m_memLastRW; }

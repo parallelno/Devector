@@ -42,6 +42,24 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 
 // enum to a const char* array
 #define ENUM_TO_CHAR_ARRAY(arrayName, ...) const char* arrayName[VA_COUNT(__VA_ARGS__)] = { __VA_ARGS__ }
+
+
+// PERFORMANCE
+#define PERT_TEST_START(_loops) \
+	{ \
+		volatile int __dummy = 0; \
+		auto __pert_test_start = std::chrono::high_resolution_clock::now(); \
+		for( int __perfIter = 0; __perfIter < _loops; __perfIter++ ) \
+		{ \
+			__dummy++; // prevent the compiler from optimizing out the loop
+
+#define PERT_TEST_END(_text) \
+		} \
+		auto __pert_test_end = std::chrono::high_resolution_clock::now(); \
+		auto __pert_test_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(__pert_test_end - __pert_test_start).count(); \
+		dev::Log("PERF TEST: {} takes sec: {}", _text, static_cast<double>( __pert_test_duration) / 1e9 ); \
+	}
+
 	//--------------------------------------------------------------
 	//
 	// UTILS

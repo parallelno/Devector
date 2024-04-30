@@ -4,72 +4,15 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_opengl3_loader.h"
 
-const char* highlightShaderVtx = R"(
-	#version 330 core
-	precision highp float;
-	
-	layout (location = 0) in vec3 vtxPos;
-	layout (location = 1) in vec2 vtxUV;
-	
-	out vec2 uv0;
-
-	void main()
-	{
-		uv0 = vtxUV;
-		gl_Position = vec4(vtxPos.xyz, 1.0f);
-	}
-)";
-
-const char* highlightShaderFrag = R"(
-	#version 330 core
-	precision highp float;
-	precision highp int;
-
-	in vec2 uv0;
-
-	uniform sampler2D texture0;
-	//uniform ivec2 iresolution;
-	uniform vec4 globalColorBg;
-	uniform vec4 globalColorFg;
-
-	layout (location = 0) out vec4 out0;
-
-	#define BYTE_COLOR_MULL 0.6
-	#define BACK_COLOR_MULL 0.7
-
-	int GetBit(float _color, int _bitIdx) {
-		return (int(_color * 255.0) >> _bitIdx) & 1;
-	}
-
-	void main()
-	{
-		float isAddrBelow32K = 1.0 - step(0.5, uv0.y);
-		vec2 uv = vec2( uv0.y * 2.0, uv0.x / 2.0 + isAddrBelow32K * 0.5);
-		float byte = texture(texture0, uv).r;
-
-		float isOdd8K = step(0.5, fract(uv0.x / 0.5));
-		isOdd8K = mix(isOdd8K, 1.0 - isOdd8K, isAddrBelow32K);
-		vec3 bgColor = mix(globalColorBg.xyz, globalColorBg.xyz * BACK_COLOR_MULL, isOdd8K);
-
-		int bitIdx = 7 - int(uv0.x * 1024.0) & 7;
-		int isBitOn = GetBit(byte, bitIdx);
-
-		int isByteOdd = (int(uv0.x * 512.0)>>2) & 1;
-		vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
-		vec3 color = mix(bgColor, byteColor, float(isBitOn));
-
-		out0 = vec4(color, globalColorBg.a);
-		//out0 = vec4(byte,byte,byte, globalColorBg.a);
-	}
-)";
+#include "Utils/ImGuiUtils.h"
 
 const char* memViewShaderVtx = R"(
 	#version 330 core
 	precision highp float;
-	
+
 	layout (location = 0) in vec3 vtxPos;
 	layout (location = 1) in vec2 vtxUV;
-	
+
 	out vec2 uv0;
 
 	void main()
@@ -86,18 +29,21 @@ const char* memViewShaderFrag = R"(
 
 	in vec2 uv0;
 
-	uniform sampler2D texture0;
-	//uniform ivec2 iresolution;
+	uniform sampler2D texture0; // global ram values
+	uniform sampler2D texture1; // .xy - highlight reads, .zw - highlight writes
 	uniform vec4 globalColorBg;
 	uniform vec4 globalColorFg;
+	uniform vec4 highlightRead;
+	uniform vec4 highlightWrite;
+	uniform vec4 highlightIdxMax;
 
 	layout (location = 0) out vec4 out0;
 
 	#define BYTE_COLOR_MULL 0.6
 	#define BACK_COLOR_MULL 0.7
 
-	int GetBit(float _color, int _bitIdx) {
-		return (int(_color * 255.0) >> _bitIdx) & 1;
+	int GetBit(float _val, int _bitIdx) {
+		return (int(_val * 255.0) >> _bitIdx) & 1;
 	}
 
 	void main()
@@ -113,66 +59,63 @@ const char* memViewShaderFrag = R"(
 		int bitIdx = 7 - int(uv0.x * 1024.0) & 7;
 		int isBitOn = GetBit(byte, bitIdx);
 
+		// highlight
+		vec4 rw = texture(texture1, uv);
+		float reads = (rw.x * 255.0f + rw.y ) * 4.0 / highlightIdxMax.x;
+		float writes = (rw.z * 255.0f + rw.w ) * 4.0 / highlightIdxMax.x;
+		vec3 readsColor = reads * highlightRead.rgb * highlightRead.a;
+		vec3 writesColor = writes * highlightWrite.rgb * highlightWrite.a;
+		
+
+		// highlight every second column
 		int isByteOdd = (int(uv0.x * 512.0)>>2) & 1;
 		vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
 		vec3 color = mix(bgColor, byteColor, float(isBitOn));
 
-		out0 = vec4(color, globalColorBg.a);
-		//out0 = vec4(byte,byte,byte, globalColorBg.a);
+		out0 = vec4(color + readsColor + writesColor, globalColorBg.a);
 	}
 )";
 
 dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
+		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils,
+		ReqHexViewer& _reqHexViewer)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils)
+	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils),
+	m_reqHexViewer(_reqHexViewer)
 {
 	m_isGLInited = Init();
 }
 
 bool dev::MemDisplayWindow::Init()
 {
+	// setting up the mem view rendering
 	auto memViewShaderRes = m_glUtils.InitShader(memViewShaderVtx, memViewShaderFrag);
 	if (!memViewShaderRes) return false;
 	m_memViewShaderId = *memViewShaderRes;
 
-	auto highlightShaderRes = m_glUtils.InitShader(highlightShaderVtx, highlightShaderFrag);
-	if (!highlightShaderRes) return false;
-	m_highlightShaderId = *highlightShaderRes;
-
 	for (int i = 0; i < RAM_TEXTURES; i++){
+		// ram
 		auto res = m_glUtils.InitTexture(RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::R8);
 		if (!res) return false;
 		m_memViewTexIds[i] = *res;
-	}
-
-	auto lastReadsRes = m_glUtils.InitTexture(Debugger::LAST_RW_W, Debugger::LAST_RW_H, GLUtils::Texture::Format::R32);
-	if (!lastReadsRes) return false;
-	m_lastReadsTexId = *lastReadsRes;
-
-	auto lastWritesRes = m_glUtils.InitTexture(Debugger::LAST_RW_W, Debugger::LAST_RW_H, GLUtils::Texture::Format::R32);
-	if (!lastWritesRes) return false;
-	m_lastWritesTexId = *lastWritesRes;
-
-	// setting up the mem highlight rendering. the resulted testure will be used in the mem view rendering below
-	GLUtils::ShaderParams hightlightShaderParams = {
-		{ "highlightRead", &m_highlightRead },
-		{ "highlightWrite", &m_highlightWrite } };
-	for (int i = 0; i < RAM_TEXTURES; i++){
-		auto res = m_glUtils.InitMaterial(m_highlightShaderId, FRAME_BUFFER_W, FRAME_BUFFER_H, 
-			{m_lastReadsTexId, m_lastWritesTexId}, hightlightShaderParams);
+		// highlight reads + writes
+		auto lastRWRes = m_glUtils.InitTexture(RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::RGBA);
 		if (!res) return false;
-		m_highlightMatIds[i] = *res;
+		m_lastRWTexIds[i] = *lastRWRes;
 	}
 
-	// setting up the mem view rendering
 	GLUtils::ShaderParams memViewShaderParams = {
 		{ "globalColorBg", &m_globalColorBg },
-		{ "globalColorFg", &m_globalColorFg } };
+		{ "globalColorFg", &m_globalColorFg },
+		{ "highlightRead",& m_highlightRead },
+		{ "highlightWrite", &m_highlightWrite },
+		{ "highlightWrite", &m_highlightWrite },
+		{ "highlightIdxMax", &m_highlightIdxMax },
+	};
 	for (int i = 0; i < RAM_TEXTURES; i++){
-		auto res = m_glUtils.InitMaterial(m_memViewShaderId, FRAME_BUFFER_W, FRAME_BUFFER_H, 
-			{m_memViewTexIds[i]}, memViewShaderParams);		
+		auto res = m_glUtils.InitMaterial(m_memViewShaderId, FRAME_BUFFER_W, FRAME_BUFFER_H,
+			{m_memViewTexIds[i], m_lastRWTexIds[i]}, memViewShaderParams);
 		if (!res) return false;
 		m_memViewMatIds[i] = *res;
 	}
@@ -200,7 +143,7 @@ static const char* separatorsS[] = {
 	"The Ram-Disk Page 3"
 };
 
-dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale) 
+dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale)
 {
 	int imgX = int(_pos.x / _scale);
 	int imgY = int(_pos.y / _scale);
@@ -218,17 +161,36 @@ dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale)
 
 void dev::MemDisplayWindow::DrawDisplay()
 {
+	static int highlightMode = 0; // 0 - RW, 1 - R, 2 - W
+	ImGui::Text("Highlight: "); ImGui::SameLine();
+	if (ImGui::RadioButton("RW", &highlightMode, 0)); ImGui::SameLine();
+	if (ImGui::RadioButton("R", &highlightMode, 1)); ImGui::SameLine();
+	if (ImGui::RadioButton("W", &highlightMode, 2)); ImGui::SameLine();
+	dev::DrawHelpMarker(
+		"Blue highlights represent reads.\n"
+		"Red highlights represent writes.\n"
+		"The brighter the color, the more recent the change.");
+
+	switch (highlightMode)
+	{
+	case 0:
+		m_highlightRead.w = 1.0f;
+		m_highlightWrite.w = 1.0f;
+		break;
+	case 1:
+		m_highlightRead.w = 1.0f;
+		m_highlightWrite.w = 0.0f;
+		break;
+	case 2:
+		m_highlightRead.w = 0.0f;
+		m_highlightWrite.w = 1.0f;
+	default:
+		break;
+	}
+
 	ImVec2 mousePos = ImGui::GetMousePos();
 	static ImVec2 imgPixelPos;
 	static int imageHoveredId = 0;
-
-	std::string labelText = "Hovered Addr: ";
-	if (imageHoveredId >= 0) 
-	{
-		Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
-		labelText += std::format("0x{:04X}, {}", addr, separatorsS[imageHoveredId]);
-	}
-	ImGui::Text(labelText.c_str());
 
 	ImVec2 remainingSize = ImGui::GetContentRegionAvail();
 	ImVec2 windowPos = ImGui::GetWindowPos();
@@ -263,6 +225,25 @@ void dev::MemDisplayWindow::DrawDisplay()
 
 			auto framebufferTex = m_glUtils.GetFramebufferTexture(m_memViewMatIds[i]);
 			ImGui::Image((void*)(intptr_t)framebufferTex, imageSize);
+
+			// if clicked, show the addr in the Hex Window
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+			{
+				Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
+				m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;
+				m_reqHexViewer.globalAddr = addr + imageHoveredId * Memory::MEM_64K;
+				m_reqHexViewer.len = 1;
+			}
+		}
+		// addr pop-up
+		if (imageHoveredId >= 0 &&
+			!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+		{
+			ImGui::BeginTooltip();
+			Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
+			GlobalAddr val = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
+			ImGui::Text("0x%04X (0x%02X), %s", addr, val, separatorsS[imageHoveredId]);
+			ImGui::EndTooltip();
 		}
 	}
 	ScaleView();
@@ -283,22 +264,18 @@ void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
 	// update
 	if (m_isGLInited)
 	{
-		/*
-		// update reads & writes textures
-		auto lastReadsAddrsP = m_debugger.GetLastReadsAddrs()->data();
-		auto lastWritesAddrsP = m_debugger.GetLastWritesAddrs()->data();
-		m_glUtils.UpdateTextures(m_memViewHighlightRenderDataId, (const uint8_t*)(lastReadsAddrsP), GL_UNSIGNED_INT, Debugger::LAST_RW_W, Debugger::LAST_RW_H, 1);
-		m_glUtils.Draw(m_memViewHighlightRenderDataId);
-		*/
-		
-		// update vram texture
 		auto memP = m_hardware.GetRam()->data();
-		for (int i = 0; i < RAM_TEXTURES; i++){
+		
+		if (_isRunning) m_debugger.UpdateLastRW();
+		auto memLastRWP = m_debugger.GetLastRW()->data();
+
+		// update vram texture
+		for (int i = 0; i < RAM_TEXTURES; i++)
+		{
 			m_glUtils.UpdateTexture(m_memViewTexIds[i], memP + i * Memory::MEM_64K);
+			m_glUtils.UpdateTexture(m_lastRWTexIds[i], (const uint8_t*)(memLastRWP) + i * Memory::MEM_64K * 4);
 			m_glUtils.Draw(m_memViewMatIds[i]);
 		}
-		
-
 	}
 }
 

@@ -46,7 +46,7 @@ namespace dev
 
 		std::list<std::wstring> m_recentFilePaths;
 
-		ReqMemViewer m_reqMemViewer;
+		ReqHexViewer m_reqHexViewer;
 		ReqDisasm m_reqDisasm;
 
 		bool m_reset = false;

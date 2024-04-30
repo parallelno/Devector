@@ -21,7 +21,7 @@ namespace dev
 
 	using Id = int;
 
-	struct ReqMemViewer{
+	struct ReqHexViewer{
 		enum class Type : int { NONE = 0, INIT_UPDATE, UPDATE };
 		GlobalAddr globalAddr;
 		GlobalAddr len;

@@ -24,17 +24,20 @@ namespace dev
 		static constexpr ImVec4 COLOR_ADDR = dev::IM_VEC4(0x909090FF); 
 		static constexpr ImVec4 COLOR_VALUE = dev::IM_VEC4(0xD4D4D4FF);
 
+		static constexpr ImU32 BG_COLOR_BYTE_HOVER = IM_COL32(100, 10, 150, 255);
+
 		Hardware& m_hardware;
-		ReqMemViewer& m_reqMemViewer;
+		ReqHexViewer& m_reqHexViewer;
 		int64_t m_ccLast = -1; // to force the first stats update
 		std::array<uint8_t, Memory::MEMORY_MAIN_LEN> m_ram;
+		int m_memPageIdx = 0;
 		Debugger& m_debugger;
 
 		void UpdateData(const bool _isRunning);
 		void DrawHex(const bool _isRunning);
 
 	public:
-		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, const float* const _dpiScaleP, ReqMemViewer& _reqMemViewer);
+		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer);
 		void Update();
 	};
 

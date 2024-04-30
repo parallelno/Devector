@@ -4,10 +4,10 @@
 #include "imgui.h"
 
 dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _fontSizeP, const float* const _dpiScaleP, ReqMemViewer& _reqMemViewer)
+		const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqMemViewer(_reqMemViewer)
+	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqHexViewer(_reqHexViewer)
 {}
 
 void dev::HexViewerWindow::Update()
@@ -40,17 +40,42 @@ void dev::HexViewerWindow::UpdateData(const bool _isRunning)
 
 	// update
 	auto memP = m_hardware.GetRam()->data();
-	std::copy(memP, memP + Memory::MEMORY_MAIN_LEN, m_ram.begin());
-	m_debugger.UpdateLastReads();
-	m_debugger.UpdateLastWrites();
+	std::copy(memP, memP + Memory::MEMORY_MAIN_LEN, m_ram.begin() + m_memPageIdx * Memory::MEM_64K);
+	m_debugger.UpdateLastRW();
 }
+
+enum class Element : int { MAIN_RAM = 0, RAM_DISK_B0, RAM_DISK_B1, RAM_DISK_B2, RAM_DISK_B3, COUNT };
+static const char* elems_names[static_cast<int>(Element::COUNT)] = { "Main Ram", "Ram-Disk0 Bank0", "Ram-Disk0 Bank1", "Ram-Disk0 Bank2", "Ram-Disk0 Bank3" };
 
 void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 {
+	// memory page selection
+	m_memPageIdx = dev::Max(0, m_memPageIdx);
+	m_memPageIdx = dev::Min(static_cast<int>(Element::COUNT)-1, m_memPageIdx);
+	const char* elem_name = elems_names[m_memPageIdx];
+	if (ImGui::SliderInt("##pageSelection", &m_memPageIdx, 0, static_cast<int>(Element::COUNT) - 1, elem_name, ImGuiSliderFlags_NoInput))
+	{
+		// update
+		auto memP = m_hardware.GetRam()->data();
+		auto pageOffset = m_memPageIdx * Memory::MEM_64K;
+		std::copy(memP + pageOffset, memP + pageOffset + Memory::MEMORY_MAIN_LEN, m_ram.begin());
+	}
+
+	// select the highlight mode (RW/R/W)
+	static int highlightMode = 0; // 0 - RW, 1 - R, 2 - W
+	ImGui::Text("Highlight: "); ImGui::SameLine();
+	if (ImGui::RadioButton("RW", &highlightMode, 0)); ImGui::SameLine();
+	if (ImGui::RadioButton("R", &highlightMode, 1)); ImGui::SameLine();
+	if (ImGui::RadioButton("W", &highlightMode, 2)); ImGui::SameLine();
+	dev::DrawHelpMarker(
+		"Blue highlights represent reads.\n"
+		"Red highlights represent writes.\n"
+		"The brighter the color, the more recent the change.");
+
 	constexpr auto headerColumn = "00\0 01\0 02\0 03\0 04\0 05\0 06\0 07\0 08\0 09\0 0A\0 0B\0 0C\0 0D\0 0E\0 0F\0";
 	
 	const int COLUMNS_COUNT = 17;
-	const char* tableName = "##MemViewer";
+	const char* tableName = "##HexViewer";
 
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_ScrollY |
@@ -87,12 +112,14 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 		}
 
 		// Set the scroll position to the selected watchpoint addr
-		if (m_reqMemViewer.type == ReqMemViewer::Type::INIT_UPDATE)
+		if (m_reqHexViewer.type == ReqHexViewer::Type::INIT_UPDATE)
 		{
-			m_reqMemViewer.type = ReqMemViewer::Type::UPDATE;
+			m_reqHexViewer.type = ReqHexViewer::Type::UPDATE;
 			float cellPaddingY = ImGui::GetStyle().CellPadding.y;
 			float offset = 2.0f;
-			ImGui::SetScrollY((m_reqMemViewer.globalAddr >> 4) * (*m_fontSizeP + cellPaddingY + offset) * (*m_dpiScaleP));
+			Addr addr = m_reqHexViewer.globalAddr & 0xFFFF;
+			m_memPageIdx = m_reqHexViewer.globalAddr >> 16;
+			ImGui::SetScrollY((addr >> 4) * (*m_fontSizeP + cellPaddingY + offset) * (*m_dpiScaleP));
 		}
 
 		// addr & data
@@ -136,15 +163,18 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 					ImVec2 highlightEnd = ImVec2(highlightPos.x + textSize.x + offsetX * 2 + 1, highlightPos.y + textSize.y + offsetY * 2);
 
 					// highlight a selected watchpoint
-					if (m_reqMemViewer.type != ReqMemViewer::Type::NONE && 
-						addr >= m_reqMemViewer.globalAddr && addr < m_reqMemViewer.len + m_reqMemViewer.globalAddr){
+					if (m_reqHexViewer.type != ReqHexViewer::Type::NONE && 
+						addr >= m_reqHexViewer.globalAddr && addr < m_reqHexViewer.len + m_reqHexViewer.globalAddr){
 						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 100, 100, 255));
 					}
 
 					if (!_isRunning) {
+						int lastRWIdx = m_debugger.GetLastRW()->at(addr + m_memPageIdx * Memory::MEM_64K);
+						auto lastReadsIdx = lastRWIdx & 0xFFFF;
+						auto lastWritesIdx = lastRWIdx >> 16;
+						
 						// highlight the last reads
-						int lastReadsIdx = m_debugger.GetLastReads()->at(addr);
-						if (lastReadsIdx > 0)
+						if ((highlightMode == 0 || highlightMode == 1) && lastReadsIdx > 0)
 						{
 							ImU32 color = IM_COL32(
 								20 * lastReadsIdx / Debugger::LAST_RW_MAX,
@@ -154,8 +184,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 							ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, color);
 						}
 						// highlight the last writes
-						int lastWritesIdx = m_debugger.GetLastWrites()->at(addr);
-						if (lastWritesIdx > 0)
+						if ((highlightMode == 0 || highlightMode == 2 ) && lastWritesIdx > 0)
 						{
 							ImU32 color = IM_COL32(
 								255 * lastWritesIdx / Debugger::LAST_RW_MAX,
@@ -169,7 +198,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 					if (ImGui::IsMouseHoveringRect(highlightPos, highlightEnd) &&
 						!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
 					{
-						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 10, 150, 255));
+						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, BG_COLOR_BYTE_HOVER);
 						ImGui::BeginTooltip();
 						ImGui::Text("Address: 0x%04X\n", addr);
 						ImGui::EndTooltip();
