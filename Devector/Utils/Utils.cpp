@@ -24,6 +24,26 @@ void dev::ThreadSleep(double _seconds)
 	std::this_thread::sleep_for(std::chrono::milliseconds((long long)(_seconds * 1000.0)));
 }
 
+void dev::CopyToClipboard(const std::string& _str) {
+#if defined(_WIN32)
+		if (OpenClipboard(nullptr)) {
+			HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, _str.size() + 1);
+			if (hMem) {
+				memcpy(GlobalLock(hMem), _str.c_str(), _str.size() + 1);
+				GlobalUnlock(hMem);
+				EmptyClipboard();
+				SetClipboardData(CF_TEXT, hMem);
+				GlobalFree(hMem);
+			}
+			CloseClipboard();
+		}
+#elif defined(__linux__)
+		std::ofstream("/dev/clipboard") << _str;
+#else
+		// TODO: Implement copy to clipboard for this platform
+#endif
+	}
+
 auto dev::LoadTextFile(const std::wstring& _path)
 -> std::string
 {	

@@ -27,11 +27,11 @@ namespace dev
 		static constexpr ImU32 BG_COLOR_BYTE_HOVER = IM_COL32(100, 10, 150, 255);
 
 		Hardware& m_hardware;
+		Debugger& m_debugger;
 		ReqHexViewer& m_reqHexViewer;
 		int64_t m_ccLast = -1; // to force the first stats update
 		std::array<uint8_t, Memory::MEMORY_MAIN_LEN> m_ram;
 		int m_memPageIdx = 0;
-		Debugger& m_debugger;
 
 		void UpdateData(const bool _isRunning);
 		void DrawHex(const bool _isRunning);

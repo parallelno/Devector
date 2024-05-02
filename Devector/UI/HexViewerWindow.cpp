@@ -39,7 +39,8 @@ void dev::HexViewerWindow::UpdateData(const bool _isRunning)
 
 	// update
 	auto memP = m_hardware.GetRam()->data();
-	std::copy(memP, memP + Memory::MEMORY_MAIN_LEN, m_ram.begin() + m_memPageIdx * Memory::MEM_64K);
+	auto pageOffset = m_memPageIdx * Memory::MEM_64K;
+	std::copy(memP + pageOffset, memP + pageOffset + Memory::MEMORY_MAIN_LEN, m_ram.begin());
 	m_debugger.UpdateLastRW();
 }
 

@@ -1,6 +1,7 @@
 #include "ImGuiUtils.h"
 
 #include "Utils.h"
+#include "StringUtils.h"
 
 #include "imgui_internal.h"
 #include "imgui.h"
@@ -292,5 +293,95 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 		ImGui::Dummy({ 80,10 });
 		ImGui::SameLine();
 		dev::DrawHelpMarker(_help);
+	}
+}
+
+void dev::DrawCodeLine(const bool _isRunning, const Debugger::DisasmLine& _line,
+	std::function<void(const Addr _addr)> _onMouseLeft,
+	std::function<void(const Addr _addr)> _onMouseRight)
+{
+	auto cmd_splitted = dev::Split(_line.str, ' ');
+	int i = 0;
+	for (const auto& cmd_parts : cmd_splitted)
+	{
+		if (i == 0)
+		{
+			// draw a mnenonic
+			ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, "\t%s ", cmd_parts.c_str());
+		}
+		else
+		{
+			// draw an operand separator
+			if (i == 2)
+			{
+				ImGui::SameLine();
+				ImGui::TextColored(DISASM_TBL_COLOR_NUMBER, ", ");
+			}
+
+			// draw an operand
+			auto operands = dev::Split(cmd_parts, ';');
+
+			int operandIdx = 0;
+			for (const auto& operand : operands)
+			{
+				if (operand[0] == '0' && operands.size() == 1)
+				{
+					// check if the hexadecimal literal is hovered
+					ImGui::SameLine();
+					bool drawNormalLiteral = true;
+					if (!_isRunning)
+					{
+						ImVec2 textPos = ImGui::GetCursorScreenPos();
+						ImVec2 textSize = ImGui::CalcTextSize(operand.c_str());
+						if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
+						{
+							ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
+							// draw a highlighted hexadecimal literal
+							ImGui::TextColored(dev::IM_VEC4(0xFFFFFFFF), "%s", operand.c_str());
+							
+							Addr reqUpdateAddr = dev::StrHexToInt(operand.c_str() + 2);
+							// if it's clicked, scroll the disasm to highlighted addr
+							if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+							{
+								_onMouseLeft(reqUpdateAddr);
+							}
+
+							if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+							{
+								_onMouseRight(reqUpdateAddr);
+							}
+
+							drawNormalLiteral = false;
+						}
+					}
+					if (drawNormalLiteral)
+					{
+						// draw a hexadecimal literal
+						ImGui::TextColored(DISASM_TBL_COLOR_NUMBER, "%s", operand.c_str());
+					}
+				}
+				else if (cmd_parts.size() <= 2 || cmd_parts == "PSW")
+				{
+					// draw a reg
+					ImGui::SameLine();
+					ImGui::TextColored(DISASM_TBL_COLOR_REG, "%s", operand.c_str());
+				}
+				else
+				{
+					// draw a const value
+					if (operand[0] == '0') {
+						ImGui::SameLine();
+						ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, ";%s", operand.c_str());
+					}
+					else {
+						// draw a const
+						ImGui::SameLine();
+						ImGui::TextColored(DISASM_TBL_COLOR_CONST, "%s ", operand.c_str());
+					}
+				}
+				operandIdx++;
+			}
+		}
+		i++;
 	}
 }

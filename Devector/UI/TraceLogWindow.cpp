@@ -46,7 +46,8 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 {
 	// filter mode
 	const char* filterName = filterNames[m_disasmFilter];
-
+	
+	if (_isRunning) ImGui::BeginDisabled();
 	if (ImGui::BeginCombo("##filterNames", filterName))
 	{
 		for (int n = 0; n < IM_ARRAYSIZE(filterNames); n++)
@@ -63,10 +64,13 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 		}
 		ImGui::EndCombo();
 	}
+	if (_isRunning) ImGui::EndDisabled();
 
 	// disasm table
 	const int COLUMNS_COUNT = 2;
 	const char* tableName = "##TraceLogTable";
+
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_ScrollY |
@@ -90,17 +94,36 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 				const auto& disasmLine = m_traceLog.at(row);
 				ImGui::TableNextRow();
 				
+				if (_isRunning) ImGui::BeginDisabled();
+
 				// the addr column
 				ImGui::TableNextColumn();
 				Addr headerAddr = row * (COLUMNS_COUNT - 1);
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
 				ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, disasmLine.addrS.c_str());
 
-				// the instruuction column
+				// the instruction column
 				ImGui::TableNextColumn();
-				ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, " %s", disasmLine.str.c_str());
+				//ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, " %s", disasmLine.str.c_str());
+
+				dev::DrawCodeLine(_isRunning, disasmLine, 
+					// _onMouseLeft. Navigate to the address
+					[&](const Addr _addr)
+					{
+						
+					},
+					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
+					[&](const Addr _addr)
+					{
+						
+					}
+				);
+				
+				if (_isRunning) ImGui::EndDisabled();
 			}
 		}
 		ImGui::EndTable();
 	}
+
+	ImGui::PopStyleVar(1);
 }

@@ -117,6 +117,8 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		exit(_err);
 	}
 
+	void CopyToClipboard(const std::string& _str);
+
 	//--------------------------------------------------------------
 	//
 	// MATH

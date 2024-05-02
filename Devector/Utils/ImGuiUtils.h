@@ -10,6 +10,7 @@
 
 #include "Types.h"
 #include "Core/Breakpoint.h"
+#include "Core/Debugger.h"
 
 namespace dev 
 {
@@ -50,6 +51,24 @@ namespace dev
 			(_color & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT << 16 |
 			(_color & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT << 24;
 	}
+
+	// disasm background colors
+	static constexpr ImU32 DISASM_TBL_BG_COLOR_BRK = dev::IM_U32(0x353636FF);
+	static constexpr ImU32 DISASM_TBL_BG_COLOR_ADDR = dev::IM_U32(0x353636FF);
+
+	// disasm text colors
+	static constexpr ImVec4 DISASM_TBL_COLOR_COMMENT = dev::IM_VEC4(0x909090FF);
+	static constexpr ImVec4 DISASM_TBL_COLOR_LABEL_GLOBAL = dev::IM_VEC4(0xD0C443FF);
+	static constexpr ImVec4 DISASM_TBL_COLOR_LABEL_LOCAL = dev::IM_VEC4(0xA8742FFF);
+	static constexpr ImVec4 DISASM_TBL_COLOR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
+	static constexpr ImVec4 DISASM_TBL_COLOR_ADDR = dev::IM_VEC4(0x909090FF);
+	static constexpr ImVec4 DISASM_TBL_COLOR_ZERO_STATS = dev::IM_VEC4(0x606060FF);
+	static constexpr ImVec4 DISASM_TBL_COLOR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
+	static constexpr ImVec4 DISASM_TBL_COLOR_NUMBER = dev::IM_VEC4(0xD4D4D4FF);
+	static constexpr ImVec4 DISASM_TBL_COLOR_REG = dev::IM_VEC4(0x1ECF44FF);
+	static constexpr ImVec4 DISASM_TBL_COLOR_CONST = dev::IM_VEC4(0x8BE0E9FF);
+
+	constexpr ImU32 DISASM_TBL_COLOR_PC = dev::IM_U32(0x88F038FF);
 
 	// Make the UI compact because there are so many fields
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);
@@ -96,9 +115,12 @@ namespace dev
 	void DrawSeparator2(const std::string& _text);
 	void DrawProperty2EditableI(const char* _name, const char* _label, int* _value, const char* _help = "");
 	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
-		const char* _hint = "", const char* _help = "", const ImGuiInputTextFlags _flags = 0);
+			const char* _hint = "", const char* _help = "", const ImGuiInputTextFlags _flags = 0);
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val, const char* _help = "");
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
+	void DrawCodeLine(const bool _isRunning, const Debugger::DisasmLine& _line,
+			std::function<void(const Addr _addr)> _onMouseLeft,
+			std::function<void(const Addr _addr)> _onMouseRight);
 }
 
 #endif // !DEV_IMGUI_UTILS_H
