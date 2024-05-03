@@ -29,7 +29,7 @@ namespace dev
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
-		ReqHexViewer& m_reqHexViewer;
+		ReqDisasm& m_reqDisasm;
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		Debugger::Disasm m_traceLog;
@@ -41,7 +41,7 @@ namespace dev
 
 	public:
 		TraceLogWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, 
-				const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer);
+				const float* const _dpiScaleP, ReqDisasm& _reqDisasm);
 		void Update();
 	};
 };

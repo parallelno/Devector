@@ -32,9 +32,14 @@ namespace dev
 		enum class Type : int { 
 			NONE = 0, 
 			UPDATE, // redraw disasm
-			UPDATE_ADDR}; // redraw disasm at the prodived addr in m_reqDisasmUpdateData
+			UPDATE_ADDR,
+			NAVIGATE_TO_ADDR,
+			NAVIAGATE_NEXT,
+			NAVIAGATE_PREV
+			}; // redraw disasm at the prodived addr in m_reqDisasmUpdateData
 		Type type = Type::NONE;
 		int addr = 0;
+		int delay = -1;
 	};
 }
 #endif // !DEV_TYPES_H

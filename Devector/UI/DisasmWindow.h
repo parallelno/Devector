@@ -25,7 +25,7 @@ namespace dev
 		static constexpr float COMMAND_W = 120.0f;
 		static constexpr float STATS_W = 100.0f;
 		static constexpr int DISASM_INSTRUCTION_OFFSET = 6;
-		static constexpr int DELAYED_SELECTION_TIME = 2;
+		const char* m_itemContextMenu = "DisasmItemMenu";
 		
 		Hardware& m_hardware;
 		Debugger& m_debugger;
@@ -45,15 +45,17 @@ namespace dev
 		void DrawDebugControls(const bool _isRunning);
 		void DrawSearch(const bool _isRunning);
 		void DrawDisasm(const bool _isRunning);
-		void UpdateData(const bool _isRunning, int64_t _globalAddr = -1, const int _instructionsOffset = -DISASM_INSTRUCTION_OFFSET);
+		void UpdateData(const bool _isRunning);
 		bool IsDisasmTableOutOfWindow() const;
-		int DrawDisasmContextMenu(const bool _openContextMenu, const Addr _regPC, int _addr, int _copyToClipboardAddr);
+		int DrawDisasmContextMenu(const bool _openContextMenu, const Addr _regPC, int _addr, 
+			int _copyToClipboardAddr, std::string& _str);
 
 	public:
 
 		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP, ReqDisasm& _reqDisasm, bool& _reset);
 		void Update();
-		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = -DISASM_INSTRUCTION_OFFSET);
+		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
+			const bool _updateSelection = true);
 	};
 
 };

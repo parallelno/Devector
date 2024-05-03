@@ -128,11 +128,9 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	const auto& regs = *res;
 	Addr regPC = regs["pc"];
 	bool openItemContextMenu = false;
-	static int editedBreakpointAddr = -1;
-	int reqUpdateAddr = -1;
+	static int itemContextMenuAddr = -1;
+	static std::string copyToClipboardStr = "";
 	static int copyToClipboardAddr = -1; // if it's -1, don't add the option, if it's >=0, add the option with the addr = copyToClipboardAddr
-	static int delayedSelectionTimer = -1;
-	static int delayedSelectionLine = 0;
 
 	if (m_disasm.empty()) return;
 
@@ -158,201 +156,188 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		ImGui::TableSetupColumn("consts");
 
 		for (; lineIdx < 200; lineIdx++)
+		{
+			// TODO: fix it. replace with fixed amount of lines and without a need to check the end of the window
+			if (IsDisasmTableOutOfWindow()) break;
+
+			ImGui::TableNextRow();
+
+			if (lineIdx >= m_disasm.size()) break;
+
+			auto& line = m_disasm[lineIdx];
+
+			bool isComment = line.type == Debugger::DisasmLine::Type::COMMENT;
+			bool isCode = line.type == Debugger::DisasmLine::Type::CODE;
+			int addr = line.addr;
+
+			// the line selection/highlight
+			ImGui::TableNextColumn();
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_BRK);
+			const bool isSelected = m_selectedLineIdx == lineIdx;
+			if (ImGui::Selectable(std::format("##disasmLineId{:04d}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				// TODO: fix it. replace with fixed amount of lines and without a need to check the end of the window
-				if (IsDisasmTableOutOfWindow()) break;
+				m_selectedLineIdx = lineIdx;
+			}
 
-				ImGui::TableNextRow();
-
-				if (lineIdx >= m_disasm.size()) break;
-
-				auto& line = m_disasm[lineIdx];
-
-				bool isComment = line.type == Debugger::DisasmLine::Type::COMMENT;
-				bool isCode = line.type == Debugger::DisasmLine::Type::CODE;
-				int addr = line.addr;
-
-				// the line selection/highlight
-				ImGui::TableNextColumn();
-				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_BRK);
-				const bool isSelected = m_selectedLineIdx == lineIdx;
-				if (ImGui::Selectable(std::format("##disasmLineId{:04d}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
+			if (!_isRunning) {
+				// draw breakpoints
+				ImGui::SameLine();
+				auto bpStatus = line.breakpointStatus;
+				if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
 				{
-					m_selectedLineIdx = lineIdx;
+					if (bpStatus == Breakpoint::Status::DELETED) {
+						m_debugger.DelBreakpoint(addr);
+					}
+					else m_debugger.SetBreakpointStatus(addr, bpStatus);
+					m_reqDisasm.type = ReqDisasm::Type::UPDATE;
 				}
 
-				if (!_isRunning) {
-					// draw breakpoints
+				// draw program counter icon
+				if (isCode && addr == regPC)
+				{
 					ImGui::SameLine();
-					auto bpStatus = line.breakpointStatus;
-					if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
-					{
-						if (bpStatus == Breakpoint::Status::DELETED) {
-							m_debugger.DelBreakpoint(addr);
-						}
-						else m_debugger.SetBreakpointStatus(addr, bpStatus);
-						m_reqDisasm.type = ReqDisasm::Type::UPDATE;
-					}
-
-					// draw program counter icon
-					if (isCode && addr == regPC)
-					{
-						ImGui::SameLine();
-						dev::DrawProgramCounter(DISASM_TBL_COLOR_PC, ImGuiDir_Right, *m_dpiScaleP);
-					}
-				}
-
-				// the addr column
-				ImGui::TableNextColumn();
-				ColumnClippingEnable(*m_dpiScaleP); // enable clipping
-				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
-				if (isCode) {
-					DrawAddr(_isRunning, line, 
-						// _onMouseLeft. Navigate to the address
-						[&]()
-						{},
-						// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
-						[&]()
-						{
-							copyToClipboardAddr = addr;
-						}
-					);
-				}
-				ColumnClippingDisable();
-
-				ImVec2 rowMin = ImGui::GetItemRectMin();
-				ImVec2 rowMax = { -1.0f, -1.0f };
-
-
-				// draw a comment
-				if (isComment)
-				{
-					if (m_fontCommentP) { ImGui::PushFont(m_fontCommentP);}
-					ImGui::TableNextColumn();
-					ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, line.str.c_str());
-
-					if (m_fontCommentP) { ImGui::PopFont(); }
-				}
-
-				// draw labels
-				else if (!isCode)
-				{
-					auto line_splited = dev::Split(line.str, '\t');
-					ImGui::TableNextColumn();
-					int i = 0;
-					for (auto const& label : line_splited)
-					{
-						// the label that matches the address and the code context
-						if (i == 0)
-						{
-							if (label[0] == '@')
-							{
-								ImGui::TextColored(DISASM_TBL_COLOR_LABEL_LOCAL, label.c_str());
-							}
-							else
-							{
-								ImGui::TextColored(DISASM_TBL_COLOR_LABEL_GLOBAL, label.c_str());
-							}
-						}
-						// all other labels that matches the address
-						else
-						{
-							ImGui::SameLine();
-							ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, " %s", label.c_str());
-						}
-						i++;
-					}
-				}
-				else
-				{
-					// draw code
-					ImGui::TableNextColumn();
-					ColumnClippingEnable(*m_dpiScaleP); // enable clipping
-
-					dev::DrawCodeLine(true, _isRunning, line, 
-						// _onMouseLeft. Navigate to the address
-						[&](const Addr _addr)
-						{
-							reqUpdateAddr = _addr;
-
-							if (m_navigateAddrsIdx == 0) {
-								m_navigateAddrs[m_navigateAddrsIdx] = line.addr;
-								m_navigateAddrsSize++;
-							}
-							if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
-								m_navigateAddrs[++m_navigateAddrsIdx] = reqUpdateAddr;
-								m_navigateAddrsSize = m_navigateAddrsIdx + 1;
-							}
-
-							// move selection to the DISASM_INSTRUCTION_OFFSET'th line
-							delayedSelectionTimer = DELAYED_SELECTION_TIME;
-							delayedSelectionLine = DISASM_INSTRUCTION_OFFSET;
-						},
-						// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
-						[&](const Addr _addr)
-						{
-							copyToClipboardAddr = _addr;
-						}
-					);
-
-					ColumnClippingDisable();
-
-					// draw stats
-					ImGui::TableNextColumn();
-					ColumnClippingEnable(*m_dpiScaleP); // enable clipping
-					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DISASM_TBL_BG_COLOR_ADDR));
-					const ImVec4* statsColor = (line.runs == 0 && line.reads == 0 && line.writes == 0) ?
-							&DISASM_TBL_COLOR_ZERO_STATS :
-							&DISASM_TBL_COLOR_ADDR;
-					ImGui::TextColored(*statsColor, line.stats.c_str());
-					ColumnClippingDisable();
-
-					// draw consts
-					ImGui::TableNextColumn();
-					if (isCode)
-					{
-						ImGui::TextColored(DISASM_TBL_COLOR_ADDR, line.consts.c_str());
-					}
-
-					rowMax = ImGui::GetItemRectMax();
-				}
-
-				// check if right-click on the row
-				if (!_isRunning && rowMax.x != -1.0f && rowMax.y != -1.0f &&
-					ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-				{
-					auto mousePos = ImGui::GetMousePos();
-					if (mousePos.x >= rowMin.x && mousePos.x < rowMax.x &&
-						mousePos.y >= rowMin.y && mousePos.y < rowMax.y)
-					{
-						openItemContextMenu = true;
-						editedBreakpointAddr = addr;
-					}
+					dev::DrawProgramCounter(DISASM_TBL_COLOR_PC, ImGuiDir_Right, *m_dpiScaleP);
 				}
 			}
 
+			// the addr column
+			ImGui::TableNextColumn();
+			ColumnClippingEnable(*m_dpiScaleP); // enable clipping
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
+			if (isCode) {
+				DrawAddr(_isRunning, line, 
+					// _onMouseLeft. Navigate to the address
+					[&]()
+					{
+						m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
+						m_reqDisasm.addr = addr;
+						m_reqDisasm.delay = DELAYED_SELECTION_TIME;
+					},
+					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
+					[&]()
+					{
+						copyToClipboardAddr = addr;
+						openItemContextMenu = true;
+					}
+				);
+			}
+			ColumnClippingDisable();
+
+			ImVec2 rowMin = ImGui::GetItemRectMin();
+			ImVec2 rowMax = { -1.0f, -1.0f };
+
+
+			// draw a comment
+			if (isComment)
+			{
+				if (m_fontCommentP) { ImGui::PushFont(m_fontCommentP);}
+				ImGui::TableNextColumn();
+				ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, line.str.c_str());
+
+				if (m_fontCommentP) { ImGui::PopFont(); }
+			}
+
+			// draw labels
+			else if (!isCode)
+			{
+				auto line_splited = dev::Split(line.str, '\t');
+				ImGui::TableNextColumn();
+				int i = 0;
+				for (auto const& label : line_splited)
+				{
+					// the label that matches the address and the code context
+					if (i == 0)
+					{
+						if (label[0] == '@')
+						{
+							ImGui::TextColored(DISASM_TBL_COLOR_LABEL_LOCAL, label.c_str());
+						}
+						else
+						{
+							ImGui::TextColored(DISASM_TBL_COLOR_LABEL_GLOBAL, label.c_str());
+						}
+					}
+					// all other labels that matches the address
+					else
+					{
+						ImGui::SameLine();
+						ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, " %s", label.c_str());
+					}
+					i++;
+				}
+			}
+			else
+			{
+				// draw code
+				ImGui::TableNextColumn();
+				ColumnClippingEnable(*m_dpiScaleP); // enable clipping
+
+				dev::DrawCodeLine(true, _isRunning, line, 
+					// _onMouseLeft. Navigate to the address
+					[&](const Addr _addr)
+					{
+						m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
+						m_reqDisasm.addr = _addr;
+						m_reqDisasm.delay = DELAYED_SELECTION_TIME;
+					},
+					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
+					[&](const Addr _addr)
+					{
+						copyToClipboardAddr = _addr;
+						openItemContextMenu = true;
+					}
+				);
+
+				ColumnClippingDisable();
+
+				// draw stats
+				ImGui::TableNextColumn();
+				ColumnClippingEnable(*m_dpiScaleP); // enable clipping
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DISASM_TBL_BG_COLOR_ADDR));
+				const ImVec4* statsColor = (line.runs == 0 && line.reads == 0 && line.writes == 0) ?
+						&DISASM_TBL_COLOR_ZERO_STATS :
+						&DISASM_TBL_COLOR_ADDR;
+				ImGui::TextColored(*statsColor, line.stats.c_str());
+				ColumnClippingDisable();
+
+				// draw consts
+				ImGui::TableNextColumn();
+				if (isCode)
+				{
+					ImGui::TextColored(DISASM_TBL_COLOR_ADDR, line.consts.c_str());
+				}
+
+				rowMax = ImGui::GetItemRectMax();
+			}
+
+			// check if right-click on the row
+			if (!_isRunning && rowMax.x != -1.0f && rowMax.y != -1.0f &&
+				ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			{
+				auto mousePos = ImGui::GetMousePos();
+				if (mousePos.x >= rowMin.x && mousePos.x < rowMax.x &&
+					mousePos.y >= rowMin.y && mousePos.y < rowMax.y)
+				{
+					if (!openItemContextMenu) {
+						openItemContextMenu = true;
+						copyToClipboardAddr = -1;
+					}
+					itemContextMenuAddr = addr;
+					copyToClipboardStr = line.str;
+				}
+			}
+		}
+
 		ImGui::EndTable();
 	}
-	DrawDisasmContextMenu(openItemContextMenu, regPC, editedBreakpointAddr, copyToClipboardAddr);
+	copyToClipboardAddr = DrawDisasmContextMenu(openItemContextMenu, regPC, itemContextMenuAddr, 
+		copyToClipboardAddr, copyToClipboardStr);
 
 	ImGui::PopStyleVar(2);
 
-	if (!_isRunning && m_reqDisasm.type != ReqDisasm::Type::NONE && m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
-	{
-		Addr addr = 0;
-		if (m_reqDisasm.type == ReqDisasm::Type::UPDATE)
-		{
-			addr = m_disasm[DISASM_INSTRUCTION_OFFSET].addr;
-		}
-		else if (m_reqDisasm.type == ReqDisasm::Type::UPDATE_ADDR){
-			addr = m_reqDisasm.addr;
-
-		}
-		UpdateDisasm(addr);
-		m_reqDisasm.type = ReqDisasm::Type::NONE;
-	}
-
+	/////////////////////////////////////////////////////////	
 	// check the keys
+	/////////////////////////////////////////////////////////	
 	if (!_isRunning && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) &&
 		m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
 	{
@@ -361,7 +346,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		if (ImGui::IsKeyDown(ImGuiKey_PageUp))
 		{
 			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 1, lineIdx - 1);
-			UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, -1 - DISASM_INSTRUCTION_OFFSET);
+			UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, 1 + DISASM_INSTRUCTION_OFFSET, false);
 		}
 		else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
 		{
@@ -369,7 +354,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				m_selectedLineIdx += 1;
 				if (m_selectedLineIdx > lineIdx - 1) {
 					m_selectedLineIdx = lineIdx - 1;
-					UpdateDisasm(m_disasm[0].addr, 1);
+					UpdateDisasm(m_disasm[0].addr, -1 + DISASM_INSTRUCTION_OFFSET, false);
 				}
 			}
 		}
@@ -377,12 +362,12 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		if (ImGui::GetIO().MouseWheel > 0.0f)
 		{
 			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, lineIdx - 1);
-			UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, -2 - DISASM_INSTRUCTION_OFFSET);
+			UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, 2 + DISASM_INSTRUCTION_OFFSET, false);
 		}
 		else if (ImGui::GetIO().MouseWheel < 0.0f)
 		{
 			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
-			UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, 2 - DISASM_INSTRUCTION_OFFSET);
+			UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr,  -2 + DISASM_INSTRUCTION_OFFSET, false);
 		}
 	}
 
@@ -392,10 +377,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	{
 		auto addr = m_navigateAddrs[--m_navigateAddrsIdx];
 		UpdateDisasm(addr);
-
-		// move selection to the DISASM_INSTRUCTION_OFFSET'th line
-		delayedSelectionTimer = DELAYED_SELECTION_TIME;
-		delayedSelectionLine = DISASM_INSTRUCTION_OFFSET;
 	}
 	// Alt + Right navigation
 	else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_RightArrow) &&
@@ -403,28 +384,52 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	{
 		auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
 		UpdateDisasm(addr);
-
-		// move selection to the DISASM_INSTRUCTION_OFFSET'th line
-		delayedSelectionTimer = DELAYED_SELECTION_TIME;
-		delayedSelectionLine = DISASM_INSTRUCTION_OFFSET;
 	}
 
-	// handle the delayed line selection
-	delayedSelectionTimer -= delayedSelectionTimer >= 0 ? 1 : 0;
-	if (delayedSelectionTimer == 0) {
-		m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
-	}
+	/////////////////////////////////////////////////////////
+	// request handling
+	/////////////////////////////////////////////////////////
+	if (!_isRunning && m_reqDisasm.type != ReqDisasm::Type::NONE && m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
+	{
+		switch (m_reqDisasm.type)
+		{
+		case ReqDisasm::Type::UPDATE:
+			{
+				Addr addr = m_disasm[DISASM_INSTRUCTION_OFFSET].addr;
+				UpdateDisasm(addr, DISASM_INSTRUCTION_OFFSET, false);
+			}
+			break;
 
-	// update the disasm if the addr was clicked
-	if (reqUpdateAddr >= 0) {
-		UpdateDisasm(reqUpdateAddr);
+		case ReqDisasm::Type::UPDATE_ADDR:
+			UpdateDisasm(m_reqDisasm.addr);
+			break;
+
+		case ReqDisasm::Type::NAVIGATE_TO_ADDR:
+			if (m_reqDisasm.delay-- == 0)
+			{
+				if (m_navigateAddrsIdx == 0) {
+					m_navigateAddrs[m_navigateAddrsIdx] = m_disasm[DISASM_INSTRUCTION_OFFSET].addr;
+					m_navigateAddrsSize++;
+				}
+				if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
+					m_navigateAddrs[++m_navigateAddrsIdx] = m_reqDisasm.addr;
+					m_navigateAddrsSize = m_navigateAddrsIdx + 1;
+				}
+				UpdateDisasm(m_reqDisasm.addr);
+				break;
+			}
+		
+		default:
+			break;
+		}
+		if (m_reqDisasm.delay < 0) m_reqDisasm.type = ReqDisasm::Type::NONE;
 	}
 
 	if (_isRunning) ImGui::EndDisabled();
 }
 
 
-void dev::DisasmWindow::UpdateData(const bool _isRunning, int64_t _addr, const int _instructionsOffset)
+void dev::DisasmWindow::UpdateData(const bool _isRunning)
 {
 	if (_isRunning) return;
 
@@ -438,33 +443,36 @@ void dev::DisasmWindow::UpdateData(const bool _isRunning, int64_t _addr, const i
 	if (ccDiff == 0) return;
 
 	// update
-	if (_addr < 0) {
-		_addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-	}
+	Addr addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
 
-	m_selectedLineIdx = -_instructionsOffset;
-	UpdateDisasm((Addr)_addr, _instructionsOffset);
+	UpdateDisasm(addr);
 }
 
-void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOffset)
+void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOffset, const bool _updateSelection)
 {
 	// TODO: request a meaningful amount disasmm lines, not 80!
-	m_disasm = m_debugger.GetDisasm(_addr, 80, _instructionsOffset);
+	m_disasm = m_debugger.GetDisasm(_addr, 80, -_instructionsOffset);
+	if (_updateSelection) m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
 }
 
-int dev::DisasmWindow::DrawDisasmContextMenu(const bool _openContextMenu, const Addr _regPC, int _addr, int _copyToClipboardAddr)
+int dev::DisasmWindow::DrawDisasmContextMenu(const bool _openContextMenu, const Addr _regPC, 
+		int _addr, int _copyToClipboardAddr, std::string& _str)
 {
-	if (_openContextMenu) ImGui::OpenPopup("DisasmItemMenu");
+	if (_openContextMenu) {
+		ImGui::OpenPopup(m_itemContextMenu);
+	}
 
-	if (ImGui::BeginPopup("DisasmItemMenu"))
+	if (ImGui::BeginPopup(m_itemContextMenu))
 	{
-		if (_copyToClipboardAddr >= 0 ){
-			if (ImGui::MenuItem("Copy To Clipboard")) {
-				dev::CopyToClipboard(std::format("0x{:04X}", _copyToClipboardAddr));
-				_copyToClipboardAddr = -1;
+		if (ImGui::MenuItem("Copy To Clipboard")) {
+				dev::CopyToClipboard(std::format("0x{:04X} {}", _addr, _str));
 			}
-			ImGui::SeparatorText("");
+		if (_copyToClipboardAddr >= 0 ){
+			if (ImGui::MenuItem("Copy Addr To Clipboard")) {
+				dev::CopyToClipboard(std::format("0x{:04X}", _copyToClipboardAddr));
+			}
 		}
+		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Show Current Break")) {
 			UpdateDisasm(_regPC);
 		}

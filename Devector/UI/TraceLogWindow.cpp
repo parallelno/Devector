@@ -4,10 +4,12 @@
 #include "imgui.h"
 
 dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer)
+		const float* const _fontSizeP, const float* const _dpiScaleP, 
+		ReqDisasm& _reqDisasm) 
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger), m_reqHexViewer(_reqHexViewer),
+	m_hardware(_hardware), m_debugger(_debugger), 
+	m_reqDisasm(_reqDisasm),
 	m_traceLog()
 {}
 void dev::TraceLogWindow::Update()
@@ -114,10 +116,16 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 					selectedLineIdx = row;
 				}
 
-
 				// the addr column
 				ImGui::TableNextColumn();
-				DrawAddr(_isRunning, disasmLine, [&](){}, 
+				DrawAddr(_isRunning, disasmLine, 
+					// _onMouseLeft. Navigate to the address
+					[&]()
+					{
+						m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
+						m_reqDisasm.addr = addr;
+						m_reqDisasm.delay = DELAYED_SELECTION_TIME;
+					},
 					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
 					[&]()
 					{
@@ -132,7 +140,9 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 					// _onMouseLeft. Navigate to the address
 					[&](const Addr _addr)
 					{
-						
+						m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
+						m_reqDisasm.addr = _addr;
+						m_reqDisasm.delay = DELAYED_SELECTION_TIME;
 					},
 					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
 					[&](const Addr _addr)
