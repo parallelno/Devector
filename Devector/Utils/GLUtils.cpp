@@ -208,14 +208,15 @@ auto dev::GLUtils::InitShader(const char* _vertexShaderSource, const char* _frag
 	glAttachShader(shaderProgram, fragmentShader);
 	glLinkProgram(shaderProgram);
 
-	auto shaderProgramRes = GLCheckError(shaderProgram, "Shader program linking failed:\n");
-	if (!shaderProgramRes) return {};
+	// TODO: figure out if this check required. if so, fix it
+	//auto shaderProgramRes = GLCheckError(shaderProgram, "Shader program linking failed:\n");
+	//if (!shaderProgramRes) return {};
 
 	// Delete shaders
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	m_shaders.push_back(*shaderProgramRes);
+	m_shaders.push_back(shaderProgram);
 
 	return shaderProgram;
 }

@@ -4,7 +4,7 @@
 #include "imgui_impl_opengl3_loader.h"
 
 // Vertex shader source code
-const char* vtxShaderS = R"(
+const char* vtxShaderS = R"#(
 	#version 330 core
 	precision highp float;
 
@@ -26,7 +26,7 @@ const char* vtxShaderS = R"(
 		float visibleArea = 256.0f + visBord * 2.0f;
 		vec2 visibleAreaCenter = vec2(bordL + 256.0f, bordB + 128.0f);
 
-		// iverse y to match the display
+		// Inverse y to match the display
 		uv0 = vec2(uv.x, 1.0f - uv.y);
 
 		uv0 -= visibleAreaCenter * texPxlSize;
@@ -35,10 +35,10 @@ const char* vtxShaderS = R"(
 
 		gl_Position = vec4(pos.xyz, 1.0f);
 	}
-)";
+)#";
 
 // Fragment shader source code
-const char* fragShaderS = R"(
+const char* fragShaderS = R"#(
 	#version 330 core
 	precision highp float;
 
@@ -73,7 +73,7 @@ const char* fragShaderS = R"(
 		vec3 color = texture(texture0, uvScrolled).rgb;
 		out0 = vec4(color, 1.0f);
 	}
-)";
+)#";
 
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
