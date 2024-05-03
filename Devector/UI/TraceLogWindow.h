@@ -37,6 +37,7 @@ namespace dev
 
 		void UpdateData(const bool _isRunning);
 		void DrawLog(const bool _isRunning);
+		int DrawDisasmContextMenu(const bool _openContextMenu, int _copyToClipboardAddr);
 
 	public:
 		TraceLogWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, 

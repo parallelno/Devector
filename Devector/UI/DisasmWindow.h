@@ -47,6 +47,7 @@ namespace dev
 		void DrawDisasm(const bool _isRunning);
 		void UpdateData(const bool _isRunning, int64_t _globalAddr = -1, const int _instructionsOffset = -DISASM_INSTRUCTION_OFFSET);
 		bool IsDisasmTableOutOfWindow() const;
+		int DrawDisasmContextMenu(const bool _openContextMenu, const Addr _regPC, int _addr, int _copyToClipboardAddr);
 
 	public:
 

@@ -118,9 +118,12 @@ namespace dev
 			const char* _hint = "", const char* _help = "", const ImGuiInputTextFlags _flags = 0);
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val, const char* _help = "");
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
-	void DrawCodeLine(const bool _isRunning, const Debugger::DisasmLine& _line,
+	void DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::DisasmLine& _line,
 			std::function<void(const Addr _addr)> _onMouseLeft,
 			std::function<void(const Addr _addr)> _onMouseRight);
+	void DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLine,
+			std::function<void()> _onMouseLeft,
+			std::function<void()> _onMouseRight);
 }
 
 #endif // !DEV_IMGUI_UTILS_H

@@ -296,7 +296,7 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 	}
 }
 
-void dev::DrawCodeLine(const bool _isRunning, const Debugger::DisasmLine& _line,
+void dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::DisasmLine& _line,
 	std::function<void(const Addr _addr)> _onMouseLeft,
 	std::function<void(const Addr _addr)> _onMouseRight)
 {
@@ -307,7 +307,12 @@ void dev::DrawCodeLine(const bool _isRunning, const Debugger::DisasmLine& _line,
 		if (i == 0)
 		{
 			// draw a mnenonic
-			ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, "\t%s ", cmd_parts.c_str());
+			if (_tab){
+				ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, "\t%s ", cmd_parts.c_str());
+			}
+			else {
+				ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, "%s ", cmd_parts.c_str());
+			}
 		}
 		else
 		{
@@ -329,7 +334,8 @@ void dev::DrawCodeLine(const bool _isRunning, const Debugger::DisasmLine& _line,
 					// check if the hexadecimal literal is hovered
 					ImGui::SameLine();
 					bool drawNormalLiteral = true;
-					if (!_isRunning)
+					if (!_isRunning &&
+						!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
 					{
 						ImVec2 textPos = ImGui::GetCursorScreenPos();
 						ImVec2 textSize = ImGui::CalcTextSize(operand.c_str());
@@ -383,5 +389,43 @@ void dev::DrawCodeLine(const bool _isRunning, const Debugger::DisasmLine& _line,
 			}
 		}
 		i++;
+	}
+}
+
+void dev::DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLine,
+			std::function<void()> _onMouseLeft,
+			std::function<void()> _onMouseRight)
+{
+	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
+
+	bool drawNormalLiteral = true;
+	if (!_isRunning &&
+		!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+	{
+		ImVec2 textPos = ImGui::GetCursorScreenPos();
+		ImVec2 textSize = ImGui::CalcTextSize(_disasmLine.addrS.c_str());
+		if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
+		{
+			ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
+			// draw a highlighted hexadecimal literal
+			ImGui::TextColored(dev::IM_VEC4(0xFFFFFFFF), "%s", _disasmLine.addrS.c_str());
+			
+			// if it's clicked, scroll the disasm to highlighted addr
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+			{
+				_onMouseLeft();
+			}
+
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			{
+				_onMouseRight();
+			}
+
+			drawNormalLiteral = false;
+		}
+	}
+	if (drawNormalLiteral)
+	{
+		ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, _disasmLine.addrS.c_str());
 	}
 }

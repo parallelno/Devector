@@ -127,7 +127,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& regs = *res;
 	Addr regPC = regs["pc"];
-	bool showItemContextMenu = false;
+	bool openItemContextMenu = false;
 	static int editedBreakpointAddr = -1;
 	int reqUpdateAddr = -1;
 	static int copyToClipboardAddr = -1; // if it's -1, don't add the option, if it's >=0, add the option with the addr = copyToClipboardAddr
@@ -207,7 +207,16 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				ColumnClippingEnable(*m_dpiScaleP); // enable clipping
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
 				if (isCode) {
-					ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, line.addrS.c_str());
+					DrawAddr(_isRunning, line, 
+						// _onMouseLeft. Navigate to the address
+						[&]()
+						{},
+						// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
+						[&]()
+						{
+							copyToClipboardAddr = addr;
+						}
+					);
 				}
 				ColumnClippingDisable();
 
@@ -260,7 +269,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					ImGui::TableNextColumn();
 					ColumnClippingEnable(*m_dpiScaleP); // enable clipping
 
-					dev::DrawCodeLine(_isRunning, line, 
+					dev::DrawCodeLine(true, _isRunning, line, 
 						// _onMouseLeft. Navigate to the address
 						[&](const Addr _addr)
 						{
@@ -316,55 +325,15 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					if (mousePos.x >= rowMin.x && mousePos.x < rowMax.x &&
 						mousePos.y >= rowMin.y && mousePos.y < rowMax.y)
 					{
-						showItemContextMenu = true;
+						openItemContextMenu = true;
 						editedBreakpointAddr = addr;
 					}
 				}
 			}
 
 		ImGui::EndTable();
-
-
-		// the item context menu
-		if (showItemContextMenu) ImGui::OpenPopup("DisasmItemMenu");
-		if (ImGui::BeginPopup("DisasmItemMenu"))
-		{
-			if (copyToClipboardAddr >= 0 ){
-				if (ImGui::MenuItem("Copy To Clipboard")) {
-					dev::CopyToClipboard(std::format("0x{:04X}", copyToClipboardAddr));
-					copyToClipboardAddr = -1;
-				}
-				ImGui::SeparatorText("");
-			}
-			if (ImGui::MenuItem("Show Current Break")) {
-				UpdateDisasm(regPC);
-			}
-			ImGui::SeparatorText("");
-			if (ImGui::MenuItem("Run To Selected Line") && editedBreakpointAddr >= 0)
-			{
-				m_debugger.AddBreakpoint(editedBreakpointAddr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
-				m_hardware.Request(Hardware::Req::RUN);
-			}
-			ImGui::SeparatorText("");
-			if (ImGui::MenuItem("Add/Remove Beakpoint"))
-			{
-				auto bpStatus = m_debugger.GetBreakpointStatus(editedBreakpointAddr);
-
-				if (bpStatus == Breakpoint::Status::DELETED) {
-					m_debugger.AddBreakpoint(editedBreakpointAddr);
-				}
-				else {
-					m_debugger.DelBreakpoint(editedBreakpointAddr);
-				}
-				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
-			}
-			if (ImGui::MenuItem("Remove All Beakpoints")) {
-				m_debugger.DelBreakpoints();
-				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
-			};
-			ImGui::EndPopup();
-		}
 	}
+	DrawDisasmContextMenu(openItemContextMenu, regPC, editedBreakpointAddr, copyToClipboardAddr);
 
 	ImGui::PopStyleVar(2);
 
@@ -481,4 +450,49 @@ void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOf
 {
 	// TODO: request a meaningful amount disasmm lines, not 80!
 	m_disasm = m_debugger.GetDisasm(_addr, 80, _instructionsOffset);
+}
+
+int dev::DisasmWindow::DrawDisasmContextMenu(const bool _openContextMenu, const Addr _regPC, int _addr, int _copyToClipboardAddr)
+{
+	if (_openContextMenu) ImGui::OpenPopup("DisasmItemMenu");
+
+	if (ImGui::BeginPopup("DisasmItemMenu"))
+	{
+		if (_copyToClipboardAddr >= 0 ){
+			if (ImGui::MenuItem("Copy To Clipboard")) {
+				dev::CopyToClipboard(std::format("0x{:04X}", _copyToClipboardAddr));
+				_copyToClipboardAddr = -1;
+			}
+			ImGui::SeparatorText("");
+		}
+		if (ImGui::MenuItem("Show Current Break")) {
+			UpdateDisasm(_regPC);
+		}
+		ImGui::SeparatorText("");
+		if (ImGui::MenuItem("Run To Selected Line") && _addr >= 0)
+		{
+			m_debugger.AddBreakpoint(_addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
+			m_hardware.Request(Hardware::Req::RUN);
+		}
+		ImGui::SeparatorText("");
+		if (ImGui::MenuItem("Add/Remove Beakpoint"))
+		{
+			auto bpStatus = m_debugger.GetBreakpointStatus(_addr);
+
+			if (bpStatus == Breakpoint::Status::DELETED) {
+				m_debugger.AddBreakpoint(_addr);
+			}
+			else {
+				m_debugger.DelBreakpoint(_addr);
+			}
+			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+		}
+		if (ImGui::MenuItem("Remove All Beakpoints")) {
+			m_debugger.DelBreakpoints();
+			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+		};
+		ImGui::EndPopup();
+	}
+
+	return _copyToClipboardAddr;
 }

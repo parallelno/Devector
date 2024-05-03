@@ -67,26 +67,33 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 	if (_isRunning) ImGui::EndDisabled();
 
 	// disasm table
-	const int COLUMNS_COUNT = 2;
+	const int COLUMNS_COUNT = 4;
 	const char* tableName = "##TraceLogTable";
+	static int selectedLineIdx = 0;
+	bool openItemContextMenu = false;
+	static int copyToClipboardAddr = -1; // if it's -1, don't add the option, if it's >=0, add the option with the addr = copyToClipboardAddr
 
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 
 	static ImGuiTableFlags flags =
+		//ImGuiTableFlags_NoPadOuterX |
 		ImGuiTableFlags_ScrollY |
-		ImGuiTableFlags_HighlightHoveredColumn |
-		ImGuiTableFlags_BordersOuter | 
-		ImGuiTableFlags_Hideable;
+		//ImGuiTableFlags_NoClip |
+		ImGuiTableFlags_NoBordersInBodyUntilResize |
+		ImGuiTableFlags_Resizable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
+		ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, 0);
         ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, ADDR_W);
         ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthFixed, CODE_W);
+		ImGui::TableSetupColumn("consts");
 
 		// addr & data
 		int idx = 0;
 		static int addrHovered = -1;
 		ImGuiListClipper clipper;
-		clipper.Begin(int(m_traceLog.size()) / (COLUMNS_COUNT - 1));
+		clipper.Begin(m_traceLog.size());
 		while (clipper.Step())
 		{
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
@@ -96,17 +103,32 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 				
 				if (_isRunning) ImGui::BeginDisabled();
 
+				int addr = disasmLine.addr;
+
+				// the line selection/highlight
+				ImGui::TableNextColumn();
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_BRK);
+				const bool isSelected = selectedLineIdx == row;
+				if (ImGui::Selectable(std::format("##TraceLogLineId{:04d}", row).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
+				{
+					selectedLineIdx = row;
+				}
+
+
 				// the addr column
 				ImGui::TableNextColumn();
-				Addr headerAddr = row * (COLUMNS_COUNT - 1);
-				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
-				ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, disasmLine.addrS.c_str());
+				DrawAddr(_isRunning, disasmLine, [&](){}, 
+					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
+					[&]()
+					{
+						copyToClipboardAddr = addr;
+						openItemContextMenu = true;
+					}
+				);
 
 				// the instruction column
 				ImGui::TableNextColumn();
-				//ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, " %s", disasmLine.str.c_str());
-
-				dev::DrawCodeLine(_isRunning, disasmLine, 
+				dev::DrawCodeLine(false, _isRunning, disasmLine, 
 					// _onMouseLeft. Navigate to the address
 					[&](const Addr _addr)
 					{
@@ -115,15 +137,40 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
 					[&](const Addr _addr)
 					{
-						
+						copyToClipboardAddr = _addr;
+						openItemContextMenu = true;
 					}
 				);
+
+				// the constants column
+				ImGui::TableNextColumn();
+				ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, "%s", disasmLine.consts.c_str());
 				
 				if (_isRunning) ImGui::EndDisabled();
 			}
 		}
 		ImGui::EndTable();
 	}
+	DrawDisasmContextMenu(openItemContextMenu, copyToClipboardAddr);
 
-	ImGui::PopStyleVar(1);
+	ImGui::PopStyleVar(2);
+}
+
+
+int dev::TraceLogWindow::DrawDisasmContextMenu(const bool _openContextMenu, int _copyToClipboardAddr)
+{
+	if (_openContextMenu) ImGui::OpenPopup("DisasmItemMenu");
+
+	if (ImGui::BeginPopup("DisasmItemMenu"))
+	{
+		if (_copyToClipboardAddr >= 0 ){
+			if (ImGui::MenuItem("Copy To Clipboard")) {
+				dev::CopyToClipboard(std::format("0x{:04X}", _copyToClipboardAddr));
+				_copyToClipboardAddr = -1;
+			}
+		}
+		ImGui::EndPopup();
+	}
+
+	return _copyToClipboardAddr;
 }
