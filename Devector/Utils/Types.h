@@ -39,7 +39,6 @@ namespace dev
 			}; // redraw disasm at the prodived addr in m_reqDisasmUpdateData
 		Type type = Type::NONE;
 		int addr = 0;
-		int delay = -1;
 	};
 }
 #endif // !DEV_TYPES_H

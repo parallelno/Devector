@@ -211,7 +211,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					{
 						m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
 						m_reqDisasm.addr = addr;
-						m_reqDisasm.delay = DELAYED_SELECTION_TIME;
 					},
 					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
 					[&]()
@@ -278,7 +277,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					{
 						m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
 						m_reqDisasm.addr = _addr;
-						m_reqDisasm.delay = DELAYED_SELECTION_TIME;
 					},
 					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
 					[&](const Addr _addr)
@@ -405,24 +403,21 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			break;
 
 		case ReqDisasm::Type::NAVIGATE_TO_ADDR:
-			if (m_reqDisasm.delay-- == 0)
-			{
-				if (m_navigateAddrsIdx == 0) {
-					m_navigateAddrs[m_navigateAddrsIdx] = m_disasm[DISASM_INSTRUCTION_OFFSET].addr;
-					m_navigateAddrsSize++;
-				}
-				if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
-					m_navigateAddrs[++m_navigateAddrsIdx] = m_reqDisasm.addr;
-					m_navigateAddrsSize = m_navigateAddrsIdx + 1;
-				}
-				UpdateDisasm(m_reqDisasm.addr);
-				break;
+			if (m_navigateAddrsIdx == 0) {
+				m_navigateAddrs[m_navigateAddrsIdx] = m_disasm[DISASM_INSTRUCTION_OFFSET].addr;
+				m_navigateAddrsSize++;
 			}
+			if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
+				m_navigateAddrs[++m_navigateAddrsIdx] = m_reqDisasm.addr;
+				m_navigateAddrsSize = m_navigateAddrsIdx + 1;
+			}
+			UpdateDisasm(m_reqDisasm.addr);
+			break;
 		
 		default:
 			break;
 		}
-		if (m_reqDisasm.delay < 0) m_reqDisasm.type = ReqDisasm::Type::NONE;
+		m_reqDisasm.type = ReqDisasm::Type::NONE;
 	}
 
 	if (_isRunning) ImGui::EndDisabled();

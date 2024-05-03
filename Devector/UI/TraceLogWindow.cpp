@@ -124,7 +124,6 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 					{
 						m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
 						m_reqDisasm.addr = addr;
-						m_reqDisasm.delay = DELAYED_SELECTION_TIME;
 					},
 					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
 					[&]()
@@ -142,7 +141,6 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 					{
 						m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
 						m_reqDisasm.addr = _addr;
-						m_reqDisasm.delay = DELAYED_SELECTION_TIME;
 					},
 					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
 					[&](const Addr _addr)

@@ -347,7 +347,7 @@ void dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::D
 							
 							Addr reqUpdateAddr = dev::StrHexToInt(operand.c_str() + 2);
 							// if it's clicked, scroll the disasm to highlighted addr
-							if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+							if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 							{
 								_onMouseLeft(reqUpdateAddr);
 							}
@@ -411,7 +411,7 @@ void dev::DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLin
 			ImGui::TextColored(dev::IM_VEC4(0xFFFFFFFF), "%s", _disasmLine.addrS.c_str());
 			
 			// if it's clicked, scroll the disasm to highlighted addr
-			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 			{
 				_onMouseLeft();
 			}

@@ -11,9 +11,6 @@ namespace dev
 	constexpr static int MAIN_WINDOW_X = 0;
 	constexpr static int MAIN_WINDOW_Y = 0;
 
-	//constexpr static int GL_NEAREST1 = 0x2600;
-	//constexpr static int GL_LINEAR1 = 0x2601;
-
 #define GL_NEAREST 0x2600
 #define GL_LINEAR 0x2601
 #define GL_UNSIGNED_INT                   0x1405
@@ -28,7 +25,7 @@ namespace dev
 	constexpr static ErrCode ERROR_UNSPECIFIED = 1;
 	constexpr static ErrCode ERROR_NO_FILES = 2;
 
-	static constexpr int DELAYED_SELECTION_TIME = 4;
+	static constexpr int DELAYED_SELECTION_TIME = 6;
 }
 
 #endif // !DEV_CONSTS_H

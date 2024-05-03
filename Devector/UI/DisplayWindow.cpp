@@ -14,6 +14,7 @@ const char* vtxShaderS = R"#(
 	uniform vec4 m_shaderData_bordL_bordB_visBord;
 
 	out vec2 uv0;
+	//out ivec4 visBord_visibleArea_texRes;
 
 	void main()
 	{
@@ -33,6 +34,8 @@ const char* vtxShaderS = R"#(
 		uv0 *= vec2(visibleArea * 2.0f , visibleArea) * texPxlSize;
 		uv0 += vec2(0.5f, 0.5f);
 
+		//visBord_visibleArea_texRes = ivec4(int(visBord), int(visibleArea), 768, 312);
+
 		gl_Position = vec4(pos.xyz, 1.0f);
 	}
 )#";
@@ -43,9 +46,9 @@ const char* fragShaderS = R"#(
 	precision highp float;
 
 	in vec2 uv0;
+	//in ivec4 visBord_visibleArea_texRes;
 
 	uniform sampler2D texture0;
-	uniform ivec2 iresolution;
 	uniform vec4 m_shaderData_scrollVert;
 
 	layout (location = 0) out vec4 out0;
@@ -53,24 +56,23 @@ const char* fragShaderS = R"#(
 	void main()
 	{
 		vec2 uv = uv0;
-		float scrollV = 0;
+		vec2 texPxlSize = vec2(1.0f / 768.0f, 1.0f / 312.0f);
 
-		vec2 texPxlSize = vec2(1.0f/768.0f , 1.0f/312.0f);
-
-		float borderLeft = texPxlSize.x * 128.0f;
-		float borderRight = borderLeft + texPxlSize.x * 512.0f;
-		float borderTop = texPxlSize.y * 40.0f;
-		float borderBottom = borderTop + texPxlSize.y * 256.0f;
+		float borderLeft = 128.0f * texPxlSize.x;
+		float borderRight = borderLeft + 512.0f;
+		float borderTop = 40.0f *  texPxlSize.y;
+		float borderBottom = borderTop + 256.0f;
 
 		if (uv.x >= borderLeft &&
 			uv.x < borderRight &&
 			uv.y >= borderTop &&
 			uv.y < borderBottom)
 		{
-			scrollV = 1.0f/255.0f * m_shaderData_scrollVert.x;
+			uv.y -= m_shaderData_scrollVert.x * texPxlSize.y;
+			// wrap V
+			uv.y += uv.y < borderTop ? 256.0f * texPxlSize.y : 0.0f;
 		}
-		vec2 uvScrolled = vec2(uv.x, uv.y - scrollV);
-		vec3 color = texture(texture0, uvScrolled).rgb;
+		vec3 color = texture(texture0, uv).rgb;
 		out0 = vec4(color, 1.0f);
 	}
 )#";
