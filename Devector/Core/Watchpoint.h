@@ -9,7 +9,7 @@
 #include <format>
 
 #include "Utils/Types.h"
-#include "Core/I8080.h"
+#include "Core/I8080Cpu.h"
 #include "Core/Memory.h"
 
 namespace dev

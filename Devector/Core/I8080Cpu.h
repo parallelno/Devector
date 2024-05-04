@@ -23,7 +23,7 @@
 
 namespace dev 
 {
-	class I8080
+	class I8080Cpu
 	{
 		uint64_t m_cc; // clock cycles. it's the debug related data
 		Addr m_pc, m_sp; // program counter, stack pointer
@@ -64,8 +64,8 @@ namespace dev
 		using DebugOnReadFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
 		using DebugOnWriteFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
 	
-		I8080() = delete;
-		I8080(
+		I8080Cpu() = delete;
+		I8080Cpu(
 			Memory& _memory,
 			InputFunc _input,
 			OutputFunc _output);

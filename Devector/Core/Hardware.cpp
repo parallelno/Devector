@@ -7,7 +7,9 @@ dev::Hardware::Hardware()
     m_status(Status::STOP),
     m_memory(),
     m_keyboard(),
-    m_io(m_keyboard, m_memory, &Display::VectorColorToArgb),
+    m_timer(), 
+    m_timerWrapper(m_timer),
+    m_io(m_keyboard, m_memory, m_timer, &Display::VectorColorToArgb),
     m_cpu(
         m_memory,
         std::bind(&IO::PortIn, &m_io, std::placeholders::_1),
@@ -110,9 +112,9 @@ auto dev::Hardware::Request(const Req _req, const nlohmann::json& _dataJ)
 }
 
 void dev::Hardware::AttachCheckBreak(CheckBreakFunc* _funcP) { m_checkBreak.store(_funcP); }
-void dev::Hardware::AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc* _funcP) { m_cpu.AttachDebugOnReadInstr(_funcP); }
-void dev::Hardware::AttachDebugOnRead(I8080::DebugOnReadFunc* _funcP) { m_cpu.AttachDebugOnRead(_funcP); }
-void dev::Hardware::AttachDebugOnWrite(I8080::DebugOnWriteFunc* _funcP) { m_cpu.AttachDebugOnWrite(_funcP); }
+void dev::Hardware::AttachDebugOnReadInstr(I8080Cpu::DebugOnReadInstrFunc* _funcP) { m_cpu.AttachDebugOnReadInstr(_funcP); }
+void dev::Hardware::AttachDebugOnRead(I8080Cpu::DebugOnReadFunc* _funcP) { m_cpu.AttachDebugOnRead(_funcP); }
+void dev::Hardware::AttachDebugOnWrite(I8080Cpu::DebugOnWriteFunc* _funcP) { m_cpu.AttachDebugOnWrite(_funcP); }
 
 // internal thread
 void dev::Hardware::ReqHandling(const bool _waitReq)

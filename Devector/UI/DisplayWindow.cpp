@@ -11,16 +11,15 @@ const char* vtxShaderS = R"#(
 	layout (location = 0) in vec3 pos;
 	layout (location = 1) in vec2 uv;
 
-	uniform vec4 m_shaderData_bordL_bordB_visBord;
+	uniform vec4 m_shaderData_bordL_bordB_visBord_bordT;
 
 	out vec2 uv0;
-	//out ivec4 visBord_visibleArea_texRes;
 
 	void main()
 	{
-		float bordL = 256.0f - m_shaderData_bordL_bordB_visBord.x;
-		float bordB = m_shaderData_bordL_bordB_visBord.y;
-		float visBord = m_shaderData_bordL_bordB_visBord.z;
+		float bordL = 256.0f - m_shaderData_bordL_bordB_visBord_bordT.x;
+		float bordB = m_shaderData_bordL_bordB_visBord_bordT.y;
+		float visBord = m_shaderData_bordL_bordB_visBord_bordT.z;
 
 		vec2 texPxlSize = vec2(1.0f/768.0f , 1.0f/312.0f);
 		
@@ -34,8 +33,6 @@ const char* vtxShaderS = R"#(
 		uv0 *= vec2(visibleArea * 2.0f , visibleArea) * texPxlSize;
 		uv0 += vec2(0.5f, 0.5f);
 
-		//visBord_visibleArea_texRes = ivec4(int(visBord), int(visibleArea), 768, 312);
-
 		gl_Position = vec4(pos.xyz, 1.0f);
 	}
 )#";
@@ -44,12 +41,13 @@ const char* vtxShaderS = R"#(
 const char* fragShaderS = R"#(
 	#version 330 core
 	precision highp float;
+	precision highp int;
 
 	in vec2 uv0;
-	//in ivec4 visBord_visibleArea_texRes;
 
 	uniform sampler2D texture0;
 	uniform vec4 m_shaderData_scrollVert;
+	uniform vec4 m_shaderData_bordL_bordB_visBord_bordT;
 
 	layout (location = 0) out vec4 out0;
 
@@ -58,10 +56,10 @@ const char* fragShaderS = R"#(
 		vec2 uv = uv0;
 		vec2 texPxlSize = vec2(1.0f / 768.0f, 1.0f / 312.0f);
 
-		float borderLeft = 128.0f * texPxlSize.x;
-		float borderRight = borderLeft + 512.0f;
-		float borderTop = 40.0f *  texPxlSize.y;
-		float borderBottom = borderTop + 256.0f;
+		float borderLeft = m_shaderData_bordL_bordB_visBord_bordT.x * texPxlSize.x;
+		float borderRight = borderLeft + 512.0f * texPxlSize.x;
+		float borderTop = m_shaderData_bordL_bordB_visBord_bordT.w *  texPxlSize.y;
+		float borderBottom = borderTop + 256.0f * texPxlSize.y;
 
 		if (uv.x >= borderLeft &&
 			uv.x < borderRight &&
@@ -98,8 +96,8 @@ bool dev::DisplayWindow::Init()
 
 	GLUtils::ShaderParams shaderParams = {
 		{ "m_shaderData_scrollVert", &m_shaderData_scrollVert },
-		{ "m_shaderData_bordL_bordB_visBord", &m_shaderData_bordL_bordB_visBord }};
-	auto vramMatRes = m_glUtils.InitMaterial(m_vramShaderId, FRAME_W, FRAME_H,
+		{ "m_shaderData_bordL_bordB_visBord_bordT", &m_shaderData_bordL_bordB_visBord_bordT }};
+	auto vramMatRes = m_glUtils.InitMaterial(m_vramShaderId, RENDER_TARGET_W, RENDER_TARGET_H,
 			{m_vramTexRes}, shaderParams);
 	if (!vramMatRes) return false;
 	m_vramMatId = *vramMatRes;
@@ -161,7 +159,7 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 	// update
 	if (m_isGLInited)
 	{
-		m_shaderData_bordL_bordB_visBord.x = (float)Display::BORDER_LEFT;
+		m_shaderData_bordL_bordB_visBord_bordT.x = (float)Display::BORDER_LEFT;
 		m_shaderData_scrollVert.x = static_cast<uint8_t>(m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert") + 1); // adding +1 offset because the default is 255
 
 		auto frameP = m_hardware.GetFrame(_isRunning);

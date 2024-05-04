@@ -6,11 +6,12 @@
 #include <string>
 
 #include "Utils/Types.h"
-#include "Core/I8080.h"
+#include "Core/I8080Cpu.h"
 #include "Core/Memory.h"
 #include "Core/Keyboard.h"
 #include "Core/IO.h"
 #include "Core/Display.h"
+#include "Core/I8253Timer.h"
 #include "Utils/Utils.h"
 #include "Utils/Result.h"
 #include "Utils/TQueue.h"
@@ -23,11 +24,13 @@ namespace dev
 {
 	class Hardware
 	{
-		I8080 m_cpu;
+		I8080Cpu m_cpu;
 		Memory m_memory;
 		Keyboard m_keyboard;
 		IO m_io;
 		Display m_display;
+		I8253Timer m_timer;
+		TimerWrapper m_timerWrapper;
 
 		enum class Status : int {
 			RUN,
@@ -68,9 +71,9 @@ namespace dev
 		auto GetRam() const -> const Memory::Ram*;
 
 		void AttachCheckBreak(CheckBreakFunc* _funcP);
-		void AttachDebugOnReadInstr(I8080::DebugOnReadInstrFunc* _funcP);
-		void AttachDebugOnRead(I8080::DebugOnReadFunc* _funcP);
-		void AttachDebugOnWrite(I8080::DebugOnWriteFunc* _funcP);
+		void AttachDebugOnReadInstr(I8080Cpu::DebugOnReadInstrFunc* _funcP);
+		void AttachDebugOnRead(I8080Cpu::DebugOnReadFunc* _funcP);
+		void AttachDebugOnWrite(I8080Cpu::DebugOnWriteFunc* _funcP);
 
 	private:
 		std::atomic <CheckBreakFunc*> m_checkBreak;

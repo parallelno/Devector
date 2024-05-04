@@ -42,7 +42,7 @@
     <ClCompile Include="Core\Hardware.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\I8080.cpp">
+    <ClCompile Include="Core\I8080Cpu.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\IO.cpp">
@@ -108,6 +108,9 @@
     <ClCompile Include="UI\TraceLogWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="Core\I8253Timer.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -159,7 +162,7 @@
     <ClInclude Include="Core\Hardware.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\I8080.h">
+    <ClInclude Include="Core\I8080Cpu.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\IO.h">
@@ -236,6 +239,9 @@
     </ClInclude>
     <ClInclude Include="UI\TraceLogWindow.h">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\I8253Timer.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

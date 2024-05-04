@@ -4,9 +4,10 @@
 // https://github.com/parallelno/v06x/blob/master/src/vio.h
 // some of the pieces of the original code remain unclear for me
 
-dev::IO::IO(Keyboard& _keyboard, Memory& _memory, VectorColorToArgbFunc _vectorColorToArgbFunc)
+dev::IO::IO(Keyboard& _keyboard, Memory& _memory, I8253Timer& _timer, 
+    VectorColorToArgbFunc _vectorColorToArgbFunc)
     :
-    m_keyboard(_keyboard), m_memory(_memory),
+    m_keyboard(_keyboard), m_memory(_memory), m_timer(_timer),
     VectorColorToArgb(_vectorColorToArgbFunc)
 {
     Init();
@@ -42,7 +43,7 @@ auto dev::IO::PortIn(uint8_t _port)
 
     switch (_port) {
     case 0x00:
-        result = 0xFF;
+        //result = 0xFF; TODO: learn what it's for
         break;
     case 0x01:
     {
@@ -93,7 +94,7 @@ auto dev::IO::PortIn(uint8_t _port)
     case 0x09:
     case 0x0a:
     case 0x0b:
-        //return timer.read(~(port & 3));
+        return m_timer.read(_port);
 
         // Joystick "C"
     case 0x0e:
@@ -217,10 +218,10 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     case 0x09:
     case 0x0a:
     case 0x0b:
-        //timer.write((~port & 3), _value);
+        m_timer.write(_port, _value);
         break;
 
-        // palette (all of them below???)
+        // palette (ask Svofski why 0x0d and 0x0e ports are for pallete)
     case PORT_OUT_BORDER_COLOR:
     case 0x0d:
     case 0x0e:

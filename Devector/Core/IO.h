@@ -9,6 +9,7 @@
 #include "Utils/Types.h"
 #include "Core/Keyboard.h"
 #include "Core/Memory.h"
+#include "Core/I8253Timer.h"
 
 namespace dev
 {
@@ -57,13 +58,14 @@ namespace dev
 
 		Keyboard& m_keyboard;
 		Memory& m_memory;
+		I8253Timer& m_timer;
 
 		VectorColorToArgbFunc VectorColorToArgb;
 
 		void PortOutHandling(uint8_t _port, uint8_t _value);
 
 	public:
-		IO(Keyboard& _keyboard, Memory& _memory, VectorColorToArgbFunc _vecToArgbFunc);
+		IO(Keyboard& _keyboard, Memory& _memory, I8253Timer& _timer, VectorColorToArgbFunc _vecToArgbFunc);
 		void Init();
 		auto PortIn(uint8_t _port) -> uint8_t;
 		void PortOut(uint8_t _port, uint8_t _value);

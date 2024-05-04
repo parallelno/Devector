@@ -1,6 +1,6 @@
-#include "I8080.h"
+#include "I8080Cpu.h"
 
-dev::I8080::I8080(
+dev::I8080Cpu::I8080Cpu(
 	Memory& _memory,
 	InputFunc _input, 
 	OutputFunc _output)
@@ -16,13 +16,13 @@ dev::I8080::I8080(
 	Init();
 }
 
-void dev::I8080::Init()
+void dev::I8080Cpu::Init()
 {
 	m_a = m_b = m_c = m_d = m_e = m_h = m_l = 0;
 	Reset();
 }
 
-void dev::I8080::Reset()
+void dev::I8080Cpu::Reset()
 {
 	m_cc = m_pc = m_sp = 0;
 	m_instructionReg = m_TMP = m_ACT = m_W = m_Z = 0;
@@ -32,7 +32,7 @@ void dev::I8080::Reset()
 	m_HLTA = m_INTE = m_IFF = m_eiPending = false;
 }
 
-void dev::I8080::ExecuteMachineCycle(bool _irq)
+void dev::I8080Cpu::ExecuteMachineCycle(bool _irq)
 {
 	m_IFF |= _irq & m_INTE;
 
@@ -58,9 +58,9 @@ void dev::I8080::ExecuteMachineCycle(bool _irq)
 	m_cc += MACHINE_CC;
 }
 
-bool dev::I8080::IsInstructionExecuted() const
+bool dev::I8080Cpu::IsInstructionExecuted() const
 {
-	return m_machineCycle == I8080::INSTR_EXECUTED || m_HLTA;
+	return m_machineCycle == I8080Cpu::INSTR_EXECUTED || m_HLTA;
 }
 
 // an instruction execution time in macine cycles. each machine cicle is 4 cc
@@ -88,7 +88,7 @@ static constexpr int M_CYCLES[]
 	4, 3, 3, 1, 6, 4, 2, 4, 4, 2, 3, 1, 6, 6, 2, 4  // F
 };
 
-void dev::I8080::Decode()
+void dev::I8080Cpu::Decode()
 {
 	switch (m_instructionReg)
 	{
@@ -402,11 +402,11 @@ void dev::I8080::Decode()
 //
 ////////////////////////////////////////////////////////////////////////////
 
-void dev::I8080::AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP) { m_debugOnReadInstr.store(_funcP); }
-void dev::I8080::AttachDebugOnRead(DebugOnReadFunc* _funcP) { m_debugOnRead.store(_funcP); }
-void dev::I8080::AttachDebugOnWrite(DebugOnWriteFunc* _funcP) { m_debugOnWrite.store(_funcP); }
+void dev::I8080Cpu::AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP) { m_debugOnReadInstr.store(_funcP); }
+void dev::I8080Cpu::AttachDebugOnRead(DebugOnReadFunc* _funcP) { m_debugOnRead.store(_funcP); }
+void dev::I8080Cpu::AttachDebugOnWrite(DebugOnWriteFunc* _funcP) { m_debugOnWrite.store(_funcP); }
 
-uint8_t dev::I8080::ReadInstrMovePC()
+uint8_t dev::I8080Cpu::ReadInstrMovePC()
 {
 	auto globalAddr = m_memory.GetGlobalAddr(m_pc, Memory::AddrSpace::RAM);
 
@@ -420,7 +420,7 @@ uint8_t dev::I8080::ReadInstrMovePC()
 	return op_code;
 }
 
-uint8_t dev::I8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
+uint8_t dev::I8080Cpu::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
 {
 	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
 
@@ -431,7 +431,7 @@ uint8_t dev::I8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
 	return val;
 }
 
-void dev::I8080::WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _addrSpace)
+void dev::I8080Cpu::WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _addrSpace)
 {
 	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
 	
@@ -440,7 +440,7 @@ void dev::I8080::WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _
 	if (DebugOnWrite && *DebugOnWrite) (*DebugOnWrite)(globalAddr, _value);
 }
 
-uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)
+uint8_t dev::I8080Cpu::ReadByteMovePC(Memory::AddrSpace _addrSpace)
 {
 	auto result = ReadByte(m_pc, _addrSpace);
 	m_pc++;
@@ -454,7 +454,7 @@ uint8_t dev::I8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)
 //
 ////////////////////////////////////////////////////////////////////////////
 
-uint8_t dev::I8080::GetFlags() const
+uint8_t dev::I8080Cpu::GetFlags() const
 {
 	int psw = 0;
 	psw |= m_flagS ? 1 << 7 : 0;
@@ -469,12 +469,12 @@ uint8_t dev::I8080::GetFlags() const
 	return (uint8_t)psw;
 }
 
-uint16_t dev::I8080::GetAF() const
+uint16_t dev::I8080Cpu::GetAF() const
 {
 	return (uint16_t)(m_a << 8 | GetFlags());
 }
 
-void dev::I8080::SetFlags(uint8_t psw)
+void dev::I8080Cpu::SetFlags(uint8_t psw)
 {
 	m_flagS = ((psw >> 7) & 1) == 1;
 	m_flagZ = ((psw >> 6) & 1) == 1;
@@ -487,51 +487,51 @@ void dev::I8080::SetFlags(uint8_t psw)
 	m_flagUnused5 = false;
 }
 
-uint16_t dev::I8080::GetBC() const
+uint16_t dev::I8080Cpu::GetBC() const
 { 
 	return (m_b << 8) | m_c; 
 }
 
-void dev::I8080::SetBC(uint16_t val)
+void dev::I8080Cpu::SetBC(uint16_t val)
 {
 	m_b = (uint8_t)(val >> 8);
 	m_c = (uint8_t)(val & 0xFF);
 }
 
-uint16_t dev::I8080::GetDE() const
+uint16_t dev::I8080Cpu::GetDE() const
 {
 	return (uint16_t)((m_d << 8) | m_e);
 }
 
-void dev::I8080::SetDE(uint16_t val)
+void dev::I8080Cpu::SetDE(uint16_t val)
 {
 	m_d = (uint8_t)(val >> 8);
 	m_e = (uint8_t)(val & 0xFF);
 }
 
-uint16_t dev::I8080::GetHL() const
+uint16_t dev::I8080Cpu::GetHL() const
 {
 	return (uint16_t)((m_h << 8) | m_l);
 }
 
-void dev::I8080::SetHL(uint16_t val)
+void dev::I8080Cpu::SetHL(uint16_t val)
 {
 	m_h = (uint8_t)(val >> 8);
 	m_l = (uint8_t)(val & 0xFF);
 }
 
-uint64_t dev::I8080::GetCC() const { return m_cc; }
-uint16_t dev::I8080::GetPC() const { return m_pc; }
-uint16_t dev::I8080::GetSP() const { return m_sp; }
-bool dev::I8080::GetFlagS() const {	return m_flagS; }
-bool dev::I8080::GetFlagZ() const { return m_flagZ; }
-bool dev::I8080::GetFlagAC() const { return m_flagAC; }
-bool dev::I8080::GetFlagP() const { return m_flagP; }
-bool dev::I8080::GetFlagC() const {	return m_flagC; }
-bool dev::I8080::GetINTE() const { return m_INTE; }
-bool dev::I8080::GetIFF() const { return m_IFF; }
-bool dev::I8080::GetHLTA() const { return m_HLTA; }
-auto dev::I8080::GetMachineCycle() const -> int { return m_machineCycle; }
+uint64_t dev::I8080Cpu::GetCC() const { return m_cc; }
+uint16_t dev::I8080Cpu::GetPC() const { return m_pc; }
+uint16_t dev::I8080Cpu::GetSP() const { return m_sp; }
+bool dev::I8080Cpu::GetFlagS() const {	return m_flagS; }
+bool dev::I8080Cpu::GetFlagZ() const { return m_flagZ; }
+bool dev::I8080Cpu::GetFlagAC() const { return m_flagAC; }
+bool dev::I8080Cpu::GetFlagP() const { return m_flagP; }
+bool dev::I8080Cpu::GetFlagC() const {	return m_flagC; }
+bool dev::I8080Cpu::GetINTE() const { return m_INTE; }
+bool dev::I8080Cpu::GetIFF() const { return m_IFF; }
+bool dev::I8080Cpu::GetHLTA() const { return m_HLTA; }
+auto dev::I8080Cpu::GetMachineCycle() const -> int { return m_machineCycle; }
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -559,19 +559,19 @@ static constexpr bool parityTable[]
 	true, false, false, true, false, true, true, false, false, true, true, false, true, false, false, true,
 };
 // returns the parity of a uint8_t: 0 if a number of set bits of `val` is odd, else 1
-bool dev::I8080::GetParity(uint8_t _val)
+bool dev::I8080Cpu::GetParity(uint8_t _val)
 {
 	return parityTable[_val];
 }
 // determines if there was a carry between bit 'bit_no' and 'bit_no - 1' during the calculation of 'a + b + cy'.
-bool dev::I8080::GetCarry(int _bit_no, uint8_t _a, uint8_t _b, bool _cy)
+bool dev::I8080Cpu::GetCarry(int _bit_no, uint8_t _a, uint8_t _b, bool _cy)
 {
 	int result = _a + _b + (_cy ? 1 : 0);
 	int carry = result ^ _a ^ _b;
 	return (carry & (1 << _bit_no)) != 0;
 }
 
-void dev::I8080::SetZSP(uint8_t _val)
+void dev::I8080Cpu::SetZSP(uint8_t _val)
 {
 	m_flagZ = _val == 0;
 	m_flagS = (_val >> 7) == 1;
@@ -579,7 +579,7 @@ void dev::I8080::SetZSP(uint8_t _val)
 }
 
 // rotate register A left
-void dev::I8080::RLC()
+void dev::I8080Cpu::RLC()
 {
 	m_flagC = m_a >> 7 == 1;
 	m_a = (uint8_t)(m_a << 1);
@@ -587,7 +587,7 @@ void dev::I8080::RLC()
 }
 
 // rotate register A right
-void dev::I8080::RRC()
+void dev::I8080Cpu::RRC()
 {
 	m_flagC = (m_a & 1) == 1;
 	m_a = (uint8_t)(m_a >> 1);
@@ -595,7 +595,7 @@ void dev::I8080::RRC()
 }
 
 // rotate register A left with the carry flag
-void dev::I8080::RAL()
+void dev::I8080Cpu::RAL()
 {
 	bool cy = m_flagC;
 	m_flagC = m_a >> 7 == 1;
@@ -604,7 +604,7 @@ void dev::I8080::RAL()
 }
 
 // rotate register A right with the carry flag
-void dev::I8080::RAR()
+void dev::I8080Cpu::RAR()
 {
 	bool cy = m_flagC;
 	m_flagC = (m_a & 1) == 1;
@@ -612,7 +612,7 @@ void dev::I8080::RAR()
 	m_a |= (uint8_t)(cy ? 1 << 7 : 0);
 }
 
-void dev::I8080::MOVRegReg(uint8_t& _regDest, uint8_t _regSrc)
+void dev::I8080Cpu::MOVRegReg(uint8_t& _regDest, uint8_t _regSrc)
 {
 	if (m_machineCycle == 0)
 	{
@@ -624,7 +624,7 @@ void dev::I8080::MOVRegReg(uint8_t& _regDest, uint8_t _regSrc)
 	}
 }
 
-void dev::I8080::LoadRegPtr(uint8_t& _regDest, Addr _addr)
+void dev::I8080Cpu::LoadRegPtr(uint8_t& _regDest, Addr _addr)
 {
 	if (m_machineCycle == 1)
 	{
@@ -632,7 +632,7 @@ void dev::I8080::LoadRegPtr(uint8_t& _regDest, Addr _addr)
 	}
 }
 
-void dev::I8080::MOVMemReg(uint8_t _sss)
+void dev::I8080Cpu::MOVMemReg(uint8_t _sss)
 {
 	if (m_machineCycle == 0)
 	{
@@ -644,7 +644,7 @@ void dev::I8080::MOVMemReg(uint8_t _sss)
 	}
 }
 
-void dev::I8080::MVIRegData(uint8_t& _regDest)
+void dev::I8080Cpu::MVIRegData(uint8_t& _regDest)
 {
 	if (m_machineCycle == 1)
 	{
@@ -652,7 +652,7 @@ void dev::I8080::MVIRegData(uint8_t& _regDest)
 	}
 }
 
-void dev::I8080::MVIMemData()
+void dev::I8080Cpu::MVIMemData()
 {
 	if (m_machineCycle == 1)
 	{
@@ -664,7 +664,7 @@ void dev::I8080::MVIMemData()
 	}
 }
 
-void dev::I8080::LDA()
+void dev::I8080Cpu::LDA()
 {
 	if (m_machineCycle == 1)
 	{
@@ -680,7 +680,7 @@ void dev::I8080::LDA()
 	}
 }
 
-void dev::I8080::STA()
+void dev::I8080Cpu::STA()
 {
 	if (m_machineCycle == 1)
 	{
@@ -696,7 +696,7 @@ void dev::I8080::STA()
 	}
 }
 
-void dev::I8080::STAX(Addr _addr)
+void dev::I8080Cpu::STAX(Addr _addr)
 {
 	if (m_machineCycle == 1)
 	{
@@ -704,7 +704,7 @@ void dev::I8080::STAX(Addr _addr)
 	}
 }
 
-void dev::I8080::LXI(uint8_t& _regH, uint8_t& _regL)
+void dev::I8080Cpu::LXI(uint8_t& _regH, uint8_t& _regL)
 {
 	if (m_machineCycle == 1)
 	{
@@ -716,7 +716,7 @@ void dev::I8080::LXI(uint8_t& _regH, uint8_t& _regL)
 	}
 }
 
-void dev::I8080::LXISP()
+void dev::I8080Cpu::LXISP()
 {
 	if (m_machineCycle == 1)
 	{
@@ -730,7 +730,7 @@ void dev::I8080::LXISP()
 	}
 }
 
-void dev::I8080::LHLD()
+void dev::I8080Cpu::LHLD()
 {
 	if (m_machineCycle == 1)
 	{
@@ -752,7 +752,7 @@ void dev::I8080::LHLD()
 	}
 }
 
-void dev::I8080::SHLD()
+void dev::I8080Cpu::SHLD()
 {
 	if (m_machineCycle == 1)
 	{
@@ -774,7 +774,7 @@ void dev::I8080::SHLD()
 	}
 }
 
-void dev::I8080::SPHL()
+void dev::I8080Cpu::SPHL()
 {
 	if (m_machineCycle == 1)
 	{
@@ -782,7 +782,7 @@ void dev::I8080::SPHL()
 	}
 }
 
-void dev::I8080::XCHG()
+void dev::I8080Cpu::XCHG()
 {
 	m_TMP = m_d;
 	m_d = m_h;
@@ -793,7 +793,7 @@ void dev::I8080::XCHG()
 	m_l = m_TMP;
 }
 
-void dev::I8080::XTHL()
+void dev::I8080Cpu::XTHL()
 {
 	if (m_machineCycle == 1)
 	{
@@ -818,7 +818,7 @@ void dev::I8080::XTHL()
 	}
 }
 
-void dev::I8080::PUSH(uint8_t _hb, uint8_t _lb)
+void dev::I8080Cpu::PUSH(uint8_t _hb, uint8_t _lb)
 {
 	if (m_machineCycle == 0)
 	{
@@ -838,7 +838,7 @@ void dev::I8080::PUSH(uint8_t _hb, uint8_t _lb)
 	}
 }
 
-void dev::I8080::POP(uint8_t& _regH, uint8_t& _regL)
+void dev::I8080Cpu::POP(uint8_t& _regH, uint8_t& _regL)
 {
 	if (m_machineCycle == 1)
 	{
@@ -853,7 +853,7 @@ void dev::I8080::POP(uint8_t& _regH, uint8_t& _regL)
 }
 
 // adds a value (+ an optional carry flag) to a register
-void dev::I8080::ADD(uint8_t _a, uint8_t _b, bool _cy)
+void dev::I8080Cpu::ADD(uint8_t _a, uint8_t _b, bool _cy)
 {
 
 	m_a = (uint8_t)(_a + _b + (_cy ? 1 : 0));
@@ -862,7 +862,7 @@ void dev::I8080::ADD(uint8_t _a, uint8_t _b, bool _cy)
 	SetZSP(m_a);
 }
 
-void dev::I8080::ADDMem(bool _cy)
+void dev::I8080Cpu::ADDMem(bool _cy)
 {
 	if (m_machineCycle == 0)
 	{
@@ -875,7 +875,7 @@ void dev::I8080::ADDMem(bool _cy)
 	}
 }
 
-void dev::I8080::ADI(bool _cy)
+void dev::I8080Cpu::ADI(bool _cy)
 {
 	if (m_machineCycle == 0)
 	{
@@ -890,13 +890,13 @@ void dev::I8080::ADI(bool _cy)
 
 // substracts a uint8_t (+ an optional carry flag) from a register
 // see https://stackoverflow.com/a/8037485
-void dev::I8080::SUB(uint8_t _a, uint8_t _b, bool _cy)
+void dev::I8080Cpu::SUB(uint8_t _a, uint8_t _b, bool _cy)
 {
 	ADD(_a, (uint8_t)(~_b), !_cy);
 	m_flagC = !m_flagC;
 }
 
-void dev::I8080::SUBMem(bool _cy)
+void dev::I8080Cpu::SUBMem(bool _cy)
 {
 	if (m_machineCycle == 0)
 	{
@@ -909,7 +909,7 @@ void dev::I8080::SUBMem(bool _cy)
 	}
 }
 
-void dev::I8080::SBI(bool _cy)
+void dev::I8080Cpu::SBI(bool _cy)
 {
 	if (m_machineCycle == 0)
 	{
@@ -922,7 +922,7 @@ void dev::I8080::SBI(bool _cy)
 	}
 }
 
-void dev::I8080::DAD(uint16_t _val)
+void dev::I8080Cpu::DAD(uint16_t _val)
 {
 	if (m_machineCycle == 1)
 	{
@@ -942,7 +942,7 @@ void dev::I8080::DAD(uint16_t _val)
 	}
 }
 
-void dev::I8080::INR(uint8_t& _regDest)
+void dev::I8080Cpu::INR(uint8_t& _regDest)
 {
 	if (m_machineCycle == 0)
 	{
@@ -957,7 +957,7 @@ void dev::I8080::INR(uint8_t& _regDest)
 	}
 }
 
-void dev::I8080::INRMem()
+void dev::I8080Cpu::INRMem()
 {
 	if (m_machineCycle == 1)
 	{
@@ -972,7 +972,7 @@ void dev::I8080::INRMem()
 	}
 }
 
-void dev::I8080::DCR(uint8_t& _regDest)
+void dev::I8080Cpu::DCR(uint8_t& _regDest)
 {
 	if (m_machineCycle == 0)
 	{
@@ -987,7 +987,7 @@ void dev::I8080::DCR(uint8_t& _regDest)
 	}
 }
 
-void dev::I8080::DCRMem()
+void dev::I8080Cpu::DCRMem()
 {
 	if (m_machineCycle == 1)
 	{
@@ -1002,7 +1002,7 @@ void dev::I8080::DCRMem()
 	}
 }
 
-void dev::I8080::INX(uint8_t& _regH, uint8_t& _regL)
+void dev::I8080Cpu::INX(uint8_t& _regH, uint8_t& _regL)
 {
 	if (m_machineCycle == 0)
 	{
@@ -1016,7 +1016,7 @@ void dev::I8080::INX(uint8_t& _regH, uint8_t& _regL)
 	}
 }
 
-void dev::I8080::INXSP()
+void dev::I8080Cpu::INXSP()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1029,7 +1029,7 @@ void dev::I8080::INXSP()
 	}
 }
 
-void dev::I8080::DCX(uint8_t& _regH, uint8_t& _regL)
+void dev::I8080Cpu::DCX(uint8_t& _regH, uint8_t& _regL)
 {
 	if (m_machineCycle == 0)
 	{
@@ -1043,7 +1043,7 @@ void dev::I8080::DCX(uint8_t& _regH, uint8_t& _regL)
 	}
 }
 
-void dev::I8080::DCXSP()
+void dev::I8080Cpu::DCXSP()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1059,7 +1059,7 @@ void dev::I8080::DCXSP()
 // Decimal Adjust Accumulator: the eight-bit number in register A is adjusted
 // to form two four-bit binary-coded-decimal digits.
 // For example, if A=$2B and DAA is executed, A becomes $31.
-void dev::I8080::DAA()
+void dev::I8080Cpu::DAA()
 {
 	bool cy = m_flagC;
 	uint8_t correction = 0;
@@ -1082,7 +1082,7 @@ void dev::I8080::DAA()
 	m_flagC = cy;
 }
 
-void dev::I8080::ANA(uint8_t _sss)
+void dev::I8080Cpu::ANA(uint8_t _sss)
 {
 	m_ACT = m_a;
 	m_TMP = _sss;
@@ -1092,7 +1092,7 @@ void dev::I8080::ANA(uint8_t _sss)
 	SetZSP(m_a);
 }
 
-void dev::I8080::AMAMem()
+void dev::I8080Cpu::AMAMem()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1108,7 +1108,7 @@ void dev::I8080::AMAMem()
 	}
 }
 
-void dev::I8080::ANI()
+void dev::I8080Cpu::ANI()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1126,7 +1126,7 @@ void dev::I8080::ANI()
 
 // executes a logic "xor" between register A and a uint8_t, then stores the
 // result in register A
-void dev::I8080::XRA(uint8_t _sss)
+void dev::I8080Cpu::XRA(uint8_t _sss)
 {
 	m_ACT = m_a;
 	m_TMP = _sss;
@@ -1136,7 +1136,7 @@ void dev::I8080::XRA(uint8_t _sss)
 	SetZSP(m_a);
 }
 
-void dev::I8080::XRAMem()
+void dev::I8080Cpu::XRAMem()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1152,7 +1152,7 @@ void dev::I8080::XRAMem()
 	}
 }
 
-void dev::I8080::XRI()
+void dev::I8080Cpu::XRI()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1170,7 +1170,7 @@ void dev::I8080::XRI()
 
 // executes a logic "or" between register A and a uint8_t, then stores the
 // result in register A
-void dev::I8080::ORA(uint8_t _sss)
+void dev::I8080Cpu::ORA(uint8_t _sss)
 {
 	m_ACT = m_a;
 	m_TMP = _sss;
@@ -1180,7 +1180,7 @@ void dev::I8080::ORA(uint8_t _sss)
 	SetZSP(m_a);
 }
 
-void dev::I8080::ORAMem()
+void dev::I8080Cpu::ORAMem()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1196,7 +1196,7 @@ void dev::I8080::ORAMem()
 	}
 }
 
-void dev::I8080::ORI()
+void dev::I8080Cpu::ORI()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1213,7 +1213,7 @@ void dev::I8080::ORI()
 }
 
 // compares the register A to another uint8_t
-void dev::I8080::CMP(uint8_t _sss)
+void dev::I8080Cpu::CMP(uint8_t _sss)
 {
 	m_ACT = m_a;
 	m_TMP = _sss;
@@ -1223,7 +1223,7 @@ void dev::I8080::CMP(uint8_t _sss)
 	SetZSP((uint8_t)(res & 0xFF));
 }
 
-void dev::I8080::CMPMem()
+void dev::I8080Cpu::CMPMem()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1239,7 +1239,7 @@ void dev::I8080::CMPMem()
 	}
 }
 
-void dev::I8080::CPI()
+void dev::I8080Cpu::CPI()
 {
 	if (m_machineCycle == 0)
 	{
@@ -1255,7 +1255,7 @@ void dev::I8080::CPI()
 	}
 }
 
-void dev::I8080::JMP(bool _condition)
+void dev::I8080Cpu::JMP(bool _condition)
 {
 	if (m_machineCycle == 1)
 	{
@@ -1271,7 +1271,7 @@ void dev::I8080::JMP(bool _condition)
 	}
 }
 
-void dev::I8080::PCHL()
+void dev::I8080Cpu::PCHL()
 {
 	if (m_machineCycle == 1)
 	{
@@ -1280,7 +1280,7 @@ void dev::I8080::PCHL()
 }
 
 // pushes the current pc to the stack, then jumps to an address
-void dev::I8080::CALL(bool _condition)
+void dev::I8080Cpu::CALL(bool _condition)
 {
 	if (m_machineCycle == 0)
 	{
@@ -1321,7 +1321,7 @@ void dev::I8080::CALL(bool _condition)
 }
 
 // pushes the current pc to the stack, then jumps to an address
-void dev::I8080::RST(uint8_t _arg)
+void dev::I8080Cpu::RST(uint8_t _arg)
 {
 	if (m_machineCycle == 0)
 	{
@@ -1345,7 +1345,7 @@ void dev::I8080::RST(uint8_t _arg)
 }
 
 // returns from subroutine
-void dev::I8080::RET()
+void dev::I8080Cpu::RET()
 {
 	if (m_machineCycle == 1)
 	{
@@ -1361,7 +1361,7 @@ void dev::I8080::RET()
 }
 
 // returns from subroutine if a condition is met
-void dev::I8080::RETCond(bool _condition)
+void dev::I8080Cpu::RETCond(bool _condition)
 {
 	if (m_machineCycle == 1)
 	{
@@ -1380,7 +1380,7 @@ void dev::I8080::RETCond(bool _condition)
 	}
 }
 
-void dev::I8080::IN_()
+void dev::I8080Cpu::IN_()
 {
 	if (m_machineCycle == 1)
 	{
@@ -1393,7 +1393,7 @@ void dev::I8080::IN_()
 	}
 }
 
-void dev::I8080::OUT_()
+void dev::I8080Cpu::OUT_()
 {
 	if (m_machineCycle == 1)
 	{
@@ -1406,7 +1406,7 @@ void dev::I8080::OUT_()
 	}
 }
 
-void dev::I8080::HLT()
+void dev::I8080Cpu::HLT()
 {
 	if (m_machineCycle == 0)
 	{

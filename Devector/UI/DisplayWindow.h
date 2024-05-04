@@ -15,11 +15,11 @@ namespace dev
 {
 	class DisplayWindow : public BaseWindow
 	{
-		static constexpr int DEFAULT_WINDOW_W = 768;
+		static constexpr int DEFAULT_WINDOW_W = 800;
 		static constexpr float WINDOW_ASPECT = 3.0f / 4.0f;
 		static constexpr int DEFAULT_WINDOW_H = static_cast<int>(DEFAULT_WINDOW_W * WINDOW_ASPECT);
-		static constexpr int FRAME_W = 512 + 32 * 2;
-		static constexpr int FRAME_H = 256 + 16 * 2;
+		static constexpr int RENDER_TARGET_W = Display::ACTIVE_AREA_W + Display::BORDER_VISIBLE * 2 * 2;
+		static constexpr int RENDER_TARGET_H = Display::ACTIVE_AREA_H + Display::BORDER_VISIBLE * 2;
 
 		const std::string m_name = "Display";
 
@@ -31,11 +31,11 @@ namespace dev
 		
 		GLUtils& m_glUtils;
 		GLUtils::Vec4 m_shaderData_scrollVert = {255.0f, 0, 0, 0};
-		GLUtils::Vec4 m_shaderData_bordL_bordB_visBord = {
+		GLUtils::Vec4 m_shaderData_bordL_bordB_visBord_bordT = {
 						(float)Display::BORDER_LEFT, 
 						static_cast<float>(Display::SCAN_VBLANK_BOTTOM), 
 						static_cast<float>(Display::BORDER_VISIBLE), 
-						0.0f};
+						Display::SCAN_ACTIVE_AREA_TOP };
 		GLuint1 m_vramShaderId = -1;
 		GLUtils::MaterialId m_vramMatId;
 		GLuint1 m_vramTexId = -1;
