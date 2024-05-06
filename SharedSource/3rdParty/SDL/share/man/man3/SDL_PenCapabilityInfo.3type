@@ -1,0 +1,38 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_PenCapabilityInfo:
+.\"   https://wiki.libsdl.org/SDL_PenCapabilityInfo
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_PenCapabilityInfo
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_PenCapabilityInfo 3type "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 DATATYPES"
+.SH NAME
+SDL_PenCapabilityInfo \- Pen capabilities, as reported by 
+.BR SDL_GetPenCapabilities
+()
+.SH HEADER FILE
+Defined in SDL3/SDL_pen\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "typedef struct SDL_PenCapabilityInfo
+.BI "{
+.BI "    float max_tilt;    /**< Physical maximum tilt angle, for XTILT and YTILT, or SDL_PEN_INFO_UNKNOWN .  Pens cannot typically tilt all the way to 90 degrees, so this value is usually less than 90.0. */
+.BI "    Uint32 wacom_id;   /**< For Wacom devices: wacom tool type ID, otherwise 0 (useful e.g. with libwacom) */
+.BI "    Sint8 num_buttons; /**< Number of pen buttons (not counting the pen tip), or SDL_PEN_INFO_UNKNOWN */
+.BI "} SDL_PenCapabilityInfo;
+.fi
+.SH AVAILABILITY
+This struct is available since SDL 3\[char46]0\[char46]0\[char46]
+

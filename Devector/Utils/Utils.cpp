@@ -78,6 +78,25 @@ auto dev::LoadFile(const std::wstring& _path)
 	return { std::move(data) };
 }
 
+bool dev::SaveFile(const std::wstring& _path, const std::vector<uint8_t>& _data, const bool _override)
+{
+	std::ofstream file{_path, std::ios::binary | std::ios::ate};
+
+	if (!file)
+	{
+		dev::Log("Failed to init a file object: ", _path);
+		return false;	
+	}
+	else if ((!_override && std::filesystem::exists(_path)))
+	{
+		dev::Log("Error. Failed to save file. File is already exist: ", _path);
+		return false;
+	}
+
+	file.write(reinterpret_cast<const char*>(_data.data()), _data.size());
+	return true;
+}
+
 void dev::DeleteFiles(const std::wstring& _dir, const std::wstring& _mask)
 {
 	const std::wstring command = L"del /Q " + _dir + _mask;
@@ -102,4 +121,11 @@ auto dev::GetFilename(const std::wstring& _path)
 {
 	std::filesystem::path p{ _path };
 	return p.stem().wstring();
+}
+
+auto dev::GetDirStemExt(const std::wstring& _path)
+-> std::tuple<std::wstring, std::wstring, std::wstring>
+{
+	std::filesystem::path p{ _path };
+	return std::make_tuple(p.parent_path().wstring(), p.stem().wstring(), p.extension().wstring());
 }

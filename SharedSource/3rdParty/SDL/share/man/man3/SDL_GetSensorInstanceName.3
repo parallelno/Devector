@@ -1,0 +1,40 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_GetSensorInstanceName:
+.\"   https://wiki.libsdl.org/SDL_GetSensorInstanceName
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_GetSensorInstanceName
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_GetSensorInstanceName 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_GetSensorInstanceName \- Get the implementation dependent name of a sensor\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_sensor\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "const char* SDL_GetSensorInstanceName(SDL_SensorID instance_id);
+.fi
+.SH FUNCTION PARAMETERS
+.TP
+.I instance_id
+the sensor instance ID
+.SH RETURN VALUE
+Returns the sensor name, or NULL if
+.BR instance_id
+is not valid
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+

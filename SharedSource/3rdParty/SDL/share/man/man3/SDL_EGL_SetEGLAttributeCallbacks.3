@@ -1,0 +1,59 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_EGL_SetEGLAttributeCallbacks:
+.\"   https://wiki.libsdl.org/SDL_EGL_SetEGLAttributeCallbacks
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_EGL_SetEGLAttributeCallbacks
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_EGL_SetEGLAttributeCallbacks 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_EGL_SetEGLAttributeCallbacks \- Sets the callbacks for defining custom EGLAttrib arrays for EGL initialization\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_video\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "void SDL_EGL_SetEGLAttributeCallbacks(SDL_EGLAttribArrayCallback platformAttribCallback,
+.BI "                                      SDL_EGLIntArrayCallback surfaceAttribCallback,
+.BI "                                      SDL_EGLIntArrayCallback contextAttribCallback);
+.fi
+.SH DESCRIPTION
+Each callback should return a pointer to an EGL attribute array terminated
+with EGL_NONE\[char46] Callbacks may return NULL pointers to signal an error, which
+will cause the 
+.BR SDL_CreateWindow
+ process to fail
+gracefully\[char46]
+
+The arrays returned by each callback will be appended to the existing
+attribute arrays defined by SDL\[char46]
+
+NOTE: These callback pointers will be reset after
+
+.BR SDL_GL_ResetAttributes
+\[char46]
+
+.SH FUNCTION PARAMETERS
+.TP
+.I platformAttribCallback
+Callback for attributes to pass to eglGetPlatformDisplay\[char46]
+.TP
+.I surfaceAttribCallback
+Callback for attributes to pass to eglCreateSurface\[char46]
+.TP
+.I contextAttribCallback
+Callback for attributes to pass to eglCreateContext\[char46]
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+

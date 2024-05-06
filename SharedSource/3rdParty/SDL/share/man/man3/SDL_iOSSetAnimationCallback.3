@@ -1,0 +1,89 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_iOSSetAnimationCallback:
+.\"   https://wiki.libsdl.org/SDL_iOSSetAnimationCallback
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_iOSSetAnimationCallback
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_iOSSetAnimationCallback 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_iOSSetAnimationCallback \- Use this function to set the animation callback on Apple iOS\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_system\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "int SDL_iOSSetAnimationCallback(SDL_Window * window, int interval, void (SDLCALL *callback)(void*), void *callbackParam);
+.fi
+.SH DESCRIPTION
+The function prototype for
+.BR callback
+is:
+.BR 
+
+.BR c
+void callback(void* callbackParam);
+
+
+.BR 
+Where its parameter,
+.BR callbackParam
+, is what was passed as
+.BR callbackParam
+to 
+.BR SDL_iOSSetAnimationCallback
+()\[char46]
+
+This function is only available on Apple iOS\[char46]
+
+For more information see:
+
+https://wiki\[char46]libsdl\[char46]org/SDL3/README/ios
+
+Note that if you use the "main callbacks" instead of a standard C
+.BR main
+function, you don't have to use this API, as SDL will manage this for you\[char46]
+
+Details on main callbacks are here:
+
+https://wiki\[char46]libsdl\[char46]org/SDL3/README/main-functions
+
+.SH FUNCTION PARAMETERS
+.TP
+.I window
+the window for which the animation callback should be set
+.TP
+.I interval
+the number of frames after which
+.B callback
+will be called
+.TP
+.I callback
+the function to call for every frame\[char46]
+.TP
+.I callbackParam
+a pointer that is passed to
+.BR callback
+\[char46]
+.SH RETURN VALUE
+Returns 0 on success or a negative error code on failure; call
+
+.BR SDL_GetError
+() for more information\[char46]
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+
+.SH SEE ALSO
+.BR SDL_iOSSetEventPump (3)

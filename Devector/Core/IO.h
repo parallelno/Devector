@@ -9,7 +9,8 @@
 #include "Utils/Types.h"
 #include "Core/Keyboard.h"
 #include "Core/Memory.h"
-#include "Core/I8253Timer.h"
+#include "Core/TimerI8253.h"
+#include "Core/FDC1793.h"
 
 namespace dev
 {
@@ -58,14 +59,15 @@ namespace dev
 
 		Keyboard& m_keyboard;
 		Memory& m_memory;
-		I8253Timer& m_timer;
+		TimerI8253& m_timer;
+		FDC1793& m_fdc;
 
 		VectorColorToArgbFunc VectorColorToArgb;
 
 		void PortOutHandling(uint8_t _port, uint8_t _value);
 
 	public:
-		IO(Keyboard& _keyboard, Memory& _memory, I8253Timer& _timer, VectorColorToArgbFunc _vecToArgbFunc);
+		IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer, FDC1793& _fdc, VectorColorToArgbFunc _vecToArgbFunc);
 		void Init();
 		auto PortIn(uint8_t _port) -> uint8_t;
 		void PortOut(uint8_t _port, uint8_t _value);

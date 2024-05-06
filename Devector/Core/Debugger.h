@@ -176,9 +176,9 @@ namespace dev
 		bool m_wpBreak;
 
 		Hardware::CheckBreakFunc m_checkBreakFunc;
-		I8080Cpu::DebugOnReadInstrFunc m_debugOnReadInstrFunc;
-		I8080Cpu::DebugOnReadFunc m_debugOnReadFunc;
-		I8080Cpu::DebugOnWriteFunc m_debugOnWriteFunc;
+		CpuI8080::DebugOnReadInstrFunc m_debugOnReadInstrFunc;
+		CpuI8080::DebugOnReadFunc m_debugOnReadFunc;
+		CpuI8080::DebugOnWriteFunc m_debugOnWriteFunc;
 
 		std::wstring m_pathLast;
 

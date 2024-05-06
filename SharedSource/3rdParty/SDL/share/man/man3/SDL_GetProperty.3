@@ -1,0 +1,78 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_GetProperty:
+.\"   https://wiki.libsdl.org/SDL_GetProperty
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_GetProperty
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_GetProperty 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_GetProperty \- Get a property on a set of properties\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_properties\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "void* SDL_GetProperty(SDL_PropertiesID props, const char *name, void *default_value);
+.fi
+.SH DESCRIPTION
+By convention, the names of properties that SDL exposes on objects will
+start with "SDL\[char46]", and properties that SDL uses internally will start with
+"SDL\[char46]internal\[char46]"\[char46] These should be considered read-only and should not be
+modified by applications\[char46]
+
+.SH FUNCTION PARAMETERS
+.TP
+.I props
+the properties to query
+.TP
+.I name
+the name of the property to query
+.TP
+.I default_value
+the default value of the property
+.SH RETURN VALUE
+Returns the value of the property, or
+.BR default_value
+if it is not set or
+not a pointer property\[char46]
+
+.SH THREAD SAFETY
+It is safe to call this function from any thread, although the data
+returned is not protected and could potentially be freed if you call
+
+.BR SDL_SetProperty
+() or
+
+.BR SDL_ClearProperty
+() on these properties from another
+thread\[char46] If you need to avoid this, use
+
+.BR SDL_LockProperties
+() and
+
+.BR SDL_UnlockProperties
+()\[char46]
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+
+.SH SEE ALSO
+.BR SDL_GetBooleanProperty (3),
+.BR SDL_GetFloatProperty (3),
+.BR SDL_GetNumberProperty (3),
+.BR SDL_GetPropertyType (3),
+.BR SDL_GetStringProperty (3),
+.BR SDL_HasProperty (3),
+.BR SDL_SetProperty (3)

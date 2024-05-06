@@ -42,9 +42,6 @@
     <ClCompile Include="Core\Hardware.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\I8080Cpu.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\IO.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -108,7 +105,16 @@
     <ClCompile Include="UI\TraceLogWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="Core\I8253Timer.cpp">
+    <ClCompile Include="Core\Audio.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\CpuI8080.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\TimerI8253.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\FileSystemImage.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -160,9 +166,6 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Hardware.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\I8080Cpu.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\IO.h">
@@ -240,7 +243,22 @@
     <ClInclude Include="UI\TraceLogWindow.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="Core\I8253Timer.h">
+    <ClInclude Include="Core\Audio.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\CpuI8080.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\TimerI8253.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\FDC1793.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Tinydir.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\FileSystemImage.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

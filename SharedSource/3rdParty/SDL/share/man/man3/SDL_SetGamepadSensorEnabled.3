@@ -1,0 +1,50 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_SetGamepadSensorEnabled:
+.\"   https://wiki.libsdl.org/SDL_SetGamepadSensorEnabled
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_SetGamepadSensorEnabled
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_SetGamepadSensorEnabled 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_SetGamepadSensorEnabled \- Set whether data reporting for a gamepad sensor is enabled\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_gamepad\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "int SDL_SetGamepadSensorEnabled(SDL_Gamepad *gamepad, SDL_SensorType type, SDL_bool enabled);
+.fi
+.SH FUNCTION PARAMETERS
+.TP
+.I gamepad
+The gamepad to update
+.TP
+.I type
+The type of sensor to enable/disable
+.TP
+.I enabled
+Whether data reporting should be enabled
+.SH RETURN VALUE
+Returns 0 on success or a negative error code on failure; call
+
+.BR SDL_GetError
+() for more information\[char46]
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+
+.SH SEE ALSO
+.BR SDL_GamepadHasSensor (3),
+.BR SDL_GamepadSensorEnabled (3)

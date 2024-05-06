@@ -95,7 +95,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 		int idx = 0;
 		static int addrHovered = -1;
 		ImGuiListClipper clipper;
-		clipper.Begin(m_traceLog.size());
+		clipper.Begin(int(m_traceLog.size()));
 		while (clipper.Step())
 		{
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)

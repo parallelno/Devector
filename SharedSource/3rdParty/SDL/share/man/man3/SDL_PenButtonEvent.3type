@@ -1,0 +1,44 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_PenButtonEvent:
+.\"   https://wiki.libsdl.org/SDL_PenButtonEvent
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_PenButtonEvent
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_PenButtonEvent 3type "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 DATATYPES"
+.SH NAME
+SDL_PenButtonEvent \- Pressure-sensitive pen button event structure (event\[char46]pbutton\[char46]*)
+.SH HEADER FILE
+Defined in SDL3/SDL_events\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "typedef struct SDL_PenButtonEvent
+.BI "{
+.BI "    SDL_EventType type;     /**< ::SDL_EVENT_PEN_BUTTON_DOWN or ::SDL_EVENT_PEN_BUTTON_UP */
+.BI "    Uint32 reserved;
+.BI "    Uint64 timestamp;       /**< In nanoseconds, populated using SDL_GetTicksNS() */
+.BI "    SDL_WindowID windowID;  /**< The window with pen focus, if any */
+.BI "    SDL_PenID which;        /**< The pen instance id */
+.BI "    Uint8 button;           /**< The pen button index (1 represents the pen tip for compatibility with mouse events) */
+.BI "    Uint8 state;            /**< ::SDL_PRESSED or ::SDL_RELEASED */
+.BI "    Uint16 pen_state;       /**< Pen button masks (where SDL_BUTTON(1) is the first button, SDL_BUTTON(2) is the second button etc.), ::SDL_PEN_DOWN_MASK is set if the pen is touching the surface, and ::SDL_PEN_ERASER_MASK is set if the pen is (used as) an eraser. */
+.BI "    float x;                /**< X coordinate, relative to window */
+.BI "    float y;                /**< Y coordinate, relative to window */
+.BI "    float axes[SDL_PEN_NUM_AXES]; /**< Pen axes such as pressure and tilt (ordered as per ::SDL_PenAxis) */
+.BI "} SDL_PenButtonEvent;
+.fi
+.SH AVAILABILITY
+This struct is available since SDL 3\[char46]0\[char46]0\[char46]
+

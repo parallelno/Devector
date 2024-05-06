@@ -1,0 +1,43 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_Keysym:
+.\"   https://wiki.libsdl.org/SDL_Keysym
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_Keysym
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_Keysym 3type "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 DATATYPES"
+.SH NAME
+SDL_Keysym \- The SDL keysym structure, used in key events\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_keyboard\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "typedef struct SDL_Keysym
+.BI "{
+.BI "    SDL_Scancode scancode;      /**< SDL physical key code - see ::SDL_Scancode for details */
+.BI "    SDL_Keycode sym;            /**< SDL virtual key code - see ::SDL_Keycode for details */
+.BI "    Uint16 mod;                 /**< current key modifiers */
+.BI "    Uint32 unused;
+.BI "} SDL_Keysym;
+.fi
+.SH DESCRIPTION
+If you are looking for translated character input, see the
+::
+.BR SDL_EVENT_TEXT_INPUT
+ event\[char46]
+
+.SH AVAILABILITY
+This struct is available since SDL 3\[char46]0\[char46]0\[char46]
+

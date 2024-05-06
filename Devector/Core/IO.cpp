@@ -1,13 +1,16 @@
-#include "IO.h"
 // the hardware logic is mostly taken from:
 // https://github.com/parallelno/v06x/blob/master/src/board.cpp
 // https://github.com/parallelno/v06x/blob/master/src/vio.h
-// some of the pieces of the original code remain unclear for me
 
-dev::IO::IO(Keyboard& _keyboard, Memory& _memory, I8253Timer& _timer, 
-    VectorColorToArgbFunc _vectorColorToArgbFunc)
+#include "IO.h"
+
+#include "Core/FDC1793.h"
+
+dev::IO::IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer,
+    FDC1793& _fdc, VectorColorToArgbFunc _vectorColorToArgbFunc)
     :
     m_keyboard(_keyboard), m_memory(_memory), m_timer(_timer),
+    m_fdc(_fdc),
     VectorColorToArgb(_vectorColorToArgbFunc)
 {
     Init();
@@ -107,20 +110,20 @@ auto dev::IO::PortIn(uint8_t _port)
         //result = ay.read(port & 1);
         break;
 
-    case 0x18: // fdc data
-        //result = fdc.read(3);
+    case 0x18:
+        result = m_fdc.Read(FDC1793::PortAddr::DATA);
         break;
-    case 0x19: // fdc sector
-        //result = fdc.read(2);
+    case 0x19:
+        result = m_fdc.Read(FDC1793::PortAddr::SECTOR);
         break;
-    case 0x1a: // fdc track
-        //result = fdc.read(1);
+    case 0x1a:
+        result = m_fdc.Read(FDC1793::PortAddr::TRACK);
         break;
-    case 0x1b: // fdc status
-        //result = fdc.read(0);
+    case 0x1b:
+        result = m_fdc.Read(FDC1793::PortAddr::STATUS);
         break;
-    case 0x1c: // fdc control - readonly
-        //result = fdc.read(4); // ask Svofski why it is disabled
+    case 0x1c:
+        //result = m_fdc.Read(FDC1793::PortAddr::CONTROL);
         break;
     default:
         break;
@@ -233,23 +236,23 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         break;
     case 0x14:
     case 0x15:
-        //ay.write(port & 1, _value);
+        //ay.Write(port & 1, _value);
         break;
 
-    case 0x18: // fdc data
-        //fdc.write(3, _value);
+    case 0x18:
+        m_fdc.Write(FDC1793::PortAddr::DATA, _value);
         break;
-    case 0x19: // fdc sector
-        //fdc.write(2, _value);
+    case 0x19:
+        m_fdc.Write(FDC1793::PortAddr::SECTOR, _value);
         break;
-    case 0x1a: // fdc track
-        //fdc.write(1, _value);
+    case 0x1a:
+        m_fdc.Write(FDC1793::PortAddr::TRACK, _value);
         break;
-    case 0x1b: // fdc command
-        //fdc.write(0, _value);
+    case 0x1b:
+        m_fdc.Write(FDC1793::PortAddr::CMD, _value);
         break;
-    case 0x1c: // fdc control
-        //fdc.write(4, _value);
+    case 0x1c:
+        m_fdc.Write(FDC1793::PortAddr::CONTROL, _value);
         break;
     default:
         break;

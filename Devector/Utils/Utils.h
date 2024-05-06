@@ -165,23 +165,20 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	//--------------------------------------------------------------
 	inline bool IsFileExist(const std::wstring& _path)
 	{
-		if (std::filesystem::exists(_path)) {
-			return true;
-		}
-		return false;
+		return std::filesystem::exists(_path);
 	}
 	inline bool IsFileExist(const std::string& _path)
 	{
-		if (std::filesystem::exists(_path)) {
-			return true;
-		}
-		return false;
+		return std::filesystem::exists(_path);
 	}
 
 	auto LoadTextFile(const std::wstring& _path) ->std::string;
 
 	auto LoadFile(const std::wstring& _path)
-		->dev::Result<std::vector<uint8_t>>;
+		-> dev::Result<std::vector<uint8_t>>;
+
+	bool SaveFile(const std::wstring& _path, 
+		const std::vector<uint8_t>& _data, const bool _override = true);
 
 	void DeleteFiles(const std::wstring& _dir, const std::wstring& _mask = L"*");
 
@@ -190,7 +187,10 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	auto GetDir(const std::wstring& _path)
 		-> std::wstring;
 	auto GetFilename(const std::wstring& _path)
-		->std::wstring;
+		-> std::wstring;
+
+	auto GetDirStemExt(const std::wstring& _path)
+		->std::tuple<std::wstring, std::wstring, std::wstring>;
 
 } // namespace dev
 #endif //!DEV_UTILS_H

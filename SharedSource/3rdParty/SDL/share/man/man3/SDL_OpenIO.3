@@ -1,0 +1,78 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_OpenIO:
+.\"   https://wiki.libsdl.org/SDL_OpenIO
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_OpenIO
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_OpenIO 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_OpenIO \- Create a custom 
+.BR SDL_IOStream
+\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_iostream\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "SDL_IOStream* SDL_OpenIO(const SDL_IOStreamInterface *iface, void *userdata);
+.fi
+.SH DESCRIPTION
+Applications do not need to use this function unless they are providing
+their own 
+.BR SDL_IOStream
+ implementation\[char46] If you just need an
+
+.BR SDL_IOStream
+ to read/write a common data source, you should
+use the built-in implementations in SDL, like
+
+.BR SDL_IOFromFile
+() or 
+.BR SDL_IOFromMem
+(),
+etc\[char46]
+
+You must free the returned pointer with 
+.BR SDL_CloseIO
+()\[char46]
+
+This function makes a copy of
+.BR iface
+and the caller does not need to keep
+this data around after this call\[char46]
+
+.SH FUNCTION PARAMETERS
+.TP
+.I iface
+The function pointers that implement this 
+.BR SDL_IOStream
+\[char46]
+.TP
+.I userdata
+The app-controlled pointer that is passed to iface's functions when called\[char46]
+.SH RETURN VALUE
+Returns a pointer to the allocated memory on success, or NULL on failure;
+call 
+.BR SDL_GetError
+() for more information\[char46]
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+
+.SH SEE ALSO
+.BR SDL_CloseIO (3),
+.BR SDL_IOFromConstMem (3),
+.BR SDL_IOFromFile (3),
+.BR SDL_IOFromMem (3)

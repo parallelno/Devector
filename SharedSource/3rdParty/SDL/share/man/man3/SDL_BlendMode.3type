@@ -1,0 +1,59 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_BlendMode:
+.\"   https://wiki.libsdl.org/SDL_BlendMode
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_BlendMode
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_BlendMode 3type "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 DATATYPES"
+.SH NAME
+SDL_BlendMode \- An enumeration of blend modes used in drawing operations\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_blendmode\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "typedef enum SDL_BlendMode
+.BI "{
+.BI "    SDL_BLENDMODE_NONE = 0x00000000,     /**< no blending
+.BI "                                              dstRGBA = srcRGBA */
+.BI "    SDL_BLENDMODE_BLEND = 0x00000001,    /**< alpha blending
+.BI "                                              dstRGB = (srcRGB * srcA) + (dstRGB * (1-srcA))
+.BI "                                              dstA = srcA + (dstA * (1-srcA)) */
+.BI "    SDL_BLENDMODE_ADD = 0x00000002,      /**< additive blending
+.BI "                                              dstRGB = (srcRGB * srcA) + dstRGB
+.BI "                                              dstA = dstA */
+.BI "    SDL_BLENDMODE_MOD = 0x00000004,      /**< color modulate
+.BI "                                              dstRGB = srcRGB * dstRGB
+.BI "                                              dstA = dstA */
+.BI "    SDL_BLENDMODE_MUL = 0x00000008,      /**< color multiply
+.BI "                                              dstRGB = (srcRGB * dstRGB) + (dstRGB * (1-srcA))
+.BI "                                              dstA = dstA */
+.BI "    SDL_BLENDMODE_INVALID = 0x7FFFFFFF
+.BI "
+.BI "    /* Additional custom blend modes can be returned by SDL_ComposeCustomBlendMode() */
+.BI "
+.BI "} SDL_BlendMode;
+.fi
+.SH DESCRIPTION
+Note that additional values may be obtained from
+
+.BR SDL_ComposeCustomBlendMode
+\[char46]
+
+.SH AVAILABILITY
+This enum is available since SDL 3\[char46]0\[char46]0\[char46]
+
+.SH SEE ALSO
+.BR SDL_ComposeCustomBlendMode (3)

@@ -1,0 +1,91 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_GetCameraDeviceSupportedFormats:
+.\"   https://wiki.libsdl.org/SDL_GetCameraDeviceSupportedFormats
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_GetCameraDeviceSupportedFormats
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_GetCameraDeviceSupportedFormats 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_GetCameraDeviceSupportedFormats \- Get the list of native formats/sizes a camera supports\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_camera\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "SDL_CameraSpec* SDL_GetCameraDeviceSupportedFormats(SDL_CameraDeviceID devid, int *count);
+.fi
+.SH DESCRIPTION
+This returns a list of all formats and frame sizes that a specific camera
+can offer\[char46] This is useful if your app can accept a variety of image formats
+and sizes and so want to find the optimal spec that doesn't require
+conversion\[char46]
+
+This function isn't strictly required; if you call
+
+.BR SDL_OpenCameraDevice
+ with a NULL spec, SDL will
+choose a native format for you, and if you instead specify a desired
+format, it will transparently convert to the requested format on your
+behalf\[char46]
+
+If
+.BR count
+is not NULL, it will be filled with the number of elements in
+the returned array\[char46] Additionally, the last element of the array has all
+fields set to zero (this element is not included in
+.BR count
+)\[char46]
+
+The returned list is owned by the caller, and should be released with
+
+.BR SDL_free
+() when no longer needed\[char46]
+
+Note that it's legal for a camera to supply a list with only the zeroed
+final element and
+.BR *count
+set to zero; this is what will happen on
+Emscripten builds, since that platform won't tell _anything_ about
+available cameras until you've opened one, and won't even tell if there
+_is_ a camera until the user has given you permission to check through a
+scary warning popup\[char46]
+
+.SH FUNCTION PARAMETERS
+.TP
+.I devid
+the camera device instance ID to query\[char46]
+.TP
+.I count
+a pointer filled in with the number of elements in the list\[char46] Can be NULL\[char46]
+.SH RETURN VALUE
+Returns a 0 terminated array of 
+.BR SDL_CameraSpecs
+, which
+should be freed with 
+.BR SDL_free
+(), or NULL on error; call
+
+.BR SDL_GetError
+() for more details\[char46]
+
+.SH THREAD SAFETY
+It is safe to call this function from any thread\[char46]
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+
+.SH SEE ALSO
+.BR SDL_GetCameraDevices (3),
+.BR SDL_OpenCameraDevice (3)

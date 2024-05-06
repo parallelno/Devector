@@ -1,0 +1,72 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_SetRenderLogicalPresentation:
+.\"   https://wiki.libsdl.org/SDL_SetRenderLogicalPresentation
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_SetRenderLogicalPresentation
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_SetRenderLogicalPresentation 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_SetRenderLogicalPresentation \- Set a device independent resolution and presentation mode for rendering\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_render\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "int SDL_SetRenderLogicalPresentation(SDL_Renderer *renderer, int w, int h, SDL_RendererLogicalPresentation mode, SDL_ScaleMode scale_mode);
+.fi
+.SH DESCRIPTION
+This function sets the width and height of the logical rendering output\[char46] A
+render target is created at the specified size and used for rendering and
+then copied to the output during presentation\[char46]
+
+You can disable logical coordinates by setting the mode to
+
+.BR SDL_LOGICAL_PRESENTATION_DISABLED
+, and
+in that case you get the full pixel resolution of the output window\[char46]
+
+You can convert coordinates in an event into rendering coordinates using
+
+.BR SDL_ConvertEventToRenderCoordinates
+()\[char46]
+
+.SH FUNCTION PARAMETERS
+.TP
+.I renderer
+the rendering context
+.TP
+.I w
+the width of the logical resolution
+.TP
+.I h
+the height of the logical resolution
+.TP
+.I mode
+the presentation mode used
+.TP
+.I scale_mode
+the scale mode used
+.SH RETURN VALUE
+Returns 0 on success or a negative error code on failure; call
+
+.BR SDL_GetError
+() for more information\[char46]
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+
+.SH SEE ALSO
+.BR SDL_ConvertEventToRenderCoordinates (3),
+.BR SDL_GetRenderLogicalPresentation (3)

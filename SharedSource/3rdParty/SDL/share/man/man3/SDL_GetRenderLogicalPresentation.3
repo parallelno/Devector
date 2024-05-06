@@ -1,0 +1,59 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_GetRenderLogicalPresentation:
+.\"   https://wiki.libsdl.org/SDL_GetRenderLogicalPresentation
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_GetRenderLogicalPresentation
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_GetRenderLogicalPresentation 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_GetRenderLogicalPresentation \- Get device independent resolution and presentation mode for rendering\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_render\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "int SDL_GetRenderLogicalPresentation(SDL_Renderer *renderer, int *w, int *h, SDL_RendererLogicalPresentation *mode, SDL_ScaleMode *scale_mode);
+.fi
+.SH DESCRIPTION
+This function gets the width and height of the logical rendering output, or
+the output size in pixels if a logical resolution is not enabled\[char46]
+
+.SH FUNCTION PARAMETERS
+.TP
+.I renderer
+the rendering context
+.TP
+.I w
+an int to be filled with the width
+.TP
+.I h
+an int to be filled with the height
+.TP
+.I mode
+a pointer filled in with the presentation mode
+.TP
+.I scale_mode
+a pointer filled in with the scale mode
+.SH RETURN VALUE
+Returns 0 on success or a negative error code on failure; call
+
+.BR SDL_GetError
+() for more information\[char46]
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+
+.SH SEE ALSO
+.BR SDL_SetRenderLogicalPresentation (3)

@@ -52,7 +52,9 @@ namespace dev
 
 	public:
 
-		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, const float* const _fontSizeP, const float* const _dpiScaleP, ReqDisasm& _reqDisasm, bool& _reset);
+		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, 
+			const float* const _fontSizeP, const float* const _dpiScaleP, 
+			ReqDisasm& _reqDisasm, bool& _reset);
 		void Update();
 		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
 			const bool _updateSelection = true);

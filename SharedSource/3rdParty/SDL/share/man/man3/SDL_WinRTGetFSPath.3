@@ -1,0 +1,57 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_WinRTGetFSPath:
+.\"   https://wiki.libsdl.org/SDL_WinRTGetFSPath
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_WinRTGetFSPath
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_WinRTGetFSPath 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_WinRTGetFSPath \- Retrieve a WinRT defined path on the local file system\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_system\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "const char * SDL_WinRTGetFSPath(SDL_WinRT_Path pathType);
+.fi
+.SH DESCRIPTION
+Not all paths are available on all versions of Windows\[char46] This is especially
+true on Windows Phone\[char46] Check the documentation for the given
+
+.BR SDL_WinRT_Path
+ for more information on which path types
+are supported where\[char46]
+
+Documentation on most app-specific path types on WinRT can be found on
+MSDN, at the URL:
+
+https://msdn\[char46]microsoft\[char46]com/en-us/library/windows/apps/hh464917\[char46]aspx
+
+.SH FUNCTION PARAMETERS
+.TP
+.I pathType
+the type of path to retrieve, one of 
+.BR SDL_WinRT_Path
+
+.SH RETURN VALUE
+Returns a UTF-8 string (8-bit, multi-byte) containing the path, or NULL if
+the path is not available for any reason; call
+
+.BR SDL_GetError
+() for more information\[char46]
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+

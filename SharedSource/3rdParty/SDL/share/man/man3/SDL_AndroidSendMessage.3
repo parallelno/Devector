@@ -1,0 +1,47 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_AndroidSendMessage:
+.\"   https://wiki.libsdl.org/SDL_AndroidSendMessage
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_AndroidSendMessage
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_AndroidSendMessage 3 "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 FUNCTIONS"
+.SH NAME
+SDL_AndroidSendMessage \- Send a user command to SDLActivity\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_system\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "int SDL_AndroidSendMessage(Uint32 command, int param);
+.fi
+.SH DESCRIPTION
+Override "boolean onUnhandledMessage(Message msg)" to handle the message\[char46]
+
+.SH FUNCTION PARAMETERS
+.TP
+.I command
+user command that must be greater or equal to 0x8000
+.TP
+.I param
+user parameter
+.SH RETURN VALUE
+Returns 0 on success or a negative error code on failure; call
+
+.BR SDL_GetError
+() for more information\[char46]
+
+.SH AVAILABILITY
+This function is available since SDL 3\[char46]0\[char46]0\[char46]
+

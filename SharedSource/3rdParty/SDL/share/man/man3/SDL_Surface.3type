@@ -1,0 +1,68 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_Surface:
+.\"   https://wiki.libsdl.org/SDL_Surface
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_Surface
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_Surface 3type "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 DATATYPES"
+.SH NAME
+SDL_Surface \- A collection of pixels used in software blitting\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_surface\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "typedef struct SDL_Surface
+.BI "{
+.BI "    Uint32 flags;               /**< Read-only */
+.BI "    SDL_PixelFormat *format;    /**< Read-only */
+.BI "    int w, h;                   /**< Read-only */
+.BI "    int pitch;                  /**< Read-only */
+.BI "    void *pixels;               /**< Read-write */
+.BI "
+.BI "    void *reserved;             /**< Private */
+.BI "
+.BI "    /** information needed for surfaces requiring locks */
+.BI "    int locked;                 /**< Read-only */
+.BI "
+.BI "    /** list of BlitMap that hold a reference to this surface */
+.BI "    void *list_blitmap;         /**< Private */
+.BI "
+.BI "    /** clipping information */
+.BI "    SDL_Rect clip_rect;         /**< Read-only */
+.BI "
+.BI "    /** info for fast blit mapping to other surfaces */
+.BI "    SDL_BlitMap *map;           /**< Private */
+.BI "
+.BI "    /** Reference count -- used when freeing surface */
+.BI "    int refcount;               /**< Read-mostly */
+.BI "} SDL_Surface;
+.fi
+.SH DESCRIPTION
+Pixels are arranged in memory in rows, with the top row first\[char46] Each row
+occupies an amount of memory given by the pitch (sometimes known as the row
+stride in non-SDL APIs)\[char46]
+
+Within each row, pixels are arranged from left to right until the width is
+reached\[char46] Each pixel occupies a number of bits appropriate for its format,
+with most formats representing each pixel as one or more whole bytes (in
+some indexed formats, instead multiple pixels are packed into each byte),
+and a byte order given by the format\[char46] After encoding all pixels, any
+remaining bytes to reach the pitch are used as padding to reach a desired
+alignment, and have undefined contents\[char46]
+
+.SH AVAILABILITY
+This struct is available since SDL 3\[char46]0\[char46]0\[char46]
+

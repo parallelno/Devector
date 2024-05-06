@@ -1,0 +1,79 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_GLattr:
+.\"   https://wiki.libsdl.org/SDL_GLattr
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_GLattr
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_GLattr 3type "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 DATATYPES"
+.SH NAME
+SDL_GLattr \- An enumeration of OpenGL configuration attributes\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_video\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "typedef enum SDL_GLattr
+.BI "{
+.BI "    SDL_GL_RED_SIZE,
+.BI "    SDL_GL_GREEN_SIZE,
+.BI "    SDL_GL_BLUE_SIZE,
+.BI "    SDL_GL_ALPHA_SIZE,
+.BI "    SDL_GL_BUFFER_SIZE,
+.BI "    SDL_GL_DOUBLEBUFFER,
+.BI "    SDL_GL_DEPTH_SIZE,
+.BI "    SDL_GL_STENCIL_SIZE,
+.BI "    SDL_GL_ACCUM_RED_SIZE,
+.BI "    SDL_GL_ACCUM_GREEN_SIZE,
+.BI "    SDL_GL_ACCUM_BLUE_SIZE,
+.BI "    SDL_GL_ACCUM_ALPHA_SIZE,
+.BI "    SDL_GL_STEREO,
+.BI "    SDL_GL_MULTISAMPLEBUFFERS,
+.BI "    SDL_GL_MULTISAMPLESAMPLES,
+.BI "    SDL_GL_ACCELERATED_VISUAL,
+.BI "    SDL_GL_RETAINED_BACKING,
+.BI "    SDL_GL_CONTEXT_MAJOR_VERSION,
+.BI "    SDL_GL_CONTEXT_MINOR_VERSION,
+.BI "    SDL_GL_CONTEXT_FLAGS,
+.BI "    SDL_GL_CONTEXT_PROFILE_MASK,
+.BI "    SDL_GL_SHARE_WITH_CURRENT_CONTEXT,
+.BI "    SDL_GL_FRAMEBUFFER_SRGB_CAPABLE,
+.BI "    SDL_GL_CONTEXT_RELEASE_BEHAVIOR,
+.BI "    SDL_GL_CONTEXT_RESET_NOTIFICATION,
+.BI "    SDL_GL_CONTEXT_NO_ERROR,
+.BI "    SDL_GL_FLOATBUFFERS,
+.BI "    SDL_GL_EGL_PLATFORM
+.BI "} SDL_GLattr;
+.fi
+.SH DESCRIPTION
+While you can set most OpenGL attributes normally, the attributes listed
+above must be known before SDL creates the window that will be used with
+the OpenGL context\[char46] These attributes are set and read with
+
+.BR SDL_GL_SetAttribute
+() and
+
+.BR SDL_GL_GetAttribute
+()\[char46]
+
+In some cases, these attributes are minimum requests; the GL does not
+promise to give you exactly what you asked for\[char46] It's possible to ask for a
+16-bit depth buffer and get a 24-bit one instead, for example, or to ask
+for no stencil buffer and still have one available\[char46] Context creation should
+fail if the GL can't provide your requested attributes at a minimum, but
+you should check to see exactly what you got\[char46]
+
+.SH AVAILABILITY
+This enum is available since SDL 3\[char46]0\[char46]0\[char46]
+

@@ -63,7 +63,7 @@ auto dev::StrWToStr(const std::wstring& _ws)
 
 const char* dev::BoolToStrC(const bool _val, bool _text)
 {
-	if (_text) 
+	if (_text)
 	{
 		static const char* false_s = "False";
 		static const char* true_s = "True";
@@ -97,16 +97,35 @@ auto dev::StrHexToInt(const char* _str)
 	return strtol(_str, &end, 16);
 }
 
-auto dev::GetSubstringCount(const std::string& _str, const std::string& _substr) 
+auto dev::GetSubstringCount(const std::string& _str, const std::string& _substr)
 -> int
 {
-    int count = 0;
-    size_t pos = 0;
+	int count = 0;
+	size_t pos = 0;
 
-    while ((pos = _str.find(_substr, pos)) != std::string::npos) {
-        ++count;
-        pos += _str.length();
-    }
+	while ((pos = _str.find(_substr, pos)) != std::string::npos) {
+		++count;
+		pos += _str.length();
+	}
 
-    return count;
+	return count;
+}
+
+void dev::StrToUpper(std::wstring& _str)
+{
+	for (auto& ch : _str) {
+		ch = std::toupper(ch);
+	}
+}
+
+// trim from end (copy)
+auto dev::TrimSpacesRight(std::wstring _str)
+-> std::wstring
+{
+	_str.erase(
+		std::find_if(
+			_str.rbegin(), _str.rend(), [](int ch) { return !std::isspace(ch);} 
+		).base(), _str.end());
+
+	return _str;
 }

@@ -1,0 +1,51 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_Keymod:
+.\"   https://wiki.libsdl.org/SDL_Keymod
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_Keymod
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_Keymod 3type "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 DATATYPES"
+.SH NAME
+SDL_Keymod \- Enumeration of valid key mods (possibly OR'd together)\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_keycode\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "typedef enum SDL_Keymod
+.BI "{
+.BI "    SDL_KMOD_NONE = 0x0000,    /**< no modifier is applicable. */
+.BI "    SDL_KMOD_LSHIFT = 0x0001,  /**< the left Shift key is down. */
+.BI "    SDL_KMOD_RSHIFT = 0x0002,  /**< the right Shift key is down. */
+.BI "    SDL_KMOD_LCTRL = 0x0040,   /**< the left Ctrl (Control) key is down. */
+.BI "    SDL_KMOD_RCTRL = 0x0080,   /**< the right Ctrl (Control) key is down. */
+.BI "    SDL_KMOD_LALT = 0x0100,    /**< the left Alt key is down. */
+.BI "    SDL_KMOD_RALT = 0x0200,    /**< the right Alt key is down. */
+.BI "    SDL_KMOD_LGUI = 0x0400,    /**< the left GUI key (often the Windows key) is down. */
+.BI "    SDL_KMOD_RGUI = 0x0800,    /**< the right GUI key (often the Windows key) is down. */
+.BI "    SDL_KMOD_NUM = 0x1000,     /**< the Num Lock key (may be located on an extended keypad) is down. */
+.BI "    SDL_KMOD_CAPS = 0x2000,    /**< the Caps Lock key is down. */
+.BI "    SDL_KMOD_MODE = 0x4000,    /**< the !AltGr key is down. */
+.BI "    SDL_KMOD_SCROLL = 0x8000,  /**< the Scoll Lock key is down. */
+.BI "
+.BI "    SDL_KMOD_CTRL = SDL_KMOD_LCTRL | SDL_KMOD_RCTRL,    /**< Any Ctrl key is down. */
+.BI "    SDL_KMOD_SHIFT = SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT, /**< Any Shift key is down. */
+.BI "    SDL_KMOD_ALT = SDL_KMOD_LALT | SDL_KMOD_RALT,       /**< Any Alt key is down. */
+.BI "    SDL_KMOD_GUI = SDL_KMOD_LGUI | SDL_KMOD_RGUI        /**< Any GUI key is down. */
+.BI "} SDL_Keymod;
+.fi
+.SH AVAILABILITY
+This enum is available since SDL 3\[char46]0\[char46]0\[char46]
+

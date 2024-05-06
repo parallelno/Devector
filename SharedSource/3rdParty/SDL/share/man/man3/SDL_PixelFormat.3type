@@ -1,0 +1,58 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_PixelFormat:
+.\"   https://wiki.libsdl.org/SDL_PixelFormat
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_PixelFormat
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_PixelFormat 3type "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 DATATYPES"
+.SH NAME
+SDL_PixelFormat \- Details about the format of a pixel\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_pixels\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "typedef struct SDL_PixelFormat
+.BI "{
+.BI "    SDL_PixelFormatEnum format;
+.BI "    SDL_Palette *palette;
+.BI "    Uint8 bits_per_pixel;
+.BI "    Uint8 bytes_per_pixel;
+.BI "    Uint8 padding[2];
+.BI "    Uint32 Rmask;
+.BI "    Uint32 Gmask;
+.BI "    Uint32 Bmask;
+.BI "    Uint32 Amask;
+.BI "    Uint8 Rloss;
+.BI "    Uint8 Gloss;
+.BI "    Uint8 Bloss;
+.BI "    Uint8 Aloss;
+.BI "    Uint8 Rshift;
+.BI "    Uint8 Gshift;
+.BI "    Uint8 Bshift;
+.BI "    Uint8 Ashift;
+.BI "    int refcount;
+.BI "    struct SDL_PixelFormat *next;
+.BI "} SDL_PixelFormat;
+.fi
+.SH DESCRIPTION
+Generally this is used with 
+.BR SDL_Surface
+, and covers many
+possible configurations, including paletted data and various bit patterns\[char46]
+
+.SH AVAILABILITY
+This struct is available since SDL 3\[char46]0\[char46]0\[char46]
+

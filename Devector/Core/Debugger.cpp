@@ -538,7 +538,7 @@ auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const si
 			const Addr operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
 			std::string constsS = LabelsToStr(operand_addr, LABEL_TYPE_ALL);
 
-			DisasmLine lineDisasm(DisasmLine::Type::CODE, globalAddr, lineS, 0,0,0, constsS);
+			DisasmLine lineDisasm(DisasmLine::Type::CODE, Addr(globalAddr), lineS, 0,0,0, constsS);
 			out.emplace_back(std::move(lineDisasm));
 
 			line++;

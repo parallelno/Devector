@@ -1,0 +1,56 @@
+.\" This manpage content is licensed under Creative Commons
+.\"  Attribution 4.0 International (CC BY 4.0)
+.\"   https://creativecommons.org/licenses/by/4.0/
+.\" This manpage was generated from SDL's wiki page for SDL_SystemCursor:
+.\"   https://wiki.libsdl.org/SDL_SystemCursor
+.\" Generated with SDL/build-scripts/wikiheaders.pl
+.\"  revision SDL-3.1.2-no-vcs
+.\" Please report issues in this manpage's content at:
+.\"   https://github.com/libsdl-org/sdlwiki/issues/new
+.\" Please report issues in the generation of this manpage from the wiki at:
+.\"   https://github.com/libsdl-org/SDL/issues/new?title=Misgenerated%20manpage%20for%20SDL_SystemCursor
+.\" SDL can be found at https://libsdl.org/
+.de URL
+\$2 \(laURL: \$1 \(ra\$3
+..
+.if \n[.g] .mso www.tmac
+.TH SDL_SystemCursor 3type "SDL 3.1.2" "Simple Directmedia Layer" "SDL3 DATATYPES"
+.SH NAME
+SDL_SystemCursor \- Cursor types for 
+.BR SDL_CreateSystemCursor
+()\[char46]
+.SH HEADER FILE
+Defined in SDL3/SDL_mouse\[char46]h
+
+.SH SYNOPSIS
+.nf
+.B #include \(dqSDL3/SDL.h\(dq
+.PP
+.BI "typedef enum SDL_SystemCursor
+.BI "{
+.BI "    SDL_SYSTEM_CURSOR_ARROW,     /**< Arrow */
+.BI "    SDL_SYSTEM_CURSOR_IBEAM,     /**< I-beam */
+.BI "    SDL_SYSTEM_CURSOR_WAIT,      /**< Wait */
+.BI "    SDL_SYSTEM_CURSOR_CROSSHAIR, /**< Crosshair */
+.BI "    SDL_SYSTEM_CURSOR_WAITARROW, /**< Small wait cursor (or Wait if not available) */
+.BI "    SDL_SYSTEM_CURSOR_SIZENWSE,  /**< Double arrow pointing northwest and southeast */
+.BI "    SDL_SYSTEM_CURSOR_SIZENESW,  /**< Double arrow pointing northeast and southwest */
+.BI "    SDL_SYSTEM_CURSOR_SIZEWE,    /**< Double arrow pointing west and east */
+.BI "    SDL_SYSTEM_CURSOR_SIZENS,    /**< Double arrow pointing north and south */
+.BI "    SDL_SYSTEM_CURSOR_SIZEALL,   /**< Four pointed arrow pointing north, south, east, and west */
+.BI "    SDL_SYSTEM_CURSOR_NO,        /**< Slashed circle or crossbones */
+.BI "    SDL_SYSTEM_CURSOR_HAND,      /**< Hand */
+.BI "    SDL_SYSTEM_CURSOR_WINDOW_TOPLEFT,     /**< Window resize top-left (or SIZENWSE) */
+.BI "    SDL_SYSTEM_CURSOR_WINDOW_TOP,         /**< Window resize top (or SIZENS) */
+.BI "    SDL_SYSTEM_CURSOR_WINDOW_TOPRIGHT,    /**< Window resize top-right (or SIZENESW) */
+.BI "    SDL_SYSTEM_CURSOR_WINDOW_RIGHT,       /**< Window resize right (or SIZEWE) */
+.BI "    SDL_SYSTEM_CURSOR_WINDOW_BOTTOMRIGHT, /**< Window resize bottom-right (or SIZENWSE) */
+.BI "    SDL_SYSTEM_CURSOR_WINDOW_BOTTOM,      /**< Window resize bottom (or SIZENS) */
+.BI "    SDL_SYSTEM_CURSOR_WINDOW_BOTTOMLEFT,  /**< Window resize bottom-left (or SIZENESW) */
+.BI "    SDL_SYSTEM_CURSOR_WINDOW_LEFT,        /**< Window resize left (or SIZEWE) */
+.BI "    SDL_NUM_SYSTEM_CURSORS
+.BI "} SDL_SystemCursor;
+.fi
+.SH AVAILABILITY
+This enum is available since SDL 3\[char46]0\[char46]0\[char46]
+
