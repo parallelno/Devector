@@ -114,9 +114,6 @@
     <ClCompile Include="Core\TimerI8253.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\FileSystemImage.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -253,12 +250,6 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\FDC1793.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Tinydir.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\FileSystemImage.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

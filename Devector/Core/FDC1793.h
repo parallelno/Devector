@@ -1,4 +1,4 @@
-// Western Digital FD1793 - Floppy Disk Controller
+// Emulation of Soviet KR1818WG93 (КР1818ВГ93) Floppy Disk Controller aka a WD1793 analog
 
 // Based on fd1793.h for vector06sdl by Viacheslav Slavinsky, ported from vector06js
 //
@@ -12,7 +12,6 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
 
 //#include "options.h"
 #include "Utils/Utils.h"
@@ -41,6 +40,7 @@ struct DiskImage
 ////////////////////////////////////////////////////////////////////////////////
 struct DiskImageTemplate : public DiskImage {};
 
+/*
 ////////////////////////////////////////////////////////////////////////////////
 //
 // DiskImageDetached
@@ -67,7 +67,7 @@ public:
 	void Set(int _idx, uint8_t _val) override	{ m_data[_idx] = _val; }
 	auto Size() -> int override					{ return (int)m_data.size(); }
 };
-
+*/
 ////////////////////////////////////////////////////////////////////////////////
 //
 // FileDiskImage
@@ -75,12 +75,12 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 class FileDiskImage : public DiskImage
 {
-	std::string m_path;
+	std::wstring m_path;
 	Data m_data;
 	bool m_loaded = false;
-	bool m_dirty = false;
+	bool m_modified = false;
 public:
-	FileDiskImage(const std::string& _path) : m_path(_path) {}
+	FileDiskImage(const std::wstring& _path) : m_path(_path) {}
 
 	~FileDiskImage()
 	{
@@ -91,7 +91,7 @@ public:
 
 	void Set(int _idx, uint8_t _val) override
 	{
-		m_dirty = m_data[_idx] != _val;
+		m_modified = m_data[_idx] != _val;
 		m_data[_idx] = _val;
 	}
 
@@ -100,7 +100,7 @@ public:
 		Load();
 		return (int)m_data.size();
 	}
-	
+
 	void Load()
 	{
 		if (!m_loaded) {
@@ -114,99 +114,13 @@ public:
 
 	void Flush() override
 	{
-		if (m_dirty) {
-			auto tmp = util::tmpname(m_path);
-			FILE * copy = fopen(tmp.c_str(), "wb");
-			if (copy) {
-				fwrite(&m_data[0], 1, m_data.size(), copy);
-			}
-			fclose(copy);
-
-			if (0 == util::careful_rename(tmp, m_path)) {
-				m_dirty = false;
-			}
+		if (m_modified)
+		{
+			m_modified = dev::SaveFile(m_path, m_data);
 		}
 	}
 };
 
-/*
-////////////////////////////////////////////////////////////////////////////////
-//
-// DirectoryImage
-//
-////////////////////////////////////////////////////////////////////////////////
-class DirectoryImage : public DiskImage
-{
-	std::string m_path;
-	std::string dirimage;
-	FileSystemImage dir;
-	
-	bool m_loaded;
-	bool m_dirty;
-public:
-	DirectoryImage(const std::string& _path) 
-		: m_path(_path), dir(FileSystemImage::MAX_FS_BYTES),
-		  m_loaded(false), m_dirty(false)
-	{}
-
-	~DirectoryImage()
-	{
-		Flush();
-	}
-
-	uint8_t Get(int _idx) override
-	{
-		if (_idx < 0 || _idx >= Size()) 
-			throw std::out_of_range("boundary error");
-		return dir.data()[_idx]; 
-	}
-
-	void Set(int _idx, uint8_t _val) override
-	{
-		if (_idx < 0 || _idx >= Size()) 
-			throw std::out_of_range("boundary error");
-		bool changed = dir.data()[_idx] != _val;
-		if (changed) {
-			dir.data()[_idx] = _val;
-			m_dirty = true;
-		}
-	}
-
-// TODO: getting size is loading the data. think of refactoring it
-	int Size() override {
-		Load();
-		return dir.data().size();
-	}
-	
-	void Load()
-	{
-		if (!m_loaded) {
-			dir.mount_local_dir(m_path);
-			m_loaded = true;
-
-			dirimage = m_path + "/" + "dirimage.fdd";
-			m_dirty = true;
-			Flush();
-		}
-	}
-
-	void Flush() override
-	{
-		if (m_dirty) {
-			std::string tmp = util::tmpname(dirimage);
-			FILE * copy = fopen(tmp.c_str(), "wb");
-			if (copy) {
-				fwrite(&dir.data()[0], 1, dir.data().size(), copy);
-			}
-			fclose(copy);
-
-			if (0 == util::careful_rename(tmp, dirimage)) {
-				m_dirty = false;
-			}
-		}
-	}
-};
-*/
 ////////////////////////////////////////////////////////////////////////////////
 //
 // FDisk
@@ -214,24 +128,27 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 class FDisk
 {
-private:
-	std::string name;
 public:
 	std::unique_ptr<DiskImage> m_diskP;
 private:
-	int m_sectorsPerTrack;
-	int m_sectorSize;
-	int totSec;
-	int m_headsNum;
+	enum class ReadSource : int { DISK = 0, BUFFER = 1 };
+
+	int m_sidesTotal;
+	int m_sectorsTotal;
+	int m_sectorSize;		// in bytes
 	int m_tracksPerSide;
-	int m_data;
-	int m_track;
-	int m_side;
-	int m_sector;
-	int m_position;
+	int m_sectorsPerTrack;
+
+	int m_data;		// lastly read byte
+	int m_side;		// current side
+	int m_track;	// current track
+	int m_sector;	// current sector
+	int m_position;	// current position in bytes
+
+	// read helpers
+	ReadSource m_readSource;
 	int m_readOffset;
-	int n_readLen;
-	int m_readSource;
+	int m_readLen;
 	uint8_t m_readBuffer[6];
 
 
@@ -241,179 +158,140 @@ public:
 		Init();
 	}
 
-
-	void Attach(const DiskImage::Data& _data) 
-	{
-		m_diskP = std::make_unique<DiskImageDetached>(_data);
-		Init();
-	}
-
 	void Attach(const std::string& _file)
 	{
 		m_diskP = std::make_unique<FileDiskImage>(_file);
-		// if (m_diskP->Size() == 0) {
-		// 	dsk = std::make_unique<DirectoryImage>(file);
-		// }
 		Init();
 	}
 
 	void Init()
 	{
-		m_sectorsPerTrack = 9;
+		/*
+		// ? Common FDD specifics ?
+		m_sidesTotal = 1;
+		m_sectorsTotal = 720;
 		m_sectorSize = 512;
-		totSec = 720;
-		m_headsNum = 1;
-		m_tracksPerSide = (totSec / m_sectorsPerTrack / m_headsNum) | 0;
+		m_sectorsPerTrack = 9;
+		*/
+
+		// Vector 06c FFD specifics
+		m_sidesTotal = 2;
+		m_sectorSize = 1024;
+		m_sectorsPerTrack = 5;
+		m_sectorsTotal = m_diskP->Size() / m_sectorSize;
+		m_tracksPerSide = m_sectorsTotal / m_sidesTotal  / m_sectorsPerTrack;
+
+		// current state
+		m_side = 0;
 		m_data = 0;
 		m_track = 0;
-		m_side = 0;
 		m_position = 0;
+
 		// read helpers
+		m_readSource = ReadSource::DISK;
 		m_readOffset = 0;
-		n_readLen = 0;
-		m_readSource = 0; // 0: dsk, 1: readBuffer
-		parse_v06c();
+		m_readLen = 0;
 	}
 
-	static int sector_length_to_code(int length)
+	static int SectorSizeToCode(int _sectorSize)
 	{
-		switch (length) {
+		switch (_sectorSize) {
 			case 128:   return 0;
 			case 256:   return 1;
 			case 512:   return 2;
 			case 1024:  return 3;
 		}
-		dev::Log("FDC1793: wrong sector length {}", length);
+		dev::Log("FDC1793: wrong sector length {}", _sectorSize);
 		return -1;
 	}
 
-	bool isReady() const 
+	bool IsReady() const
 	{
 		return m_diskP->Size() > 0;
 	}
 
-	void seek(int track, int sector, int side)
+	void Seek(int _track, int _sector, int _side)
 	{
-		if (isReady()) {
-			int offsetSector = (sector != 0) ? (sector - 1) : 0;
-			m_position = (track * (m_sectorsPerTrack * m_headsNum) 
-				+ (m_sectorsPerTrack * side) + offsetSector) * m_sectorSize;
-			track = track;
-			side = side;
-			
-			/*if (Options.log.fdc) {
-				printf("FDC1793: disk seek position: %08x "
-						"(side:%d,trk:%d,sec:%d)\n", position, side,
-						track, sector);
-			}*/
+		if (IsReady())
+		{
+			_sector = dev::Max(0, _sector - 1); // In CHS addressing the sector numbers always start at 1
+			int sectors = m_sectorsPerTrack * (_track * m_sidesTotal + _side);
+
+			m_position = (sectors + _sector) * m_sectorSize;
+			m_track = _track;
+			m_side = _side;
+
+			// TODO: find out why it is not setting m_sector
 		}
 	};
 
-	void readSector(int sector)
+	void ReadSector(int _sector)
 	{
-		n_readLen = m_sectorSize;
+		m_readSource = ReadSource::DISK;
+		m_readLen = m_sectorSize;
 		m_readOffset = 0;
-		m_readSource = 0;
-		sector = sector;
-		seek(m_track, sector, m_side);
+
+		m_sector = _sector;
+		Seek(m_track, _sector, m_side);
 	}
 
-	void readAddress()
+	// TODO: think of using one func for both ReadSector and WriteSector
+	void WriteSector(int _sector)
 	{
-		n_readLen = 6;
-		m_readSource = 1;
+		m_readSource = ReadSource::DISK;
+		m_readLen = m_sectorSize;
 		m_readOffset = 0;
+
+		m_sector = _sector;
+		Seek(m_track, _sector, m_side);
+	}
+
+	void ReadAddress()
+	{
+		m_readSource = ReadSource::BUFFER;
+		m_readLen = sizeof(m_readBuffer);
+		m_readOffset = 0;
+
 		m_readBuffer[0] = m_track;
-		m_readBuffer[1] = m_side; // invert side ? not sure
+		m_readBuffer[1] = m_side; // TODO: investigate this comment left by the svofsi -> invert side ? not sure
 		m_readBuffer[2] = m_sector;
-		m_readBuffer[3] = FDisk::sector_length_to_code(m_sectorSize);
+		m_readBuffer[3] = FDisk::SectorSizeToCode(m_sectorSize);
 		m_readBuffer[4] = 0;
 		m_readBuffer[5] = 0;
 	}
 
+	// reads one byte at once
 	bool Read()
 	{
-		bool finished = true;
-		if (m_readOffset < n_readLen) {
-			finished = false;
-			if (m_readSource) {
-				m_data = m_readBuffer[m_readOffset];
-			} else {
-				m_data = m_diskP->Get(m_position + m_readOffset);
-			}
+		bool finished = m_readOffset >= m_readLen;
+		if (!finished)
+		{
+			m_data = m_readSource == ReadSource::BUFFER ? 
+					m_readBuffer[m_readOffset] :
+					m_diskP->Get(m_position + m_readOffset);
+
 			m_readOffset++;
-		} /*else {
-			if (Options.log.fdc) {
-				printf("FDC1793: read finished src:%d\n", readSource);
-			}
-		}*/
-		//printf("FDC1793: disk read, rem: %d finished: %d\n", readLength,
-		//        finished);
+		}
 		return finished;
 	}
 
-	bool write_data(uint8_t data)
+	// writes one byte at once
+	// TODO: check if there is no perf loss flushing ~820K file every Write
+	bool Write(const uint8_t _data)
 	{
-		bool finished = true;
-		if (m_readOffset < n_readLen) {
-			finished = false;
-			m_diskP->Set(m_position + m_readOffset, data);
+		bool finished = m_readOffset >= m_readLen;
+		if (!finished)
+		{
+			m_diskP->Set(m_position + m_readOffset, _data);
 			m_readOffset++;
-			if (m_readOffset == n_readLen) {
+			if (m_readOffset == m_readLen) {
 				m_diskP->Flush();
 			}
-		}/*
-		else {
-			if (Options.log.fdc) {
-				printf("FDC1793: Write finished: position=%08x\n", position);
-
-				for (int i = 0; i < readLength; ++i) {
-					printf("%02x ", GetDisk->get(position + i));
-
-					if ((i + 1) % 16 == 0 || i + 1 == readLength) {
-						printf("  ");
-						for (int j = -15; j <= 0; ++j) {
-							printf("%c", util::printable_char(
-										GetDisk->get(position + i + j)));
-						}
-						printf("  W\n");
-					}
-				}
-			}
-		}*/
+		}
 		return finished;
 	}
 
-	void writeSector(int sector)
-	{
-		n_readLen = m_sectorSize;
-		m_readOffset = 0;
-		m_readSource = 0;
-		sector = sector;
-		seek(m_track, sector, m_side);
-	}
-
-	// Vector-06c floppy: 2 sides, 5 sectors of 1024 bytes
-	bool parse_v06c() 
-	{
-		static constexpr int FDD_NSECTORS = 5;
-
-		if (!isReady()) {
-			return false;
-		}
-		m_tracksPerSide = (m_diskP->Size() >> 10) / 2 * FDD_NSECTORS;
-		m_headsNum = 2;
-		m_sectorSize = 1024;
-		m_sectorsPerTrack = 5;
-		totSec = m_diskP->Size() / 1024;
-
-		return true;
-	};
-
-	uint8_t read_data() const
-	{
-		return m_data;
-	}
+	uint8_t GetData() const { return m_data; }
 
 };
 
@@ -432,35 +310,9 @@ public:
 //
 class FDC1793
 {
-private:
-	FDisk m_disks[4];
-
-	// port 4, parameter register: SMDH3210
-	// 							S - SS or 
-	// 							M - MON or Motor On
-	// 							D - DDEN or Double Density
-	// 							H - HLD or Hold. 1 is head on disk (it is or-ed with motor on)
-	// 							3 - Drive 3 is active
-	// 							2 - Drive 2 is active
-	// 							1 - Drive 1 is active
-	// 							0 - Drive 0 is active
-	int m_paramReg;
-
-	int m_side;  // side selected: 0 is side 0, 1 is side 1
-	int m_intRQ;
-	int m_data;
-	int m_status;
-	int m_commandTr;
-	int m_track;
-	int m_sector;
-	int m_stepDir = 1;
-	int m_lingerTime = 3;
-	int m_diskSelected = 0;
-
-	int LINGER_BEFORE;
-	int LINGER_AFTER = 2;
-
-public:
+	static constexpr int LINGER_BEFORE = 0;
+	static constexpr int LINGER_AFTER = 2;
+	
 	static constexpr int ST_NOTREADY = 0x80; // sampled before read/Write
 	static constexpr int ST_READONLY = 0x40;
 	static constexpr int ST_HEADLOADED = 0x20;
@@ -478,10 +330,35 @@ public:
 	static constexpr int PRT_INTRQ = 0x01;
 	static constexpr int PRT_DRQ = 0x80;
 
-	static constexpr int CMD_READSEC = 1;
-	static constexpr int CMD_READADDR = 2;
-	static constexpr int CMD_WRITESEC = 3;
+	FDisk m_disks[4];
 
+	// port 4, parameter register: SMDH3210
+	// 							S - SS or ???
+	// 							M - MON or Motor On
+	// 							D - DDEN or Double Density
+	// 							H - HLD or Hold. 1 is head on disk (it is or-ed with motor on)
+	// 							3 - Drive 3 is active
+	// 							2 - Drive 2 is active
+	// 							1 - Drive 1 is active
+	// 							0 - Drive 0 is active
+	int m_paramReg;
+
+	int m_intRQ;
+	int m_status;
+
+	int m_data;
+	int m_side;  // side selected: 0 is side 0, 1 is side 1
+	int m_track;
+	int m_sector;
+
+	int m_stepDir = 1;
+	int m_lingerTime = 3;
+	int m_diskSelected = 0;
+
+	enum class Cmd { NONE, READ_SEC, READ_ADDR, WRITE_SEC};
+	Cmd m_commandTr;
+
+public:
 	enum class PortAddr : int { CMD = 0, TRACK, SECTOR, DATA, CONTROL, STATUS };
 
 	auto GetDisk(const int _diskIdx = -1) -> FDisk&
@@ -489,51 +366,13 @@ public:
 		return m_disks[_diskIdx == -1 ? m_diskSelected : _diskIdx];
 	}
 
-	void Exec()
-	{
-		bool finished;
-		if (m_commandTr == CMD_READSEC || m_commandTr == CMD_READADDR) 
-		{
-			if (m_status & ST_DRQ) {
-				dev::Log("FDC1793: invalid read");
-				return;
-			}
-			finished = GetDisk().Read();
-			if (finished) 
-			{
-				m_status &= ~ST_BUSY;
-				m_intRQ = PRT_INTRQ;
-			} else 
-			{
-				m_status |= ST_DRQ;
-				m_data = GetDisk().read_data();
-			}
-		}
-		else if (m_commandTr == CMD_WRITESEC) {
-			if ((m_status & ST_DRQ) == 0) {
-				finished = GetDisk().write_data(m_data);
-				if (finished) {
-					m_status &= ~ST_BUSY;
-					m_intRQ = PRT_INTRQ;
-				}
-				else {
-					m_status |= ST_DRQ;
-				}
-			}
-		} 
-		else {
-			// finish lingering
-			m_status &= ~ST_BUSY;
-		}
-	}
-
 	int Read(const PortAddr _portAddr)
 	{
 		int result = 0;
 
-		if (GetDisk().isReady()) {
+		if (GetDisk().IsReady()) {
 			m_status &= ~ST_NOTREADY;
-		} else{ 
+		} else{
 			m_status |= ST_NOTREADY;
 		}
 
@@ -545,7 +384,7 @@ public:
 				int returnStatus = m_status;
 				if (m_status & ST_BUSY) {
 					if (m_lingerTime < 0) {
-						returnStatus &= ~ST_BUSY; // pretend that we're slow 
+						returnStatus &= ~ST_BUSY; // pretend that we're slow
 						++m_lingerTime;
 					} else if (m_lingerTime < LINGER_AFTER) {
 						++m_lingerTime;
@@ -597,105 +436,6 @@ public:
 		return result;
 	};
 
-	void Command(const int _val)
-	{
-		int cmd = _val >> 4;
-		int param = _val & 0x0f;
-		int update = param & 1;
-		int multiple = update;
-
-		m_intRQ = 0;
-		m_commandTr = 0;
-		switch (cmd) {
-			case 0x00: // restor, type 1
-				m_intRQ = PRT_INTRQ;
-				if (GetDisk().isReady()) {
-					m_track = 0;
-					GetDisk().seek(m_track, 1, m_side);
-				} else {
-					m_status |= ST_SEEKERR;
-				}
-				break;
-
-			case 0x01: // seek
-				GetDisk().seek(m_data, m_sector, m_side);
-				m_track = m_data;
-				m_intRQ = PRT_INTRQ;
-				m_status |= ST_BUSY;
-				m_lingerTime = LINGER_BEFORE;
-				break;
-
-			case 0x02: // step, u = 0
-			case 0x03: // step, u = 1
-				m_track += m_stepDir;
-				if (m_track < 0) {
-					m_track = 0;
-				}
-				m_lingerTime = LINGER_BEFORE;
-				m_status |= ST_BUSY;
-				break;
-
-			case 0x04: // step in, u = 0
-			case 0x05: // step in, u = 1
-				m_stepDir = 1;
-				m_track += m_stepDir;
-				m_lingerTime = LINGER_BEFORE;
-				m_status |= ST_BUSY;
-				break;
-
-			case 0x06: // step out, u = 0
-			case 0x07: // step out, u = 1
-				m_stepDir = -1;
-				m_track += m_stepDir;
-				if (m_track < 0) {
-					m_track = 0;
-				}
-				m_lingerTime = LINGER_BEFORE;
-				m_status |= ST_BUSY;
-				break;
-
-			case 0x08: // read sector, m = 0
-			case 0x09: // read sector, m = 1
-				m_commandTr = CMD_READSEC;
-				m_status |= ST_BUSY;
-				GetDisk().seek(m_track, m_sector, m_side);
-				GetDisk().readSector(m_sector);
-				m_lingerTime = LINGER_BEFORE;
-				break;
-
-			case 0x0A: // Write sector, m = 0
-			case 0x0B: // Write sector, m = 1
-				m_commandTr = CMD_WRITESEC;
-				m_status |= ST_BUSY;
-				m_status |= ST_DRQ;
-				GetDisk().seek(m_track, m_sector, m_side);
-				GetDisk().writeSector(m_sector);
-				m_lingerTime = LINGER_BEFORE;
-				break;
-
-			case 0x0C: // read address
-				m_commandTr = CMD_READADDR;
-				m_status |= ST_BUSY;
-				GetDisk().readAddress();
-				m_lingerTime = LINGER_BEFORE;
-				break;
-
-			case 0x0D: // force interrupt
-				break;
-
-			case 0x0E: // read track
-				dev::Log("FDC1793: 'Read Track' command is not implemented");
-				break;
-
-			case 0x0F: // Write track
-				printf("FDC1793: 'Write Track' command is not implemented");
-				break;
-
-			default:
-				break;
-		}
-	};
-
 	void Write(const PortAddr _portAddr, const int _val)
 	{
 		switch (_portAddr) {
@@ -733,5 +473,145 @@ public:
 				return;
 		}
 	}
+
+private:
+	void Command(const int _val)
+	{
+		int cmd = _val >> 4;
+		int param = _val & 0x0f;
+		int update = param & 1;
+		int multiple = update;
+
+		m_intRQ = 0;
+		m_commandTr = Cmd::NONE;
+
+		switch (cmd) {
+			case 0x00: // restor, type 1
+				m_intRQ = PRT_INTRQ;
+				if (GetDisk().IsReady()) {
+					m_track = 0;
+					GetDisk().Seek(m_track, 1, m_side);
+				} else {
+					m_status |= ST_SEEKERR;
+				}
+				break;
+
+			case 0x01: // Seek
+				GetDisk().Seek(m_data, m_sector, m_side);
+				m_track = m_data;
+				m_intRQ = PRT_INTRQ;
+				m_status |= ST_BUSY;
+				m_lingerTime = LINGER_BEFORE;
+				break;
+
+			case 0x02: // step, u = 0
+			case 0x03: // step, u = 1
+				m_track += m_stepDir;
+				if (m_track < 0) {
+					m_track = 0;
+				}
+				m_lingerTime = LINGER_BEFORE;
+				m_status |= ST_BUSY;
+				break;
+
+			case 0x04: // step in, u = 0
+			case 0x05: // step in, u = 1
+				m_stepDir = 1;
+				m_track += m_stepDir;
+				m_lingerTime = LINGER_BEFORE;
+				m_status |= ST_BUSY;
+				break;
+
+			case 0x06: // step out, u = 0
+			case 0x07: // step out, u = 1
+				m_stepDir = -1;
+				m_track += m_stepDir;
+				if (m_track < 0) {
+					m_track = 0;
+				}
+				m_lingerTime = LINGER_BEFORE;
+				m_status |= ST_BUSY;
+				break;
+
+			case 0x08: // read sector, m = 0
+			case 0x09: // read sector, m = 1
+				m_commandTr = Cmd::READ_SEC;
+				m_status |= ST_BUSY;
+				//GetDisk().Seek(m_track, m_sector, m_side);
+				GetDisk().ReadSector(m_sector);
+				m_lingerTime = LINGER_BEFORE;
+				break;
+
+			case 0x0A: // Write sector, m = 0
+			case 0x0B: // Write sector, m = 1
+				m_commandTr = Cmd::WRITE_SEC;
+				m_status |= ST_BUSY;
+				m_status |= ST_DRQ;
+				//GetDisk().Seek(m_track, m_sector, m_side);
+				GetDisk().WriteSector(m_sector);
+				m_lingerTime = LINGER_BEFORE;
+				break;
+
+			case 0x0C: // read address
+				m_commandTr = Cmd::READ_ADDR;
+				m_status |= ST_BUSY;
+				GetDisk().ReadAddress();
+				m_lingerTime = LINGER_BEFORE;
+				break;
+
+			case 0x0D: // force interrupt
+				break;
+
+			case 0x0E: // read track
+				dev::Log("FDC1793: 'Read Track' command is not implemented");
+				break;
+
+			case 0x0F: // Write track
+				printf("FDC1793: 'Write Track' command is not implemented");
+				break;
+
+			default:
+				break;
+		}
+	};
+
+	void Exec()
+	{
+		bool finished;
+		if (m_commandTr == Cmd::READ_SEC || m_commandTr == Cmd::READ_ADDR)
+		{
+			if (m_status & ST_DRQ) {
+				dev::Log("FDC1793: invalid read");
+				return;
+			}
+			finished = GetDisk().Read();
+			if (finished)
+			{
+				m_status &= ~ST_BUSY;
+				m_intRQ = PRT_INTRQ;
+			} else
+			{
+				m_status |= ST_DRQ;
+				m_data = GetDisk().GetData();
+			}
+		}
+		else if (m_commandTr == Cmd::WRITE_SEC) {
+			if ((m_status & ST_DRQ) == 0) {
+				finished = GetDisk().Write(m_data);
+				if (finished) {
+					m_status &= ~ST_BUSY;
+					m_intRQ = PRT_INTRQ;
+				}
+				else {
+					m_status |= ST_DRQ;
+				}
+			}
+		}
+		else {
+			// finish lingering
+			m_status &= ~ST_BUSY;
+		}
+	}
 };
+
 #endif //!DEV_FDC1793_H

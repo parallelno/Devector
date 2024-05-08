@@ -115,7 +115,6 @@
     <ClCompile Include="Core\CpuI8080.cpp" />
     <ClCompile Include="Core\Debugger.cpp" />
     <ClCompile Include="Core\Display.cpp" />
-    <ClCompile Include="Core\FileSystemImage.cpp" />
     <ClCompile Include="Core\Hardware.cpp" />
     <ClCompile Include="Core\IO.cpp" />
     <ClCompile Include="Core\Keyboard.cpp" />
@@ -160,13 +159,11 @@
     <ClInclude Include="Core\Debugger.h" />
     <ClInclude Include="Core\Display.h" />
     <ClInclude Include="Core\FDC1793.h" />
-    <ClInclude Include="Core\FileSystemImage.h" />
     <ClInclude Include="Core\Hardware.h" />
     <ClInclude Include="Core\IO.h" />
     <ClInclude Include="Core\Keyboard.h" />
     <ClInclude Include="Core\Memory.h" />
     <ClInclude Include="Core\TimerI8253.h" />
-    <ClInclude Include="Core\Tinydir.h" />
     <ClInclude Include="Core\Watchpoint.h" />
     <ClInclude Include="DevectorApp.h" />
     <ClInclude Include="UI\BaseWindow.h" />

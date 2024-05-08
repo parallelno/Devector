@@ -51,14 +51,14 @@ auto dev::IO::PortIn(uint8_t _port)
     case 0x01:
     {
         /* PortC.low input ? */
-        auto portCLow = (CW & 0x01) ? 0x0b : (m_portC & 0x0f);
+        auto portCLow = (CW & 0x01) ? 0x0b : m_portC & 0x0f;
         /* PortC.high input ? */
-        auto portCUp = (CW & 0x08) ?
-            (/*(tape_player.sample() << 4) |*/
-                (m_keyboard.m_keySS ? 0 : (1 << 5)) |
-                (m_keyboard.m_keyUS ? 0 : (1 << 6)) |
-                (m_keyboard.m_keyRus ? 0 : (1 << 7))) : (m_portC & 0xf0);
-        result = portCLow | portCUp;
+        auto portCHigh = (CW & 0x08) ?
+                /*(tape_player.sample() << 4) |*/
+                (m_keyboard.m_keySS  ? 0 : 1 << 5) |
+                (m_keyboard.m_keyUS  ? 0 : 1 << 6) |
+                (m_keyboard.m_keyRus ? 0 : 1 << 7) : m_portC & 0xf0;
+        result = portCLow | portCHigh;
     }
         break;
 
