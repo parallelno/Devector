@@ -1,7 +1,7 @@
 #include "GLUtils.h"
 
 #include "Result.h"
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 #include <format>
 #include "GL/glew.h"
 

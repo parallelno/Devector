@@ -1,7 +1,7 @@
 #include <format>
 #include "WatchpointsWindow.h"
 #include "Utils/ImGuiUtils.h"
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 
 dev::WatchpointsWindow::WatchpointsWindow(Debugger& _debugger,
 	const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer)

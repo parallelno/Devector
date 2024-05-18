@@ -1,11 +1,11 @@
 #include "Hardware.h"
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 #include <chrono>
 
-dev::Hardware::Hardware()
+dev::Hardware::Hardware(const std::wstring& _pathBootData)
     :
     m_status(Status::STOP),
-    m_memory(),
+    m_memory(_pathBootData),
     m_keyboard(),
     m_timer(),
     m_timerWrapper(m_timer),
@@ -32,6 +32,7 @@ dev::Hardware::~Hardware()
     m_executionThread.join();
 }
 
+// when HW needs Reset
 void dev::Hardware::Init()
 {
     m_memory.Init();
@@ -124,7 +125,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
     {        
         auto result = m_reqs.pop();
 
-        const auto& [req, dataj] = *result;
+        const auto& [req, dataJ] = *result;
 
         switch (req)
         {
@@ -160,7 +161,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             break;
 
         case Req::SET_MEM:
-            SetMem(dataj);
+            m_memory.SetRam(dataJ["data"], dataJ["addr"]);
             m_reqRes.emplace({});
             break;
 
@@ -186,11 +187,11 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             break;
 
         case Req::GET_BYTE_RAM:
-            m_reqRes.emplace(GetByte(dataj, Memory::AddrSpace::RAM));
+            m_reqRes.emplace(GetByte(dataJ, Memory::AddrSpace::RAM));
             break;
 
         case Req::GET_WORD_STACK:
-            m_reqRes.emplace(GetWord(dataj, Memory::AddrSpace::STACK));
+            m_reqRes.emplace(GetWord(dataJ, Memory::AddrSpace::STACK));
             break;
 
         case Req::GET_DISPLAY_DATA:
@@ -211,13 +212,21 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
         case Req::GET_GLOBAL_ADDR_RAM:
             m_reqRes.emplace({
-                {"data", m_memory.GetGlobalAddr(dataj["addr"], Memory::AddrSpace::RAM)}
+                {"data", m_memory.GetGlobalAddr(dataJ["addr"], Memory::AddrSpace::RAM)}
                 });
             break;
 
         case Req::KEY_HANDLING:
-            m_io.GetKeyboard().KeyHandling(dataj["key"], dataj["action"]);
+        {
+            auto memType = m_io.GetKeyboard().KeyHandling(dataJ["key"], dataJ["action"]);
+            if (memType == Keyboard::RebootType::ROM) {
+                Reset();
+            }
+            else if (memType == Keyboard::RebootType::RAM) {
+                Restart();
+            }
             m_reqRes.emplace({});
+        }
             break;
 
         case Req::SCROLL_VERT:
@@ -226,6 +235,15 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
                 });
             break;
 
+        case Req::LOAD_FDD:
+        {
+            //m_fdc.Attach(dataJ["data"], dataJ["driveIdx"]);
+            int driveIdx = dataJ["driveIdx"];
+            std::string path = dataJ["path"];
+            m_fdc.disk(driveIdx).attach(path);
+            m_reqRes.emplace({});
+        }
+            break;
         default:
             break;
         }
@@ -241,18 +259,7 @@ void dev::Hardware::Reset()
 void dev::Hardware::Restart()
 {
     m_cpu.Reset();
-}
-
-void dev::Hardware::SetMem(const nlohmann::json& _dataJ)
-{
-    const std::vector<uint8_t> data = _dataJ;
-
-    if (data.size() > Memory::MEMORY_MAIN_LEN) {
-        // TODO: communicate the fail state
-        return;
-    }
-
-    m_memory.Set(data);
+    m_memory.SetMemType(Memory::MemType::RAM);
 }
 
 auto dev::Hardware::GetRegs() const

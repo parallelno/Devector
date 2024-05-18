@@ -5,7 +5,7 @@
 #include <cstring>
 #include <vector>
 
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 #include "Utils/Utils.h"
 
 dev::Breakpoint::Breakpoint(const Addr _addr,

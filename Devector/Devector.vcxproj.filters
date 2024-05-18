@@ -93,7 +93,7 @@
     <ClCompile Include="Utils\JsonUtils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Utils\StringUtils.cpp">
+    <ClCompile Include="Utils\StrUtils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="Utils\Utils.cpp">
@@ -105,13 +105,13 @@
     <ClCompile Include="UI\TraceLogWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Audio.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\CpuI8080.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\TimerI8253.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Fdc1793.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -219,7 +219,7 @@
     <ClInclude Include="Utils\Status.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Utils\StringUtils.h">
+    <ClInclude Include="Utils\StrUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Utils\TQueue.h">
@@ -240,16 +240,16 @@
     <ClInclude Include="UI\TraceLogWindow.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Audio.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\CpuI8080.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\TimerI8253.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\FDC1793.h">
+    <ClInclude Include="Core\Fdc1793.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\fd1793.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

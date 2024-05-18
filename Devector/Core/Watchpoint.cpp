@@ -4,7 +4,7 @@
 #include <sstream>
 #include <cstring>
 #include <vector>
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 #include "Utils/Utils.h"
 
 dev::Watchpoint::Watchpoint(const Access _access, const GlobalAddr _globalAddr, const Condition _cond,

@@ -3,7 +3,7 @@
 #include "Utils/Types.h"
 #include "Utils/Consts.h"
 #include "Utils/ImGuiUtils.h"
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 
 dev::BreakpointsWindow::BreakpointsWindow(Debugger& _debugger,
 	const float* const _fontSizeP, const float* const _dpiScaleP, ReqDisasm& _reqDisasm)

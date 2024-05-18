@@ -68,8 +68,8 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 	ImGui::RadioButton("R", &highlightMode, 1); ImGui::SameLine();
 	ImGui::RadioButton("W", &highlightMode, 2); ImGui::SameLine();
 	dev::DrawHelpMarker(
-		"Blue highlights represent reads.\n"
-		"Red highlights represent writes.\n"
+		"Blue highlight represents reads.\n"
+		"Red highlight represents writes.\n"
 		"The brighter the color, the more recent the change.");
 
 	constexpr auto headerColumn = "00\0 01\0 02\0 03\0 04\0 05\0 06\0 07\0 08\0 09\0 0A\0 0B\0 0C\0 0D\0 0E\0 0F\0";

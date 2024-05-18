@@ -30,6 +30,7 @@ namespace dev
 		const std::string FONT_CODE_PATH_DEFAULT = "Devector";
 		static constexpr int RECENT_FILES_MAX = 10;
 		const std::string LABELS_FILENAME = "debug.txt";
+		const std::string POPUP_FDD = "Fdd Setup";
 
 		std::unique_ptr <dev::Hardware> m_hardwareP;
 		std::unique_ptr <dev::Debugger> m_debuggerP;
@@ -46,12 +47,13 @@ namespace dev
 		bool m_disasmWindowShow = true;
 		bool m_memoryMapWindowShow = true;
 
-		std::list<std::wstring> m_recentFilePaths;
+		// path, driveIdx, autoBoot
+		std::list<std::tuple<std::wstring, int, bool>> m_recentFilePaths;
 
 		ReqHexViewer m_reqHexViewer;
 		ReqDisasm m_reqDisasm;
-
-		bool m_reset = false;
+		bool m_reqMainWindowReload = false;
+		bool m_reqHardwareStatsReset = false;
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 		GLUtils m_glUtils;
 
@@ -65,10 +67,12 @@ namespace dev
 		void SettingsInit();
 		void RecentFilesInit();
 		void RecentFilesStore();
-		void RecentFilesUpdate(const std::wstring& _filePath);
+		void RecentFilesUpdate(const std::wstring& _path, const int _driveIdx = -1, const bool _autoBoot = false);
 		void AppStyleInit();
 		void MainMenuUpdate();
-		void LoadRom(const std::wstring& _filePath);
+		void LoadRom(const std::wstring& _path);
+		void LoadFdd(const std::wstring& _path, const int _driveIdx, const bool _autoBoot);
+		void Reload();
 		static void KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes);
 	};
 

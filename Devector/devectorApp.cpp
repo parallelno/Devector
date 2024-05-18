@@ -9,7 +9,7 @@
 #include "DevectorApp.h"
 #include "Utils/Utils.h"
 #include "Utils/JsonUtils.h"
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 
 dev::DevectorApp::DevectorApp(
 	const std::string& _stringPath, nlohmann::json _settingsJ)
@@ -23,10 +23,13 @@ dev::DevectorApp::DevectorApp(
 
 void dev::DevectorApp::WindowsInit()
 {
-	m_hardwareP = std::make_unique < dev::Hardware>();
+	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", ""));
+
+	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
-	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reset);
-	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasm, m_reset);
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqHardwareStatsReset);
+	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
+		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasm, m_reqHardwareStatsReset, m_reqMainWindowReload);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasm);
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqHexViewer);
@@ -68,6 +71,10 @@ bool OpenFileDialog(WCHAR* filePath, int size)
 
 void dev::DevectorApp::Update()
 {
+	if (m_reqMainWindowReload) {
+		m_reqMainWindowReload = false;
+		Reload();
+	}
 	MainMenuUpdate();
 
 	m_hardwareStatsWindowP->Update();
@@ -82,22 +89,104 @@ void dev::DevectorApp::Update()
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)
 {
+	if (!IsFileExist(_path)) {
+		dev::Log(L"File not found: {}", _path);
+		return;
+	}
+
+	auto result = dev::LoadFile(_path);
+	if (!result || result->empty()) {
+		dev::Log(L"Error occurred while loading the file. Path: {}. "
+			"Please ensure the file exists and you have the correct permissions to read it.", _path);
+		return;
+	}
+
 	m_hardwareP->Request(Hardware::Req::STOP);
-
-	auto romDir = dev::GetDir(_path);
-	auto debugPath = romDir + L"\\" + dev::GetFilename(_path) + L".json";
-	m_debuggerP->LoadDebugData(debugPath);
-
 	m_hardwareP->Request(Hardware::Req::RESET);
-	m_debuggerP->ReqLoadRom(_path);
+
+	m_debuggerP->LoadDebugData(_path);
+
+	auto reqData = nlohmann::json({ {"data", *result}, {"addr", Memory::ROM_LOAD_ADDR} });
+	m_hardwareP->Request(Hardware::Req::SET_MEM, reqData);
+
 	m_debuggerP->Reset();
 	m_hardwareP->Request(Hardware::Req::RUN);
+	
 	RecentFilesUpdate(_path);
 	RecentFilesStore();
+
+	Log(L"File loaded: {}", _path);
+}
+
+void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, const bool _autoBoot)
+{
+	if (!IsFileExist(_path)) {
+		dev::Log(L"File not found: {}", _path);
+		return;
+	}
+
+	auto fddResult = dev::LoadFile(_path);
+	if (!fddResult || fddResult->empty()) {
+		dev::Log(L"Error occurred while loading the file. Path: {}. "
+			"Please ensure the file exists and you have the correct permissions to read it.", _path);
+		return;
+	}
+
+	if (_autoBoot)
+	{
+		/*
+		// loading the loader
+		auto bootPath = dev::StrToStrW(GetSettingsString("bootPath", ""));
+		if (bootPath.empty()) {
+			Log("bootPath field not found in the settings");
+			return;
+		}
+		auto bootResult = dev::LoadFile(bootPath);
+		if (!bootResult || bootResult->empty()) {
+			dev::Log(L"Error occurred while loading the boot file. Path: {}. "
+				"Please ensure the file exists and you have the correct permissions to read it.", bootPath);
+			return;
+		}
+		*/
+		m_hardwareP->Request(Hardware::Req::STOP);
+		//m_hardwareP->Request(Hardware::Req::RESET);
+
+		//auto reqData = nlohmann::json({ {"data", *bootResult}, {"addr", 0} });
+	}
+
+	// loading the fdd data
+	//m_hardwareP->Request(Hardware::Req::LOAD_FDD, { {"data", *fddResult }, {"driveIdx", _driveIdx}});
+	m_hardwareP->Request(Hardware::Req::LOAD_FDD, { {"path", dev::StrWToStr(_path) }, {"driveIdx", _driveIdx} });
+
+	if (_autoBoot)
+	{
+		m_debuggerP->Reset();
+		m_hardwareP->Request(Hardware::Req::RESET);
+	}
+
+	m_hardwareP->Request(Hardware::Req::RUN); // because it can be stopped by the ::Reload
+
+	RecentFilesUpdate(_path, _driveIdx, _autoBoot);
+	RecentFilesStore();
+
+	Log(L"File loaded: {}", _path);
+}
+
+void dev::DevectorApp::Reload()
+{
+	if (m_recentFilePaths.empty()) return;
+	// get latest recent path
+	const auto& [path, _driveIdx, _autoBoot] = m_recentFilePaths.front();
+
+	if (_driveIdx < 0) LoadRom(path);
+	else LoadFdd(path, _driveIdx, _autoBoot);
 }
 
 void dev::DevectorApp::MainMenuUpdate()
 {
+	static std::wstring fddPath = L"";
+	bool openFddPopup = false;
+
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
@@ -109,25 +198,44 @@ void dev::DevectorApp::MainMenuUpdate()
 				// Open the file dialog
 				if (OpenFileDialog(path, MAX_PATH))
 				{
-					auto fileSize = dev::GetFileSize(path);
-					if (fileSize > Memory::MEMORY_MAIN_LEN)
-					{
-						// TODO: the popup window does not apper. fix it
-						DrawPopup("Warning", "File is too big");
-					}
-					else 
-					{
+				
+					auto ext = StrToUpper(dev::GetExt(path));
+					if (ext == L".ROM") {
 						LoadRom(path);
+					}
+					else if (ext == L".FDD")
+					{
+						fddPath = path;
+						//ImGui::OpenPopup("Boot or load?");
+						//ImGui::OpenPopup("Delete?");
+						openFddPopup = true;
+					}
+					else {
+						dev::Log(L"Not supported file type: {}", path);
 					}
 				}
 			}
 			if (ImGui::BeginMenu("Recent Files"))
 			{
-				for (const auto& path : m_recentFilePaths)
+				for (const auto& [path, driveIdx, autoBoot] : m_recentFilePaths)
 				{
-					if (ImGui::MenuItem(dev::StrWToStr(path).c_str()))
+					std::string itemS = dev::StrWToStr(path);
+					if (driveIdx >= 0) 
 					{
-						LoadRom(path);
+						itemS += std::format(":{}", driveIdx);
+						itemS += autoBoot ? "A" : "";
+					}
+					
+					if (ImGui::MenuItem(itemS.c_str()))
+					{
+						if (driveIdx < 0){
+							LoadRom(path);
+						}
+						else
+						{
+							fddPath = path;
+							ImGui::OpenPopup("Boot or load?");
+						}
 						break; // because m_recentFilePaths were modified
 					}
 				}
@@ -145,40 +253,78 @@ void dev::DevectorApp::MainMenuUpdate()
 			ImGui::MenuItem("Memory Map", NULL, &m_memoryMapWindowShow);
 			ImGui::EndMenu();
 		}
+	
 		ImGui::EndMenuBar();
 	}
+
+	// FDD: "boot or mount?" popup window
+	if (openFddPopup) ImGui::OpenPopup(POPUP_FDD.c_str());
+
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(POPUP_FDD.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Specify the drive to mount the FDD file as \nwell as the auto boot option if required.");
+		ImGui::Separator();
+
+		static int driveIdx = 0;
+		ImGui::Combo("##DiskSelect", &driveIdx, "Drive0 Boot\0Drive0\0Drive1\0Drive2\0Drive3\0");
+
+		if (ImGui::Button("OK", ImVec2(120, 0))) 
+		{ 
+			ImGui::CloseCurrentPopup();
+
+			bool autoBoot = driveIdx == 0;
+			LoadFdd(fddPath, dev::Max(driveIdx - 1, 0), autoBoot); // "driveIdx - 1" because 0, 1 are associated with Drive 0
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+		ImGui::EndPopup();
+	}
+
 }
 
 void dev::DevectorApp::RecentFilesInit()
 {
 	auto recentFiles = GetSettingsObject("recentFiles");
-	for (const auto& filePaths : recentFiles)
+	for (const auto& path_driveIdx_autoBoot : recentFiles)
 	{
-		m_recentFilePaths.push_back(dev::StrToStrW(filePaths));
+		auto path = dev::StrToStrW(path_driveIdx_autoBoot[0]);
+		int driveIdx = path_driveIdx_autoBoot[1];
+		bool autoBoot = path_driveIdx_autoBoot[2];
+
+		m_recentFilePaths.push_back({ path, driveIdx, autoBoot });
 	}
 }
 
 void dev::DevectorApp::RecentFilesStore()
 {
 	nlohmann::json recentFiles;
-	for (const auto& recentFilePath : m_recentFilePaths)
+	for (const auto& [path, driveIdx, autoBoot] : m_recentFilePaths)
 	{
-		recentFiles.push_back(dev::StrWToStr(recentFilePath));
+		nlohmann::json item = { dev::StrWToStr(path), driveIdx, autoBoot };
+
+		recentFiles.push_back(item);
 	}
 	SettingsUpdate("recentFiles", recentFiles);
 	SettingsSave(m_stringPath);
 }
 
-void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path)
+void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path, const int _driveIdx, const bool _autoBoot)
 {
 	// make a copy
 	auto path{ _path };
 
 	// remove if it contains
-	m_recentFilePaths.remove(_path);
+	m_recentFilePaths.remove_if(
+		[&_path](const auto& tuple) {
+			return std::get<0>(tuple) == _path;
+		}
+	);
 
 	// add a new one
-	m_recentFilePaths.push_front({path});
+	m_recentFilePaths.push_front({path, _driveIdx, _autoBoot });
 	// check the amount
 	if (m_recentFilePaths.size() > RECENT_FILES_MAX)
 	{

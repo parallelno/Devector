@@ -4,10 +4,8 @@
 
 #include "IO.h"
 
-#include "Core/FDC1793.h"
-
 dev::IO::IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer,
-    FDC1793& _fdc, VectorColorToArgbFunc _vectorColorToArgbFunc)
+    FD1793& _fdc, VectorColorToArgbFunc _vectorColorToArgbFunc)
     :
     m_keyboard(_keyboard), m_memory(_memory), m_timer(_timer),
     m_fdc(_fdc),
@@ -26,9 +24,9 @@ void dev::IO::Init()
     m_portA2 = 0xFF;
     m_portB2 = 0xFF;
     m_portC2 = 0xFF;
-    outport = PORT_NO_COMMIT;
-    outbyte = PORT_NO_COMMIT;
-    palettebyte = PORT_NO_COMMIT;
+    m_outport = PORT_NO_COMMIT;
+    m_outbyte = PORT_NO_COMMIT;
+    m_palettebyte = PORT_NO_COMMIT;
     joy_0e = 0xFF;
     joy_0f = 0xFF;
     m_borderColorIdx = 0;
@@ -97,7 +95,7 @@ auto dev::IO::PortIn(uint8_t _port)
     case 0x09:
     case 0x0a:
     case 0x0b:
-        return m_timer.read(_port);
+        //return m_timer.read(_port);
 
         // Joystick "C"
     case 0x0e:
@@ -111,19 +109,23 @@ auto dev::IO::PortIn(uint8_t _port)
         break;
 
     case 0x18:
-        result = m_fdc.Read(FDC1793::PortAddr::DATA);
+        //result = m_fdc.Read(Fdc1793::PortAddr::DATA);
+        result = m_fdc.read(3);
         break;
     case 0x19:
-        result = m_fdc.Read(FDC1793::PortAddr::SECTOR);
+        //result = m_fdc.Read(Fdc1793::PortAddr::SECTOR);
+        result = m_fdc.read(2);
         break;
     case 0x1a:
-        result = m_fdc.Read(FDC1793::PortAddr::TRACK);
+        //result = m_fdc.Read(Fdc1793::PortAddr::TRACK);
+        result = m_fdc.read(1);
         break;
     case 0x1b:
-        result = m_fdc.Read(FDC1793::PortAddr::STATUS);
+        //result = m_fdc.Read(Fdc1793::PortAddr::STATUS);
+        result = m_fdc.read(0);
         break;
     case 0x1c:
-        //result = m_fdc.Read(FDC1793::PortAddr::CONTROL);
+        ////////////result = m_fdc.Read(Fdc1793::PortAddr::CONTROL); // TODO: find out why it was commened out in the original code
         break;
     default:
         break;
@@ -135,8 +137,8 @@ auto dev::IO::PortIn(uint8_t _port)
 // cpu sends this data
 void dev::IO::PortOut(uint8_t _port, uint8_t _value)
 {
-    outport = _port;
-    outbyte = _value;
+    m_outport = _port;
+    m_outbyte = _value;
 
     m_outCommitTimer = OUT_COMMIT_TIME;
     if (_port == PORT_OUT_BORDER_COLOR) {
@@ -146,12 +148,12 @@ void dev::IO::PortOut(uint8_t _port, uint8_t _value)
 
 void dev::IO::PortOutCommit()
 {
-    PortOutHandling(outport, outbyte);
+    PortOutHandling(m_outport, m_outbyte);
 }
 
 void dev::IO::PaletteCommit(const int _index)
 {
-    m_palette[_index] = VectorColorToArgb(palettebyte);
+    m_palette[_index] = VectorColorToArgb(m_palettebyte);
 }
 
 // data sent by cpu handled here at the commit time
@@ -181,7 +183,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
             PortOutHandling(2, 0);
             PortOutHandling(3, 0);
         }
-        if (((m_portC & 8 > 0) != ruslat) && onruslat) {
+        if (((m_portC & 8) > 0) != ruslat && onruslat) {
             onruslat((m_portC & 8) == 0);
         }
         break;
@@ -189,7 +191,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         ruslat = m_portC & 8;
         m_portC = _value;
         //ontapeoutchange(m_portC & 1);
-        if (((m_portC & 8 > 0) != ruslat) && onruslat) {
+        if (((m_portC & 8) > 0) != ruslat && onruslat) {
             onruslat((m_portC & 8) == 0);
         }
         break;
@@ -221,7 +223,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     case 0x09:
     case 0x0a:
     case 0x0b:
-        m_timer.write(_port, _value);
+        //m_timer.write(_port, _value);
         break;
 
         // palette (ask Svofski why 0x0d and 0x0e ports are for pallete)
@@ -229,7 +231,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
     case 0x0d:
     case 0x0e:
     case 0x0f:
-        palettebyte = _value;
+        m_palettebyte = _value;
         break;
     case 0x10:
         m_memory.SetRamDiskMode(_value);
@@ -240,19 +242,24 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         break;
 
     case 0x18:
-        m_fdc.Write(FDC1793::PortAddr::DATA, _value);
+        //m_fdc.Write(Fdc1793::PortAddr::DATA, _value);
+        m_fdc.write(3, _value);
         break;
     case 0x19:
-        m_fdc.Write(FDC1793::PortAddr::SECTOR, _value);
+        //m_fdc.Write(Fdc1793::PortAddr::SECTOR, _value);
+        m_fdc.write(2, _value);
         break;
     case 0x1a:
-        m_fdc.Write(FDC1793::PortAddr::TRACK, _value);
+        //m_fdc.Write(Fdc1793::PortAddr::TRACK, _value);
+        m_fdc.write(1, _value);
         break;
     case 0x1b:
-        m_fdc.Write(FDC1793::PortAddr::CMD, _value);
+        //m_fdc.Write(Fdc1793::PortAddr::CMD, _value);
+        m_fdc.write(0, _value);
         break;
     case 0x1c:
-        m_fdc.Write(FDC1793::PortAddr::CONTROL, _value);
+        //m_fdc.Write(Fdc1793::PortAddr::CONTROL, _value);
+        m_fdc.write(4, _value);
         break;
     default:
         break;

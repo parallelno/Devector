@@ -1,14 +1,14 @@
 #include <format>
 #include "HardwareStatsWindow.h"
 #include "Utils/ImGuiUtils.h"
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 
 dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware, 
 		const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reset)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware),
-	m_reset(_reset)
+	m_reqHardwareStatsReset(_reset)
 {
 	UpdateData(false);
 }
@@ -124,7 +124,7 @@ void dev::HardwareStatsWindow::DrawHardware()
 		DrawProperty2("CRT", m_rasterPixel_rasterLineS);
 
 		// mapping
-		DrawSeparator2("Mapping:");
+		DrawSeparator2("Ram-Disk:");
 		DrawProperty2("RAM Mode", m_mappingRamModeS);
 		DrawProperty2("RAM Page", m_mappingPageRamS);
 		DrawProperty2("Stack Mode", m_mappingModeStackS);
@@ -177,9 +177,9 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 {
 	if (_isRunning) return;
 
-	if (m_reset) {
+	if (m_reqHardwareStatsReset) {
 		m_ccLast = 0;
-		m_reset = false;
+		m_reqHardwareStatsReset = false;
 	}
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& data = *res;

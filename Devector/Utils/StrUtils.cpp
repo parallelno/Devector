@@ -1,6 +1,6 @@
 #include <sstream>
 
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 #include <locale>
 #include <codecvt>
 
@@ -60,7 +60,14 @@ auto dev::StrWToStr(const std::wstring& _ws)
 	const std::string s(_ws.begin(), _ws.end());
 	return s;
 }
-
+/*
+auto dev::Utf8ToStrW(const std::string& _s)
+-> std::wstring
+{
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+	return converter.from_bytes(_s);
+}
+*/
 const char* dev::BoolToStrC(const bool _val, bool _text)
 {
 	if (_text)
@@ -111,11 +118,13 @@ auto dev::GetSubstringCount(const std::string& _str, const std::string& _substr)
 	return count;
 }
 
-void dev::StrToUpper(std::wstring& _str)
+auto dev::StrToUpper(std::wstring _str)
+-> std::wstring
 {
 	for (auto& ch : _str) {
 		ch = std::toupper(ch);
 	}
+	return _str;
 }
 
 // trim from end (copy)

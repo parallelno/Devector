@@ -71,7 +71,7 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	template <typename... Args>
 	constexpr void Log(const std::string& _fmt, Args&&... args)
 	{
-		logMutex.lock();
+		logMutex.lock(); 
 
 		using namespace std::chrono;
 
@@ -79,6 +79,23 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 			floor<seconds>(current_zone()->to_local(system_clock::now())) <<
 			"  " <<
 			std::vformat(_fmt, std::make_format_args(args...)) <<
+			std::endl;
+
+		logMutex.unlock();
+	}
+
+	template <typename... Args>
+	constexpr void Log(const std::wstring& _fmt, Args&&... args)
+	{
+		logMutex.lock();
+
+		using namespace std::chrono;
+
+		std::wcout << L"Local time " <<
+			floor<seconds>(current_zone()->to_local(system_clock::now())) <<
+			L"  " <<
+			//std::vformat(std::wstring(std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(_fmt)), std::make_format_args(args...)) <<
+			std::vformat(_fmt, std::make_wformat_args(args...)) <<
 			std::endl;
 
 		logMutex.unlock();
@@ -188,6 +205,9 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		-> std::wstring;
 	auto GetFilename(const std::wstring& _path)
 		-> std::wstring;
+
+	auto GetExt(const std::wstring& _path)
+		->std::wstring;
 
 	auto GetDirStemExt(const std::wstring& _path)
 		->std::tuple<std::wstring, std::wstring, std::wstring>;

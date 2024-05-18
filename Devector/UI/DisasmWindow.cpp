@@ -1,19 +1,21 @@
 #include <format>
 #include "DisasmWindow.h"
 #include "Utils/ImGuiUtils.h"
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 
 
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
-		const float* const _fontSize, const float* const _dpiScale, ReqDisasm& _reqDisasm, bool& _reset)
+		const float* const _fontSize, const float* const _dpiScale, 
+		ReqDisasm& _reqDisasm, bool& _reset, bool& _reload)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
 	m_hardware(_hardware),
 	m_debugger(_debugger),
 	m_fontCommentP(fontComment),
 	m_reqDisasm(_reqDisasm),
-	m_reset(_reset), m_navigateAddrs()
+	m_reqHardwareStatsReset(_reset), m_navigateAddrs(),
+	m_reqMainWindowReload(_reload)
 {
 	UpdateData(false);
 }
@@ -78,12 +80,9 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	ImGui::SameLine();
 	if (ImGui::Button("Reset"))
 	{
-		m_reset = true;
+		m_reqHardwareStatsReset = true;
+		m_reqMainWindowReload = true;
 		m_hardware.Request(Hardware::Req::STOP);
-		m_hardware.Request(Hardware::Req::RESET);
-		m_debugger.ReqLoadRomLast();
-		m_debugger.Reset();
-		m_hardware.Request(Hardware::Req::RUN);
 	}
 }
 
@@ -131,6 +130,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	static int itemContextMenuAddr = -1;
 	static std::string copyToClipboardStr = "";
 	static int copyToClipboardAddr = -1; // if it's -1, don't add the option, if it's >=0, add the option with the addr = copyToClipboardAddr
+	static int addrHighlighted = -1;
 
 	if (m_disasm.empty()) return;
 
@@ -205,7 +205,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			ColumnClippingEnable(*m_dpiScaleP); // enable clipping
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
 			if (isCode) {
-				DrawAddr(_isRunning, line, 
+				DrawAddr(_isRunning, line, addrHighlighted == addr,
 					// _onMouseLeft. Navigate to the address
 					[&]()
 					{
@@ -271,7 +271,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				ImGui::TableNextColumn();
 				ColumnClippingEnable(*m_dpiScaleP); // enable clipping
 
-				dev::DrawCodeLine(true, _isRunning, line, 
+				addrHighlighted = dev::DrawCodeLine(true, _isRunning, line,
 					// _onMouseLeft. Navigate to the address
 					[&](const Addr _addr)
 					{

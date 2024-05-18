@@ -16,7 +16,7 @@ namespace dev
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		Hardware& m_hardware;
-		bool& m_reset;
+		bool& m_reqHardwareStatsReset;
 		
 		////////////////////
 		// stats

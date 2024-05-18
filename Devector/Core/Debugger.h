@@ -116,8 +116,6 @@ namespace dev
 
 		void LoadDebugData(const std::wstring& _path);
 		void ResetLabels();
-		void ReqLoadRom(const std::wstring& _path);
-		void ReqLoadRomLast();
 
 		auto GetLastRW() -> const MemLastRW*;
 		void UpdateLastRW();
@@ -179,8 +177,6 @@ namespace dev
 		CpuI8080::DebugOnReadInstrFunc m_debugOnReadInstrFunc;
 		CpuI8080::DebugOnReadFunc m_debugOnReadFunc;
 		CpuI8080::DebugOnWriteFunc m_debugOnWriteFunc;
-
-		std::wstring m_pathLast;
 
 		std::mutex m_lastRWMutex;
 		LastRWAddrs m_lastReadsAddrs; // a circular buffer that contains addresses

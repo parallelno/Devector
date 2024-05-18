@@ -1,7 +1,7 @@
 #include "ImGuiUtils.h"
 
 #include "Utils.h"
-#include "StringUtils.h"
+#include "StrUtils.h"
 
 #include "imgui_internal.h"
 #include "imgui.h"
@@ -296,10 +296,11 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 	}
 }
 
-void dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::DisasmLine& _line,
+int dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::DisasmLine& _line,
 	std::function<void(const Addr _addr)> _onMouseLeft,
 	std::function<void(const Addr _addr)> _onMouseRight)
 {
+	int addrHighlighted = -1;
 	auto cmd_splitted = dev::Split(_line.str, ' ');
 	int i = 0;
 	for (const auto& cmd_parts : cmd_splitted)
@@ -346,6 +347,7 @@ void dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::D
 							ImGui::TextColored(dev::IM_VEC4(0xFFFFFFFF), "%s", operand.c_str());
 							
 							Addr reqUpdateAddr = dev::StrHexToInt(operand.c_str() + 2);
+							addrHighlighted = reqUpdateAddr;
 							// if it's clicked, scroll the disasm to highlighted addr
 							if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 							{
@@ -390,9 +392,10 @@ void dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::D
 		}
 		i++;
 	}
+	return addrHighlighted;
 }
 
-void dev::DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLine,
+void dev::DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLine, bool highlight,
 			std::function<void()> _onMouseLeft,
 			std::function<void()> _onMouseRight)
 {
@@ -404,7 +407,7 @@ void dev::DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLin
 	{
 		ImVec2 textPos = ImGui::GetCursorScreenPos();
 		ImVec2 textSize = ImGui::CalcTextSize(_disasmLine.addrS.c_str());
-		if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
+		if (highlight || ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
 		{
 			ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
 			// draw a highlighted hexadecimal literal

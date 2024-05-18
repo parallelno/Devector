@@ -1,7 +1,7 @@
 #include "Utils/ArgsParser.h"
 #include "Utils/Consts.h"
 #include "Utils/Utils.h"
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 #include "Utils/JsonUtils.h"
 #include "Utils/Consts.h"
 #include "DevectorApp.h"

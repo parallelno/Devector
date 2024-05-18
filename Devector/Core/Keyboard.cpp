@@ -2,28 +2,35 @@
 #include "Utils/Utils.h"
 #include "GLFW/glfw3.h"
 
-dev::Keyboard::Keyboard() 
-	: 
-	m_keySS(false), m_keyUS(false), m_keyRus(false), m_terminate(false)
+dev::Keyboard::Keyboard()
 {
 	memset(m_encodingMatrix, 0, sizeof(m_encodingMatrix));
-	init_map();
+	InitMapping();
 }
 
-void dev::Keyboard::KeyHandling(int _key, int _action)
+// HW thread
+auto dev::Keyboard::KeyHandling(int _key, int _action)
+-> RebootType
 {
 	int row, column;
 
 	switch (_key)
 	{
 	case GLFW_KEY_F11:
-		if (_action == GLFW_PRESS) onreset(true);
+		if (_action == GLFW_RELEASE) {
+			// BLK + VVOD functionality (reset HW and enable rom reading)
+			return RebootType::ROM;
+		}
 		break;
 	case GLFW_KEY_F12:
-		if (_action == GLFW_PRESS) onreset(false);
+		if (_action == GLFW_RELEASE) {
+			// BLK + SBR functionality (restart CPU, disable rom reading)
+			return RebootType::RAM;
+		}
 		break;
 	case GLFW_KEY_PAUSE:
-		// on windows ctrl+break seems to magically become scroll lock, wtf
+		// TODO: figure out what this old comment is about -> on windows ctrl+break seems to magically become scroll lock, wtf
+		// TODO: find out what is m_terminate for
 		if (_action == GLFW_PRESS) m_terminate = true;
 		break;
 		// shift keys
@@ -61,6 +68,8 @@ void dev::Keyboard::KeyHandling(int _key, int _action)
 		}
 		break;
 	}
+
+	return RebootType::NONE;
 };
 
 auto dev::Keyboard::Read(int _rows)
@@ -75,7 +84,7 @@ auto dev::Keyboard::Read(int _rows)
 	return ~result;
 }
 
-void dev::Keyboard::init_map()
+void dev::Keyboard::InitMapping()
 {
 	// Keyboard encoding matrix:
 	//              columns

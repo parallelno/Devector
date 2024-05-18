@@ -7,28 +7,36 @@
 #include <functional>
 
 #include "Utils/Types.h"
+#include "Core/Memory.h"
 
 namespace dev
 {
-    class Keyboard
-    {
-    private:
-        uint8_t m_encodingMatrix[8];
-        using KeyCode = int;
-        using RowColumnCode = int;
-        std::map<KeyCode, RowColumnCode> m_keymap;
+	class Keyboard
+	{
+	private:
+		uint8_t m_encodingMatrix[8];
+		using KeyCode = int;
+		using RowColumnCode = int;
+		std::map<KeyCode, RowColumnCode> m_keymap;
 
-    public:
-        bool m_keySS, m_keyUS, m_keyRus;
-        bool m_terminate;
-        std::function<void(bool)> onreset;
+	public:
+		enum class RebootType {
+			NONE = 0,
+			ROM,
+			RAM
+		};
+		bool m_keySS = false;
+		bool m_keyUS = false;
+		bool m_keyRus = false;
+		bool m_terminate = false;
+		RebootType m_rebootType = RebootType::NONE;
 
-        Keyboard();
-        void KeyHandling(int _key, int _action);
-        auto Read(int _rows) -> uint8_t;
+		Keyboard();
+		auto KeyHandling(int _key, int _action) -> RebootType;
+		auto Read(int _rows) -> uint8_t;
 
-    private:
-        void init_map();
-    };
+	private:
+		void InitMapping();
+	};
 }
 #endif // !DEV_KEYBOARD_H

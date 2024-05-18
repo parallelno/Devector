@@ -12,7 +12,8 @@
 #include "Core/IO.h"
 #include "Core/Display.h"
 #include "Core/TimerI8253.h"
-#include "Core/FDC1793.h"
+//#include "Core/Fdc1793.h"
+#include "Core/fd1793.h"
 #include "Utils/Utils.h"
 #include "Utils/Result.h"
 #include "Utils/TQueue.h"
@@ -32,7 +33,7 @@ namespace dev
 		Display m_display;
 		TimerI8253 m_timer;
 		TimerWrapper m_timerWrapper;
-		FDC1793 m_fdc;
+		FD1793 m_fdc;
 
 		enum class Status : int {
 			RUN,
@@ -64,9 +65,10 @@ namespace dev
 			GET_GLOBAL_ADDR_RAM,
 			KEY_HANDLING,
 			SCROLL_VERT,
+			LOAD_FDD,
 		};
 
-        Hardware();
+        Hardware(const std::wstring& _pathBootData);
 		~Hardware();
 		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result <nlohmann::json>;
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;
@@ -92,7 +94,6 @@ namespace dev
 		void ReqHandling(const bool _waitReq = false);
 		void Reset();
 		void Restart();
-		void SetMem(const nlohmann::json& _dataJ);
 		auto GetRegs() const -> nlohmann::json;
 		auto GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;

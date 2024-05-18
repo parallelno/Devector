@@ -36,7 +36,8 @@ namespace dev
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		int m_selectedLineIdx = 0;
-		bool& m_reset;
+		bool& m_reqHardwareStatsReset;
+		bool& m_reqMainWindowReload;
 		static constexpr int NAVIGATE_ADDRS_LEN = 256;
 		std::array<Addr, NAVIGATE_ADDRS_LEN> m_navigateAddrs;
 		int m_navigateAddrsIdx = 0;
@@ -54,7 +55,7 @@ namespace dev
 
 		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, 
 			const float* const _fontSizeP, const float* const _dpiScaleP, 
-			ReqDisasm& _reqDisasm, bool& _reset);
+			ReqDisasm& _reqDisasm, bool& _reset, bool& _reload);
 		void Update();
 		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
 			const bool _updateSelection = true);

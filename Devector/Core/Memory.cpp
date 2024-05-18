@@ -1,31 +1,50 @@
 #include "Memory.h"
+#include "Utils/Utils.h"
 
+dev::Memory::Memory(const std::wstring& _pathBootData)
+	: m_rom(), m_ram()
+{
+	auto res = dev::LoadFile(_pathBootData);
+	if (res) m_rom = *res;
+}
 void dev::Memory::Init()
 {
-	m_data.fill(0);
+	m_ram.fill(0);
 
 	m_mappingModeStack = false;
 	m_mappingPageStack = 0;
 	m_mappingModeRam = 0;
 	m_mappingPageRam = 0;
+
+	m_memType = MemType::ROM;
 }
 
-void dev::Memory::Set(const std::vector<uint8_t>& _data, const Addr _loadAddr)
+void dev::Memory::SetMemType(const MemType _memType)
 {
-	std::copy(_data.begin(), _data.end(), m_data.data() + _loadAddr);
+	m_memType = _memType;
+}
+void dev::Memory::SetRam(const std::vector<uint8_t>& _data, const Addr _addr)
+{
+	std::copy(_data.begin(), _data.end(), m_ram.data() + _addr);
 }
 
 auto dev::Memory::GetByte(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
 -> uint8_t
 {
 	_globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
-	return m_data[_globalAddr];
+
+	if (m_memType == MemType::ROM && _globalAddr < m_rom.size()) 
+	{
+		return m_rom[_globalAddr];
+	}
+
+	return m_ram[_globalAddr];
 }
 
 void dev::Memory::SetByte(GlobalAddr _globalAddr, uint8_t _value, const AddrSpace _addrSpace)
 {
 	_globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
-	m_data[_globalAddr] = _value;
+	m_ram[_globalAddr] = _value;
 }
 
 auto dev::Memory::GetWord(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
@@ -39,10 +58,10 @@ auto dev::Memory::GetWord(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
 auto dev::Memory::GetScreenBytes(Addr _screenAddrOffset) const
 -> uint32_t
 {
-	auto byte8 = m_data[_screenAddrOffset + 0x8000];
-	auto byteA = m_data[_screenAddrOffset + 0xA000];
-	auto byteC = m_data[_screenAddrOffset + 0xC000];
-	auto byteE = m_data[_screenAddrOffset + 0xE000];
+	auto byte8 = m_ram[_screenAddrOffset + 0x8000];
+	auto byteA = m_ram[_screenAddrOffset + 0xA000];
+	auto byteC = m_ram[_screenAddrOffset + 0xC000];
+	auto byteE = m_ram[_screenAddrOffset + 0xE000];
 
 	return byte8 << 24 | byteA << 16 | byteC << 8 | byteE;
 }
@@ -50,7 +69,7 @@ auto dev::Memory::GetScreenBytes(Addr _screenAddrOffset) const
 auto dev::Memory::GetRam() const
 -> const Ram*
 {
-	return &m_data;
+	return &m_ram;
 }
 
 // converts an addr to a global addr depending on the ram/stack mapping modes

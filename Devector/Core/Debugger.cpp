@@ -4,7 +4,7 @@
 #include <sstream>
 #include <cstring>
 #include <vector>
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 #include "Utils/Utils.h"
 
 dev::Debugger::Debugger(Hardware& _hardware)
@@ -12,7 +12,6 @@ dev::Debugger::Debugger(Hardware& _hardware)
 	m_hardware(_hardware),
 	m_wpBreak(false),
 	m_traceLog(),
-	m_pathLast(),
 	m_lastReadsAddrs(), m_lastWritesAddrs(),
 	m_memLastRW(),
 	m_lastReadsAddrsOld(), m_lastWritesAddrsOld(), 
@@ -440,11 +439,14 @@ bool IsConstLabel(const char* _s)
 
 void dev::Debugger::LoadDebugData(const std::wstring& _path)
 {
-	ResetLabels();
+	// check if the file exists
+	auto romDir = dev::GetDir(_path);
+	auto debugPath = romDir + L"\\" + dev::GetFilename(_path) + L".json";
+	if (!dev::IsFileExist(debugPath)) return;
 
-	if (!dev::IsFileExist(_path)) return;
+	ResetLabels();
 	
-	auto debugDataJ = LoadJson(_path);
+	auto debugDataJ = LoadJson(debugPath);
 
 	// add labels
 	if (debugDataJ.contains("labels")){
@@ -859,36 +861,6 @@ auto dev::Debugger::LabelsToStr(const Addr _addr, int _labelTypes) const
 // Requests
 //
 //////////////////////////////////////////////////////////////
-
-void dev::Debugger::ReqLoadRom(const std::wstring& _path)
-{
-	m_pathLast = _path;
-
-	auto fileSize = GetFileSize(_path);
-
-	if (fileSize > Memory::MEMORY_MAIN_LEN) {
-		// TODO: communicate the fail state
-		return;
-	}
-
-	auto result = dev::LoadFile(_path);
-	
-	if (!result || result->empty()) {
-		// TODO: communicate the fail state
-		return;
-	}
-
-	m_hardware.Request(Hardware::Req::SET_MEM, *result);
-
-	Log("file loaded: {}", dev::StrWToStr(_path));
-}
-
-void dev::Debugger::ReqLoadRomLast()
-{
-	if (m_pathLast.empty()) return;
-
-	ReqLoadRom(m_pathLast);
-}
 
 void dev::Debugger::UpdateLastRW()
 {

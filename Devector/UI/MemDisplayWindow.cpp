@@ -119,6 +119,8 @@ bool dev::MemDisplayWindow::Init()
 		if (!res) return false;
 		m_memViewMatIds[i] = *res;
 	}
+
+	return true;
 }
 
 void dev::MemDisplayWindow::Update()

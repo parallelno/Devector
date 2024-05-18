@@ -19,6 +19,10 @@ namespace dev
 		{
 			RAM, STACK, GLOBAL
 		};
+		enum class MemType {
+			ROM,
+			RAM
+		};
 
 		static constexpr uint8_t MAPPING_RAM_MODE_A000 = 1 << 5;
 		static constexpr uint8_t MAPPING_RAM_MODE_8000 = 1 << 6;
@@ -39,19 +43,22 @@ namespace dev
 		static constexpr size_t MEMORY_MAIN_LEN = MEM_64K;
 		static constexpr size_t GLOBAL_MEMORY_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAMDISK_MAX;
 
+		using Rom = std::vector<uint8_t>;
 		using Ram = std::array<uint8_t, GLOBAL_MEMORY_LEN>;
 
-		bool m_mappingModeStack;
-		size_t m_mappingPageStack;
-		uint8_t m_mappingModeRam;	// 0 - no mapping, 
+		bool m_mappingModeStack = false;
+		size_t m_mappingPageStack = 0;
+		uint8_t m_mappingModeRam = 0;	// 0 - no mapping, 
 									// MAPPING_RAM_MODE_A000 - addr range [0xA000-0xDFFF] is mapped to the ram-disk 
 									// MAPPING_RAM_MODE_8000 - addr range [0x8000-0x9FFF] is mapped to the ram-disk 
 									// MAPPING_RAM_MODE_E000 - addr range [0xE000-0xFFFF] is mapped to the ram-disk
-		uint8_t m_mappingPageRam; // 0 - mapping to the ram-disk page0, etc
+		uint8_t m_mappingPageRam = 0; // 0 - mapping to the ram-disk page0, etc
 
+		Memory(const std::wstring& _pathBootData);
 		void Init();
 		// internal thread access
-		void Set(const std::vector<uint8_t>& _data, const Addr _loadAddr = ROM_LOAD_ADDR);
+		void SetMemType(const MemType _memType);
+		void SetRam(const std::vector<uint8_t>& _data, const Addr _addr = ROM_LOAD_ADDR);
 		auto GetByte(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
 		void SetByte(GlobalAddr _globalAddr, uint8_t _value, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		auto GetWord(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint16_t;
@@ -62,7 +69,10 @@ namespace dev
 		void SetRamDiskMode(uint8_t _data);
 
 	private:
-		Ram m_data;
+		Ram m_ram;
+		Rom m_rom;
+
+		MemType m_memType = MemType::ROM;
 	};
 }
 #endif // !DEV_MEMORY_H

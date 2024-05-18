@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "Utils/Consts.h"
-#include "Utils/StringUtils.h"
+#include "Utils/StrUtils.h"
 #include "Utils/Result.h"
 
 void dev::RunApp(const std::wstring& _dir, const std::wstring& _appName) 
@@ -84,12 +84,12 @@ bool dev::SaveFile(const std::wstring& _path, const std::vector<uint8_t>& _data,
 
 	if (!file)
 	{
-		dev::Log("Failed to init a file object: ", _path);
+		dev::Log(L"Failed to init a file object: {}", _path);
 		return false;	
 	}
 	else if ((!_override && std::filesystem::exists(_path)))
 	{
-		dev::Log("Error. Failed to save file. File is already exist: ", _path);
+		dev::Log(L"Error. Failed to save file. File is already exist: {}", _path);
 		return false;
 	}
 
@@ -121,6 +121,13 @@ auto dev::GetFilename(const std::wstring& _path)
 {
 	std::filesystem::path p{ _path };
 	return p.stem().wstring();
+}
+
+auto dev::GetExt(const std::wstring& _path)
+->std::wstring
+{
+	std::filesystem::path p{ _path };
+	return p.extension().wstring();
 }
 
 auto dev::GetDirStemExt(const std::wstring& _path)
