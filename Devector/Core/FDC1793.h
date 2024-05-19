@@ -18,30 +18,6 @@
 
 namespace dev
 {
-	/*
-	////////////////////////////////////////////////////////////////////////////////
-	//
-	// DiskImage
-	//
-	////////////////////////////////////////////////////////////////////////////////
-	class DiskImage
-	{
-		using Data = std::vector<uint8_t>;
-
-		Data m_lastReadByte;
-		bool m_modified = false;
-	public:
-		DiskImage() = delete;
-		DiskImage(const std::wstring& _path);
-		~DiskImage();
-
-		auto Get(int _idx) -> uint8_t;
-		void Set(int _idx, uint8_t _val);
-		auto Size() -> int;
-		void Load();
-		void Flush();
-	};
-	*/
 	////////////////////////////////////////////////////////////////////////////////
 	//
 	// FDrive

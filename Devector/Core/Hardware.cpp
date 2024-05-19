@@ -218,11 +218,11 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
         case Req::KEY_HANDLING:
         {
-            auto memType = m_io.GetKeyboard().KeyHandling(dataJ["key"], dataJ["action"]);
-            if (memType == Keyboard::RebootType::ROM) {
+            auto op = m_io.GetKeyboard().KeyHandling(dataJ["key"], dataJ["action"]);
+            if (op == Keyboard::Operation::RESET) {
                 Reset();
             }
-            else if (memType == Keyboard::RebootType::RAM) {
+            else if (op == Keyboard::Operation::RESTART) {
                 Restart();
             }
             m_reqRes.emplace({});
@@ -240,7 +240,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             //m_fdc.Attach(dataJ["data"], dataJ["driveIdx"]);
             int driveIdx = dataJ["driveIdx"];
             std::string path = dataJ["path"];
-            m_fdc.disk(driveIdx).attach(path);
+            m_fdc.attach(driveIdx, dev::StrToStrW(path));
             m_reqRes.emplace({});
         }
             break;

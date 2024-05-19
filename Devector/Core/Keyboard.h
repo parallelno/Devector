@@ -20,19 +20,19 @@ namespace dev
 		std::map<KeyCode, RowColumnCode> m_keymap;
 
 	public:
-		enum class RebootType {
+		enum class Operation {
 			NONE = 0,
-			ROM,
-			RAM
+			RESET,
+			RESTART
 		};
 		bool m_keySS = false;
 		bool m_keyUS = false;
 		bool m_keyRus = false;
 		bool m_terminate = false;
-		RebootType m_rebootType = RebootType::NONE;
+		Operation m_rebootType = Operation::NONE;
 
 		Keyboard();
-		auto KeyHandling(int _key, int _action) -> RebootType;
+		auto KeyHandling(int _key, int _action) -> Operation;
 		auto Read(int _rows) -> uint8_t;
 
 	private:

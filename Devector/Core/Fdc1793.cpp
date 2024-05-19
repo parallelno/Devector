@@ -1,55 +1,5 @@
 #include "Core/Fdc1793.h"
 
-/*
-////////////////////////////////////////////////////////////////////////////////
-//
-// DiskImage
-//
-////////////////////////////////////////////////////////////////////////////////
-
-dev::DiskImage::DiskImage(const std::wstring& _path)
-	: m_path(_path)
-{}
-
-dev::DiskImage::~DiskImage()
-{
-	Flush();
-}
-
-auto dev::DiskImage::Get(int _idx) -> uint8_t { return m_lastReadByte[_idx]; }
-
-void dev::DiskImage::Set(int _idx, uint8_t _val)
-{
-	m_modified = m_lastReadByte[_idx] != _val;
-	m_lastReadByte[_idx] = _val;
-}
-
-// TODO: getting size is loading the data. think of refactoring it
-int dev::DiskImage::Size() 
-{
-	Load();
-	return (int)m_lastReadByte.size();
-}
-
-void dev::DiskImage::Load()
-{
-	if (!m_loaded) {
-		auto res = dev::LoadFile(m_path);
-		m_loaded = res;
-		if (m_loaded) {
-			m_lastReadByte = *res;
-		}
-	}
-}
-
-void dev::DiskImage::Flush()
-{
-	if (m_modified)
-	{
-		m_modified = dev::SaveFile(m_path, m_lastReadByte);
-	}
-}
-*/
 ////////////////////////////////////////////////////////////////////////////////
 //
 // FDrive

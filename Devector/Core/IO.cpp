@@ -5,7 +5,7 @@
 #include "IO.h"
 
 dev::IO::IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer,
-    FD1793& _fdc, VectorColorToArgbFunc _vectorColorToArgbFunc)
+    Fdc1793& _fdc, VectorColorToArgbFunc _vectorColorToArgbFunc)
     :
     m_keyboard(_keyboard), m_memory(_memory), m_timer(_timer),
     m_fdc(_fdc),

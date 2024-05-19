@@ -12,7 +12,6 @@
 #include "Core/IO.h"
 #include "Core/Display.h"
 #include "Core/TimerI8253.h"
-//#include "Core/Fdc1793.h"
 #include "Core/fd1793.h"
 #include "Utils/Utils.h"
 #include "Utils/Result.h"
@@ -33,7 +32,7 @@ namespace dev
 		Display m_display;
 		TimerI8253 m_timer;
 		TimerWrapper m_timerWrapper;
-		FD1793 m_fdc;
+		Fdc1793 m_fdc;
 
 		enum class Status : int {
 			RUN,

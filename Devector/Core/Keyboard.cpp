@@ -10,7 +10,7 @@ dev::Keyboard::Keyboard()
 
 // HW thread
 auto dev::Keyboard::KeyHandling(int _key, int _action)
--> RebootType
+-> Operation
 {
 	int row, column;
 
@@ -18,14 +18,14 @@ auto dev::Keyboard::KeyHandling(int _key, int _action)
 	{
 	case GLFW_KEY_F11:
 		if (_action == GLFW_RELEASE) {
-			// BLK + VVOD functionality (reset HW and enable rom reading)
-			return RebootType::ROM;
+			// BLK + VVOD functionality
+			return Operation::RESET;
 		}
 		break;
-	case GLFW_KEY_F12:
+	case GLFW_KEY_F10: // TODO: F12 causes debug interraption. It is ImGui feature. Fix it.
 		if (_action == GLFW_RELEASE) {
-			// BLK + SBR functionality (restart CPU, disable rom reading)
-			return RebootType::RAM;
+			// BLK + SBR functionality
+			return Operation::RESTART;
 		}
 		break;
 	case GLFW_KEY_PAUSE:
@@ -69,7 +69,7 @@ auto dev::Keyboard::KeyHandling(int _key, int _action)
 		break;
 	}
 
-	return RebootType::NONE;
+	return Operation::NONE;
 };
 
 auto dev::Keyboard::Read(int _rows)
