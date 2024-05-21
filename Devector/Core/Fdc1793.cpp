@@ -1,4 +1,7 @@
-#include "Core/Fdc1793.h"
+﻿#include "Core/Fdc1793.h"
+
+#include <string>
+#include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -6,119 +9,84 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-dev::FDrive::FDrive(const Data& _data)
+
+dev::FDrive::FDrive(const std::wstring& _path)
 {
-	m_data = _data;
+	auto res = dev::LoadFile(_path);
+	m_data = *res;
+}
 
-	/*
-	// ? Common FDD specifics ?
-	m_sidesTotal = 1;
-	m_sectorsTotal = 720;
-	m_sectorLen = 512;
-	m_sectorsPerTrack = 9;
-	*/
+uint8_t dev::FDrive::Get(const int _idx) { return m_data[_idx]; }
 
-	// Vector 06c FFD specifics
-	m_sidesTotal = 2;
-	m_sectorLen = 1024;
-	m_sectorsPerTrack = 5;
-	m_sectorsTotal = m_data.size() / m_sectorLen;
-	m_tracksPerSide = m_sectorsTotal / m_sidesTotal  / m_sectorsPerTrack;
+void dev::FDrive::Set(const int _idx, const uint8_t _val)
+{
+	if (m_data[_idx] == _val) return;
 
-	// current state
-	m_side = 0;
-	m_lastReadByte = 0;
-	m_track = 0;
+	m_data[_idx] = _val;
+	m_modified = true;
+}
+
+void dev::FDrive::Seek(const int _track, const int _sector, const int _side)
+{
+	int sectors = SECTORS_PER_TRACK * (_track * SIDES_PER_DISK + _side);
+	int sectorAdjusted = dev::Max(0, _sector - 1); // In CHS addressing the sector numbers always start at 1
+	m_position = (sectors + sectorAdjusted) * SECTOR_LEN;
+	m_trackReg = _track;
+	m_side = _side;
+	m_sectorReg = _sector;
+};
+
+void dev::FDrive::InitReadSector(int _sector)
+{
+	m_readSource = ReadSource::DISK;
+	m_transferLen = SECTOR_LEN;
+}
+
+void dev::FDrive::InitWriteSector(const int _sector)
+{
+	m_readSource = ReadSource::DISK;
+	m_transferLen = SECTOR_LEN;
+}
+
+void dev::FDrive::InitReadAddress()
+{
+	m_readSource = ReadSource::ID_FIELD;
+	m_transferLen = sizeof(m_idField);
 	m_position = 0;
 
-	// read helpers
-	m_readSource = ReadSource::DISK;
-	m_readOffset = 0;
-	m_readLen = 0;
+	// init the data
+	m_idField.fields.track = m_trackReg;
+	m_idField.fields.side = m_side;
+	m_idField.fields.sectorAddr = m_sectorReg;
 }
 
-dev::FDrive::FDrive(FDrive&& _other)
-	: m_data(std::move(_other.m_data))
-{}
-
-void dev::FDrive::Seek(int _track, int _sector, int _side)
+// if read is available, reads one byte and returns true
+// TODO: setting the "finished" status to true requires an extra call. 
+// Check if fixing that helps to mitigate the use of LINGER_AFTER
+auto dev::FDrive::Read(uint8_t& _dataReg)
+-> OpStatus
 {
-	_sector = dev::Max(0, _sector - 1); // In CHS addressing the sector numbers always start at 1
-	int sectors = m_sectorsPerTrack * (_track * m_sidesTotal + _side);
+	if (m_transferLen == 0) return OpStatus::DONE;
 
-	m_position = (sectors + _sector) * m_sectorLen;
-	m_track = _track;
-	m_side = _side;
-	m_sector = _sector;
-}
+	_dataReg = m_readSource == ReadSource::ID_FIELD ?
+		m_idField.data[m_position++] : m_data[m_position++];
 
-void dev::FDrive::ReadSector(int _sector)
-{
-	m_readSource = ReadSource::DISK;
-	m_readLen = m_sectorLen;
-	m_readOffset = 0;
+		m_transferLen--;
 
-	Seek(m_track, _sector, m_side);
-}
-
-// TODO: think of using one func for both ReadSector and WriteSector
-void dev::FDrive::WriteSector(int _sector)
-{
-	m_readSource = ReadSource::DISK;
-	m_readLen = m_sectorLen;
-	m_readOffset = 0;
-
-	Seek(m_track, _sector, m_side);
-}
-
-void dev::FDrive::ReadAddress()
-{
-	m_readSource = ReadSource::BUFFER;
-	m_readLen = sizeof(m_readBuffer);
-	m_readOffset = 0;
-
-	m_readBuffer[0] = m_track;
-	m_readBuffer[1] = m_side; // TODO: investigate this comment left by the svofsi -> invert side ? not sure
-	m_readBuffer[2] = m_sector;
-	
-	// sector lengths {128, 256, 512, 1024} are associated with {0, 1, 2, 3}
-	static constexpr int sectorLenCode[] = { 0, 1, 2, 3 };
-
-	m_readBuffer[3] = sectorLenCode[m_sectorLen];
-	m_readBuffer[4] = 0;
-	m_readBuffer[5] = 0;
-}
-
-// reads one byte at once
-// TODO: setting the "finished" status to true requires an extra call. Check if fixing that helps to mitigate the use of LINGER_AFTER
-bool dev::FDrive::Read()
-{
-	bool finished = m_readOffset >= m_readLen;
-	if (!finished)
-	{
-		m_lastReadByte = m_readSource == ReadSource::BUFFER ? 
-				m_readBuffer[m_readOffset] :
-				m_data[m_position + m_readOffset];
-
-		m_readOffset++;
-	}
-	return finished;
+	return OpStatus::IN_PROCESS;
 }
 
 // writes one byte at once
-// TODO: check if there is no perf loss flushing ~820K file every Write
-bool dev::FDrive::Write(const uint8_t _data)
+auto dev::FDrive::Write(const uint8_t _data)
+-> OpStatus
 {
-	bool finished = m_readOffset >= m_readLen;
-	if (!finished)
-	{
-		m_data[m_position + m_readOffset] = _data;
-		m_readOffset++;
-	}
-	return finished;
-}
+	if (m_transferLen == 0) return OpStatus::DONE;
 
-uint8_t dev::FDrive::GetData() const { return m_lastReadByte; }
+	m_data[m_position++] = _data;
+	m_transferLen--;
+
+	return OpStatus::IN_PROCESS;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -126,270 +94,261 @@ uint8_t dev::FDrive::GetData() const { return m_lastReadByte; }
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-void dev::Fdc1793::Attach(const FDrive::Data& _data, const int _driveIdx)
-{
-	m_drives[_driveIdx].reset(new FDrive(_data));
-}
-
 auto dev::Fdc1793::GetDrive(const int _driveIdx)
 -> FDrive*
 {
-	return m_drives[_driveIdx == -1 ? m_driveSelected : _driveIdx].get();
+	return m_drives[_driveIdx == -1 ? m_drive : _driveIdx].get();
+}
+
+void dev::Fdc1793::Attach(const int _driveIdx, const std::wstring& _path)
+{
+	m_drives[_driveIdx & DRIVES_MAX].reset(new FDrive(_path));
 }
 
 uint8_t dev::Fdc1793::Read(const PortAddr _portAddr)
 {
+	//if (Options.nofdc) return 0xff;
+
 	int result = 0;
-
-	// TODO: redundant condition
-	if (GetDrive()) {
-		m_status &= ~ST_NOTREADY;
-	} else{
-		m_status |= ST_NOTREADY;
-	}
-
+	if (GetDrive()) m_status &= ~ST_NOTREADY;
+	else m_status |= ST_NOTREADY;
+	int returnStatus;
 	switch (_portAddr) {
-		case PortAddr::STATUS:
-		{
-			// to make software that waits for the controller to start happy:
-			// linger -10 to 0 before setting busy flag, set busy flag
-			// linger 0 to 10 before exec
-			int returnStatus = m_status;
-			if (m_status & ST_BUSY) {
-				//if (m_lingerTime < 0) {
-				//	returnStatus &= ~ST_BUSY; // pretend that we're slow
-				//	++m_lingerTime;
-				//} else if (m_lingerTime < LINGER_AFTER) {
-				//	++m_lingerTime;
-				//} else if (m_lingerTime == LINGER_AFTER) {
-				//	++m_lingerTime;
+	case PortAddr::STATUS: // status
+
+		// to make software that waits for the controller to start happy:
+		// linger -10 to 0 before setting busy flag, set busy flag
+		// linger 0 to 10 before Exec
+		returnStatus = m_status;
+		if (m_status & ST_BUSY) {
+			m_execDelayTimer = dev::Max(-1, --m_execDelayTimer);
+			if (m_execDelayTimer == 0) {
 				Exec();
 				returnStatus = m_status;
-				//}
 			}
-
-			//m_status &= (ST_BUSY | ST_NOTREADY);
-			m_intRQ = 0;
-			result = returnStatus;
-			break;
 		}
-		case PortAddr::TRACK:
-			result = m_track;
-			break;
 
-		case PortAddr::SECTOR:
-			result = m_sector;
-			break;
+		m_intrq = 0;
 
-		case PortAddr::DATA:
-			if (!(m_status & ST_DRQ)) {
-				dev::Log("Fdc1793: reading too much!");
-			}
-			result = m_lastReadByte;
-			m_status &= ~ST_DRQ;
+		result = returnStatus;
+		break;
+
+	case PortAddr::TRACK:
+		result = m_track;
+		break;
+
+	case PortAddr::SECTOR:
+		result = m_sector;
+		break;
+
+	case PortAddr::DATA:
+		if (!(m_status & ST_DRQ)) {
+			dev::Log("Fdc1793: reading too much!\n");
+		}
+		result = m_data;
+		m_status &= ~ST_DRQ;
+		Exec();
+		break;
+
+	case PortAddr::CONTROL:
+		if (m_status & ST_BUSY) {
 			Exec();
-			break;
+		}
+		// DRQ,0,0,0,0,0,0,INTRQ
+		// faster to use than FDC
+		result = m_intrq | ((m_status & ST_DRQ) ? PRT_DRQ : 0);
+		break;
 
-/*
-		case PortAddr::CONTROL:
-			if (m_status & ST_BUSY) {
-				Exec();
-			}
-			// DRQ,0,0,0,0,0,0,INTRQ
-			// faster to use than FDC
-			result = m_intRQ | ((m_status & ST_DRQ) ? PRT_DRQ : 0);
-			break;
-
-		default:
-			printf("Fdc1793: invalid port read\n");
-			result = -1;
-			break;
-*/
+	default:
+		printf("Fdc1793: invalid port read\n");
+		result = 0xFF;
+		break;
 	}
 	return result;
-}
+};
 
-void dev::Fdc1793::Write(const PortAddr _portAddr, const int _val)
+void dev::Fdc1793::Write(PortAddr _portAddr, const uint8_t _val)
 {
 	switch (_portAddr) {
-		case PortAddr::CMD:
-			Command(_val);
-			break;
+	case PortAddr::CMD:
+		Command(_val);
+		break;
 
-		case PortAddr::TRACK:
-			m_track = _val;
-			m_status &= ~ST_DRQ;
-			break;
+	case PortAddr::TRACK:
+		m_track = _val;
+		m_status &= ~ST_DRQ;
+		break;
 
-		case PortAddr::SECTOR:
-			m_sector = _val;
-			m_status &= ~ST_DRQ;
-			break;
+	case PortAddr::SECTOR:
+		m_sector = _val;
+		m_status &= ~ST_DRQ;
+		break;
 
-		case PortAddr::DATA:
-			m_lastReadByte = _val;
-			m_status &= ~ST_DRQ;
-			Exec();
-			break;
+	case PortAddr::DATA:
+		m_data = _val;
+		m_status &= ~ST_DRQ;
+		Exec();
+		break;
 
-		case PortAddr::CONTROL:
-			m_paramReg = _val;
-			// Kishinev v06c: 0011xSAB
-			// 				A - drive A
-			// 				B - drive B
-			// 				S - side
-			m_driveSelected = _val & 3;
-			//this->_side = ((~val) >> 2) & 1; // invert side
-			m_side = ((~_val) >> 2) & 1; // invert side
-			break;
-		default:
-			dev::Log("Fdc1793: Write to unknown port address: {}", static_cast<int>(_portAddr));
-			return;
-	}
-}
+	case PortAddr::CONTROL:
+		// Kishinev fdc: 0011xSAB
+		// 				A - drive A
+		// 				B - drive B
+		// 				S - side
+		m_paramReg = _val;
+		m_drive = _val & 3;
+		m_side = ((~_val) >> 2) & 1; // inverted side
+		break;
 
-void dev::Fdc1793::Command(const int _val)
-{
-	int cmd = _val >> 4;
-	int param = _val & 0x0f;
-	int update = param & 1;
-	int multiple = update;
-
-	m_intRQ = 0;
-	m_commandTr = Cmd::NONE;
-
-	switch (cmd) {
-		case 0x00: // restor, type 1
-			m_intRQ = PRT_INTRQ;
-			if (GetDrive()) {
-				m_track = 0;
-				GetDrive()->Seek(m_track, 1, m_side);
-			} else {
-				m_status |= ST_SEEKERR;
-			}
-			break;
-
-		case 0x01: // Seek
-			if (GetDrive()) {
-				GetDrive()->Seek(m_lastReadByte, m_sector, m_side);
-				m_track = m_lastReadByte;
-				m_intRQ = PRT_INTRQ;
-				m_status |= ST_BUSY;
-			}
-			break;
-
-		case 0x02: // step, u = 0
-		case 0x03: // step, u = 1
-			m_track += m_stepDir;
-			if (m_track < 0) {
-				m_track = 0;
-			}
-			m_status |= ST_BUSY;
-			break;
-
-		case 0x04: // step in, u = 0
-		case 0x05: // step in, u = 1
-			m_stepDir = 1;
-			m_track += m_stepDir;
-			m_status |= ST_BUSY;
-			break;
-
-		case 0x06: // step out, u = 0
-		case 0x07: // step out, u = 1
-			m_stepDir = -1;
-			m_track += m_stepDir;
-			if (m_track < 0) {
-				m_track = 0;
-			}
-			m_status |= ST_BUSY;
-			break;
-
-		case 0x08: // read sector, m = 0
-		case 0x09: // read sector, m = 1
-			if (GetDrive()) {
-				m_commandTr = Cmd::READ_SEC;
-				m_status |= ST_BUSY;
-				//GetDrive().Seek(m_track, m_sector, m_side);
-				GetDrive()->ReadSector(m_sector);
-			}
-			break;
-
-		case 0x0A: // Write sector, m = 0
-		case 0x0B: // Write sector, m = 1
-			if (GetDrive()) {
-				m_commandTr = Cmd::WRITE_SEC;
-				m_status |= ST_BUSY;
-				m_status |= ST_DRQ;
-				//GetDrive().Seek(m_track, m_sector, m_side);
-				GetDrive()->WriteSector(m_sector);
-			}
-			break;
-
-		case 0x0C: // read address
-			if (GetDrive()) {
-				m_commandTr = Cmd::READ_ADDR;
-				m_status |= ST_BUSY;
-				GetDrive()->ReadAddress();
-			}
-			break;
-
-		case 0x0D: // force interrupt
-			break;
-
-		case 0x0E: // read track
-			dev::Log("Fdc1793: 'Read Track' command is not implemented");
-			break;
-
-		case 0x0F: // Write track
-			printf("Fdc1793: 'Write Track' command is not implemented");
-			break;
-
-		default:
-			break;
+	default:
+		dev::Log("Fdc1793: Write to unknown port address: {}", static_cast<int>(_portAddr));
+		return;
 	}
 }
 
 void dev::Fdc1793::Exec()
 {
-	bool finished;
-	if (m_commandTr == Cmd::READ_SEC || m_commandTr == Cmd::READ_ADDR)
+	if (m_cmdTransfer == Cmd::READ_SEC || m_cmdTransfer == Cmd::READ_ADDR)
 	{
 		if (m_status & ST_DRQ) {
 			dev::Log("Fdc1793: invalid read");
 			return;
 		}
-		if (GetDrive()) {
-			finished = GetDrive()->Read();
-		}
-		if (finished)
+		switch (GetDrive()->Read(m_data))
 		{
-			m_status &= ~ST_BUSY;
-			m_intRQ = PRT_INTRQ;
-		} else
-		{
+		case FDrive::OpStatus::IN_PROCESS:
 			m_status |= ST_DRQ;
-			if (GetDrive()) {
-				m_lastReadByte = GetDrive()->GetData();
-			}
+			break;
+
+		case FDrive::OpStatus::DONE:
+			m_status &= ~ST_BUSY;
+			m_intrq = PRT_INTRQ;
+			//m_cmdTransfer = Cmd::NONE;
+			break;
 		}
+
 	}
-	else if (m_commandTr == Cmd::WRITE_SEC) {
-		if ((m_status & ST_DRQ) == 0) {
-			if (GetDrive()) 
+	else if (m_cmdTransfer == Cmd::WRITE_SEC)
+	{
+		if ((m_status & ST_DRQ) == 0)
+		{
+			switch (GetDrive()->Read(m_data)) 
 			{
-				finished = GetDrive()->Write(m_lastReadByte);
-				if (finished) {
-					m_status &= ~ST_BUSY;
-					m_intRQ = PRT_INTRQ;
-				}
-				else {
-					m_status |= ST_DRQ;
-				}
+			case FDrive::OpStatus::IN_PROCESS:
+				m_status |= ST_DRQ;
+				break;
+
+			case FDrive::OpStatus::DONE:
+				m_status &= ~ST_BUSY;
+				m_intrq = PRT_INTRQ;
+				//m_cmdTransfer = Cmd::NONE;
+				break;
 			}
 		}
 	}
 	else {
-		// finish lingering
 		m_status &= ~ST_BUSY;
 	}
 }
+
+void dev::Fdc1793::Command(const uint8_t _val)
+{
+	int cmd = _val >> 4;
+	int param = _val & 0x0f;
+	int update, multiple;
+	update = multiple = (param & 1);
+	m_intrq = 0;
+	m_cmdTransfer = Cmd::NONE;
+	switch (cmd) 
+	{
+	case 0x00: // restor, type 1
+		m_intrq = PRT_INTRQ;
+		if (GetDrive()) {
+			m_track = 0;
+			GetDrive()->Seek(m_track, 1, m_side);
+		}
+		else {
+			m_status |= ST_SEEKERR;
+		}
+		break;
+
+	case 0x01: // seek
+		GetDrive()->Seek(m_data, m_sector, m_side);
+		m_track = m_data;
+		m_intrq = PRT_INTRQ;
+		m_status |= ST_BUSY;
+		m_execDelayTimer = EXEC_DELAY;
+		break;
+
+	case 0x02: // step, u = 0
+	case 0x03: // step, u = 1
+		m_track += m_stepdir;
+		if (m_track < 0) {
+			m_track = 0;
+		}
+		m_execDelayTimer = EXEC_DELAY;
+		m_status |= ST_BUSY;
+		break;
+
+	case 0x04: // step in, u = 0
+	case 0x05: // step in, u = 1
+		m_stepdir = 1;
+		m_track += m_stepdir;
+		m_execDelayTimer = EXEC_DELAY;
+		m_status |= ST_BUSY;
+		//GetDrive()->seek(_track, _sector, _side);
+		break;
+
+	case 0x06: // step out, u = 0
+	case 0x07: // step out, u = 1
+		m_stepdir = -1;
+		m_track += m_stepdir;
+		if (m_track < 0) {
+			m_track = 0;
+		}
+		m_execDelayTimer = EXEC_DELAY;
+		m_status |= ST_BUSY;
+		break;
+
+	case 0x08: // read sector, m = 0
+	case 0x09: // read sector, m = 1
+	{
+		m_cmdTransfer = Cmd::READ_SEC;
+		m_status |= ST_BUSY;
+		GetDrive()->Seek(m_track, m_sector, m_side);
+		GetDrive()->InitReadSector(m_sector);
+		m_execDelayTimer = EXEC_DELAY;
+	}
+	break;
+	case 0x0A: // write sector, m = 0
+	case 0x0B: // write sector, m = 1
+	{
+		m_cmdTransfer = Cmd::WRITE_SEC;
+		m_status |= ST_BUSY;
+		m_status |= ST_DRQ;
+		GetDrive()->Seek(m_track, m_sector, m_side);
+		GetDrive()->InitWriteSector(m_sector);
+		m_execDelayTimer = EXEC_DELAY;
+	}
+	break;
+	case 0x0C: // read address
+		m_cmdTransfer = Cmd::READ_ADDR;
+		m_status |= ST_BUSY;
+		GetDrive()->InitReadAddress();
+		m_execDelayTimer = EXEC_DELAY;
+		break;
+	case 0x0D: // force interrupt
+		break;
+
+	case 0x0E: // read track
+		dev::Log("Fdc1793: 'Read Track' command is not implemented");
+		break;
+
+	case 0x0F: // Write track
+		printf("Fdc1793: 'Write Track' command is not implemented");
+		break;
+
+	default:
+		break;
+	}
+};
