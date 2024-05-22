@@ -32,9 +32,9 @@ namespace dev {
 		};
 	private:
 		// Vector06c specifics:
-		static constexpr int SECTORS_PER_TRACK = 5;
 		static constexpr int SIDES_PER_DISK = 2;
 		static constexpr int TRACKS_PER_SIDE = 82;
+		static constexpr int SECTORS_PER_TRACK = 5;
 		static constexpr int SECTOR_LEN = 1024;
 
 		std::string m_path;

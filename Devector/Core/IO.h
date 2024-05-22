@@ -10,7 +10,7 @@
 #include "Core/Keyboard.h"
 #include "Core/Memory.h"
 #include "Core/TimerI8253.h"
-#include "Core/fd1793.h"
+#include "Core/fdcc1793.h"
 
 namespace dev
 {

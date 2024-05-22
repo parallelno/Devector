@@ -126,6 +126,7 @@ auto dev::IO::PortIn(uint8_t _port)
         break;
     case 0x1c:
         ////////////result = m_fdc.Read(Fdc1793::PortAddr::CONTROL); // TODO: find out why it was commened out in the original code
+        result = m_fdc.read(4);
         break;
     default:
         break;

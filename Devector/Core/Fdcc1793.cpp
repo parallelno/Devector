@@ -2,7 +2,47 @@
 
 #include "Fdcc1793.h"
 
-#include <string.h>
+#include "Utils/Utils.h"
+
+#include <cstdint>
+
+// Vector06c specifics:
+static constexpr int SIDES_PER_DISK = 2;
+static constexpr int TRACKS_PER_SIDE = 82;
+static constexpr int SECTORS_PER_TRACK = 5;
+static constexpr int SECTOR_LEN = 1024;
+
+uint8_t m_data[SIDES_PER_DISK * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_LEN];
+FDIDisk disks[NUM_FDI_DRIVES];
+WD1793 fdd;
+
+void dev::Fdc1793::attach(const std::wstring& _path)
+{
+    auto res = dev::LoadFile(_path);
+    auto data = *res;
+    if (data.size() > sizeof(m_data)) return;
+
+    memcpy(m_data, data.data(), data.size());
+    
+    for (int i = 0; i < NUM_FDI_DRIVES; ++i)
+    {
+        disks[i].Format = FMT_VECTOR;
+    }
+
+    Reset1793(&fdd, disks, WD1793_INIT);
+    fdd.Disk[0]->Data = m_data;
+}
+
+auto dev::Fdc1793::read(const int _portAddr)
+-> uint8_t
+{
+    return Read1793(&fdd, _portAddr);
+}
+void dev::Fdc1793::write(const int _portAddr, const uint8_t _val)
+{
+    Write1793(&fdd, _portAddr, _val);
+}
+
 
 /** EjectFDI() ***********************************************/
 /** Eject disk image. Free all allocated memory.            **/
@@ -18,7 +58,7 @@ void EjectFDI(FDIDisk* D)
 /*************************************************************/
 void InitFDI(FDIDisk* D)
 {
-    D->Format = 0;
+    D->Format = FMT_VECTOR;
     D->Data = 0;
     D->DataSize = 0;
     D->Sides = 0;
@@ -45,18 +85,32 @@ static const int SecSizes[] =
 /*************************************************************/
 uint8_t* SeekFDI(FDIDisk* D, int Side, int Track, int SideID, int TrackID, int SectorID)
 {
-    uint8_t* P, * T;
-    int J, Deleted;
-
     /* Have to have disk mounted */
     if (!D || !D->Data) return(0);
 
-    /* May need to search for deleted sectors */
-    Deleted = (SectorID >= 0) && (SectorID & SEEK_DELETED) ? 0x80 : 0x00;
-    if (Deleted) SectorID &= ~SEEK_DELETED;
 
     switch (D->Format)
     {
+    case FMT_VECTOR:
+    {
+        int sectors = SECTORS_PER_TRACK * (TrackID * SIDES_PER_DISK + SideID);
+        int sectorAdjusted = dev::Max(0, SectorID - 1); // In CHS addressing the sector numbers always start at 1
+        int m_position = (sectors + sectorAdjusted) * SECTOR_LEN;
+
+        uint8_t* P = D->Data + m_position;
+
+        /* FDI stores a header for each sector */
+        D->Header[0] = TrackID;
+        D->Header[1] = SideID;
+        D->Header[2] = SectorID;
+        D->Header[3] = 0x3; // sec len 1024
+        D->Header[4] = 0x00;
+        D->Header[5] = 0x00;
+        /* FDI has variable sector numbers and sizes */
+        D->Sectors = SECTORS_PER_TRACK; // ??? maybe it expects a curent sector?
+        D->SecSize = SECTOR_LEN;
+        return D->Data + m_position;
+    }
     case FMT_TRD:
     case FMT_DSK:
     case FMT_SCL:
@@ -70,29 +124,38 @@ uint8_t* SeekFDI(FDIDisk* D, int Side, int Track, int SideID, int TrackID, int S
     case FMT_ADMDSK:
     case FMT_MSXDSK:
     case FMT_SF7000:
-        /* Track directory */
-        P = FDI_DIR(D->Data);
-        /* Find current track entry */
-        for (J = Track * D->Sides + Side % D->Sides;J;--J) P += (FDI_SECTORS(P) + 1) * 7;
-        /* Find sector entry */
-        for (J = FDI_SECTORS(P), T = P + 7;J;--J, T += 7)
-            if ((T[0] == TrackID) || (TrackID < 0))
-                if ((T[1] == SideID) || (SideID < 0))
-                    if (((T[2] == SectorID) && ((T[4] & 0x80) == Deleted)) || (SectorID < 0))
-                        break;
-        /* Fall out if not found */
-        if (!J) return(0);
-        /* FDI stores a header for each sector */
-        D->Header[0] = T[0];
-        D->Header[1] = T[1];
-        D->Header[2] = T[2];
-        D->Header[3] = T[3] <= 3 ? T[3] : 3;
-        D->Header[4] = T[4];
-        D->Header[5] = 0x00;
-        /* FDI has variable sector numbers and sizes */
-        D->Sectors = FDI_SECTORS(P);
-        D->SecSize = FDI_SECSIZE(T);
-        return(FDI_SECTOR(D->Data, P, T));
+        {
+            uint8_t* P, * T;
+            int J;
+
+            /* May need to search for deleted sectors */
+            int Deleted = (SectorID >= 0) && (SectorID & SEEK_DELETED) ? 0x80 : 0x00;
+            if (Deleted) SectorID &= ~SEEK_DELETED;
+
+            /* Track directory */
+            P = FDI_DIR(D->Data);
+            /* Find current track entry */
+            for (J = Track * D->Sides + Side % D->Sides;J;--J) P += (FDI_SECTORS(P) + 1) * 7;
+            /* Find sector entry */
+            for (J = FDI_SECTORS(P), T = P + 7;J;--J, T += 7)
+                if ((T[0] == TrackID) || (TrackID < 0))
+                    if ((T[1] == SideID) || (SideID < 0))
+                        if (((T[2] == SectorID) && ((T[4] & 0x80) == Deleted)) || (SectorID < 0))
+                            break;
+            /* Fall out if not found */
+            if (!J) return(0);
+            /* FDI stores a header for each sector */
+            D->Header[0] = T[0];
+            D->Header[1] = T[1];
+            D->Header[2] = T[2];
+            D->Header[3] = T[3] <= 3 ? T[3] : 3;
+            D->Header[4] = T[4];
+            D->Header[5] = 0x00;
+            /* FDI has variable sector numbers and sizes */
+            D->Sectors = FDI_SECTORS(P);
+            D->SecSize = FDI_SECSIZE(T);
+            return(FDI_SECTOR(D->Data, P, T));
+        }
     }
 
     /* Unknown format */
@@ -137,30 +200,6 @@ void Reset1793(WD1793* D, FDIDisk* Disks, uint8_t Eject)
         /* Eject disk image, if requested */
         if ((Eject == WD1793_EJECT) && D->Disk[J]) EjectFDI(D->Disk[J]);
     }
-}
-
-/** Save1793() ***********************************************/
-/** Save WD1793 state to a given buffer of given maximal    **/
-/** size. Returns number of bytes saved or 0 on failure.    **/
-/*************************************************************/
-unsigned int Save1793(const WD1793* D, uint8_t* Buf, unsigned int Size)
-{
-    unsigned int N = (const uint8_t*)&(D->Ptr) - (const uint8_t*)D;
-    if (N > Size) return(0);
-    memcpy(Buf, D, N);
-    return(N);
-}
-
-/** Load1793() ***********************************************/
-/** Load WD1793 state from a given buffer of given maximal  **/
-/** size. Returns number of bytes loaded or 0 on failure.   **/
-/*************************************************************/
-unsigned int Load1793(WD1793* D, uint8_t* Buf, unsigned int Size)
-{
-    unsigned int N = (const uint8_t*)&(D->Ptr) - (const uint8_t*)D;
-    if (N > Size) return(0);
-    memcpy(D, Buf, N);
-    return(N);
 }
 
 /** Read1793() ***********************************************/
@@ -407,14 +446,23 @@ uint8_t Write1793(WD1793* D, uint8_t A, uint8_t V)
         break;
 
     case WD1793_SYSTEM:
-        // @@@ Too verbose
-              /* Reset controller if S_RESET goes up */
-        if ((D->R[4] ^ V) & V & S_RESET) Reset1793(D, D->Disk[0], WD1793_KEEP);
-        /* Set disk #, side #, ignore the density (@@@) */
+        // Reset controller if S_RESET goes up
+        //if ((D->R[4] ^ V) & V & S_RESET) Reset1793(D, D->Disk[0], WD1793_KEEP);
+        
+        // Set disk #, side #, ignore the density (@@@)
         D->Drive = V & S_DRIVE;
-        D->Side = !(V & S_SIDE);
-        /* Save last written value */
+
+        //D->Side = !(V & S_SIDE);
+        // Kishinev fdc: 0011xSAB
+        // 				A - drive A
+        // 				B - drive B
+        // 				S - side
+        D->Side = ((~V) >> 2) & 1; // inverted side
+
+
+        // Save last written value
         D->R[4] = V;
+
         break;
 
     case WD1793_DATA:

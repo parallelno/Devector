@@ -241,7 +241,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             int driveIdx = dataJ["driveIdx"];
             std::string path = dataJ["path"];
             //m_fdc.attach(driveIdx, dev::StrToStrW(path));
-            m_fdc.disk(0).attach(path);
+            m_fdc.attach(dev::StrToStrW(path));
             m_reqRes.emplace({});
         }
             break;

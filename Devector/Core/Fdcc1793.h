@@ -11,7 +11,23 @@
 #ifndef DEV_FDC1793_H
 #define DEV_FDC1793_H
 
-#include <vector>
+#include <string>
+
+namespace dev
+{
+    class Fdc1793
+    {
+    public:
+
+
+        enum class PortAddr : int { CMD = 0, TRACK, SECTOR, DATA, CONTROL, STATUS };
+
+        void attach(const std::wstring& _path);
+        auto read(const int _portAddr) -> uint8_t;
+        void write(const int _portAddr, const uint8_t _val);
+    };
+}
+
 
 
 #define FDI_SAVE_FAILED    0  /* Failed saving disk image    */
@@ -36,13 +52,12 @@
 #define FMT_SAD    13      /* Sam Coupe disk                 */
 #define FMT_DSK    14      /* Generic raw disk image         */
 #define FMT_MEMORY 15      /* In-memory (RetroArch SRAM)     */
+#define FMT_VECTOR 16      // Vector06C
 
 #define SEEK_DELETED (0x40000000)
 
 #define NUM_FDI_DRIVES 4
 
-extern uint8_t* DiskData;
-extern int DiskSize;
 
 /** FDIDisk **************************************************/
 /** This structure contains all disk image information and  **/
@@ -177,18 +192,6 @@ uint8_t* SeekFDI(FDIDisk* D, int Side, int Track, int SideID, int TrackID, int S
     /** values.                                                 **/
     /*************************************************************/
     uint8_t Write1793(WD1793* D, uint8_t A, uint8_t V);
-
-    /** Save1793() ***********************************************/
-    /** Save WD1793 state to a given buffer of given maximal    **/
-    /** size. Returns number of bytes saved or 0 on failure.    **/
-    /*************************************************************/
-    unsigned int Save1793(const WD1793* D, uint8_t* Buf, unsigned int Size);
-
-    /** Load1793() ***********************************************/
-    /** Load WD1793 state from a given buffer of given maximal  **/
-    /** size. Returns number of bytes loaded or 0 on failure.   **/
-    /*************************************************************/
-    unsigned int Load1793(WD1793* D, uint8_t* Buf, unsigned int Size);
 
 
 #endif // DEV_FDC1793_H
