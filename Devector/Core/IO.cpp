@@ -109,24 +109,19 @@ auto dev::IO::PortIn(uint8_t _port)
         break;
 
     case 0x18:
-        //result = m_fdc.Read(Fdc1793::PortAddr::DATA);
-        result = m_fdc.read(3);
+        result = m_fdc.Read(Fdc1793::Port::DATA);
         break;
     case 0x19:
-        //result = m_fdc.Read(Fdc1793::PortAddr::SECTOR);
-        result = m_fdc.read(2);
+        result = m_fdc.Read(Fdc1793::Port::SECTOR);
         break;
     case 0x1a:
-        //result = m_fdc.Read(Fdc1793::PortAddr::TRACK);
-        result = m_fdc.read(1);
+        result = m_fdc.Read(Fdc1793::Port::TRACK);
         break;
     case 0x1b:
-        //result = m_fdc.Read(Fdc1793::PortAddr::STATUS);
-        result = m_fdc.read(0);
+        result = m_fdc.Read(Fdc1793::Port::STATUS);
         break;
     case 0x1c:
-        ////////////result = m_fdc.Read(Fdc1793::PortAddr::CONTROL); // TODO: find out why it was commened out in the original code
-        result = m_fdc.read(4);
+        result = m_fdc.Read(Fdc1793::Port::READY);
         break;
     default:
         break;
@@ -243,24 +238,19 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         break;
 
     case 0x18:
-        //m_fdc.Write(Fdc1793::PortAddr::DATA, _value);
-        m_fdc.write(3, _value);
+        m_fdc.Write(Fdc1793::Port::DATA, _value);
         break;
     case 0x19:
-        //m_fdc.Write(Fdc1793::PortAddr::SECTOR, _value);
-        m_fdc.write(2, _value);
+        m_fdc.Write(Fdc1793::Port::SECTOR, _value);
         break;
     case 0x1a:
-        //m_fdc.Write(Fdc1793::PortAddr::TRACK, _value);
-        m_fdc.write(1, _value);
+        m_fdc.Write(Fdc1793::Port::TRACK, _value);
         break;
     case 0x1b:
-        //m_fdc.Write(Fdc1793::PortAddr::CMD, _value);
-        m_fdc.write(0, _value);
+        m_fdc.Write(Fdc1793::Port::COMMAND, _value);
         break;
     case 0x1c:
-        //m_fdc.Write(Fdc1793::PortAddr::CONTROL, _value);
-        m_fdc.write(4, _value);
+        m_fdc.Write(Fdc1793::Port::SYSTEM, _value);
         break;
     default:
         break;
