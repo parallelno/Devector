@@ -275,7 +275,7 @@ void dev::DevectorApp::MainMenuUpdate()
 			ImGui::CloseCurrentPopup();
 
 			bool autoBoot = driveIdx == 0;
-			LoadFdd(fddPath, dev::Max(driveIdx - 1, 0), autoBoot); // "driveIdx - 1" because 0, 1 are associated with Drive 0
+			LoadFdd(fddPath, dev::Max(driveIdx - 1, 0), autoBoot); // "driveIdx - 1" because 0, 1 are associated with FDisk 0
 		}
 		ImGui::SetItemDefaultFocus();
 		ImGui::SameLine();

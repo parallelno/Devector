@@ -115,7 +115,6 @@
     <ClCompile Include="Core\Debugger.cpp" />
     <ClCompile Include="Core\Display.cpp" />
     <ClCompile Include="Core\Fdc1793.cpp" />
-    <ClCompile Include="Core\Fdcc1793.cpp" />
     <ClCompile Include="Core\Hardware.cpp" />
     <ClCompile Include="Core\IO.cpp" />
     <ClCompile Include="Core\Keyboard.cpp" />
@@ -158,9 +157,7 @@
     <ClInclude Include="Core\CpuI8080.h" />
     <ClInclude Include="Core\Debugger.h" />
     <ClInclude Include="Core\Display.h" />
-    <ClInclude Include="Core\fd1793.h" />
     <ClInclude Include="Core\Fdc1793.h" />
-    <ClInclude Include="Core\Fdcc1793.h" />
     <ClInclude Include="Core\Hardware.h" />
     <ClInclude Include="Core\IO.h" />
     <ClInclude Include="Core\Keyboard.h" />

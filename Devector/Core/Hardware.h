@@ -12,7 +12,7 @@
 #include "Core/IO.h"
 #include "Core/Display.h"
 #include "Core/TimerI8253.h"
-#include "Core/fdcc1793.h"
+#include "Core/fdc1793.h"
 #include "Utils/Utils.h"
 #include "Utils/Result.h"
 #include "Utils/TQueue.h"

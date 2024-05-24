@@ -111,9 +111,6 @@
     <ClCompile Include="Core\TimerI8253.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Fdcc1793.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Fdc1793.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -249,13 +246,7 @@
     <ClInclude Include="Core\TimerI8253.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Fdcc1793.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Fdc1793.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\fd1793.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
