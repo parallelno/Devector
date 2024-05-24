@@ -33,16 +33,12 @@ auto dev::FDisk::GetDisk()
 -> FDisk*
 { return loaded ? this : nullptr; };
 
-//static constexpr int FDI_SAVE_FAILED    0;  /* Failed saving disk image    */
-//static constexpr int FDI_SAVE_TRUNCATED 1;  /* Truncated data while saving */
-//static constexpr int FDI_SAVE_PADDED    2;  /* Padded data while saving    */
-//static constexpr int FDI_SAVE_OK        3;  /* Succeeded saving disk image */
+//static constexpr int FDI_SAVE_FAILED    0;  // Failed saving disk image   
+//static constexpr int FDI_SAVE_TRUNCATED 1;  // Truncated data while saving
+//static constexpr int FDI_SAVE_PADDED    2;  // Padded data while saving   
+//static constexpr int FDI_SAVE_OK        3;  // Succeeded saving disk image
 
-static constexpr int SEEK_DELETED	= 0x40000000;
-
-static constexpr int WD1793_KEEP	= 0;
-static constexpr int WD1793_INIT	= 1;
-static constexpr int WD1793_EJECT	= 2;
+//static constexpr int SEEK_DELETED	= 0x40000000;
 
 static constexpr int WD1793_COMMAND = 0;
 static constexpr int WD1793_STATUS	= 0;
@@ -63,164 +59,143 @@ static constexpr int F_NOTREADY = 0x80; // The drive is not ready
 // Type-1 command status:
 static constexpr int F_INDEX	= 0x02; // Index mark detected               
 static constexpr int F_TRACK0	= 0x04; // Head positioned at track #0       
-static constexpr int F_CRCERR	= 0x08; // CRC error in ID field             
-static constexpr int F_SEEKERR	= 0x10; // Seek error, track not verified    
+//static constexpr int F_CRCERR	= 0x08; // CRC error in ID field             
+//static constexpr int F_SEEKERR	= 0x10; // Seek error, track not verified    
 static constexpr int F_HEADLOAD = 0x20; // Head loaded                       
 
 // Type-2 and Type-3 command status:
 static constexpr int F_DRQ		= 0x02; // Data request pending              
 static constexpr int F_LOSTDATA	= 0x04; // Data has been lost (missed DRQ)
 static constexpr int F_ERRCODE	= 0x18; // Error code bits:               
-static constexpr int F_BADDATA	= 0x08; // 1 = bad data CRC               
+//static constexpr int F_BADDATA	= 0x08; // 1 = bad data CRC               
 static constexpr int F_NOTFOUND	= 0x10; // 2 = sector not found           
-static constexpr int F_BADID	= 0x18; // 3 = bad ID field CRC           
-static constexpr int F_DELETED	= 0x20; // Deleted data mark (when reading)
-static constexpr int F_WRFAULT	= 0x20; // Write fault (when writing)      
+//static constexpr int F_BADID	= 0x18; // 3 = bad ID field CRC           
+//static constexpr int F_DELETED	= 0x20; // Deleted data mark (when reading)
+//static constexpr int F_WRFAULT	= 0x20; // Write fault (when writing)      
 
-static constexpr int C_DELMARK	= 0x01;
+//static constexpr int C_DELMARK	= 0x01;
 static constexpr int C_SIDECOMP	= 0x02;
-static constexpr int C_STEPRATE	= 0x03;
-static constexpr int C_VERIFY	= 0x04;
-static constexpr int C_WAIT15MS	= 0x04;
+//static constexpr int C_STEPRATE	= 0x03;
+//static constexpr int C_VERIFY	= 0x04;
+//static constexpr int C_WAIT15MS	= 0x04;
 static constexpr int C_LOADHEAD	= 0x08;
 static constexpr int C_SIDE		= 0x08;
 static constexpr int C_IRQ		= 0x08;
 static constexpr int C_SETTRACK	= 0x10;
-static constexpr int C_MULTIREC	= 0x10;
+//static constexpr int C_MULTIREC	= 0x10;
 
 static constexpr int S_DRIVE	= 0x03;
 static constexpr int S_RESET	= 0x04;
 static constexpr int S_HALT		= 0x08;
-static constexpr int S_SIDE		= 0x10;
-static constexpr int S_DENSITY	= 0x20;
+//static constexpr int S_SIDE		= 0x10;
+//static constexpr int S_DENSITY	= 0x20;
 
 
-/** Seek() ************************************************/
-/** Seek to given side/track/sector. Returns sector address **/
-/** on success or 0 on failure.                             **/
-/*************************************************************/
-uint8_t* dev::Fdc1793::Seek(int Side, int Track, int SideID, int TrackID, int SectorID)
+// Seek to given side / track / sector.Returns sector address
+// on success or 0 on failure.
+uint8_t* dev::Fdc1793::Seek(int _side, int _track, int _sideID, int _trackID, int _sectorID)
 {
-	/* Have to have disk mounted */
-	if (!fdd.Disk) return(0);
+	// Have to have disk mounted
+	if (!m_disk) return(0);
 
-	int sectors = FDisk::sectorsPerTrack * (TrackID * FDisk::sidesPerDisk + SideID);
-	int sectorAdjusted = dev::Max(0, SectorID - 1); // In CHS addressing the sector numbers always start at 1
+	int sectors = FDisk::sectorsPerTrack * (_trackID * FDisk::sidesPerDisk + _sideID);
+	int sectorAdjusted = dev::Max(0, _sectorID - 1); // In CHS addressing the sector numbers always start at 1
 	int m_position = (sectors + sectorAdjusted) * FDisk::sectorLen;
 
-	/* FDisk stores a header for each sector */
-	fdd.Disk->header[0] = TrackID;
-	fdd.Disk->header[1] = SideID;
-	fdd.Disk->header[2] = SectorID;
-	/* FDisk has variable sector numbers and sizes */
-	return fdd.Disk->GetData() + m_position;
+	// FDisk stores a header for each sector
+	m_disk->header[0] = _trackID;
+	m_disk->header[1] = _sideID;
+	m_disk->header[2] = _sectorID;
+	// FDisk has variable sector numbers and sizes
+	return m_disk->GetData() + m_position;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Reset() **********************************************/
-/** Reset WD1793. When Disks=WD1793_INIT, also initialize   **/
-/** disks. When Disks=WD1793_EJECT, eject inserted disks,   **/
-/** freeing memory.                                         **/
-/*************************************************************/
+// Resets the fdc state
 void dev::Fdc1793::Reset()
 {
-	int J;
-
-	fdd.R[0] = 0x00;
-	fdd.R[1] = 0x00;
-	fdd.R[2] = 0x00;
-	fdd.R[3] = 0x00;
-	fdd.R[4] = S_RESET | S_HALT;
-	fdd.Drive = 0;
-	fdd.Side = 0;
-	fdd.LastS = 0;
-	fdd.IRQ = 0;
-	fdd.WRLength = 0;
-	fdd.RDLength = 0;
-	fdd.Wait = 0;
-	fdd.Cmd = 0xD0;
-	fdd.Rsrvd2 = 0;
-
-	/* For all drives... */
-	for (J = 0;J < DRIVES_MAX;++J)
-	{
-		/* Reset drive-dependent state */
-		fdd.Track[J] = 0;
-		fdd.Rsrvd1[J] = 0;
-	}
+	m_regs[0] = 0x00;
+	m_regs[1] = 0x00;
+	m_regs[2] = 0x00;
+	m_regs[3] = 0x00;
+	m_regs[4] = S_RESET | S_HALT;
+	m_drive = 0;
+	m_side = 0;
+	m_track = 0;
+	m_lastS = 0;
+	m_irq = 0;
+	m_wrLength = 0;
+	m_rdLength = 0;
+	m_wait = 0;
+	m_cmd = 0xD0;
 }
 
-/** Read1793() *********************************************/
-/** Read value from a WD1793 register. Returns read data  **/
-/** on success or 0xFF on failure (bad register address). **/
-/***********************************************************/
+// Reads value from a WD1793 register. Returns read data
+// on success or 0xFF on failure (bad register address).
 uint8_t dev::Fdc1793::Read(Port _reg)
 {
 	switch (_reg)
 	{
 	case Port::STATUS:
-		_reg = static_cast<Port>(fdd.R[0]);
-		/* If no disk present, set F_NOTREADY */
-		if (!fdd.Disk) _reg = static_cast<Port>((int)_reg | F_NOTREADY);
-		if ((fdd.Cmd < 0x80) || (fdd.Cmd == 0xD0))
+		_reg = static_cast<Port>(m_regs[0]);
+		// If no disk present, set F_NOTREADY
+		if (!m_disk) _reg = static_cast<Port>((int)_reg | F_NOTREADY);
+		if ((m_cmd < 0x80) || (m_cmd == 0xD0))
 		{
-			/* Keep flipping F_INDEX bit as the disk rotates (Sam Coupe) */
-			fdd.R[0] = (fdd.R[0] ^ F_INDEX) & (F_INDEX | F_BUSY | F_NOTREADY | F_READONLY | F_TRACK0);
+			// Keep flipping F_INDEX bit as the disk rotates (Sam Coupe)
+			m_regs[0] = (m_regs[0] ^ F_INDEX) & (F_INDEX | F_BUSY | F_NOTREADY | F_READONLY | F_TRACK0);
 		}
 		else
 		{
-			/* When reading status, clear all bits but F_BUSY and F_NOTREADY */
-			fdd.R[0] &= F_BUSY | F_NOTREADY | F_READONLY | F_DRQ;
+			// When reading status, clear all bits but F_BUSY and F_NOTREADY
+			m_regs[0] &= F_BUSY | F_NOTREADY | F_READONLY | F_DRQ;
 		}
 		return((int)_reg);
 	case Port::TRACK:
 	case Port::SECTOR:
-		/* Return track/sector numbers */
-		return(fdd.R[(int)_reg]);
+		// Return track/sector numbers
+		return(m_regs[(int)_reg]);
 	case Port::DATA:
-		/* When reading data, load value from disk */
-		if (fdd.RDLength)
+		// When reading data, load value from disk
+		if (m_rdLength)
 		{
-			/* Read data */
-			fdd.R[(int)_reg] = *fdd.Ptr++;
-			/* Decrement length */
-			if (--fdd.RDLength)
+			// Read data
+			m_regs[(int)_reg] = *m_ptr++;
+			// Decrement length
+			if (--m_rdLength)
 			{
-				/* Reset timeout watchdog */
-				fdd.Wait = 255;
-				/* Advance to the next sector as needed */
-				if (!(fdd.RDLength & (fdd.Disk->sectorLen - 1))) ++fdd.R[2];
+				// Reset timeout watchdog
+				m_wait = 255;
+				// Advance to the next sector as needed
+				if (!(m_rdLength & (m_disk->sectorLen - 1))) ++m_regs[2];
 			}
 			else
 			{
-				/* Read completed */
-				fdd.R[0] &= ~(F_DRQ | F_BUSY);
-				fdd.IRQ = WD1793_IRQ;
+				// Read completed
+				m_regs[0] &= ~(F_DRQ | F_BUSY);
+				m_irq = WD1793_IRQ;
 			}
 		}
-		return(fdd.R[(int)_reg]);
+		return(m_regs[(int)_reg]);
 	case Port::READY:
-		/* After some idling, stop read/write operations */
-		if (fdd.Wait)
-			if (!--fdd.Wait)
+		// After some idling, stop read/write operations
+		if (m_wait)
+			if (!--m_wait)
 			{
-				fdd.RDLength = fdd.WRLength = 0;
-				fdd.R[0] = (fdd.R[0] & ~(F_DRQ | F_BUSY)) | F_LOSTDATA;
-				fdd.IRQ = WD1793_IRQ;
+				m_rdLength = m_wrLength = 0;
+				m_regs[0] = (m_regs[0] & ~(F_DRQ | F_BUSY)) | F_LOSTDATA;
+				m_irq = WD1793_IRQ;
 			}
-		/* Done */
-		return(fdd.IRQ);
+		// Done
+		return(m_irq);
 	}
 
-	/* Bad register */
+	// Bad register
 	return(0xFF);
 }
 
-/** Write1793() ******************************************/
-/** Write value into WD1793 register. Returns DRQ/IRQ   **/
-/** values.                                             **/
-/*********************************************************/
+// Writes a value into the WD1793 register. 
+// Returns WD1793_IRQ or WD1793_DRQ
 uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 {
 	int J;
@@ -228,227 +203,228 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 	switch (_reg)
 	{
 	case Port::COMMAND:
-		/* Reset interrupt request */
-		fdd.IRQ = 0;
-		/* If it is FORCE-IRQ command... */
+		// Reset interrupt request
+		m_irq = 0;
+		// If it is FORCE-m_irq command...
 		if ((_val & 0xF0) == 0xD0)
 		{
-			/* Reset any executing command */
-			fdd.RDLength = fdd.WRLength = 0;
-			fdd.Cmd = 0xD0;
-			/* Either reset BUSY flag or reset all flags if BUSY=0 */
-			if (fdd.R[0] & F_BUSY) fdd.R[0] &= ~F_BUSY;
-			else               fdd.R[0] = (fdd.Track[fdd.Drive] ? 0 : F_TRACK0) | F_INDEX;
-			/* Cause immediate interrupt if requested */
-			if (_val & C_IRQ) fdd.IRQ = WD1793_IRQ;
-			/* Done */
-			return(fdd.IRQ);
+			// Reset any executing command
+			m_rdLength = m_wrLength = 0;
+			m_cmd = 0xD0;
+			// Either reset BUSY flag or reset all flags if BUSY=0
+			if (m_regs[0] & F_BUSY) m_regs[0] &= ~F_BUSY;
+			else               m_regs[0] = (m_track ? 0 : F_TRACK0) | F_INDEX;
+			// Cause immediate interrupt if requested
+			if (_val & C_IRQ) m_irq = WD1793_IRQ;
+			// Done
+			return(m_irq);
 		}
-		/* If busy, drop out */
-		if (fdd.R[0] & F_BUSY) break;
-		/* Reset status register */
-		fdd.R[0] = 0x00;
-		fdd.Cmd = _val;
-		/* Depending on the command... */
+		// If busy, drop out
+		if (m_regs[0] & F_BUSY) break;
+		// Reset status register
+		m_regs[0] = 0x00;
+		m_cmd = _val;
+		// Depending on the command...
 		switch (_val & 0xF0)
 		{
-		case 0x00: /* RESTORE (seek track 0) */
-			fdd.Track[fdd.Drive] = 0;
-			fdd.R[0] = F_INDEX | F_TRACK0 | (_val & C_LOADHEAD ? F_HEADLOAD : 0);
-			fdd.R[1] = 0;
-			fdd.IRQ = WD1793_IRQ;
+		case 0x00: // RESTORE (seek track 0)
+			m_track = 0;
+			m_regs[0] = F_INDEX | F_TRACK0 | (_val & C_LOADHEAD ? F_HEADLOAD : 0);
+			m_regs[1] = 0;
+			m_irq = WD1793_IRQ;
 			break;
 
-		case 0x10: /* SEEK */
-			/* Reset any executing command */
-			fdd.RDLength = fdd.WRLength = 0;
-			fdd.Track[fdd.Drive] = fdd.R[3];
-			fdd.R[0] = F_INDEX
-				| (fdd.Track[fdd.Drive] ? 0 : F_TRACK0)
+		case 0x10: // SEEK
+			// Reset any executing command
+			m_rdLength = m_wrLength = 0;
+			m_track = m_regs[3];
+			m_regs[0] = F_INDEX
+				| (m_track ? 0 : F_TRACK0)
 				| (_val & C_LOADHEAD ? F_HEADLOAD : 0);
-			fdd.R[1] = fdd.Track[fdd.Drive];
-			fdd.IRQ = WD1793_IRQ;
+			m_regs[1] = m_track;
+			m_irq = WD1793_IRQ;
 			break;
 
-		case 0x20: /* STEP */
-		case 0x30: /* STEP-AND-UPDATE */
-		case 0x40: /* STEP-IN */
-		case 0x50: /* STEP-IN-AND-UPDATE */
-		case 0x60: /* STEP-OUT */
-		case 0x70: /* STEP-OUT-AND-UPDATE */
-			/* Either store or fetch step direction */
-			if (_val & 0x40) fdd.LastS = _val & 0x20; else _val = (_val & ~0x20) | fdd.LastS;
-			/* Step the head, update track register if requested */
-			if (_val & 0x20) { if (fdd.Track[fdd.Drive]) --fdd.Track[fdd.Drive]; }
-			else ++fdd.Track[fdd.Drive];
-			/* Update track register if requested */
-			if (_val & C_SETTRACK) fdd.R[1] = fdd.Track[fdd.Drive];
-			/* Update status register */
-			fdd.R[0] = F_INDEX | (fdd.Track[fdd.Drive] ? 0 : F_TRACK0);
-			// @@@ WHY USING J HERE?
+		case 0x20: // STEP
+		case 0x30: // STEP-AND-UPDATE
+		case 0x40: // STEP-IN
+		case 0x50: // STEP-IN-AND-UPDATE
+		case 0x60: // STEP-OUT
+		case 0x70: // STEP-OUT-AND-UPDATE
+			// Either store or fetch step direction
+			if (_val & 0x40) m_lastS = _val & 0x20; else _val = (_val & ~0x20) | m_lastS;
+			// Step the head, update track register if requested
+			if (_val & 0x20) { if (m_track) --m_track; }
+			else ++m_track;
+			// Update track register if requested
+			if (_val & C_SETTRACK) m_regs[1] = m_track;
+			// Update status register
+			m_regs[0] = F_INDEX | (m_track ? 0 : F_TRACK0);
+			// TODO: @@@ WHY USING J HERE?
 			//                  | (J&&(V&C_VERIFY)? 0:F_SEEKERR);
-					  /* Generate IRQ */
-			fdd.IRQ = WD1793_IRQ;
+					  // Generate m_irq
+			m_irq = WD1793_IRQ;
 			break;
 
 		case 0x80:
-		case 0x90: /* READ-SECTORS */
-			/* Seek to the requested sector */
-			fdd.Ptr = Seek(fdd.Side, fdd.Track[fdd.Drive],
-				_val & C_SIDECOMP ? !!(_val & C_SIDE) : fdd.Side, fdd.R[1], fdd.R[2]
+		case 0x90: // READ-SECTORS
+			// Seek to the requested sector
+			m_ptr = Seek(m_side, m_track,
+				_val & C_SIDECOMP ? !!(_val & C_SIDE) : m_side, m_regs[1], m_regs[2]
 			);
-			/* If seek successful, set up reading operation */
-			if (!fdd.Ptr)
+			// If seek successful, set up reading operation
+			if (!m_ptr)
 			{
-				fdd.R[0] = (fdd.R[0] & ~F_ERRCODE) | F_NOTFOUND;
-				fdd.IRQ = WD1793_IRQ;
+				m_regs[0] = (m_regs[0] & ~F_ERRCODE) | F_NOTFOUND;
+				m_irq = WD1793_IRQ;
 			}
 			else
 			{
-				fdd.RDLength = fdd.Disk->sectorLen
-					* (_val & 0x10 ? (fdd.Disk->sectorsPerTrack - fdd.R[2] + 1) : 1);
-				fdd.R[0] |= F_BUSY | F_DRQ;
-				fdd.IRQ = WD1793_DRQ;
-				fdd.Wait = 255;
+				m_rdLength = m_disk->sectorLen
+					* (_val & 0x10 ? (m_disk->sectorsPerTrack - m_regs[2] + 1) : 1);
+				m_regs[0] |= F_BUSY | F_DRQ;
+				m_irq = WD1793_DRQ;
+				m_wait = 255;
 			}
 			break;
 
 		case 0xA0:
-		case 0xB0: /* WRITE-SECTORS */
-			/* Seek to the requested sector */
-			fdd.Ptr = Seek(fdd.Side, fdd.Track[fdd.Drive],
-				_val & C_SIDECOMP ? !!(_val & C_SIDE) : fdd.Side, fdd.R[1], fdd.R[2]
+		case 0xB0: // WRITE-SECTORS
+			// Seek to the requested sector
+			m_ptr = Seek(m_side, m_track,
+				_val & C_SIDECOMP ? !!(_val & C_SIDE) : m_side, m_regs[1], m_regs[2]
 			);
-			/* If seek successful, set up writing operation */
-			if (!fdd.Ptr)
+			// If seek successful, set up writing operation
+			if (!m_ptr)
 			{
-				fdd.R[0] = (fdd.R[0] & ~F_ERRCODE) | F_NOTFOUND;
-				fdd.IRQ = WD1793_IRQ;
+				m_regs[0] = (m_regs[0] & ~F_ERRCODE) | F_NOTFOUND;
+				m_irq = WD1793_IRQ;
 			}
 			else
 			{
-				fdd.WRLength = fdd.Disk->sectorLen
-					* (_val & 0x10 ? (fdd.Disk->sectorsPerTrack - fdd.R[2] + 1) : 1);
-				fdd.R[0] |= F_BUSY | F_DRQ;
-				fdd.IRQ = WD1793_DRQ;
-				fdd.Wait = 255;
-				fdd.Disk->updated = true;
+				m_wrLength = m_disk->sectorLen
+					* (_val & 0x10 ? (m_disk->sectorsPerTrack - m_regs[2] + 1) : 1);
+				m_regs[0] |= F_BUSY | F_DRQ;
+				m_irq = WD1793_DRQ;
+				m_wait = 255;
+				m_disk->updated = true;
 			}
 			break;
 
-		case 0xC0: /* READ-ADDRESS */
-			/* Read first sector address from the track */
-			if (!fdd.Disk) fdd.Ptr = 0;
+		case 0xC0: // READ-ADDRESS
+			// Read first sector address from the track
+			if (!m_disk) m_ptr = 0;
 			else
 				for (J = 0;J < 256;++J)
 				{
-					fdd.Ptr = Seek(
-						fdd.Side, fdd.Track[fdd.Drive],
-						fdd.Side, fdd.Track[fdd.Drive], J
+					m_ptr = Seek(
+						m_side, m_track,
+						m_side, m_track, J
 					);
-					if (fdd.Ptr) break;
+					if (m_ptr) break;
 				}
-			/* If address found, initiate data transfer */
-			if (!fdd.Ptr)
+			// If address found, initiate data transfer
+			if (!m_ptr)
 			{
-				fdd.R[0] |= F_NOTFOUND;
-				fdd.IRQ = WD1793_IRQ;
+				m_regs[0] |= F_NOTFOUND;
+				m_irq = WD1793_IRQ;
 			}
 			else
 			{
-				fdd.Ptr = fdd.Disk->header;
-				fdd.RDLength = 6;
-				fdd.R[0] |= F_BUSY | F_DRQ;
-				fdd.IRQ = WD1793_DRQ;
-				fdd.Wait = 255;
+				m_ptr = m_disk->header;
+				m_rdLength = 6;
+				m_regs[0] |= F_BUSY | F_DRQ;
+				m_irq = WD1793_DRQ;
+				m_wait = 255;
 			}
 			break;
 
-		case 0xE0: /* READ-TRACK */
+		case 0xE0: // READ-TRACK
 			break;
 
-		case 0xF0: /* WRITE-TRACK, i.e., format */
-			// not implementing the full protocol (involves parsing lead-in & lead-out); simply setting track data to 0xe5
-			if (fdd.Ptr = Seek(0, fdd.Track[fdd.Drive], 0, fdd.R[1], 1))
+		case 0xF0: // WRITE-TRACK, i.e., format
+			// the full protocol is not implemented (involves parsing lead-in & lead-out); 
+			// it only sets the track data to 0xE5
+			if (m_ptr = Seek(0, m_track, 0, m_regs[1], 1))
 			{
-				memset(fdd.Ptr, 0xe5, fdd.Disk->sectorLen * fdd.Disk->sectorsPerTrack);
-				fdd.Disk->updated = 1;
+				memset(m_ptr, 0xE5, m_disk->sectorLen * m_disk->sectorsPerTrack);
+				m_disk->updated = 1;
 			}
-			if (fdd.Disk->sidesPerDisk > 1 && (fdd.Ptr = Seek(1, fdd.Track[fdd.Drive], 1, fdd.R[1], 1)))
+			if (m_disk->sidesPerDisk > 1 && (m_ptr = Seek(1, m_track, 1, m_regs[1], 1)))
 			{
-				memset(fdd.Ptr, 0xe5, fdd.Disk->sectorLen * fdd.Disk->sectorsPerTrack);
-				fdd.Disk->updated = 1;
+				memset(m_ptr, 0xE5, m_disk->sectorLen * m_disk->sectorsPerTrack);
+				m_disk->updated = 1;
 			}
 			break;
 
-		default: /* UNKNOWN */
+		default: // UNKNOWN
 			break;
 		}
 		break;
 
 	case Port::TRACK:
 	case Port::SECTOR:
-		if (!(fdd.R[0] & F_BUSY)) fdd.R[(int)_reg] = _val;
+		if (!(m_regs[0] & F_BUSY)) m_regs[(int)_reg] = _val;
 		break;
 
 	case Port::DATA:
-		/* When writing data, store value to disk */
-		if (fdd.WRLength)
+		// When writing data, store value to disk
+		if (m_wrLength)
 		{
-			/* Write data */
-			*fdd.Ptr++ = _val;
-			fdd.Disk->updated = true;
-			/* Decrement length */
-			if (--fdd.WRLength)
+			// Write data
+			*m_ptr++ = _val;
+			m_disk->updated = true;
+			// Decrement length
+			if (--m_wrLength)
 			{
-				/* Reset timeout watchdog */
-				fdd.Wait = 255;
-				/* Advance to the next sector as needed */
-				if (!(fdd.WRLength & (fdd.Disk->sectorLen - 1))) ++fdd.R[2];
+				// Reset timeout watchdog
+				m_wait = 255;
+				// Advance to the next sector as needed
+				if (!(m_wrLength & (m_disk->sectorLen - 1))) ++m_regs[2];
 			}
 			else
 			{
-				/* Write completed */
-				fdd.R[0] &= ~(F_DRQ | F_BUSY);
-				fdd.IRQ = WD1793_IRQ;
+				// Write completed
+				m_regs[0] &= ~(F_DRQ | F_BUSY);
+				m_irq = WD1793_IRQ;
 			}
 		}
-		/* Save last written value */
-		fdd.R[(int)_reg] = _val;
+		// Save last written value
+		m_regs[(int)_reg] = _val;
 		break;
 
 	case Port::SYSTEM:
 		// Reset controller if S_RESET goes up
-		if ((fdd.R[4] ^ _val) & _val & S_RESET)
+		if ((m_regs[4] ^ _val) & _val & S_RESET)
 		{
 			// TODO: figure out if it is still required.
-			//Reset(_disk, fdd.Disk[fdd.FDisk], WD1793_KEEP);
+			//Reset(_disk, Disk[FDisk], WD1793_KEEP);
 		}
 
 		// Set disk #, side #, ignore the density (@@@)
-		fdd.Drive = _val & S_DRIVE;
-		fdd.Disk = m_drives[fdd.Drive].GetDisk();
+		m_drive = _val & S_DRIVE;
+		m_disk = m_disks[m_drive].GetDisk();
 
-		//fdd.Side = !(V & S_SIDE);
+		//m_side = !(V & S_SIDE);
 		// Kishinev fdc: 0011xSAB
 		// 				A - drive A
 		// 				B - drive B
 		// 				S - side
-		fdd.Side = ((~_val) >> 2) & 1; // inverted side
+		m_side = ((~_val) >> 2) & 1; // inverted side
 
 
 		// Save last written value
-		fdd.R[(int)_reg] = _val;
+		m_regs[(int)_reg] = _val;
 
 		break;
 	}
 
-	/* Done */
-	return(fdd.IRQ);
+	// Done
+	return(m_irq);
 }
 
 void dev::Fdc1793::Attach(const int _driveIdx, const std::wstring& _path)
 {
-	m_drives[_driveIdx & DRIVES_MAX].Attach(_path);
+	m_disks[_driveIdx & DRIVES_MAX].Attach(_path);
 	Reset();
 }

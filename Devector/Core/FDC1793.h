@@ -36,31 +36,6 @@ namespace dev
 		auto GetDisk() -> FDisk*;
 	};
 
-#pragma pack(4)
-	struct WD1793
-	{
-		int  Rsrvd1[4];   /* Reserved, do not touch */
-
-		uint8_t R[5];        /* Registers */
-		uint8_t Drive;       /* Current disk # */
-		uint8_t Side;        /* Current side # */
-		uint8_t Track[DRIVES_MAX]; /* Current track # */
-		uint8_t LastS;       /* Last STEP direction */
-		uint8_t IRQ;         /* 0x80: IRQ pending, 0x40: DRQ pending */
-		uint8_t Wait;        /* Expiration counter */
-		uint8_t Cmd;         /* Last command */
-
-		int  WRLength;    /* Data left to write */
-		int  RDLength;    /* Data left to read */
-		int  Rsrvd2;      /* Reserved, do not touch */
-
-		/*--- Save1793() will save state above this line ----*/
-
-		uint8_t* Ptr;        /* Pointer to data */
-		FDisk* Disk = nullptr; /* current disk images */
-	};
-#pragma pack()
-
 	class Fdc1793
 	{
 	public:
@@ -75,10 +50,24 @@ namespace dev
 		};
 
 	private:
-		FDisk m_drives[DRIVES_MAX];
-		WD1793 fdd;
+		FDisk m_disks[DRIVES_MAX];
 
-		auto Seek(int Side, int Track, int SideID, int TrackID, int SectorID) -> uint8_t*;
+		uint8_t m_regs[5];	// Registers
+		uint8_t m_drive;	// Current disk #
+		uint8_t m_side;		// Current side #
+		uint8_t m_track;	// Current track #
+		uint8_t m_lastS;	// Last STEP direction
+		uint8_t m_irq;		// 0x80: IRQ pending, 0x40: DRQ pending
+		uint8_t m_wait;		// Expiration counter
+		uint8_t m_cmd;		// Last command
+
+		int  m_wrLength;	// Data left to write
+		int  m_rdLength;	// Data left to read
+
+		uint8_t* m_ptr;     // Pointer to data
+		FDisk* m_disk = nullptr; // current disk images
+
+		auto Seek(int _side, int _track, int _sideID, int _trackID, int _sectorID) -> uint8_t*;
 		void Reset();
 
 	public:
