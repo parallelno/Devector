@@ -131,6 +131,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	static std::string copyToClipboardStr = "";
 	static int copyToClipboardAddr = -1; // if it's -1, don't add the option, if it's >=0, add the option with the addr = copyToClipboardAddr
 	static int addrHighlighted = -1;
+	static int addrHighlightedTimer = 0;
 
 	if (m_disasm.empty()) return;
 
@@ -205,7 +206,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			ColumnClippingEnable(*m_dpiScaleP); // enable clipping
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
 			if (isCode) {
-				DrawAddr(_isRunning, line, addrHighlighted == addr,
+				uint8_t addrHighlightedAlpha = (addrHighlighted == addr) ? addrHighlightedTimer * 255 / ADDR_HIGHLIGHT_TIME : 0;
+				DrawAddr(_isRunning, line, addrHighlightedAlpha,
 					// _onMouseLeft. Navigate to the address
 					[&]()
 					{
@@ -235,7 +237,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
 				if (m_fontCommentP) { ImGui::PopFont(); }
 			}
-
 			// draw labels
 			else if (!isCode)
 			{
@@ -271,7 +272,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				ImGui::TableNextColumn();
 				ColumnClippingEnable(*m_dpiScaleP); // enable clipping
 
-				addrHighlighted = dev::DrawCodeLine(true, _isRunning, line,
+				int currentLineAddrHighlighted = dev::DrawCodeLine(true, _isRunning, line,
 					// _onMouseLeft. Navigate to the address
 					[&](const Addr _addr)
 					{
@@ -285,6 +286,16 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 						openItemContextMenu = true;
 					}
 				);
+				// handle the addr highlight
+				if (currentLineAddrHighlighted >= 0) {
+					// set the highlighted addr
+					addrHighlightedTimer = ADDR_HIGHLIGHT_TIME;
+					addrHighlighted = currentLineAddrHighlighted;
+				}
+				else {
+					// handle the addr highlight timer
+					addrHighlightedTimer = dev::Max(0, --addrHighlightedTimer);
+				}
 
 				ColumnClippingDisable();
 

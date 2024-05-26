@@ -22,7 +22,7 @@ auto dev::Keyboard::KeyHandling(int _key, int _action)
 			return Operation::RESET;
 		}
 		break;
-	case GLFW_KEY_F10: // TODO: F12 causes debug interraption. It is ImGui feature. Fix it.
+	case GLFW_KEY_F10: // TODO: F12 causes debug interruption. It is ImGui feature. Fix it.
 		if (_action == GLFW_RELEASE) {
 			// BLK + SBR functionality
 			return Operation::RESTART;

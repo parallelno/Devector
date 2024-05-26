@@ -19,6 +19,9 @@ void dev::Memory::Init()
 	m_memType = MemType::ROM;
 }
 
+void dev::Memory::Restart() { m_memType = MemType::RAM; }
+
+
 void dev::Memory::SetMemType(const MemType _memType)
 {
 	m_memType = _memType;
@@ -104,6 +107,8 @@ bool dev::Memory::IsRamMapped(Addr _addr) const
 
 	return false;
 }
+
+bool dev::Memory::IsRomEnabled() const { return m_memType == MemType::ROM; };
 
 void dev::Memory::SetRamDiskMode(uint8_t _data)
 {

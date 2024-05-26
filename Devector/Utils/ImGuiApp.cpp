@@ -354,5 +354,12 @@ auto dev::ImGuiApp::GetSettingsObject(const std::string& _fieldName)
 
 int dev::ImGuiApp::GetSettingsInt(const std::string& _fieldName, int _defaultValue)
 {
+    std::lock_guard<std::mutex> mlock(m_settingsMutex);
     return dev::GetJsonInt(m_settingsJ, _fieldName, false, _defaultValue);
+}
+
+bool dev::ImGuiApp::GetSettingsBool(const std::string& _fieldName, bool _defaultValue)
+{
+    std::lock_guard<std::mutex> mlock(m_settingsMutex);
+    return dev::GetJsonBool(m_settingsJ, _fieldName, false, _defaultValue);
 }

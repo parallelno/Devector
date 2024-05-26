@@ -57,8 +57,11 @@ namespace dev
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 		GLUtils m_glUtils;
 
+		enum class LoadFddStatus { NONE, LOAD, UPDATED, SAVE_DISCARD_DIALOG, SAVE };
+
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ);
+		~DevectorApp();
 
 		virtual void Update();
 

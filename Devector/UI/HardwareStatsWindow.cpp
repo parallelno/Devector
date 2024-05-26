@@ -4,11 +4,12 @@
 #include "Utils/StrUtils.h"
 
 dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware, 
-		const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reset)
+		const float* const _fontSizeP, const float* const _dpiScaleP, 
+		bool& _reset, const bool _autorunFdd)
 	:
 	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware),
-	m_reqHardwareStatsReset(_reset)
+	m_reqHardwareStatsReset(_reset), m_autorunFdd(_autorunFdd)
 {
 	UpdateData(false);
 }
@@ -22,6 +23,7 @@ void dev::HardwareStatsWindow::Update()
 	
 	bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 	UpdateData(isRunning);
+	UpdateDataRuntime();
 	DrawStats(isRunning);
 
 	ImGui::End();
@@ -122,6 +124,7 @@ void dev::HardwareStatsWindow::DrawHardware()
 		DrawProperty2("CPU Cicles", m_ccS);
 		DrawProperty2("Last Run", m_ccLastRunS);
 		DrawProperty2("CRT", m_rasterPixel_rasterLineS);
+		DrawProperty2("Rus/Lat", m_ruslatS);
 
 		// mapping
 		DrawSeparator2("Ram-Disk:");
@@ -129,6 +132,16 @@ void dev::HardwareStatsWindow::DrawHardware()
 		DrawProperty2("RAM Page", m_mappingPageRamS);
 		DrawProperty2("Stack Mode", m_mappingModeStackS);
 		DrawProperty2("Stack Page", m_mappingPageStackS);
+
+		// FDC
+		DrawSeparator2("FDC:");
+		static const std::string diskNames[] = { "Drive A", "Drive B", "Drive C", "Drive D" };
+		DrawProperty2("Selected", m_fdcDrive, m_fdcStats);
+
+		for (int i=0; i<Fdc1793::DRIVES_MAX; i++)
+		{
+			DrawProperty2(diskNames[i], m_fddStats[i], m_fddPaths[i]);
+		}
 
 		ImGui::EndTable();
 	}
@@ -216,17 +229,17 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_flagHLTA = data["flagHLTA"];
 
 	// Stack
-	Addr dataAddrN10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 12 } })->at("data");
-	Addr dataAddrN8 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 10 } })->at("data");
-	Addr dataAddrN6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 8 } })->at("data");
-	Addr dataAddrN4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 6 } })->at("data");
-	Addr dataAddrN2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 4 } })->at("data");
-	Addr dataAddr0 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 2 } })->at("data");
-	Addr dataAddrP2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP } })->at("data");
-	Addr dataAddrP4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 2 } })->at("data");
-	Addr dataAddrP6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 4 } })->at("data");
-	Addr dataAddrP8 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 6 } })->at("data");
-	Addr dataAddrP10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 8 } })->at("data");
+	Addr dataAddrN10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 10 } })->at("data");
+	Addr dataAddrN8 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 8 } })->at("data");
+	Addr dataAddrN6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 6 } })->at("data");
+	Addr dataAddrN4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 4 } })->at("data");
+	Addr dataAddrN2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 2 } })->at("data");
+	Addr dataAddr0 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP } })->at("data");
+	Addr dataAddrP2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 2} })->at("data");
+	Addr dataAddrP4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 4 } })->at("data");
+	Addr dataAddrP6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 6 } })->at("data");
+	Addr dataAddrP8 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 8 } })->at("data");
+	Addr dataAddrP10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 10 } })->at("data");
 
 	m_dataAddrN10S = std::format("{:04X}", dataAddrN10);
 	m_dataAddrN8S = std::format("{:04X}", dataAddrN8);
@@ -268,4 +281,54 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_mappingPageRamS = std::format("{}", mappingPageRam);
 	m_mappingModeStackS = dev::BoolToStrC(mappingModeStack, true);
 	m_mappingPageStackS = std::format("{}", mappingPageStack);
+}
+
+void dev::HardwareStatsWindow::UpdateDataRuntime()
+{
+	static int delay = 0;
+	if (delay++ < 10) return;
+	delay = 0;
+
+	// FDC
+	static const std::string diskNames[] = { "Drive A", "Drive B", "Drive C", "Drive D" };
+	auto fdcInfo = *m_hardware.Request(Hardware::Req::GET_FDC_INFO);
+	m_fdcDrive = diskNames[fdcInfo["drive"]];
+	m_fdcSide = std::to_string(fdcInfo["side"].get<int>());
+	m_fdcTrack = std::to_string(fdcInfo["track"].get<int>());
+	m_fdcPosition = std::to_string(fdcInfo["position"].get<int>());
+	m_fdcRwLen = std::to_string(fdcInfo["rwLen"].get<int>());
+	m_fdcStats = std::format("Side {}\nTrack {}\nPosition {}\n R/W Len {}",
+		m_fdcSide, m_fdcTrack, m_fdcPosition, m_fdcRwLen);
+
+	for (int driveIdx = 0; driveIdx < Fdc1793::DRIVES_MAX; driveIdx++)
+	{
+		auto fddInfo = *m_hardware.Request(
+			Hardware::Req::GET_FDD_INFO, { {"_driveIdx", driveIdx} });
+		size_t reads = fddInfo["reads"];
+		size_t writes = fddInfo["writes"];
+		m_fddPaths[driveIdx] = fddInfo["path"];
+
+		m_fddStats[driveIdx] = fddInfo["mounted"] ? std::format("RW: {}/{}", reads, writes) : "dismounted";
+	}
+
+	// ruslat
+	auto ruslatHistoryJ = *m_hardware.Request(Hardware::Req::GET_RUSLAT_HISTORY);
+	auto m_ruslatHistory = ruslatHistoryJ["data"].get<uint32_t>();
+
+	// ruslat autorun
+	bool newRusLat = (m_ruslatHistory & 0b1000) != 0;
+
+	if (newRusLat != m_ruslat) {
+		if (m_rustLatSwitched++ > 2)
+		{
+			m_rustLatSwitched = 0;
+			auto romEnabledJ = *m_hardware.Request(Hardware::Req::IS_ROM_ENABLED);
+			if (romEnabledJ["data"]) {
+				m_hardware.Request(Hardware::Req::RESTART);
+			}
+		}
+	}
+
+	m_ruslat = (m_ruslatHistory & 0b1000) != 0;
+	m_ruslatS = m_ruslat ? "(*)" : "( )";
 }

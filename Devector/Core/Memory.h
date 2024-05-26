@@ -66,7 +66,9 @@ namespace dev
 		auto GetRam() const -> const Ram*;
 		auto GetGlobalAddr(GlobalAddr _globalAddr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		bool IsRamMapped(const Addr _addr) const;
+		bool IsRomEnabled() const;
 		void SetRamDiskMode(uint8_t _data);
+		void Restart();
 
 	private:
 		Ram m_ram;

@@ -50,8 +50,8 @@ namespace dev
 			STOP,
 			IS_RUNNING,
 			EXIT,
-			RESET,
-			RESTART,
+			RESET,			// reboot the pc, enable the ROM
+			RESTART,		// reboot the pc, disable the ROM
 			EXECUTE_INSTR,
 			EXECUTE_FRAME,
 			EXECUTE_FRAME_NO_BREAKS,
@@ -62,6 +62,12 @@ namespace dev
 			GET_DISPLAY_DATA,
 			GET_MEMORY_MODES,
 			GET_GLOBAL_ADDR_RAM,
+			GET_FDC_INFO,
+			GET_FDD_INFO,
+			GET_FDD_IMAGE,
+			GET_RUSLAT,
+			GET_RUSLAT_HISTORY,
+			IS_ROM_ENABLED,
 			KEY_HANDLING,
 			SCROLL_VERT,
 			LOAD_FDD,
@@ -96,6 +102,8 @@ namespace dev
 		auto GetRegs() const -> nlohmann::json;
 		auto GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
+		auto GetFddInfo(const int _driveIdx) -> Fdc1793::DiskInfo;
+		auto GetFddImage(const int _driveIdx) -> const std::vector<uint8_t>;
 	};
 }
 #endif // !DEV_HARDWARE_H

@@ -186,6 +186,18 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
                 });
             break;
 
+        case Req::GET_RUSLAT:
+            m_reqRes.emplace({
+                {"data", m_io.GetRusLat()},
+                });
+            break;
+
+        case Req::GET_RUSLAT_HISTORY:
+            m_reqRes.emplace({
+                {"data", m_io.GetRusLatHistory()},
+                });
+            break;
+
         case Req::GET_BYTE_RAM:
             m_reqRes.emplace(GetByte(dataJ, Memory::AddrSpace::RAM));
             break;
@@ -216,6 +228,45 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
                 });
             break;
 
+        case Req::GET_FDC_INFO: {
+            auto info = m_fdc.GetFdcInfo();
+            m_reqRes.emplace({
+                {"drive", info.drive},
+                {"side", info.side},
+                {"track", info.track},
+                {"lastS", info.lastS},
+                {"wait", info.irq},
+                {"cmd", info.cmd},
+                {"rwLen", info.rwLen},
+                {"position", info.position},
+                });
+            break;
+        }
+
+        case Req::GET_FDD_INFO: {
+            auto info = m_fdc.GetFddInfo(dataJ["_driveIdx"]);
+            m_reqRes.emplace({
+                {"path", dev::StrWToStr(info.path)},
+                {"updated", info.updated},
+                {"reads", info.reads},
+                {"writes", info.writes},
+                {"mounted", info.mounted},
+                });
+            break;
+        }
+        
+        case Req::GET_FDD_IMAGE:
+            m_reqRes.emplace({
+                {"data", m_fdc.GetFddImage(dataJ["_driveIdx"])},
+                });
+            break;
+
+        case Req::IS_ROM_ENABLED:
+            m_reqRes.emplace({
+                {"data", m_memory.IsRomEnabled() },
+                });
+            break;             
+
         case Req::KEY_HANDLING:
         {
             auto op = m_io.GetKeyboard().KeyHandling(dataJ["key"], dataJ["action"]);
@@ -237,7 +288,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
         case Req::LOAD_FDD:
         {
-            m_fdc.Attach(dataJ["driveIdx"], dev::StrToStrW(dataJ["path"]));
+            m_fdc.Mount(dataJ["driveIdx"], dataJ["data"], dev::StrToStrW(dataJ["path"]));
             m_reqRes.emplace({});
         }
             break;
@@ -256,7 +307,7 @@ void dev::Hardware::Reset()
 void dev::Hardware::Restart()
 {
     m_cpu.Reset();
-    m_memory.SetMemType(Memory::MemType::RAM);
+    m_memory.Restart();
 }
 
 auto dev::Hardware::GetRegs() const

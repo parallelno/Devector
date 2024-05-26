@@ -17,6 +17,9 @@ namespace dev
 		int64_t m_ccLastRun = 0;
 		Hardware& m_hardware;
 		bool& m_reqHardwareStatsReset;
+		bool m_autorunFdd;
+		bool m_ruslat = false;
+		int m_rustLatSwitched = 0;
 		
 		////////////////////
 		// stats
@@ -55,6 +58,15 @@ namespace dev
 		std::string m_mappingPageRamS;
 		std::string m_mappingModeStackS;
 		std::string m_mappingPageStackS;
+		std::string m_fdcDrive;
+		std::string m_fdcSide;
+		std::string m_fdcTrack;
+		std::string m_fdcPosition;
+		std::string m_fdcRwLen;
+		std::string m_fdcStats;
+		std::string m_fddStats[Fdc1793::DRIVES_MAX];
+		std::string m_fddPaths[Fdc1793::DRIVES_MAX];
+		std::string m_ruslatS;
 		// stats end
 		////////////////////
 
@@ -64,10 +76,12 @@ namespace dev
 		void DrawStack();
 		void DrawHardware();
 		void UpdateData(const bool _isRunning);
+		void UpdateDataRuntime();
 
 	public:
 		HardwareStatsWindow(Hardware& _hardware,
-			const float* const _fontSizeP, const float* const _dpiScaleP, bool& _reset);
+			const float* const _fontSizeP, const float* const _dpiScaleP, 
+			bool& _reset, const bool _autorunFdd);
 		
 		void Update();
 

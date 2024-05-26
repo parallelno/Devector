@@ -33,6 +33,8 @@ void dev::IO::Init()
     m_displayMode = DISPLAY_MODE_256;
     m_outCommitTimer = IO::PORT_NO_COMMIT;
     m_paletteCommitTimer = IO::PORT_NO_COMMIT;
+    m_ruslat = 0;
+    m_ruslatHistory = 0;
 
     m_palette.fill(0xFF000000);
 }
@@ -155,11 +157,11 @@ void dev::IO::PaletteCommit(const int _index)
 // data sent by cpu handled here at the commit time
 void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 {
-    bool ruslat;
+    //bool ruslat;
     switch (_port) {
         // PortInputA 
     case 0x00:
-        ruslat = m_portC & 8;
+        //m_ruslat = (m_portC >> 3) & 1;
         if ((_value & 0x80) == 0) {
             // port C BSR: 
             //   bit 0: 1 = set, 0 = reset
@@ -179,17 +181,18 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
             PortOutHandling(2, 0);
             PortOutHandling(3, 0);
         }
-        if (((m_portC & 8) > 0) != ruslat && onruslat) {
-            onruslat((m_portC & 8) == 0);
-        }
+        /*if (((m_portC & 8) > 0) != ruslat) {
+            m_ruslat((m_portC & 8) == 0);
+        }*/
         break;
     case 0x01:
-        ruslat = m_portC & 8;
+        m_ruslat = (m_portC >> 3) & 1;
+        m_ruslatHistory = (m_ruslatHistory<<1) + m_ruslat;
         m_portC = _value;
         //ontapeoutchange(m_portC & 1);
-        if (((m_portC & 8) > 0) != ruslat && onruslat) {
+        /*if (((m_portC & 8) > 0) != ruslat && onruslat) {
             onruslat((m_portC & 8) == 0);
-        }
+        }*/
         break;
     case 0x02:
         m_portB = _value;

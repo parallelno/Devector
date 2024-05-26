@@ -9,33 +9,30 @@ dev::FDisk::FDisk()
 	header[1] = 0;
 	header[2] = 0;
 	header[3] = 0x3;	// a code associated with a sectorLen=1024
-	header[4] = 0;		// CRC1, not supported
-	header[5] = 0;		// CRC2, not supported
+	header[4] = 0;		// CRC1 is not supported
+	header[5] = 0;		// CRC2 is not supported
 }
 
-void dev::FDisk::Attach(const std::wstring& _path)
+void dev::FDisk::Mount(const std::vector<uint8_t>& _data, const std::wstring& _path)
 {
-	auto res = dev::LoadFile(_path);
-	if (!res) return;
-
-	auto resData = *res;
-	if (resData.size() > sizeof(data)) return;
-
-	memcpy(data, resData.data(), resData.size());
-	loaded = true;
+	path = _path;
+	memcpy(data, _data.data(), _data.size());
+	mounted = true;
+	updated = false;
+	reads = writes = 0;
 }
 
-auto dev::FDisk::GetData() 
--> uint8_t* 
-{ return loaded ? data : nullptr; };
+auto dev::FDisk::GetData()
+-> uint8_t*
+{ return mounted ? data : nullptr; };
 
-auto dev::FDisk::GetDisk() 
+auto dev::FDisk::GetDisk()
 -> FDisk*
-{ return loaded ? this : nullptr; };
+{ return mounted ? this : nullptr; };
 
-//static constexpr int FDI_SAVE_FAILED    0;  // Failed saving disk image   
+//static constexpr int FDI_SAVE_FAILED    0;  // Failed saving disk image
 //static constexpr int FDI_SAVE_TRUNCATED 1;  // Truncated data while saving
-//static constexpr int FDI_SAVE_PADDED    2;  // Padded data while saving   
+//static constexpr int FDI_SAVE_PADDED    2;  // Padded data while saving
 //static constexpr int FDI_SAVE_OK        3;  // Succeeded saving disk image
 
 //static constexpr int SEEK_DELETED	= 0x40000000;
@@ -53,25 +50,25 @@ static constexpr int WD1793_DRQ		= 0x40;
 
 // Common status bits:
 static constexpr int F_BUSY		= 0x01; // Controller is executing a command
-static constexpr int F_READONLY = 0x40; // The disk is write-protected       
-static constexpr int F_NOTREADY = 0x80; // The drive is not ready            
+static constexpr int F_READONLY = 0x40; // The disk is write-protected
+static constexpr int F_NOTREADY = 0x80; // The drive is not ready
 
 // Type-1 command status:
-static constexpr int F_INDEX	= 0x02; // Index mark detected               
-static constexpr int F_TRACK0	= 0x04; // Head positioned at track #0       
-//static constexpr int F_CRCERR	= 0x08; // CRC error in ID field             
-//static constexpr int F_SEEKERR	= 0x10; // Seek error, track not verified    
-static constexpr int F_HEADLOAD = 0x20; // Head loaded                       
+static constexpr int F_INDEX	= 0x02; // Index mark detected
+static constexpr int F_TRACK0	= 0x04; // Head positioned at track #0
+//static constexpr int F_CRCERR	= 0x08; // CRC error in ID field
+//static constexpr int F_SEEKERR	= 0x10; // Seek error, track not verified
+static constexpr int F_HEADLOAD = 0x20; // Head loaded
 
 // Type-2 and Type-3 command status:
-static constexpr int F_DRQ		= 0x02; // Data request pending              
+static constexpr int F_DRQ		= 0x02; // Data request pending
 static constexpr int F_LOSTDATA	= 0x04; // Data has been lost (missed DRQ)
-static constexpr int F_ERRCODE	= 0x18; // Error code bits:               
-//static constexpr int F_BADDATA	= 0x08; // 1 = bad data CRC               
-static constexpr int F_NOTFOUND	= 0x10; // 2 = sector not found           
-//static constexpr int F_BADID	= 0x18; // 3 = bad ID field CRC           
+static constexpr int F_ERRCODE	= 0x18; // Error code bits:
+//static constexpr int F_BADDATA	= 0x08; // 1 = bad data CRC
+static constexpr int F_NOTFOUND	= 0x10; // 2 = sector not found
+//static constexpr int F_BADID	= 0x18; // 3 = bad ID field CRC
 //static constexpr int F_DELETED	= 0x20; // Deleted data mark (when reading)
-//static constexpr int F_WRFAULT	= 0x20; // Write fault (when writing)      
+//static constexpr int F_WRFAULT	= 0x20; // Write fault (when writing)
 
 //static constexpr int C_DELMARK	= 0x01;
 static constexpr int C_SIDECOMP	= 0x02;
@@ -91,18 +88,19 @@ static constexpr int S_HALT		= 0x08;
 //static constexpr int S_DENSITY	= 0x20;
 
 
-// Seek to given side / track / sector.Returns sector address
-// on success or 0 on failure.
+dev::Fdc1793::Fdc1793() { Reset(); }
+
+// Seek to given side / track / sector. Returns sector address
+// (data pointer) on success or nulptr on failure.
 uint8_t* dev::Fdc1793::Seek(int _side, int _track, int _sideID, int _trackID, int _sectorID)
 {
-	// Have to have disk mounted
-	if (!m_disk) return(0);
+	if (!m_disk) return nullptr;
 
 	int sectors = FDisk::sectorsPerTrack * (_trackID * FDisk::sidesPerDisk + _sideID);
 	int sectorAdjusted = dev::Max(0, _sectorID - 1); // In CHS addressing the sector numbers always start at 1
 	int m_position = (sectors + sectorAdjusted) * FDisk::sectorLen;
 
-	// FDisk stores a header for each sector
+	// store a header for each sector
 	m_disk->header[0] = _trackID;
 	m_disk->header[1] = _sideID;
 	m_disk->header[2] = _sectorID;
@@ -110,8 +108,7 @@ uint8_t* dev::Fdc1793::Seek(int _side, int _track, int _sideID, int _trackID, in
 	return m_disk->GetData() + m_position;
 }
 
-
-// Resets the fdc state
+// Resets the state of the WD1793 FDC.
 void dev::Fdc1793::Reset()
 {
 	m_regs[0] = 0x00;
@@ -119,19 +116,19 @@ void dev::Fdc1793::Reset()
 	m_regs[2] = 0x00;
 	m_regs[3] = 0x00;
 	m_regs[4] = S_RESET | S_HALT;
-	m_drive = 0;
+	//m_drive = 0;
 	m_side = 0;
 	m_track = 0;
 	m_lastS = 0;
 	m_irq = 0;
-	m_wrLength = 0;
-	m_rdLength = 0;
+	m_rwLen = 0;
 	m_wait = 0;
 	m_cmd = 0xD0;
 }
 
-// Reads value from a WD1793 register. Returns read data
-// on success or 0xFF on failure (bad register address).
+
+// Reads a value from a WD1793 register.
+// Returns the read data on success or 0xFF on failure (bad register address).
 uint8_t dev::Fdc1793::Read(Port _reg)
 {
 	switch (_reg)
@@ -153,21 +150,17 @@ uint8_t dev::Fdc1793::Read(Port _reg)
 		return((int)_reg);
 	case Port::TRACK:
 	case Port::SECTOR:
-		// Return track/sector numbers
-		return(m_regs[(int)_reg]);
+		return(m_regs[(int)_reg]); // Return track/sector numbers
 	case Port::DATA:
-		// When reading data, load value from disk
-		if (m_rdLength)
+		if (m_rwLen)
 		{
 			// Read data
 			m_regs[(int)_reg] = *m_ptr++;
-			// Decrement length
-			if (--m_rdLength)
+			m_disk->reads++;
+			if (--m_rwLen)
 			{
-				// Reset timeout watchdog
-				m_wait = 255;
-				// Advance to the next sector as needed
-				if (!(m_rdLength & (m_disk->sectorLen - 1))) ++m_regs[2];
+				m_wait = 255; // Reset timeout watchdog
+				if (!(m_rwLen & (m_disk->sectorLen - 1))) ++m_regs[2]; // Advance to the next sector if needed
 			}
 			else
 			{
@@ -182,7 +175,7 @@ uint8_t dev::Fdc1793::Read(Port _reg)
 		if (m_wait)
 			if (!--m_wait)
 			{
-				m_rdLength = m_wrLength = 0;
+				m_rwLen = 0;
 				m_regs[0] = (m_regs[0] & ~(F_DRQ | F_BUSY)) | F_LOSTDATA;
 				m_irq = WD1793_IRQ;
 			}
@@ -190,11 +183,10 @@ uint8_t dev::Fdc1793::Read(Port _reg)
 		return(m_irq);
 	}
 
-	// Bad register
-	return(0xFF);
+	return(0xFF); // Bad register case
 }
 
-// Writes a value into the WD1793 register. 
+// Writes a value into the WD1793 register.
 // Returns WD1793_IRQ or WD1793_DRQ
 uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 {
@@ -203,17 +195,19 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 	switch (_reg)
 	{
 	case Port::COMMAND:
-		// Reset interrupt request
+		// Reset an interrupt request
 		m_irq = 0;
 		// If it is FORCE-m_irq command...
 		if ((_val & 0xF0) == 0xD0)
 		{
 			// Reset any executing command
-			m_rdLength = m_wrLength = 0;
+			m_rwLen = 0;
 			m_cmd = 0xD0;
 			// Either reset BUSY flag or reset all flags if BUSY=0
-			if (m_regs[0] & F_BUSY) m_regs[0] &= ~F_BUSY;
-			else               m_regs[0] = (m_track ? 0 : F_TRACK0) | F_INDEX;
+			if (m_regs[0] & F_BUSY)
+				m_regs[0] &= ~F_BUSY;
+			else
+				m_regs[0] = (m_track ? 0 : F_TRACK0) | F_INDEX;
 			// Cause immediate interrupt if requested
 			if (_val & C_IRQ) m_irq = WD1793_IRQ;
 			// Done
@@ -221,10 +215,10 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 		}
 		// If busy, drop out
 		if (m_regs[0] & F_BUSY) break;
-		// Reset status register
+		 // Reset status register
 		m_regs[0] = 0x00;
 		m_cmd = _val;
-		// Depending on the command...
+		// hadling the rest commands
 		switch (_val & 0xF0)
 		{
 		case 0x00: // RESTORE (seek track 0)
@@ -236,7 +230,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 
 		case 0x10: // SEEK
 			// Reset any executing command
-			m_rdLength = m_wrLength = 0;
+			m_rwLen = 0;
 			m_track = m_regs[3];
 			m_regs[0] = F_INDEX
 				| (m_track ? 0 : F_TRACK0)
@@ -252,10 +246,15 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 		case 0x60: // STEP-OUT
 		case 0x70: // STEP-OUT-AND-UPDATE
 			// Either store or fetch step direction
-			if (_val & 0x40) m_lastS = _val & 0x20; else _val = (_val & ~0x20) | m_lastS;
+			if (_val & 0x40)
+				m_lastS = _val & 0x20;
+			else
+				_val = (_val & ~0x20) | m_lastS;
 			// Step the head, update track register if requested
-			if (_val & 0x20) { if (m_track) --m_track; }
-			else ++m_track;
+			if (_val & 0x20) {
+				if (m_track) --m_track;
+			} else
+				++m_track;
 			// Update track register if requested
 			if (_val & C_SETTRACK) m_regs[1] = m_track;
 			// Update status register
@@ -280,7 +279,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			}
 			else
 			{
-				m_rdLength = m_disk->sectorLen
+				m_rwLen = m_disk->sectorLen
 					* (_val & 0x10 ? (m_disk->sectorsPerTrack - m_regs[2] + 1) : 1);
 				m_regs[0] |= F_BUSY | F_DRQ;
 				m_irq = WD1793_DRQ;
@@ -302,7 +301,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			}
 			else
 			{
-				m_wrLength = m_disk->sectorLen
+				m_rwLen = m_disk->sectorLen
 					* (_val & 0x10 ? (m_disk->sectorsPerTrack - m_regs[2] + 1) : 1);
 				m_regs[0] |= F_BUSY | F_DRQ;
 				m_irq = WD1793_DRQ;
@@ -332,7 +331,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			else
 			{
 				m_ptr = m_disk->header;
-				m_rdLength = 6;
+				m_rwLen = 6;
 				m_regs[0] |= F_BUSY | F_DRQ;
 				m_irq = WD1793_DRQ;
 				m_wait = 255;
@@ -343,17 +342,17 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			break;
 
 		case 0xF0: // WRITE-TRACK, i.e., format
-			// the full protocol is not implemented (involves parsing lead-in & lead-out); 
+			// the full protocol is not implemented (involves parsing lead-in & lead-out);
 			// it only sets the track data to 0xE5
 			if (m_ptr = Seek(0, m_track, 0, m_regs[1], 1))
 			{
 				memset(m_ptr, 0xE5, m_disk->sectorLen * m_disk->sectorsPerTrack);
-				m_disk->updated = 1;
+				m_disk->updated = true;
 			}
 			if (m_disk->sidesPerDisk > 1 && (m_ptr = Seek(1, m_track, 1, m_regs[1], 1)))
 			{
 				memset(m_ptr, 0xE5, m_disk->sectorLen * m_disk->sectorsPerTrack);
-				m_disk->updated = 1;
+				m_disk->updated = true;
 			}
 			break;
 
@@ -369,21 +368,20 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 
 	case Port::DATA:
 		// When writing data, store value to disk
-		if (m_wrLength)
+		if (m_rwLen)
 		{
 			// Write data
 			*m_ptr++ = _val;
 			m_disk->updated = true;
+			m_disk->writes++;
 			// Decrement length
-			if (--m_wrLength)
+			if (--m_rwLen)
 			{
-				// Reset timeout watchdog
-				m_wait = 255;
+				m_wait = 255; // Reset timeout watchdog
 				// Advance to the next sector as needed
-				if (!(m_wrLength & (m_disk->sectorLen - 1))) ++m_regs[2];
+				if (!(m_rwLen & (m_disk->sectorLen - 1))) ++m_regs[2];
 			}
-			else
-			{
+			else {
 				// Write completed
 				m_regs[0] &= ~(F_DRQ | F_BUSY);
 				m_irq = WD1793_IRQ;
@@ -395,25 +393,22 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 
 	case Port::SYSTEM:
 		// Reset controller if S_RESET goes up
-		if ((m_regs[4] ^ _val) & _val & S_RESET)
-		{
+		if ((m_regs[4] ^ _val) & _val & S_RESET){
 			// TODO: figure out if it is still required.
-			//Reset(_disk, Disk[FDisk], WD1793_KEEP);
+			//Reset();
 		}
 
-		// Set disk #, side #, ignore the density (@@@)
 		m_drive = _val & S_DRIVE;
 		m_disk = m_disks[m_drive].GetDisk();
 
 		//m_side = !(V & S_SIDE);
-		// Kishinev fdc: 0011xSAB
-		// 				A - drive A
-		// 				B - drive B
+
+		// Kishinev fdc: 0011xSDD
 		// 				S - side
+		// 				DD - drive index: 0, 1, 2, 3
 		m_side = ((~_val) >> 2) & 1; // inverted side
 
-
-		// Save last written value
+		// Save the last written value
 		m_regs[(int)_reg] = _val;
 
 		break;
@@ -423,8 +418,40 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 	return(m_irq);
 }
 
-void dev::Fdc1793::Attach(const int _driveIdx, const std::wstring& _path)
+void dev::Fdc1793::Mount(const int _driveIdx, const std::vector<uint8_t>& _data, const std::wstring& _path)
 {
-	m_disks[_driveIdx & DRIVES_MAX].Attach(_path);
-	Reset();
+	m_disks[_driveIdx % DRIVES_MAX].Mount(_data, _path);
+	if (_driveIdx == m_drive) Reset();
+}
+
+auto dev::Fdc1793::GetFdcInfo()
+-> Info
+{
+	return Info(
+		m_drive,
+		m_side,
+		m_track,
+		m_lastS,
+		m_irq,
+		m_wait,
+		m_cmd,
+		m_rwLen,
+		m_ptr - m_disks[m_drive].GetData());
+}
+
+auto dev::Fdc1793::GetFddInfo(const int _driveIdx)
+-> DiskInfo
+{
+	return DiskInfo(m_disks[_driveIdx].path,
+		m_disks[_driveIdx].updated,
+		m_disks[_driveIdx].reads,
+		m_disks[_driveIdx].writes,
+		m_disks[_driveIdx].mounted );
+}
+
+auto dev::Fdc1793::GetFddImage(const int _driveIdx)
+-> const std::vector<uint8_t>
+{
+	auto data = m_disks[_driveIdx].GetData();
+	return { data, data + FDisk::dataLen };
 }

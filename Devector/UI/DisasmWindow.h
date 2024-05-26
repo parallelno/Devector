@@ -26,6 +26,7 @@ namespace dev
 		static constexpr float STATS_W = 100.0f;
 		static constexpr int DISASM_INSTRUCTION_OFFSET = 6;
 		const char* m_itemContextMenu = "DisasmItemMenu";
+		static constexpr int ADDR_HIGHLIGHT_TIME = 1000;
 		
 		Hardware& m_hardware;
 		Debugger& m_debugger;

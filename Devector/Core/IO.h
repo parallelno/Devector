@@ -32,9 +32,6 @@ namespace dev
 		
 		static constexpr int PALETTE_LEN = 16;
 
-		// TODO: make it working
-		std::function<void(bool)> onruslat;
-
 		using VectorColorToArgbFunc = std::function<ColorI(const uint8_t)>;
 
 		static constexpr bool DISPLAY_MODE_256 = false;
@@ -50,10 +47,13 @@ namespace dev
 
 		uint8_t CW, m_portA, m_portB, m_portC;
 		uint8_t CW2, m_portA2, m_portB2, m_portC2;
+		uint32_t m_ruslat = 0;
+		uint32_t m_ruslatHistory = 0;
 
 		int m_outport;
 		int m_outbyte;
 		int m_palettebyte;
+
 
 		uint8_t joy_0e, joy_0f;
 
@@ -77,9 +77,9 @@ namespace dev
 		inline auto GetColor(const size_t _colorIdx) const -> ColorI { return m_palette[_colorIdx]; };
 		inline auto GetBorderColor() const -> ColorI { return m_palette[m_borderColorIdx]; };
 		inline auto GetBorderColorIdx() const -> uint8_t { return m_borderColorIdx; };
-		inline auto GetScroll() const -> uint8_t { 
-			return m_portA; 
-		};
+		inline auto GetScroll() const -> uint8_t { return m_portA; };
+		inline auto GetRusLat() const -> uint32_t { return m_ruslat; }
+		inline auto GetRusLatHistory() const -> uint32_t { return m_ruslatHistory; }
 		inline auto GetDisplayMode() const -> bool { return m_displayMode; };
 		inline auto GetOutCommitTimer() const -> int { return m_outCommitTimer; };
 		inline auto GetPaletteCommitTimer() const -> int { return m_paletteCommitTimer; };

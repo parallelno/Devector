@@ -88,6 +88,7 @@ namespace dev {
         auto GetSettingsString(const std::string& _fieldName, const std::string& _defaultValue) -> std::string;
         auto GetSettingsObject(const std::string& _fieldName ) -> nlohmann::json;
         int GetSettingsInt(const std::string& _fieldName, int _defaultValue);
+        bool GetSettingsBool(const std::string& _fieldName, bool _defaultValue);
 
     private:
         std::mutex m_settingsMutex;

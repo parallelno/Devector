@@ -118,7 +118,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 
 				// the addr column
 				ImGui::TableNextColumn();
-				DrawAddr(_isRunning, disasmLine, false,
+				DrawAddr(_isRunning, disasmLine, 0,
 					// _onMouseLeft. Navigate to the address
 					[&]()
 					{
