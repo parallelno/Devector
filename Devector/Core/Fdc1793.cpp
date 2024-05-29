@@ -436,7 +436,8 @@ auto dev::Fdc1793::GetFdcInfo()
 		m_wait,
 		m_cmd,
 		m_rwLen,
-		m_ptr - m_disks[m_drive].GetData());
+		m_ptr - m_disks[m_drive].GetData()
+	);
 }
 
 auto dev::Fdc1793::GetFddInfo(const int _driveIdx)

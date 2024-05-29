@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_IO_H
-#define DEV_IO_H
 
 #include <cstdint>
 #include <array>
@@ -86,4 +84,3 @@ namespace dev
 		void TryToCommit(const uint8_t _colorIdx);
 	};
 }
-#endif // !DEV_IO_H

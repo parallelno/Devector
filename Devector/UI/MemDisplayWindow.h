@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_MEM_DISPLAY_WINDOW_H
-#define DEV_MEM_DISPLAY_WINDOW_H
 /*
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
@@ -68,5 +66,3 @@ namespace dev
 	};
 
 };
-
-#endif // !DEV_MEM_DISPLAY_WINDOW_H

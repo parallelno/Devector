@@ -1,6 +1,5 @@
 #pragma once
-#ifndef DEV_DEVECTORAPP_H
-#define DEV_DEVECTORAPP_H
+
 #include <string>
 #include "GLFW/glfw3.h"
 
@@ -78,6 +77,4 @@ namespace dev
 		void Reload();
 		static void KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes);
 	};
-
 }
-#endif // !DEVECTORAPP_H

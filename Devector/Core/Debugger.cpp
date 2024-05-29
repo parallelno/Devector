@@ -128,29 +128,6 @@ static const char* mnemonics[0x100] =
 	"rp",  "pop PSW", "jp",  "di",   "cp",  "push PSW", "ori", "rst 0x6", "rm",  "sphl",    "jm",  "ei",      "cm",  "db 0xFD", "cpi", "rst 0x7"
 };
 
-// CAPITAL NAMING
-/*
-	"NOP",	   "LXI B",  "STAX B", "INX B",  "INR B", "DCR B", "MVI B", "RLC", "DB 0x08", "DAD B",  "LDAX B", "DCX B",  "INR C", "DCR C", "MVI C", "RRC",
-	"DB 0x10", "LXI D",  "STAX D", "INX D",  "INR D", "DCR D", "MVI D", "RAL", "DB 0x18", "DAD D",  "LDAX D", "DCX D",  "INR E", "DCR E", "MVI E", "RAR",
-	"DB 0x20", "LXI H",  "SHLD",   "INX H",  "INR H", "DCR H", "MVI H", "DAA", "DB 0x28", "DAD H",  "LHLD",   "DCX H",  "INR L", "DCR L", "MVI L", "CMA",
-	"DB 0x30", "LXI SP", "STA",    "INX SP", "INR M", "DCR M", "MVI M", "STC", "DB 0x38", "DAD SP", "LDA",    "DCX SP", "INR A", "DCR A", "MVI A", "CMC",
-
-	"MOV B B", "MOV B C", "MOV B D", "MOV B E", "MOV B H", "MOV B L", "MOV B M", "MOV B A", "MOV C B", "MOV C C", "MOV C D", "MOV C E", "MOV C H", "MOV C L", "MOV C M", "MOV C A",
-	"MOV D B", "MOV D C", "MOV D D", "MOV D E", "MOV D H", "MOV D L", "MOV D M", "MOV D A", "MOV E B", "MOV E C", "MOV E D", "MOV E E", "MOV E H", "MOV E L", "MOV E M", "MOV E A",
-	"MOV H B", "MOV H C", "MOV H D", "MOV H E", "MOV H H", "MOV H L", "MOV H M", "MOV H A", "MOV L B", "MOV L C", "MOV L D", "MOV L E", "MOV L H", "MOV L L", "MOV L M", "MOV L A",
-	"MOV M B", "MOV M C", "MOV M D", "MOV M E", "MOV M H", "MOV M L", "HLT",     "MOV M A", "MOV A B", "MOV A C", "MOV A D", "MOV A E", "MOV A H", "MOV A L", "MOV A M", "MOV A A",
-
-	"ADD B", "ADD C", "ADD D", "ADD E", "ADD H", "ADD L", "ADD M", "ADD A", "ADC B", "ADC C", "ADC D", "ADC E", "ADC H", "ADC L", "ADC M", "ADC A",
-	"SUB B", "SUB C", "SUB D", "SUB E", "SUB H", "SUB L", "SUB M", "SUB A", "SBB B", "SBB C", "SBB D", "SBB E", "SBB H", "SBB L", "SBB M", "SBB A",
-	"ANA B", "ANA C", "ANA D", "ANA E", "ANA H", "ANA L", "ANA M", "ANA A", "XRA B", "XRA C", "XRA D", "XRA E", "XRA H", "XRA L", "XRA M", "XRA A",
-	"ORA B", "ORA C", "ORA D", "ORA E", "ORA H", "ORA L", "ORA M", "ORA A", "CMP B", "CMP C", "CMP D", "CMP E", "CMP H", "CMP L", "CMP M", "CMP A",
-
-	"RNZ", "POP B",   "JNZ", "JMP",  "CNZ", "PUSH B",   "ADI", "RST 0x0", "RZ",  "RET",     "JZ",  "DB 0xCB", "CZ",  "CALL",    "ACI", "RST 0x1",
-	"RNC", "POP D",   "JNC", "OUT",  "CNC", "PUSH D",   "SUI", "RST 0x2", "RC",  "DB 0xD9", "JC",  "IN",      "CC",  "DB 0xDD", "SBI", "RST 0x3",
-	"RPO", "POP H",   "JPO", "XTHL", "CPO", "PUSH H",   "ANI", "RST 0x4", "RPE", "PCHL",    "JPE", "XCHG",    "CPE", "DB 0xED", "XRI", "RST 0x5",
-	"RP",  "POP PSW", "JP",  "DI",   "CP",  "PUSH PSW", "ORI", "RST 0x6", "RM",  "SPHL",    "JM",  "EI",      "CM",  "DB 0xFD", "CPI", "RST 0x7"
-*/
-
 // define the maximum number of bytes in a command
 #define CMD_LEN_MAX 3
 
@@ -175,7 +152,7 @@ static const uint8_t cmd_lens[0x100] =
 	1,1,3,1,3,1,2,1,1,1,3,1,3,1,2,1
 };
 
-auto GetMnemonic(const uint8_t _opcode,
+auto GetMnemonic1(const uint8_t _opcode,
 	const uint8_t _dataL, const uint8_t _dataH)
 {
 	std::string out(mnemonics[_opcode]);
@@ -289,14 +266,15 @@ auto dev::Debugger::GetDisasmLineDb(const uint8_t _data) const
 auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) const
 -> Addr
 {
-	int instructions = _instructionOffset > 0 ? _instructionOffset : -_instructionOffset;
+	int instructions = dev::Abs(_instructionOffset);
 
 	if (_instructionOffset > 0)
 	{
 		Addr addr = _addr;
 		for (int i = 0; i < instructions; i++)
 		{
-			auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
+			auto resOpcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
+			uint8_t opcode = resOpcode->at("data");
 
 			auto cmdLen = cmd_lens[opcode];
 			addr = addr + cmdLen;
@@ -316,7 +294,8 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 
 			while (addr < _addr && currentInstruction < instructions)
 			{
-				auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
+				auto resOpcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
+				uint8_t opcode = resOpcode->at("data");
 
 				auto cmdLen = cmd_lens[opcode];
 				addr = addr + cmdLen;
@@ -353,9 +332,9 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 // 				_instructionsOffset = 0 means the start address is the _addr, 
 //				_instructionsOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
 auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset)
-->Disasm
+->DisasmLines
 {
-	Disasm out;
+	DisasmLines out;
 	if (_lines == 0) return out;
 
 	auto instructionsOffset = _instructionOffset > 0 ? _instructionOffset : -_instructionOffset;
@@ -367,7 +346,7 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 
 	if (_instructionOffset < 0 && addr == _addr)
 	{
-		// it failed to find an new addr, we assume a data blob is ahead
+		// a new addr is not found. it means a data blob is ahead
 		addr -= (Addr)instructionsOffset;
 		lines -= instructionsOffset;
 
@@ -392,9 +371,13 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 
 	for (int i = 0; i < lines; i++)
 	{
-		auto opcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
-		auto dataL = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 1 } })->at("data");
-		auto dataH = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 2 } })->at("data");
+		auto resOpcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
+		auto resDataL = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 1 } });
+		auto resDataH = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 2 } });
+		uint8_t opcode = resOpcode->at("data");
+		uint8_t dataL = resDataL->at("data");
+		uint8_t dataH = resDataH->at("data");
+
 		auto data = dataH << 8 | dataL;
 		if (m_labels.contains(addr))
 		{
@@ -422,6 +405,53 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 		addr = addr + cmd_lens[opcode];
 	}
 	return out;
+}
+
+// _instructionOffset defines the start address of the disasm. 
+// 				_instructionOffset = 0 means the start address is the _addr, 
+//				_instructionOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
+auto dev::Debugger::GetDisasm2(const Addr _addr, const size_t _lines, const int _instructionOffset)
+-> const Disasm::Lines*
+{
+	if (_lines <= 0) return nullptr;
+	size_t lines = dev::Max(_lines, Disasm::DISASM_LINES_MAX);
+	size_t lineIdx = 0;
+
+	// calculate a new address that precedes the specified 'addr' by the instructionOffset
+	Addr addr = GetAddr(_addr, _instructionOffset);
+
+	if (_instructionOffset < 0 && addr == _addr)
+	{
+		// _instructionOffset < 0 means we want to disasm several intructions prior the _addr.
+		// but if the output addr is equal to _addr, that means 
+		// there is no valid instructions fit into the range (_addr+_instructionOffset, _addr). (_instructionOffset is negative!) That means a data blob is ahead
+		addr += (Addr)_instructionOffset;
+
+		for (; lineIdx < -_instructionOffset;)
+		{
+			lineIdx = m_disasm.AddLabes(lineIdx, addr, m_labels);
+
+			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
+			auto breakpointStatus = GetBreakpointStatus(addr);
+			GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
+			lineIdx = m_disasm.AddDb(lineIdx, addr, db, m_consts,
+				m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], breakpointStatus);
+		}
+	}
+
+	for (; lineIdx < lines;)
+	{
+		lineIdx = m_disasm.AddLabes(lineIdx, addr, m_labels);
+
+		uint32_t cmd = m_hardware.Request(Hardware::Req::GET_THREE_BYTES_RAM, { { "addr", addr } })->at("data");
+
+		GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
+		auto breakpointStatus = GetBreakpointStatus(globalAddr);
+
+		lineIdx = m_disasm.AddCode(lineIdx, addr, cmd, m_labels, m_consts,
+			m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], breakpointStatus);
+	}
+	return m_disasm.GetLines();
 }
 
 bool IsConstLabel(const char* _s)
@@ -453,14 +483,7 @@ void dev::Debugger::LoadDebugData(const std::wstring& _path)
 		for(auto& [labelName, addrS] : debugDataJ["labels"].items())
 		{
 			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
-			// check if it is an __external_label
-			if (labelName.size() >= 2 && labelName[0] == '_' && labelName[1] == '_')
-			{
-				m_externalLabels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
-			}
-			else {
-				m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
-			}
+			m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
 		}
 	}
 
@@ -477,7 +500,6 @@ void dev::Debugger::ResetLabels()
 {
 	m_labels.clear();
 	m_consts.clear();
-	m_externalLabels.clear();
 }
 
 //////////////////////////////////////////////////////////////
@@ -509,12 +531,12 @@ void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _
 }
 
 auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const size_t _filter)
-->Disasm
+->DisasmLines
 {
 	size_t filter = dev::Min(_filter, OPCODE_TYPE_MAX);
 	size_t offset = dev::Max(_offset, 0);
 
-	Disasm out;
+	DisasmLines out;
 
 	for (int i = 0; i < offset; i++)
 	{
@@ -605,7 +627,7 @@ auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _
 auto dev::Debugger::TraceLog::ToStr() const
 ->std::string
 {
-	return GetMnemonic(m_opcode, m_dataL, m_dataH);
+	return GetMnemonic1(m_opcode, m_dataL, m_dataH);
 }
 
 void dev::Debugger::TraceLog::Clear()
@@ -841,13 +863,6 @@ auto dev::Debugger::LabelsToStr(const Addr _addr, int _labelTypes) const
 	if (_labelTypes & LABEL_TYPE_CONST && m_consts.contains(_addr))
 	{
 		for (const auto& label : m_consts.at(_addr))
-		{
-			out += label + ", ";
-		}
-	}
-	if (_labelTypes & LABEL_TYPE_EXTERNAL && m_externalLabels.contains(_addr))
-	{
-		for (const auto& label : m_externalLabels.at(_addr))
 		{
 			out += label + ", ";
 		}

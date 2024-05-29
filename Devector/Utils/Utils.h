@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_UTILS_H
-#define DEV_UTILS_H
 
 #include <chrono>
 #include <format>
@@ -175,6 +173,12 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		return (a < b) ? a : b;
 	}
 
+	template <typename T>
+	inline T Abs(T a)
+	{
+		return (a > 0) ? a : -a;
+	}
+
 	//--------------------------------------------------------------
 	//
 	// FILES
@@ -212,5 +216,4 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	auto GetDirStemExt(const std::wstring& _path)
 		->std::tuple<std::wstring, std::wstring, std::wstring>;
 
-} // namespace dev
-#endif //!DEV_UTILS_H
+}

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_TYPES_H
-#define DEV_TYPES_H
 
 #include <cstdint>
 #include "Utils/Types.h"
@@ -41,4 +39,3 @@ namespace dev
 		int addr = 0;
 	};
 }
-#endif // !DEV_TYPES_H

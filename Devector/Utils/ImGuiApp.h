@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_IMGUI_APP_H
-#define DEV_IMGUI_APP_H
 
 #include <stdio.h>
 #include <string>
@@ -95,4 +93,3 @@ namespace dev {
         nlohmann::json m_settingsJ;
     };
 }
-#endif // !DEV_IMGUI_APP_H

@@ -11,8 +11,6 @@
 // each t-state triggered by 3 Mhz clock
 
 #pragma once
-#ifndef DEV_CPU_I8080_H
-#define DEV_CPU_I8080_H
 
 #include <functional>
 #include <atomic>
@@ -201,4 +199,3 @@ namespace dev
 
 	};
 }
-#endif // !DEV_CPU_I8080_H

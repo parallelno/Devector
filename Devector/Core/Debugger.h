@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_DEBUGGER_H
-#define DEV_DEBUGGER_H
 
 #include <memory>
 #include <mutex>
@@ -11,6 +9,7 @@
 
 #include "Utils/Types.h"
 #include "Core/Hardware.h"
+#include "Core/Disasm.h"
 #include "Core/Display.h"
 #include "Core/Breakpoint.h"
 #include "Core/Watchpoint.h"
@@ -28,7 +27,9 @@ namespace dev
 		using MemLastRW = std::array<uint32_t, Memory::GLOBAL_MEMORY_LEN>;
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
-		struct DisasmLine 
+		Disasm m_disasm;
+
+		struct DisasmLine
 		{
 			enum class Type {
 				COMMENT,
@@ -39,9 +40,9 @@ namespace dev
 			Type type;
 			Addr addr;
 			std::string addrS;
-			std::string str; // labels, comments, code
-			std::string consts; // labels that are assiciated with arguments of an operation
-			std::string stats;
+			std::string str; // labels, comments
+			std::string consts; // labels associated with arguments of an operation
+			std::string stats; // contains: runs, reads, writes
 			uint64_t runs;
 			uint64_t reads;
 			uint64_t writes;
@@ -52,7 +53,7 @@ namespace dev
 				std::string _consts = "", const Breakpoint::Status _breakpointStatus = Breakpoint::Status::DELETED)
 				: 
 				type(_type), addr(_addr), str(_str), 
-				runs(_runs), reads(_reads), writes(_writes), 
+				runs(_runs), reads(_reads), writes(_writes),
 				consts(_consts), breakpointStatus(_breakpointStatus)
 			{
 				if (type == Type::CODE) {
@@ -72,7 +73,7 @@ namespace dev
 				consts(), breakpointStatus(Breakpoint::Status::DELETED)
 			{};
 		};
-		using Disasm = std::vector<DisasmLine>;
+		using DisasmLines = std::vector<DisasmLine>;
 		using Watchpoints = std::map<dev::Id, Watchpoint>;
 		using Breakpoints = std::map<GlobalAddr, Breakpoint>;
 
@@ -87,7 +88,8 @@ namespace dev
 		void Read(const GlobalAddr _globalAddr, const uint8_t _val);
 		void Write(const GlobalAddr _globalAddr, const uint8_t _val);
 
-		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) ->Disasm;
+		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) ->DisasmLines;
+		auto GetDisasm2(const Addr _addr, const size_t _lines, const int _instructionOffset) -> const Disasm::Lines*;
 
 		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
 		void AddBreakpoint(const Addr _addr,
@@ -112,7 +114,7 @@ namespace dev
 
 		bool CheckBreak(const Addr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam);
 
-		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> Disasm;
+		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> DisasmLines;
 
 		void LoadDebugData(const std::wstring& _path);
 		void ResetLabels();
@@ -153,6 +155,7 @@ namespace dev
 
 			auto ToStr() const->std::string;
 			void Clear();
+			Addr GetOperandAddr() { return m_dataL | (m_dataH << 8); };
 		};
 
 		std::array <TraceLog, TRACE_LOG_SIZE> m_traceLog;
@@ -163,7 +166,6 @@ namespace dev
 		using Labels = std::map<GlobalAddr, AddrLabels>;
 		Labels m_labels;		// labels
 		Labels m_consts;		// labels used as constants only
-		Labels m_externalLabels;// labels with a prefix "__" called externals and used in the code libraries in the ram-disk
 
 		Hardware& m_hardware;
 
@@ -190,4 +192,3 @@ namespace dev
 								// high 2 bytes contains the order of writings. 255 is the most recently written, 0 - the least recently written
 	};
 }
-#endif // !DEV_DEBUGGER_H

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_DISPLAY_H
-#define DEV_DISPLAY_H
 
 #include <vector>
 #include <array>
@@ -97,4 +95,3 @@ namespace dev
 		void FillBorderPortHandling(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 	};
 }
-#endif // !DEV_DISPLAY_H

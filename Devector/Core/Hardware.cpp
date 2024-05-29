@@ -202,6 +202,10 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             m_reqRes.emplace(GetByte(dataJ, Memory::AddrSpace::RAM));
             break;
 
+        case Req::GET_THREE_BYTES_RAM:
+            m_reqRes.emplace(Get3Bytes(dataJ, Memory::AddrSpace::RAM));
+            break;
+
         case Req::GET_WORD_STACK:
             m_reqRes.emplace(GetWord(dataJ, Memory::AddrSpace::STACK));
             break;
@@ -339,6 +343,16 @@ auto dev::Hardware::GetByte(const nlohmann::json _addr, const Memory::AddrSpace 
     Addr addr = _addr["addr"];
     nlohmann::json out = {
         {"data", m_memory.GetByte(addr, _addrSpace)}
+    };
+    return out;
+}
+
+auto dev::Hardware::Get3Bytes(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace)
+-> nlohmann::json
+{
+    Addr addr = _addr["addr"];
+    nlohmann::json out = {
+        {"data", m_memory.GetByte(addr, _addrSpace) | (m_memory.GetWord(addr + 1, _addrSpace) << 8) }
     };
     return out;
 }

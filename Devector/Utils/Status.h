@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_STATUS_H
-#define DEV_STATUS_H
 
 #include <atomic>
 
@@ -41,6 +39,4 @@ namespace dev
 		}
 	};
 }
-
-#endif // !DEV_STATUS_H
 

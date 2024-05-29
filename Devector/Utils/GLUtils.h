@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_GL_UTILS_H
-#define DEV_GL_UTILS_H
 
 #include "Consts.h"
 #include "Core/Hardware.h"
@@ -83,5 +81,3 @@ namespace dev
 		bool IsMaterialReady(const int _materialId) const;
 	};
 }
-
-#endif // !DEV_GL_UTILS_H

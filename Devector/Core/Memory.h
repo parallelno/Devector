@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_MEMORY_H
-#define DEV_MEMORY_H
 
 #include <cstdint>
 #include <vector>
@@ -77,4 +75,3 @@ namespace dev
 		MemType m_memType = MemType::ROM;
 	};
 }
-#endif // !DEV_MEMORY_H

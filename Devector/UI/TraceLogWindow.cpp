@@ -118,7 +118,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 
 				// the addr column
 				ImGui::TableNextColumn();
-				DrawAddr(_isRunning, disasmLine, 0,
+				DrawAddr(_isRunning, disasmLine.addrS.c_str(), 0,
 					// _onMouseLeft. Navigate to the address
 					[&]()
 					{
@@ -152,7 +152,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 
 				// the constants column
 				ImGui::TableNextColumn();
-				ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, "%s", disasmLine.consts.c_str());
+				ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, disasmLine.consts.c_str());
 				
 				if (_isRunning) ImGui::EndDisabled();
 			}

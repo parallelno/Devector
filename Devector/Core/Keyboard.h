@@ -1,6 +1,4 @@
 ﻿#pragma once
-#ifndef DEV_KEYBOARD_H
-#define DEV_KEYBOARD_H
 
 #include <cstdint>
 #include <map>
@@ -39,4 +37,3 @@ namespace dev
 		void InitMapping();
 	};
 }
-#endif // !DEV_KEYBOARD_H

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_DISPLAY_WINDOW_H
-#define DEV_DISPLAY_WINDOW_H
 
 #include <vector>
 
@@ -53,5 +51,3 @@ namespace dev
 	};
 
 };
-
-#endif // !DEV_DISPLAY_WINDOW_H

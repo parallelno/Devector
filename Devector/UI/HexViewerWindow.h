@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_HEX_VIEWER_WINDOW_H
-#define DEV_HEX_VIEWER_WINDOW_H
 
 #include <vector>
 
@@ -42,5 +40,3 @@ namespace dev
 		void Update();
 	};
 };
-
-#endif // !DEV_HEX_VIEWER_WINDOW_H

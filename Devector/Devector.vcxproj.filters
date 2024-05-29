@@ -114,6 +114,9 @@
     <ClCompile Include="Core\Fdc1793.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Disasm.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -247,6 +250,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Fdc1793.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Disasm.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

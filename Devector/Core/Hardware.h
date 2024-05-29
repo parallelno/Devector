@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_HARDWARE_H
-#define DEV_HARDWARE_H
 
 #include <mutex>
 #include <string>
@@ -58,6 +56,7 @@ namespace dev
 			GET_REGS,
 			GET_REG_PC,
 			GET_BYTE_RAM,
+			GET_THREE_BYTES_RAM,
 			GET_WORD_STACK,
 			GET_DISPLAY_DATA,
 			GET_MEMORY_MODES,
@@ -101,9 +100,9 @@ namespace dev
 		void Restart();
 		auto GetRegs() const -> nlohmann::json;
 		auto GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
+		auto Get3Bytes(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto GetFddInfo(const int _driveIdx) -> Fdc1793::DiskInfo;
 		auto GetFddImage(const int _driveIdx) -> const std::vector<uint8_t>;
 	};
 }
-#endif // !DEV_HARDWARE_H

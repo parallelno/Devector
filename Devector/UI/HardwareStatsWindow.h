@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_HARDWARE_STATS_WINDOW_H
-#define DEV_HARDWARE_STATS_WINDOW_H
 
 #include "Utils/Consts.h"
 #include "Ui/BaseWindow.h"
@@ -88,5 +86,3 @@ namespace dev
 	};
 
 };
-
-#endif // !DEV_HARDWARE_STATS_WINDOW_H

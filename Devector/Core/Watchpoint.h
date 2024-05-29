@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_WATCHPOINT_H
-#define DEV_WATCHPOINT_H
 
 #include <memory>
 #include <mutex>
@@ -69,4 +67,3 @@ namespace dev
 		std::string m_comment;
 	};
 }
-#endif // !DEV_WATCHPOINT_H

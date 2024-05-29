@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_CONSTS_H
-#define DEV_CONSTS_H
 
 #include "Utils/Types.h"
 
@@ -27,5 +25,3 @@ namespace dev
 
 	static constexpr int DELAYED_SELECTION_TIME = 6;
 }
-
-#endif // !DEV_CONSTS_H

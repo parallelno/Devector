@@ -113,6 +113,7 @@
     <ClCompile Include="Core\Breakpoint.cpp" />
     <ClCompile Include="Core\CpuI8080.cpp" />
     <ClCompile Include="Core\Debugger.cpp" />
+    <ClCompile Include="Core\Disasm.cpp" />
     <ClCompile Include="Core\Display.cpp" />
     <ClCompile Include="Core\Fdc1793.cpp" />
     <ClCompile Include="Core\Hardware.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="Core\Breakpoint.h" />
     <ClInclude Include="Core\CpuI8080.h" />
     <ClInclude Include="Core\Debugger.h" />
+    <ClInclude Include="Core\Disasm.h" />
     <ClInclude Include="Core\Display.h" />
     <ClInclude Include="Core\Fdc1793.h" />
     <ClInclude Include="Core\Hardware.h" />

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_WATCHPOINTS_WINDOW_H
-#define DEV_WATCHPOINTS_WINDOW_H
 
 #include "imgui.h"
 
@@ -38,5 +36,3 @@ namespace dev
 	};
 
 };
-
-#endif // !DEV_WATCHPOINTS_WINDOW_H

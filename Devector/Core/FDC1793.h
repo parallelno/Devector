@@ -5,8 +5,6 @@
 // https://github.com/svofski/vector06sdl/blob/master/src/fd1793.h
 
 #pragma once
-#ifndef DEV_FDC1793_H
-#define DEV_FDC1793_H
 
 #include <string>
 #include <vector>
@@ -62,8 +60,8 @@ namespace dev
 			uint8_t wait;	// Expiration counter
 			uint8_t cmd;	// Last command
 
-			int rwLen;		// The length of the transfered data
-			int position;		// sector addr
+			int    rwLen;		// The length of the transfered data
+			size_t position;		// sector addr
 		};
 
 		struct DiskInfo {
@@ -106,5 +104,3 @@ namespace dev
 		auto GetFddImage(const int _driveIdx) -> const std::vector<uint8_t>;
 	};
 }
-
-#endif // DEV_FDC1793_H

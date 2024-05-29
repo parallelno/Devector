@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_BASE_WINDOW_H
-#define DEV_BASE_WINDOW_H
 
 namespace dev
 {
@@ -27,5 +25,3 @@ namespace dev
 		void SetWindowDefaultPosSize();
 	};
 }
-#endif // !DEV_BASE_WINDOW_H
-

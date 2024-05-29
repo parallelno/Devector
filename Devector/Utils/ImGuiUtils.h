@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_IMGUI_UTILS_H
-#define DEV_IMGUI_UTILS_H
 
 #include <string>
 #include <list>
@@ -11,6 +9,7 @@
 #include "Types.h"
 #include "Core/Breakpoint.h"
 #include "Core/Debugger.h"
+#include "Core/Disasm.h"
 
 namespace dev 
 {
@@ -121,13 +120,17 @@ namespace dev
 	auto DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::DisasmLine& _line,
 			std::function<void(const Addr _addr)> _onMouseLeft,
 			std::function<void(const Addr _addr)> _onMouseRight) -> int;
-	void DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLine, 
-			uint8_t _highlightAlpha,
+	auto DrawCodeLine2(const bool _tab, const bool _isRunning, const Disasm::Line& _line,
+		std::function<void(const Addr _addr)> _onMouseLeft,
+		std::function<void(const Addr _addr)> _onMouseRight) -> int;
+	auto DrawOperandAddr(const bool _isRunning, 
+		const char* _operand, const int _opAddr, ImVec4 _addrColor,
+		std::function<void(const Addr _addr)> _onMouseLeft,
+		std::function<void(const Addr _addr)> _onMouseRight) -> int;
+	void DrawAddr(const bool _isRunning, const char* _addrS, uint8_t _highlightAlpha,
 			std::function<void()> _onMouseLeft,
 			std::function<void()> _onMouseRight);
 
 	enum class FddStatus { NONE, DISCARD, SAVE, ALWAYS_DISCARD, ALWAYS_SAVE};
 	auto DrawSaveDiscardFddPopup(int _selectedDriveIdx, std::wstring _mountedFddPath) -> FddStatus;
 }
-
-#endif // !DEV_IMGUI_UTILS_H

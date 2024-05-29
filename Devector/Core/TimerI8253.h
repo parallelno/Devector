@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_TIMER_I8253_H
-#define DEV_TIMER_I8253_H
 
 #include <array>
 #include <inttypes.h>
@@ -514,4 +512,3 @@ namespace dev
 		}
 	};
 }
-#endif // !DEV_TIMER_I8253_H

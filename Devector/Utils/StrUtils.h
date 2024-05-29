@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_STRING_UTILS_H
-#define DEV_STRING_UTILS_H
 
 #include <string>
 #include <vector>
@@ -25,4 +23,3 @@ namespace dev
 	auto StrToUpper(const std::wstring _str) -> std::wstring;
 	inline auto TrimSpacesRight(std::wstring _str) -> std::wstring;
 }
-#endif // !DEV_STRING_UTILS_H

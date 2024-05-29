@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_JSON_UTILS_H
-#define DEV_JSON_UTILS_H
 
 #include "json.hpp"
 
@@ -80,5 +78,4 @@ namespace dev
 		const std::vector<uint8_t>& _defaultValue = {})
 		-> const std::vector<uint8_t>;
 
-} // namespace dev
-#endif // !DEV_JSON_UTILS_H
+}

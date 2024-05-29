@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_RESULT_H
-#define DEV_RESULT_H
 
 #include <optional>
 #include <string>
@@ -102,5 +100,3 @@ namespace dev
 		}
 	};
 }
-
-#endif // !DEV_RESULT_H

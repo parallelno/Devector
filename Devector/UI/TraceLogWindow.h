@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_TRACELOG_WINDOW_H
-#define DEV_TRACELOG_WINDOW_H
 
 #include <vector>
 
@@ -32,7 +30,7 @@ namespace dev
 		ReqDisasm& m_reqDisasm;
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
-		Debugger::Disasm m_traceLog;
+		Debugger::DisasmLines m_traceLog;
 		size_t m_disasmFilter = 0;
 
 		void UpdateData(const bool _isRunning);
@@ -45,5 +43,3 @@ namespace dev
 		void Update();
 	};
 };
-
-#endif // !DEV_TRACELOG_WINDOW_H

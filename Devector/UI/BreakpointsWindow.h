@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_BREAKPOINTS_WINDOW_H
-#define DEV_BREAKPOINTS_WINDOW_H
 
 #include "imgui.h"
 
@@ -35,5 +33,3 @@ namespace dev
 	};
 
 };
-
-#endif // !DEV_BREAKPOINTS_WINDOW_H

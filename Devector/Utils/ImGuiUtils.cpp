@@ -2,6 +2,7 @@
 
 #include "Utils.h"
 #include "StrUtils.h"
+#include "Core/Disasm.h"
 
 #include "imgui_internal.h"
 #include "imgui.h"
@@ -303,6 +304,44 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 	}
 }
 
+int dev::DrawOperandAddr(const bool _isRunning, 
+	const char* _operand, const int _opAddr, ImVec4 _addrColor,
+	std::function<void(const Addr _addr)> _onMouseLeft,
+	std::function<void(const Addr _addr)> _onMouseRight)
+{
+	int reqUpdateAddr = - 1;
+
+	if (!_isRunning &&
+		!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+	{
+		ImVec2 textPos = ImGui::GetCursorScreenPos();
+		ImVec2 textSize = ImGui::CalcTextSize(_operand);
+		if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
+		{
+			ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
+
+			reqUpdateAddr = _opAddr >= 0 ? _opAddr : dev::StrHexToInt(_operand + 2);
+			// if it's clicked, scroll the disasm to highlighted addr
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+			{
+				_onMouseLeft(reqUpdateAddr);
+			}
+
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			{
+				_onMouseRight(reqUpdateAddr);
+			}
+
+			// highlighted hexadecimal literal is white
+			_addrColor.x = _addrColor.y = _addrColor.z = _addrColor.w = 1.0f;
+		}
+	}
+	// draw a hexadecimal literal
+	ImGui::TextColored(_addrColor, _operand);
+
+	return reqUpdateAddr;
+}
+
 int dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::DisasmLine& _line,
 	std::function<void(const Addr _addr)> _onMouseLeft,
 	std::function<void(const Addr _addr)> _onMouseRight)
@@ -332,50 +371,22 @@ int dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::Di
 			}
 
 			// draw an operand
-			auto operands = dev::Split(cmd_parts, ';');
+			auto operands = dev::Split(cmd_parts, ';'); // split into operands
 
 			int operandIdx = 0;
 			for (const auto& operand : operands)
 			{
-				if (operand[0] == '0' && operands.size() == 1)
+				if (operand[0] == '0' && operands.size() == 1) // if there is no CONST
 				{
 					// check if the hexadecimal literal is hovered
 					ImGui::SameLine();
-					ImVec4 addrColor = DISASM_TBL_COLOR_NUMBER;
-					if (!_isRunning &&
-						!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
-					{
-						ImVec2 textPos = ImGui::GetCursorScreenPos();
-						ImVec2 textSize = ImGui::CalcTextSize(operand.c_str());
-						if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
-						{
-							ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
-
-							Addr reqUpdateAddr = dev::StrHexToInt(operand.c_str() + 2);
-							addrHighlighted = reqUpdateAddr;
-							// if it's clicked, scroll the disasm to highlighted addr
-							if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-							{
-								_onMouseLeft(reqUpdateAddr);
-							}
-
-							if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-							{
-								_onMouseRight(reqUpdateAddr);
-							}
-
-							// highlighted text is white
-							addrColor.x = addrColor.y = addrColor.z = addrColor.w = 1.0f;
-						}
-					}
-					// draw a hexadecimal literal
-					ImGui::TextColored(addrColor, "%s", operand.c_str());
+					addrHighlighted = DrawOperandAddr(_isRunning, operand.c_str(), -1, DISASM_TBL_COLOR_NUMBER, _onMouseLeft, _onMouseRight);
 				}
 				else if (cmd_parts.size() <= 2 || cmd_parts == "PSW")
 				{
 					// draw a reg
 					ImGui::SameLine();
-					ImGui::TextColored(DISASM_TBL_COLOR_REG, "%s", operand.c_str());
+					ImGui::TextColored(DISASM_TBL_COLOR_REG, operand.c_str());
 				}
 				else
 				{
@@ -398,8 +409,131 @@ int dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::Di
 	return addrHighlighted;
 }
 
-void dev::DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLine, 
-			uint8_t _highlightAlpha,
+int dev::DrawCodeLine2(const bool _tab, const bool _isRunning, const Disasm::Line& _line,
+	std::function<void(const Addr _addr)> _onMouseLeft,
+	std::function<void(const Addr _addr)> _onMouseRight)
+{
+	int addrHighlighted = -1;
+	/*
+	auto cmd_splitted = dev::Split(_line.str, ' ');
+	int i = 0;
+	for (const auto& cmd_parts : cmd_splitted)
+	{
+		if (i == 0)
+		{
+			// draw a mnenonic
+			if (_tab) {
+				ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, "\t%s ", cmd_parts.c_str());
+			}
+			else {
+				ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, "%s ", cmd_parts.c_str());
+			}
+		}
+		else
+		{
+			// draw an operand separator
+			if (i == 2)
+			{
+				ImGui::SameLine();
+				ImGui::TextColored(DISASM_TBL_COLOR_NUMBER, ", ");
+			}
+
+			// draw an operand
+			auto operands = dev::Split(cmd_parts, ';'); // split into operands
+
+			int operandIdx = 0;
+			for (const auto& operand : operands)
+			{
+				if (operand[0] == '0' && operands.size() == 1) // if there is no CONST
+				{
+					// check if the hexadecimal literal is hovered
+					ImGui::SameLine();
+					addrHighlighted = DrawOperandAddr(_isRunning, operand.c_str(), -1, DISASM_TBL_COLOR_NUMBER, _onMouseLeft, _onMouseRight);
+				}
+				else if (cmd_parts.size() <= 2 || cmd_parts == "PSW")
+				{
+					// draw a reg
+					ImGui::SameLine();
+					ImGui::TextColored(DISASM_TBL_COLOR_REG, operand.c_str());
+				}
+				else
+				{
+					// draw a const value
+					if (operand[0] == '0') {
+						ImGui::SameLine();
+						ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, ";%s", operand.c_str());
+					}
+					else {
+						// draw a const
+						ImGui::SameLine();
+						ImGui::TextColored(DISASM_TBL_COLOR_CONST, "%s ", operand.c_str());
+					}
+				}
+				operandIdx++;
+			}
+		}
+		i++;
+	}
+	*/
+	auto opcode = _line.opcode;
+	auto mnemonic = dev::GetMnemonic(opcode);
+	auto mnemonicLen = dev::GetMnemonicLen(opcode);
+	auto mnemonicType = dev::GetMnemonicType(opcode);
+	auto immType = GetImmediateType(opcode);
+
+	for (int i = 0; i < mnemonicLen; i++)
+	{
+		switch (mnemonicType[i])
+		{
+		case MNT_CMD:
+			// draw a mnenonic
+			if (_tab) {
+				ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, "\t%s", mnemonic[i]);
+			}
+			else {
+				ImGui::TextColored(DISASM_TBL_COLOR_MNEMONIC, "%s", mnemonic[i]);
+			}
+			break;
+
+		case MNT_IMM:
+			ImGui::SameLine();
+			ImGui::TextColored(DISASM_TBL_COLOR_CONST, " %s", mnemonic[i]);
+			break;
+
+		case MNT_REG:
+			ImGui::SameLine();
+			ImGui::TextColored(DISASM_TBL_COLOR_REG, " %s", mnemonic[i]);
+			break;
+		}
+		// draw an operand separator
+		if (mnemonicLen == 3 && i == 1) {
+			ImGui::SameLine();
+			ImGui::TextColored(DISASM_TBL_COLOR_NUMBER, ",");
+		}
+	}
+	// print an immediate operand
+	if (immType == CMD_IB_OFF1 || immType == CMD_IW_OFF1)
+	{
+		if (mnemonicLen > 1) {
+			ImGui::SameLine();
+			ImGui::TextColored(DISASM_TBL_COLOR_NUMBER, ",");
+		}
+		ImGui::SameLine();
+		if (immType == CMD_IB_OFF1) {
+			ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, " 0x%s", _line.GetImmediateS() + 4);
+		}
+		else if (immType == CMD_IW_OFF1) {
+			ImGui::Text(" "); ImGui::SameLine();
+			addrHighlighted = DrawOperandAddr(_isRunning, _line.GetImmediateS(), -1, DISASM_TBL_COLOR_NUMBER, _onMouseLeft, _onMouseRight);
+		}
+	}
+
+
+	return addrHighlighted;
+}
+
+
+void dev::DrawAddr(const bool _isRunning, const char* _addrS, uint8_t _highlightAlpha,
 			std::function<void()> _onMouseLeft,
 			std::function<void()> _onMouseRight)
 {
@@ -410,13 +544,13 @@ void dev::DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLin
 		!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
 	{
 		ImVec2 textPos = ImGui::GetCursorScreenPos();
-		ImVec2 textSize = ImGui::CalcTextSize(_disasmLine.addrS.c_str());
+		ImVec2 textSize = ImGui::CalcTextSize(_addrS);
 		if ((_highlightAlpha) ||
 			ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
 		{
 			ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, _highlightAlpha));
 			// draw a highlighted hexadecimal literal
-			ImGui::TextColored(dev::IM_VEC4(0xFFFFFFFF), "%s", _disasmLine.addrS.c_str());
+			ImGui::TextColored(dev::IM_VEC4(0xFFFFFFFF), _addrS);
 			
 			// if it's clicked, scroll the disasm to highlighted addr
 			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
@@ -434,7 +568,7 @@ void dev::DrawAddr(const bool _isRunning, const Debugger::DisasmLine& _disasmLin
 	}
 	if (drawNormalLiteral)
 	{
-		ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, _disasmLine.addrS.c_str());
+		ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, _addrS);
 	}
 }
 

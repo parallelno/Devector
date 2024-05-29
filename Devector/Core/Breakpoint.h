@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEV_BREAKPOINTS_H
-#define DEV_BREAKPOINTS_H
 
 #include <memory>
 #include <mutex>
@@ -71,4 +69,3 @@ namespace dev
 		auto IsActiveS() const -> const char*;
 	};
 }
-#endif // !DEV_BREAKPOINTS_H
