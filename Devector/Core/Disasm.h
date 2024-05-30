@@ -27,7 +27,8 @@ namespace dev
 	#define CMD_IB_OFF1 2 // immediate byte, offset = 1
 	#define CMD_IW_OFF1 3 // immediate word, offset = 1
 
-	auto AddrToAddrS(const Addr _addr) -> const char*;
+	auto AddrToAddrI16S(const Addr _addr) -> const char*;
+	auto AddrToAddrI8S(const uint8_t _addr) -> const char*;
 	auto GetMnemonic(const uint8_t _opcode) -> const char**;
 	auto GetMnemonicLen(const uint8_t _opcode) -> uint8_t;
 	auto GetMnemonicType(const uint8_t _opcode) -> const uint8_t*;
@@ -47,7 +48,6 @@ namespace dev
 				COMMENT,
 				LABELS,
 				CODE,
-				DB
 			};
 
 			Type type = Type::CODE;
@@ -63,8 +63,11 @@ namespace dev
 			Breakpoint::Status breakpointStatus = Breakpoint::Status::DISABLED;
 			auto GetStr() const -> std::string;
 
-			inline const char* GetAddrS() const { return AddrToAddrS(addr); };
-			inline const char* GetImmediateS() const { return AddrToAddrS(imm); };
+			inline const char* GetAddrS() const { return AddrToAddrI16S(addr); };
+			inline const char* GetImmediateS() const;
+			inline const char* GetLabel() const { return labels ? labels->at(0).c_str() : nullptr; };
+			inline const char* GetLabelConst() const { return labels ? labels->at(0).c_str() : consts ? consts->at(0).c_str() : nullptr; };
+			inline const char* GetConst() const { return consts ? consts->at(0).c_str() : nullptr; };
 		};
 
 		using Lines = std::array<Line, DISASM_LINES_MAX>;

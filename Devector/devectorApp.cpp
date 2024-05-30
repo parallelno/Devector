@@ -261,12 +261,13 @@ void dev::DevectorApp::MainMenuUpdate()
 					if (ImGui::MenuItem(itemS.c_str()))
 					{
 						if (driveIdx < 0){
-							LoadRom(path);
+							auto copyPath(path);
+							LoadRom(copyPath);
 						}
 						else
 						{
-							fddPath = path;
-							ImGui::OpenPopup("Boot or load?");
+							auto copyPath(path);
+							LoadFdd(copyPath, driveIdx, autoBoot);
 						}
 						break; // because m_recentFilePaths were modified
 					}
@@ -305,7 +306,7 @@ void dev::DevectorApp::MainMenuUpdate()
 		{ 
 			ImGui::CloseCurrentPopup();
 
-			autoBoot = driveSelect == 0;
+			autoBoot = ( driveSelect == 0 );
 			selectedDriveIdx = dev::Max(driveSelect - 1, 0); // "0" and "1" are both associated with FDisk 0
 			// check if the mounted disk is updated
 			auto fddInfo = *m_hardwareP->Request(

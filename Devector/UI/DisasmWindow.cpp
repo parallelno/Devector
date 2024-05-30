@@ -199,7 +199,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
 			// the line selection/highlight
 			ImGui::TableNextColumn();
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_BRK);
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DBG_COLOR_BRK);
 			const bool isSelected = m_selectedLineIdx == lineIdx;
 			if (ImGui::Selectable(std::format("##disasmLineId{:04d}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
@@ -230,7 +230,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			// the addr column
 			ImGui::TableNextColumn();
 			ColumnClippingEnable(*m_dpiScaleP); // enable clipping
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DBG_COLOR_ADDR);
 			if (isCode) {
 				uint8_t addrHighlightedAlpha = (addrHighlighted == addr) ? addrHighlightedTimer * 255 / ADDR_HIGHLIGHT_TIME : 0;
 				DrawAddr(_isRunning, line.addrS.c_str(), addrHighlightedAlpha,
@@ -259,7 +259,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			{
 				if (m_fontCommentP) { ImGui::PushFont(m_fontCommentP);}
 				ImGui::TableNextColumn();
-				ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, line.str.c_str());
+				ImGui::TextColored(DCOLOR_COMMENT, line.str.c_str());
 
 				if (m_fontCommentP) { ImGui::PopFont(); }
 			}
@@ -276,18 +276,18 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					{
 						if (label[0] == '@')
 						{
-							ImGui::TextColored(DISASM_TBL_COLOR_LABEL_LOCAL, label.c_str());
+							ImGui::TextColored(DCOLOR_LABEL_LOCAL, label.c_str());
 						}
 						else
 						{
-							ImGui::TextColored(DISASM_TBL_COLOR_LABEL_GLOBAL, label.c_str());
+							ImGui::TextColored(DCOLOR_LABEL_GLOBAL, label.c_str());
 						}
 					}
 					// all other labels that matches the address
 					else
 					{
 						ImGui::SameLine();
-						ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, " %s", label.c_str());
+						ImGui::TextColored(DCOLOR_LABEL_MINOR, " %s", label.c_str());
 					}
 					i++;
 				}
@@ -327,10 +327,10 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				// draw stats
 				ImGui::TableNextColumn();
 				ColumnClippingEnable(*m_dpiScaleP); // enable clipping
-				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DISASM_TBL_BG_COLOR_ADDR));
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DBG_COLOR_ADDR));
 				const ImVec4* statsColor = (line.runs == 0 && line.reads == 0 && line.writes == 0) ?
-						&DISASM_TBL_COLOR_ZERO_STATS :
-						&DISASM_TBL_COLOR_ADDR;
+						&DCOLOR_ZERO_STATS :
+						&DCOLOR_ADDR;
 				ImGui::TextColored(*statsColor, line.stats.c_str());
 				ColumnClippingDisable();
 
@@ -338,7 +338,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				ImGui::TableNextColumn();
 				if (isCode)
 				{
-					ImGui::TextColored(DISASM_TBL_COLOR_ADDR, line.consts.c_str());
+					ImGui::TextColored(DCOLOR_ADDR, line.consts.c_str());
 				}
 
 				rowMax = ImGui::GetItemRectMax();
@@ -490,7 +490,7 @@ auto dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line
 	// the addr column
 	ImGui::TableNextColumn();
 	ColumnClippingEnable(*m_dpiScaleP); // enable clipping
-	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
+	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DBG_COLOR_ADDR);
 
 	dev::DrawAddr(_isRunning, _line.GetAddrS(), _addrHighlightedAlpha,
 		// _onMouseLeft. Navigate to the address
@@ -548,12 +548,12 @@ auto dev::DisasmWindow::DrawDisasmComment(const Disasm::Line& _line)
 -> ImVec2
 {
 	ImGui::TableNextColumn();
-	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
+	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DBG_COLOR_ADDR);
 	ImGui::TableNextColumn();
 	auto selectionMin = ImGui::GetItemRectMin();
 
 	if (m_fontCommentP) ImGui::PushFont(m_fontCommentP);
-	ImGui::TextColored(DISASM_TBL_COLOR_COMMENT, _line.comments->at(0).c_str());
+	ImGui::TextColored(DCOLOR_COMMENT, _line.comments->at(0).c_str());
 	if (m_fontCommentP) { ImGui::PopFont(); }
 
 	return selectionMin;
@@ -563,33 +563,36 @@ auto dev::DisasmWindow::DrawDisasmLabels(const Disasm::Line& _line)
 -> ImVec2
 {
 	ImGui::TableNextColumn();
-	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_ADDR);
+	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DBG_COLOR_ADDR);
 	ImGui::TableNextColumn();
 	auto selectionMin = ImGui::GetItemRectMin();
+	const ImVec4* mainLabelColorP = &DCOLOR_LABEL_GLOBAL;
 
 	if (!_line.labels) return selectionMin;
 
-	bool firstComment = true;
-	int i = MAX_DISASM_LABELS;
+	int i = 0;
 	for (const auto& label : *_line.labels) 
 	{
-		if (firstComment)
+		if (i == 1) {
+			ImGui::SameLine();
+			ImGui::TextColored(DCOLOR_COMMENT, "; ");
+		}
+		if (!i)
 		{
 			if (label[0] == '@') {
-				ImGui::TextColored(DISASM_TBL_COLOR_LABEL_LOCAL, label.c_str());
+				mainLabelColorP = &DCOLOR_LABEL_LOCAL;
 			}
-			else {
-				ImGui::TextColored(DISASM_TBL_COLOR_LABEL_GLOBAL, label.c_str());
-			}
-			firstComment = false;
+			ImGui::TextColored(*mainLabelColorP, label.c_str());
+			ImGui::SameLine();
+			ImGui::TextColored(*mainLabelColorP, ": ");
 		}
 		else {
 			ImGui::SameLine();
-			ImGui::TextColored(DISASM_TBL_COLOR_LABEL_MINOR, " %s", label.c_str());
+			ImGui::TextColored(DCOLOR_LABEL_MINOR, " %s", label.c_str());
 		}
-		if (--i) {
+		if (i++ == MAX_DISASM_LABELS) {
 			ImGui::SameLine();
-			ImGui::Text("... ");
+			ImGui::TextColored(DCOLOR_COMMENT, "...");
 			break;
 		}
 	}
@@ -601,8 +604,8 @@ void dev::DisasmWindow::DrawDisasmStats(const Disasm::Line& _line)
 {
 	ImGui::TableNextColumn();
 	ColumnClippingEnable(*m_dpiScaleP); // enable clipping
-	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DISASM_TBL_BG_COLOR_ADDR));
-	const ImVec4& statsColor = _line.accessed ? DISASM_TBL_COLOR_ADDR : DISASM_TBL_COLOR_ZERO_STATS;
+	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DBG_COLOR_ADDR));
+	const ImVec4& statsColor = _line.accessed ? DCOLOR_ADDR : DCOLOR_ZERO_STATS;
 	ImGui::TextColored(statsColor, _line.statsS);
 	ColumnClippingDisable();
 }
@@ -612,19 +615,18 @@ void dev::DisasmWindow::DrawDisasmConsts(const Disasm::Line& _line)
 	ImGui::TableNextColumn();
 	if (!_line.consts) return;
 
-	bool firstComment = true;
-	int i = MAX_DISASM_LABELS;
+	int i = 0;
 	for (const auto& const_ : *_line.consts)
 	{
-		if (!firstComment) {
+		if (i) {
 			ImGui::SameLine();
-			ImGui::Text(", ");
+			ImGui::TextColored(DCOLOR_COMMENT, ", ");
 		}
-		ImGui::TextColored(DISASM_TBL_COLOR_ADDR, const_.c_str());
-		firstComment = false;
-		if (--i) {
+		ImGui::TextColored(DCOLOR_ADDR, const_.c_str());
+
+		if (i++ == MAX_DISASM_LABELS) {
 			ImGui::SameLine();
-			ImGui::Text("... ");
+			ImGui::TextColored(DCOLOR_COMMENT, "...");
 			break;
 		}
 	}
@@ -663,12 +665,12 @@ void dev::DisasmWindow::DrawDisasm2(const bool _isRunning)
 		ImGui::TableSetupColumn("stats", ImGuiTableColumnFlags_WidthFixed, STATS_W);
 		ImGui::TableSetupColumn("consts");
 
-		m_lines = dev::Min((int)m_disasmP->size(), GetVisibleLines());
+		m_disasmLines = dev::Min((int)m_disasmP->size(), GetVisibleLines());
 
-		for (int lineIdx = 0; lineIdx < m_lines; lineIdx++)
+		for (int lineIdx = 0; lineIdx < m_disasmLines; lineIdx++)
 		{
 			// TODO: fix it. replace with fixed amount of lines and without a need to check the end of the window
-			if (IsDisasmTableOutOfWindow()) break;
+			//if (IsDisasmTableOutOfWindow()) break;
 
 			ImGui::TableNextRow();
 
@@ -677,7 +679,7 @@ void dev::DisasmWindow::DrawDisasm2(const bool _isRunning)
 
 			// the line selection/highlight
 			ImGui::TableNextColumn();
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DISASM_TBL_BG_COLOR_BRK);
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DBG_COLOR_BRK);
 			const bool isSelected = m_selectedLineIdx == lineIdx;
 			if (ImGui::Selectable(std::format("##disasm{}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
@@ -739,15 +741,15 @@ void dev::DisasmWindow::DrawDisasm2(const bool _isRunning)
 	/////////////////////////////////////////////////////////	
 	// check the keys
 	/////////////////////////////////////////////////////////	
-	if (!_isRunning && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) &&
-		m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
+	if (ImGui::IsItemHovered() &&
+		m_disasmLines >= DISASM_INSTRUCTION_OFFSET)
 	{
 		// TODO: BUG: the code below only handles up and down arrow keys once for some reason
 		/*
 		if (ImGui::IsKeyDown(ImGuiKey_PageUp))
 		{
 			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 1, lineIdx - 1);
-			UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, 1 + DISASM_INSTRUCTION_OFFSET, false);
+			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, 1 + DISASM_INSTRUCTION_OFFSET, false);
 		}
 		else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
 		{
@@ -755,20 +757,20 @@ void dev::DisasmWindow::DrawDisasm2(const bool _isRunning)
 				m_selectedLineIdx += 1;
 				if (m_selectedLineIdx > lineIdx - 1) {
 					m_selectedLineIdx = lineIdx - 1;
-					UpdateDisasm(m_disasm[0].addr, -1 + DISASM_INSTRUCTION_OFFSET, false);
+					UpdateDisasm(m_disasmP->at(0).addr, -1 + DISASM_INSTRUCTION_OFFSET, false);
 				}
 			}
 		}
 		*/
 		if (ImGui::GetIO().MouseWheel > 0.0f)
 		{
-			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_lines - 1);
-			UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, 2 + DISASM_INSTRUCTION_OFFSET, false);
+			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);
+			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, 2 + DISASM_INSTRUCTION_OFFSET, false);
 		}
 		else if (ImGui::GetIO().MouseWheel < 0.0f)
 		{
 			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
-			UpdateDisasm(m_disasm[DISASM_INSTRUCTION_OFFSET].addr, -2 + DISASM_INSTRUCTION_OFFSET, false);
+			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, -2 + DISASM_INSTRUCTION_OFFSET, false);
 		}
 	}
 
@@ -790,13 +792,13 @@ void dev::DisasmWindow::DrawDisasm2(const bool _isRunning)
 	/////////////////////////////////////////////////////////
 	// request handling
 	/////////////////////////////////////////////////////////
-	if (!_isRunning && m_reqDisasm.type != ReqDisasm::Type::NONE && m_disasm.size() >= DISASM_INSTRUCTION_OFFSET)
+	if (!_isRunning && m_reqDisasm.type != ReqDisasm::Type::NONE && m_disasmLines >= DISASM_INSTRUCTION_OFFSET)
 	{
 		switch (m_reqDisasm.type)
 		{
 		case ReqDisasm::Type::UPDATE:
 		{
-			Addr addr = m_disasm[DISASM_INSTRUCTION_OFFSET].addr;
+			Addr addr = m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr;
 			UpdateDisasm(addr, DISASM_INSTRUCTION_OFFSET, false);
 		}
 		break;
@@ -807,7 +809,7 @@ void dev::DisasmWindow::DrawDisasm2(const bool _isRunning)
 
 		case ReqDisasm::Type::NAVIGATE_TO_ADDR:
 			if (m_navigateAddrsIdx == 0) {
-				m_navigateAddrs[m_navigateAddrsIdx] = m_disasm[DISASM_INSTRUCTION_OFFSET].addr;
+				m_navigateAddrs[m_navigateAddrsIdx] = m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr;
 				m_navigateAddrsSize++;
 			}
 			if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
@@ -899,7 +901,7 @@ void dev::DisasmWindow::UpdateDisasm2(const Addr _addr, const int _instructionsO
 {
 	//PERT_TEST_START(1)
 
-	m_disasmP = m_debugger.GetDisasm2(_addr, m_lines, -_instructionsOffset);
+	m_disasmP = m_debugger.GetDisasm2(_addr, m_disasmLines, -_instructionsOffset);
 	if (_updateSelection) m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
 
 	//PERT_TEST_END("UdateData")

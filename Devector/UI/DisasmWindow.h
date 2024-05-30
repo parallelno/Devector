@@ -34,7 +34,7 @@ namespace dev
 		char m_searchText[255] = "";
 		Debugger::DisasmLines m_disasm;
 		const Disasm::Lines* m_disasmP = nullptr;
-		int m_lines = Disasm::DISASM_LINES_MAX;
+		int m_disasmLines = Disasm::DISASM_LINES_MAX;
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		int m_selectedLineIdx = 0;

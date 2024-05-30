@@ -133,6 +133,8 @@ static const char* MN_5	= "5";
 static const char* MN_6	= "6";
 static const char* MN_7	= "7";
 
+static const char* DB_[1] = { MN_DB };
+
 static const char* NOP[1]		= {MN_NOP};
 static const char* LXI_B[2]		= {MN_LXI, MN_B};
 static const char* STAX_B[2]	= {MN_STAX, MN_B};
@@ -393,10 +395,10 @@ static const char* RST_7[2]		= {MN_RST, MN_7};
 // mnemonics names
 static const char** mnenomics[DISASM_CMDS] =
 {
-	NOP,   LXI_B,	STAX_B,	INX_B,	INR_B,	DCR_B,	MVI_B,	RLC, DB_8,	DAD_B,	LDAX_B,	DCX_B,	INR_C,	DCR_C,	MVI_C,	RRC,
-	DB_10, LXI_D,	STAX_D,	INX_D,	INR_D,	DCR_D,	MVI_D,	RAL, DB_18,	DAD_D,	LDAX_D,	DCX_D,	INR_E,	DCR_E,	MVI_E,	RAR,
-	DB_20, LXI_H,	SHLD,	INX_H,	INR_H,	DCR_H,	MVI_H,	DAA, DB_28,	DAD_H,	LHLD,	DCX_H,	INR_L,	DCR_L,	MVI_L,	CMA,
-	DB_30, LXI_SP,	STA,	INX_SP,	INR_M,	DCR_M,	MVI_M,	STC, DB_38,	DAD_SP,	LDA,	DCX_SP,	INR_A,	DCR_A,	MVI_A,	CMC,
+	NOP, LXI_B,	STAX_B,	INX_B,	INR_B,	DCR_B,	MVI_B,	RLC, DB_,	DAD_B,	LDAX_B,	DCX_B,	INR_C,	DCR_C,	MVI_C,	RRC,
+	DB_, LXI_D,	STAX_D,	INX_D,	INR_D,	DCR_D,	MVI_D,	RAL, DB_,	DAD_D,	LDAX_D,	DCX_D,	INR_E,	DCR_E,	MVI_E,	RAR,
+	DB_, LXI_H,	SHLD,	INX_H,	INR_H,	DCR_H,	MVI_H,	DAA, DB_,	DAD_H,	LHLD,	DCX_H,	INR_L,	DCR_L,	MVI_L,	CMA,
+	DB_, LXI_SP,STA,	INX_SP,	INR_M,	DCR_M,	MVI_M,	STC, DB_,	DAD_SP,	LDA,	DCX_SP,	INR_A,	DCR_A,	MVI_A,	CMC,
 
 	MOV_BB, MOV_BC, MOV_BD, MOV_BE, MOV_BH, MOV_BL, MOV_BM, MOV_BA, MOV_CB, MOV_CC, MOV_CD, MOV_CE, MOV_CH, MOV_CL, MOV_CM, MOV_CA,
 	MOV_DB, MOV_DC, MOV_DD, MOV_DE, MOV_DH, MOV_DL, MOV_DM, MOV_DA, MOV_EB, MOV_EC, MOV_ED, MOV_EE, MOV_EH, MOV_EL, MOV_EM, MOV_EA,
@@ -408,16 +410,18 @@ static const char** mnenomics[DISASM_CMDS] =
 	ANA_B, ANA_C, ANA_D, ANA_E, ANA_H, ANA_L, ANA_M, ANA_A, XRA_B, XRA_C, XRA_D, XRA_E, XRA_H, XRA_L, XRA_M, XRA_A,
 	ORA_B, ORA_C, ORA_D, ORA_E, ORA_H, ORA_L, ORA_M, ORA_A, CMP_B, CMP_C, CMP_D, CMP_E, CMP_H, CMP_L, CMP_M, CMP_A,
 
-	RNZ, POP_B,	  JNZ,	JMP,  CNZ, PUSH_B,	 ADI, RST_0, RZ,  RET,   JZ,  DB_CB, CZ,  CALL,	 ACI, RST_1,
-	RNC, POP_D,	  JNC,	OUT1, CNC, PUSH,	 SUI, RST_2, RC,  DB_D9, JC,  IN1,	 CC,  DB_DD, SBI, RST_3,
-	RPO, POP_H,	  JPO,	XTHL, CPO, PUSH_H,	 ANI, RST_4, RPE, PCHL,  JPE, XCHG,	 CPE, DB_ED, XRI, RST_5,
-	RP,  POP_PSW, JP,	DI,   CP,  PUSH_PSW, ORI, RST_6, RM,  SPHL,  JM,  EI,	 CM,  DB_FD, CPI, RST_7,
+	RNZ, POP_B,	  JNZ,	JMP,  CNZ, PUSH_B,	 ADI, RST_0, RZ,  RET,  JZ,  DB_,	CZ,  CALL,	 ACI, RST_1,
+	RNC, POP_D,	  JNC,	OUT1, CNC, PUSH,	 SUI, RST_2, RC,  DB_,	JC,  IN1,	CC,  DB_, SBI, RST_3,
+	RPO, POP_H,	  JPO,	XTHL, CPO, PUSH_H,	 ANI, RST_4, RPE, PCHL, JPE, XCHG,	CPE, DB_, XRI, RST_5,
+	RP,  POP_PSW, JP,	DI,   CP,  PUSH_PSW, ORI, RST_6, RM,  SPHL, JM,  EI,	CM,  DB_, CPI, RST_7,
 };
 
 const uint8_t T_CMD[1]		= {MNT_CMD};
 const uint8_t T_CMD_R[2]	= {MNT_CMD, MNT_REG};
 const uint8_t T_CMD_RR[3]	= {MNT_CMD, MNT_REG, MNT_REG}; 
 const uint8_t T_CMD_IM[2]	= {MNT_CMD, MNT_IMM};
+
+#define T_DB		T_CMD
 
 #define T_NOP		T_CMD
 #define T_LXI_B		T_CMD_R
@@ -679,10 +683,10 @@ const uint8_t T_CMD_IM[2]	= {MNT_CMD, MNT_IMM};
 // types of a mnemonic parts
 static const uint8_t* mnenomicTypes [DISASM_CMDS] =
 {
-	T_NOP,   T_LXI_B,	T_STAX_B,	T_INX_B,	T_INR_B,	T_DCR_B,	T_MVI_B,	T_RLC, T_DB_8,	T_DAD_B,	T_LDAX_B,	T_DCX_B,	T_INR_C,	T_DCR_C,	T_MVI_C,	T_RRC,
-	T_DB_10, T_LXI_D,	T_STAX_D,	T_INX_D,	T_INR_D,	T_DCR_D,	T_MVI_D,	T_RAL, T_DB_18,	T_DAD_D,	T_LDAX_D,	T_DCX_D,	T_INR_E,	T_DCR_E,	T_MVI_E,	T_RAR,
-	T_DB_20, T_LXI_H,	T_SHLD,		T_INX_H,	T_INR_H,	T_DCR_H,	T_MVI_H,	T_DAA, T_DB_28,	T_DAD_H,	T_LHLD,		T_DCX_H,	T_INR_L,	T_DCR_L,	T_MVI_L,	T_CMA,
-	T_DB_30, T_LXI_SP,	T_STA,		T_INX_SP,	T_INR_M,	T_DCR_M,	T_MVI_M,	T_STC, T_DB_38,	T_DAD_SP,	T_LDA,		T_DCX_SP,	T_INR_A,	T_DCR_A,	T_MVI_A,	T_CMC,
+	T_NOP,T_LXI_B,	T_STAX_B,	T_INX_B,	T_INR_B,	T_DCR_B,	T_MVI_B,	T_RLC, T_DB,	T_DAD_B,	T_LDAX_B,	T_DCX_B,	T_INR_C,	T_DCR_C,	T_MVI_C,	T_RRC,
+	T_DB, T_LXI_D,	T_STAX_D,	T_INX_D,	T_INR_D,	T_DCR_D,	T_MVI_D,	T_RAL, T_DB,	T_DAD_D,	T_LDAX_D,	T_DCX_D,	T_INR_E,	T_DCR_E,	T_MVI_E,	T_RAR,
+	T_DB, T_LXI_H,	T_SHLD,		T_INX_H,	T_INR_H,	T_DCR_H,	T_MVI_H,	T_DAA, T_DB,	T_DAD_H,	T_LHLD,		T_DCX_H,	T_INR_L,	T_DCR_L,	T_MVI_L,	T_CMA,
+	T_DB, T_LXI_SP,	T_STA,		T_INX_SP,	T_INR_M,	T_DCR_M,	T_MVI_M,	T_STC, T_DB,	T_DAD_SP,	T_LDA,		T_DCX_SP,	T_INR_A,	T_DCR_A,	T_MVI_A,	T_CMC,
 
 	T_MOV_BB, T_MOV_BC, T_MOV_BD, T_MOV_BE, T_MOV_BH, T_MOV_BL, T_MOV_BM, T_MOV_BA, T_MOV_CB, T_MOV_CC, T_MOV_CD, T_MOV_CE, T_MOV_CH, T_MOV_CL, T_MOV_CM, T_MOV_CA,
 	T_MOV_DB, T_MOV_DC, T_MOV_DD, T_MOV_DE, T_MOV_DH, T_MOV_DL, T_MOV_DM, T_MOV_DA, T_MOV_EB, T_MOV_EC, T_MOV_ED, T_MOV_EE, T_MOV_EH, T_MOV_EL, T_MOV_EM, T_MOV_EA,
@@ -694,10 +698,10 @@ static const uint8_t* mnenomicTypes [DISASM_CMDS] =
 	T_ANA_B, T_ANA_C, T_ANA_D, T_ANA_E, T_ANA_H, T_ANA_L, T_ANA_M, T_ANA_A, T_XRA_B, T_XRA_C, T_XRA_D, T_XRA_E, T_XRA_H, T_XRA_L, T_XRA_M, T_XRA_A,
 	T_ORA_B, T_ORA_C, T_ORA_D, T_ORA_E, T_ORA_H, T_ORA_L, T_ORA_M, T_ORA_A, T_CMP_B, T_CMP_C, T_CMP_D, T_CMP_E, T_CMP_H, T_CMP_L, T_CMP_M, T_CMP_A,
 
-	T_RNZ, T_POP_B,	  T_JNZ,	T_JMP,  T_CNZ, T_PUSH_B,	T_ADI, T_RST_0, T_RZ,  T_RET,   T_JZ,  T_DB_CB,	T_CZ,  T_CALL,	T_ACI, T_RST_1,
-	T_RNC, T_POP_D,	  T_JNC,	T_OUT1, T_CNC, T_PUSH,		T_SUI, T_RST_2, T_RC,  T_DB_D9, T_JC,  T_IN1,	T_CC,  T_DB_DD, T_SBI, T_RST_3,
-	T_RPO, T_POP_H,	  T_JPO,	T_XTHL, T_CPO, T_PUSH_H,	T_ANI, T_RST_4, T_RPE, T_PCHL,  T_JPE, T_XCHG,	T_CPE, T_DB_ED, T_XRI, T_RST_5,
-	T_RP,  T_POP_PSW, T_JP,		T_DI,   T_CP,  T_PUSH_PSW,	T_ORI, T_RST_6, T_RM,  T_SPHL,  T_JM,  T_EI,	T_CM,  T_DB_FD, T_CPI, T_RST_7,
+	T_RNZ, T_POP_B,	  T_JNZ,	T_JMP,  T_CNZ, T_PUSH_B,	T_ADI, T_RST_0, T_RZ,  T_RET,   T_JZ,  T_DB,	T_CZ,  T_CALL,	T_ACI, T_RST_1,
+	T_RNC, T_POP_D,	  T_JNC,	T_OUT1, T_CNC, T_PUSH,		T_SUI, T_RST_2, T_RC,  T_DB,	T_JC,  T_IN1,	T_CC,  T_DB, T_SBI, T_RST_3,
+	T_RPO, T_POP_H,	  T_JPO,	T_XTHL, T_CPO, T_PUSH_H,	T_ANI, T_RST_4, T_RPE, T_PCHL,  T_JPE, T_XCHG,	T_CPE, T_DB, T_XRI, T_RST_5,
+	T_RP,  T_POP_PSW, T_JP,		T_DI,   T_CP,  T_PUSH_PSW,	T_ORI, T_RST_6, T_RM,  T_SPHL,  T_JM,  T_EI,	T_CM,  T_DB, T_CPI, T_RST_7,
 };
 
 // instruction lengths in bytes
@@ -751,10 +755,10 @@ static const uint8_t cmdImms[DISASM_CMDS] =
 // mnemonics names lens
 static const uint8_t mnenomicLens[DISASM_CMDS] =
 {
-	1, 2, 2, 2,	2, 2, 2, 1, 2, 2, 2, 2,	2, 2, 2, 1,
-	2, 2, 2, 2,	2, 2, 2, 1, 2, 2, 2, 2,	2, 2, 2, 1,
-	2, 2, 1, 2,	2, 2, 2, 1, 2, 2, 1, 2,	2, 2, 2, 1,
-	2, 2, 1, 2,	2, 2, 2, 1, 2, 2, 1, 2,	2, 2, 2, 1,
+	1, 2, 2, 2,	2, 2, 2, 1, 1, 2, 2, 2,	2, 2, 2, 1,
+	1, 2, 2, 2,	2, 2, 2, 1, 1, 2, 2, 2,	2, 2, 2, 1,
+	1, 2, 1, 2,	2, 2, 2, 1, 1, 2, 1, 2,	2, 2, 2, 1,
+	1, 2, 1, 2,	2, 2, 2, 1, 1, 2, 1, 2,	2, 2, 2, 1,
 
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -766,14 +770,17 @@ static const uint8_t mnenomicLens[DISASM_CMDS] =
 	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 
-	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2,
-	1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1,	1, 2, 1, 2,
-	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1,	1, 2, 1, 2,
-	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1,	1, 2, 1, 2,
+	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2,
+	1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1,	1, 1, 1, 2,
+	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1,	1, 1, 1, 2,
+	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1,	1, 1, 1, 2,
 };
 
-#define ADDRS_LEN 7 //sizeof("0xFFFF");
-static char addrsS[0x10000 * ADDRS_LEN]; // for fast Addr to AddrS conversion
+#define I16_ADDRS_LEN 7	// sizeof("0xFFFF");
+static char addrsS[0x10000 * I16_ADDRS_LEN]; // for fast Addr to AddrS conversion
+
+#define I8_ADDRS_LEN 5	// sizeof("0xFF");
+static char smallAddrsS[0x100 * I8_ADDRS_LEN]; // for fast Addr to AddrS conversion
 
 void InitAddrsS()
 {
@@ -793,6 +800,17 @@ void InitAddrsS()
 		addrsS[i++] = addrS[3];
 		addrsS[i++] = 0;
 	}
+
+	char smallAddrS[3]; // "FF"
+	for (int i = 0, addr = 0; i < sizeof(smallAddrsS); addr++)
+	{
+		sprintf_s(smallAddrS, 3, "%02X", addr);
+		smallAddrsS[i++] = '0';
+		smallAddrsS[i++] = 'x';
+		smallAddrsS[i++] = smallAddrS[0];
+		smallAddrsS[i++] = smallAddrS[1];
+		smallAddrsS[i++] = 0;
+	}
 }
 
 struct IniterAddrsS {
@@ -800,12 +818,18 @@ struct IniterAddrsS {
 };
 static IniterAddrsS initerAddrsS;
 
-auto dev::AddrToAddrS(const Addr _addr) -> const char* { return addrsS + _addr * ADDRS_LEN; }
+auto dev::AddrToAddrI16S(const Addr _addr) -> const char* { return addrsS + _addr * I16_ADDRS_LEN; }
+auto dev::AddrToAddrI8S(const uint8_t _addr) -> const char* { return smallAddrsS + _addr * I8_ADDRS_LEN; }
 auto dev::GetMnemonic(const uint8_t _opcode) -> const char** { return mnenomics[_opcode]; }
 auto dev::GetMnemonicLen(const uint8_t _opcode) -> uint8_t { return mnenomicLens[_opcode]; }
 auto dev::GetMnemonicType(const uint8_t _opcode) -> const uint8_t* { return mnenomicTypes[_opcode]; }
 auto dev::GetImmediateType(const uint8_t _opcode) -> uint8_t { return cmdImms[_opcode]; }
 
+auto dev::Disasm::Line::GetImmediateS() const
+-> const char*
+{ 
+	return cmdImms[opcode] == CMD_IW_OFF1 ? AddrToAddrI16S(imm) : AddrToAddrI8S(imm);
+};
 
 auto dev::Disasm::AddLabes(const size_t _idx, const Addr _addr, const Labels& _labels)
 -> size_t
@@ -832,8 +856,9 @@ auto dev::Disasm::AddDb(const size_t _idx, Addr& _addr, const uint8_t _data,
 	if (_idx >= DISASM_LINES_MAX) return _idx;
 
 	auto& line = lines[_idx];
-	line.type = Line::Type::DB;
+	line.type = Line::Type::CODE;
 	line.addr = _addr;
+	line.opcode = 0x10; // db 0x10 is used as a placeholder
 	line.imm = _data;
 	line.accessed = _runs != UINT64_MAX && _reads != UINT64_MAX && _writes != UINT64_MAX;
 	line.breakpointStatus = _breakpointStatus;
@@ -855,8 +880,9 @@ auto dev::Disasm::AddCode(const size_t _idx, Addr& _addr, const uint32_t _cmd,
 	if (_idx >= DISASM_LINES_MAX) return _idx;
 
 	uint8_t opcode = _cmd & 0xFF;
+	auto immType = cmdImms[opcode];
 
-	if (cmdImms[opcode] == CMD_IB_OFF0) {
+	if (immType == CMD_IB_OFF0) {
 		return AddDb(_idx, _addr, opcode, _consts, _runs, _reads, _writes, _breakpointStatus);
 	}
 
@@ -872,11 +898,12 @@ auto dev::Disasm::AddCode(const size_t _idx, Addr& _addr, const uint32_t _cmd,
 	line.accessed = _runs != UINT64_MAX && _reads != UINT64_MAX && _writes != UINT64_MAX;
 	line.breakpointStatus = _breakpointStatus;
 
-	auto labelsI = _labels.find(data);
-	auto constsI = _consts.find(data);
-
-	line.labels = labelsI == _labels.end() ? nullptr : &(labelsI->second);
-	line.consts = constsI == _consts.end() ? nullptr : &constsI->second;
+	if (immType != CMD_IM_NONE) {
+		auto labelsI = _labels.find(data);
+		auto constsI = _consts.find(data);
+		line.labels = labelsI == _labels.end() ? nullptr : &(labelsI->second);
+		line.consts = constsI == _consts.end() ? nullptr : &constsI->second;
+	}
 
 	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", _runs, _reads, _writes);
 
@@ -897,6 +924,7 @@ auto dev::Disasm::Line::GetStr() const
 		auto mnemonic = mnenomics[opcode];
 		auto mnemonicLen = mnenomicLens[opcode];
 		auto mnemonicType = mnenomicTypes[opcode];
+		auto immType = cmdImms[opcode];
 		// print a mnemonic
 		for (int i = 0; i < mnemonicLen; i++)
 		{
@@ -915,21 +943,15 @@ auto dev::Disasm::Line::GetStr() const
 				break;
 			}
 			// draw an operand separator
-			if (mnemonicLen == 3 && i == 1) out += ",";
+			if (i == 1 && (mnemonicLen == 3 || immType == CMD_IB_OFF1 || immType == CMD_IW_OFF1)) out += ",";
 		}
 		// print an immediate operand
-		if (cmdImms[opcode] == CMD_IB_OFF1 || cmdImms[opcode] == CMD_IW_OFF1)
+		if (immType != CMD_IM_NONE)
 		{
-			if (mnemonicLen > 1) out += ",";
-			if (cmdImms[opcode] == CMD_IB_OFF1) out += std::format(" 0x{}", GetImmediateS()+4);
-			else out += std::format(" {}", GetImmediateS());
+			out += std::format(" {}", GetImmediateS());
 		}
 		return out;
 	}
-	case Type::DB:
-		out += std::format("db 0x{} ", imm);
-		return out;
-
 	case Type::LABELS: 
 		for (auto& label : *labels)
 		{

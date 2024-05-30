@@ -18,10 +18,10 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_H = 300;
 		static constexpr float ADDR_W = 50.0f;
 		static constexpr float CODE_W = 200.0f;
-		static constexpr ImU32 DISASM_TBL_BG_COLOR_ADDR = dev::IM_U32(0x353636FF);
+		static constexpr ImU32 DBG_COLOR_ADDR = dev::IM_U32(0x353636FF);
 
-		static constexpr ImVec4 DISASM_TBL_COLOR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
-		static constexpr ImVec4 DISASM_TBL_COLOR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
+		static constexpr ImVec4 DCOLOR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
+		static constexpr ImVec4 DCOLOR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
 
 		const std::string m_name = "TraceLog";
 

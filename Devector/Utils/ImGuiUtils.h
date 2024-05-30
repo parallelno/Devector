@@ -52,20 +52,23 @@ namespace dev
 	}
 
 	// disasm background colors
-	static constexpr ImU32 DISASM_TBL_BG_COLOR_BRK = dev::IM_U32(0x353636FF);
-	static constexpr ImU32 DISASM_TBL_BG_COLOR_ADDR = dev::IM_U32(0x353636FF);
+	static constexpr ImU32 DBG_COLOR_BRK = dev::IM_U32(0x353636FF);
+	static constexpr ImU32 DBG_COLOR_ADDR = dev::IM_U32(0x353636FF);
 
 	// disasm text colors
-	static constexpr ImVec4 DISASM_TBL_COLOR_COMMENT = dev::IM_VEC4(0x909090FF);
-	static constexpr ImVec4 DISASM_TBL_COLOR_LABEL_GLOBAL = dev::IM_VEC4(0xD0C443FF);
-	static constexpr ImVec4 DISASM_TBL_COLOR_LABEL_LOCAL = dev::IM_VEC4(0xA8742FFF);
-	static constexpr ImVec4 DISASM_TBL_COLOR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
-	static constexpr ImVec4 DISASM_TBL_COLOR_ADDR = dev::IM_VEC4(0x909090FF);
-	static constexpr ImVec4 DISASM_TBL_COLOR_ZERO_STATS = dev::IM_VEC4(0x606060FF);
-	static constexpr ImVec4 DISASM_TBL_COLOR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
-	static constexpr ImVec4 DISASM_TBL_COLOR_NUMBER = dev::IM_VEC4(0xD4D4D4FF);
-	static constexpr ImVec4 DISASM_TBL_COLOR_REG = dev::IM_VEC4(0x1ECF44FF);
-	static constexpr ImVec4 DISASM_TBL_COLOR_CONST = dev::IM_VEC4(0x8BE0E9FF);
+	static constexpr ImVec4 DCOLOR_COMMENT = dev::IM_VEC4(0x909090FF);
+	static constexpr ImVec4 DCOLOR_LABEL_GLOBAL = dev::IM_VEC4(0xD0C443FF);
+	static constexpr ImVec4 DCOLOR_LABEL_GLOBAL_IMM = dev::IM_VEC4(0xB0A46CFF); // a label that replaces an immediate operand
+	static constexpr ImVec4 DCOLOR_LABEL_LOCAL = dev::IM_VEC4(0xA8742FFF);
+	static constexpr ImVec4 DCOLOR_LABEL_LOCAL_IMM = dev::IM_VEC4(0x9E8154FF); // a label that replaces an immediate operand
+	static constexpr ImVec4 DCOLOR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
+	static constexpr ImVec4 DCOLOR_ADDR = dev::IM_VEC4(0x909090FF);
+	static constexpr ImVec4 DCOLOR_ZERO_STATS = dev::IM_VEC4(0x606060FF);
+	static constexpr ImVec4 DCOLOR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
+	static constexpr ImVec4 DCOLOR_NUMBER = dev::IM_VEC4(0xD0D0D0FF);
+	static constexpr ImVec4 DCOLOR_NUMBER_HIGHLIGHT = dev::IM_VEC4(0xFFFFFFFF);
+	static constexpr ImVec4 DCOLOR_REG = dev::IM_VEC4(0x1ECF44FF);
+	static constexpr ImVec4 DCOLOR_CONST = dev::IM_VEC4(0x8BE0E9FF);
 
 	constexpr ImU32 DISASM_TBL_COLOR_PC = dev::IM_U32(0x88F038FF);
 
@@ -123,8 +126,8 @@ namespace dev
 	auto DrawCodeLine2(const bool _tab, const bool _isRunning, const Disasm::Line& _line,
 		std::function<void(const Addr _addr)> _onMouseLeft,
 		std::function<void(const Addr _addr)> _onMouseRight) -> int;
-	auto DrawOperandAddr(const bool _isRunning, 
-		const char* _operand, const int _opAddr, ImVec4 _addrColor,
+	auto DrawImmediateOp(const bool _isRunning, const char* _operandS,
+		const int _operand, const ImVec4& _color, const ImVec4& _highlightColor,
 		std::function<void(const Addr _addr)> _onMouseLeft,
 		std::function<void(const Addr _addr)> _onMouseRight) -> int;
 	void DrawAddr(const bool _isRunning, const char* _addrS, uint8_t _highlightAlpha,
