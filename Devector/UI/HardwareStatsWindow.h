@@ -15,9 +15,9 @@ namespace dev
 		int64_t m_ccLastRun = 0;
 		Hardware& m_hardware;
 		bool& m_reqHardwareStatsReset;
-		bool m_autorunFdd;
 		bool m_ruslat = false;
 		int m_rustLatSwitched = 0;
+		bool m_restartOnLoadFdd;
 		
 		////////////////////
 		// stats
@@ -79,7 +79,7 @@ namespace dev
 	public:
 		HardwareStatsWindow(Hardware& _hardware,
 			const float* const _fontSizeP, const float* const _dpiScaleP, 
-			bool& _reset, const bool _autorunFdd);
+			bool& _reset, const bool _restartOnLoadFdd);
 		
 		void Update();
 

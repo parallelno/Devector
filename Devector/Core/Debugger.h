@@ -88,8 +88,7 @@ namespace dev
 		void Read(const GlobalAddr _globalAddr, const uint8_t _val);
 		void Write(const GlobalAddr _globalAddr, const uint8_t _val);
 
-		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) ->DisasmLines;
-		auto GetDisasm2(const Addr _addr, const size_t _lines, const int _instructionOffset) -> const Disasm::Lines*;
+		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) -> const Disasm::Lines*;
 
 		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
 		void AddBreakpoint(const Addr _addr,

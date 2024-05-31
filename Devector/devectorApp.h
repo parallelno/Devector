@@ -30,6 +30,8 @@ namespace dev
 		static constexpr int RECENT_FILES_MAX = 10;
 		const std::string LABELS_FILENAME = "debug.txt";
 		const std::string POPUP_FDD = "Fdd Setup";
+		const std::wstring EXT_ROM = L".ROM";
+		const std::wstring EXT_FDD = L".FDD";
 
 		std::unique_ptr <dev::Hardware> m_hardwareP;
 		std::unique_ptr <dev::Debugger> m_debuggerP;

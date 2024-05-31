@@ -10,12 +10,6 @@
 
 namespace dev
 {
-	/*void InitAddrsS();
-	struct IniterAddrsS {
-		IniterAddrsS();
-	};
-	static IniterAddrsS initerAddrsS;*/
-
 	// types of a mnemonic parts
 	#define MNT_CMD		0 // command
 	#define MNT_REG		1 // register
@@ -59,8 +53,9 @@ namespace dev
 			const AddrLabels* consts	= nullptr; // labels used as constants only
 			const AddrLabels* comments	= nullptr;
 			bool accessed	= false; // no runs, reads, writes yet
-
 			Breakpoint::Status breakpointStatus = Breakpoint::Status::DISABLED;
+
+			const void Init();
 			auto GetStr() const -> std::string;
 
 			inline const char* GetAddrS() const { return AddrToAddrI16S(addr); };
@@ -72,8 +67,6 @@ namespace dev
 
 		using Lines = std::array<Line, DISASM_LINES_MAX>;
 		Lines lines;
-
-		//Disasm() { InitAddrsS(); };
 		
 		auto AddLabes(const size_t _idx, const Addr _addr, const Labels& _labels) -> size_t;
 

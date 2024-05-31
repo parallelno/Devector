@@ -109,7 +109,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 
 				// the line selection/highlight
 				ImGui::TableNextColumn();
-				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DBG_COLOR_BRK);
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
 				const bool isSelected = selectedLineIdx == row;
 				if (ImGui::Selectable(std::format("##TraceLogLineId{:04d}", row).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 				{
@@ -152,7 +152,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 
 				// the constants column
 				ImGui::TableNextColumn();
-				ImGui::TextColored(DCOLOR_LABEL_MINOR, disasmLine.consts.c_str());
+				ImGui::TextColored(DASM_CLR_LABEL_MINOR, disasmLine.consts.c_str());
 				
 				if (_isRunning) ImGui::EndDisabled();
 			}

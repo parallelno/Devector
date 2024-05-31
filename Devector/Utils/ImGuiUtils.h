@@ -52,25 +52,25 @@ namespace dev
 	}
 
 	// disasm background colors
-	static constexpr ImU32 DBG_COLOR_BRK = dev::IM_U32(0x353636FF);
-	static constexpr ImU32 DBG_COLOR_ADDR = dev::IM_U32(0x353636FF);
+	static constexpr ImU32 DIS_BG_CLR_BRK = dev::IM_U32(0x353636FF);
+	static constexpr ImU32 DASM_BG_CLR_ADDR = dev::IM_U32(0x353636FF);
 
 	// disasm text colors
-	static constexpr ImVec4 DCOLOR_COMMENT = dev::IM_VEC4(0x909090FF);
-	static constexpr ImVec4 DCOLOR_LABEL_GLOBAL = dev::IM_VEC4(0xD0C443FF);
-	static constexpr ImVec4 DCOLOR_LABEL_GLOBAL_IMM = dev::IM_VEC4(0xB0A46CFF); // a label that replaces an immediate operand
-	static constexpr ImVec4 DCOLOR_LABEL_LOCAL = dev::IM_VEC4(0xA8742FFF);
-	static constexpr ImVec4 DCOLOR_LABEL_LOCAL_IMM = dev::IM_VEC4(0x9E8154FF); // a label that replaces an immediate operand
-	static constexpr ImVec4 DCOLOR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
-	static constexpr ImVec4 DCOLOR_ADDR = dev::IM_VEC4(0x909090FF);
-	static constexpr ImVec4 DCOLOR_ZERO_STATS = dev::IM_VEC4(0x606060FF);
-	static constexpr ImVec4 DCOLOR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
-	static constexpr ImVec4 DCOLOR_NUMBER = dev::IM_VEC4(0xD0D0D0FF);
-	static constexpr ImVec4 DCOLOR_NUMBER_HIGHLIGHT = dev::IM_VEC4(0xFFFFFFFF);
-	static constexpr ImVec4 DCOLOR_REG = dev::IM_VEC4(0x1ECF44FF);
-	static constexpr ImVec4 DCOLOR_CONST = dev::IM_VEC4(0x8BE0E9FF);
+	static constexpr ImVec4 DASM_CLR_COMMENT = dev::IM_VEC4(0x909090FF);
+	static constexpr ImVec4 DASM_CLR_LABEL_GLOBAL = dev::IM_VEC4(0xD0C443FF);
+	static constexpr ImVec4 DASM_CLR_LABEL_GLOBAL_IMM = dev::IM_VEC4(0xB0A46CFF); // a label that replaces an immediate operand
+	static constexpr ImVec4 DASM_CLR_LABEL_LOCAL = dev::IM_VEC4(0xA8742FFF);
+	static constexpr ImVec4 DASM_CLR_LABEL_LOCAL_IMM = dev::IM_VEC4(0x9E8154FF); // a label that replaces an immediate operand
+	static constexpr ImVec4 DASM_CLR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
+	static constexpr ImVec4 DASM_CLR_ADDR = dev::IM_VEC4(0x909090FF);
+	static constexpr ImVec4 DASM_CLR_ZERO_STATS = dev::IM_VEC4(0x606060FF);
+	static constexpr ImVec4 DASM_CLR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
+	static constexpr ImVec4 DASM_CLR_NUMBER = dev::IM_VEC4(0xD0D0D0FF);
+	static constexpr ImVec4 DASM_CLR_NUMBER_HIGHLIGHT = dev::IM_VEC4(0xFFFFFFFF);
+	static constexpr ImVec4 DASM_CLR_REG = dev::IM_VEC4(0x1ECF44FF);
+	static constexpr ImVec4 DASM_CLR_CONST = dev::IM_VEC4(0x8BE0E9FF);
 
-	constexpr ImU32 DISASM_TBL_COLOR_PC = dev::IM_U32(0x88F038FF);
+	constexpr ImU32 DASM_CLR_PC = dev::IM_U32(0x88F038FF);
 
 	// Make the UI compact because there are so many fields
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);

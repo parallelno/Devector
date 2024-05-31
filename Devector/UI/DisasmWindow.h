@@ -57,7 +57,6 @@ namespace dev
 		auto DrawDisasmLabels(const Disasm::Line& _line) -> ImVec2;
 		void DrawDisasmStats(const Disasm::Line& _line);
 		void DrawDisasmConsts(const Disasm::Line& _line);
-		void DrawDisasm2(const bool _isRunning);
 		void UpdateData(const bool _isRunning);
 		bool IsDisasmTableOutOfWindow() const;
 		int GetVisibleLines() const;
@@ -71,8 +70,6 @@ namespace dev
 			ReqDisasm& _reqDisasm, bool& _reset, bool& _reload);
 		void Update();
 		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
-			const bool _updateSelection = true);
-		void UpdateDisasm2(const Addr _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
 			const bool _updateSelection = true);
 	};
 

@@ -825,6 +825,20 @@ auto dev::GetMnemonicLen(const uint8_t _opcode) -> uint8_t { return mnenomicLens
 auto dev::GetMnemonicType(const uint8_t _opcode) -> const uint8_t* { return mnenomicTypes[_opcode]; }
 auto dev::GetImmediateType(const uint8_t _opcode) -> uint8_t { return cmdImms[_opcode]; }
 
+const void dev::Disasm::Line::Init()
+{
+	type = Type::CODE;
+	addr = 0;
+	opcode = 0;
+	imm = 0; // immediate operand
+	statsS[0] = '\0'; // contains: runs, reads, writes
+	labels = nullptr;
+	consts = nullptr; // labels used as constants only
+	comments = nullptr;
+	accessed = false; // no runs, reads, writes yet
+	breakpointStatus = Breakpoint::Status::DISABLED;
+}
+
 auto dev::Disasm::Line::GetImmediateS() const
 -> const char*
 { 
@@ -840,6 +854,8 @@ auto dev::Disasm::AddLabes(const size_t _idx, const Addr _addr, const Labels& _l
 	if (labelsI == _labels.end()) return _idx;
 
 	auto& line = lines[_idx];
+	line.Init();
+
 	line.type = Line::Type::LABELS;
 	line.addr = _addr;
 	line.labels = &labelsI->second;
@@ -856,6 +872,7 @@ auto dev::Disasm::AddDb(const size_t _idx, Addr& _addr, const uint8_t _data,
 	if (_idx >= DISASM_LINES_MAX) return _idx;
 
 	auto& line = lines[_idx];
+	line.Init();
 	line.type = Line::Type::CODE;
 	line.addr = _addr;
 	line.opcode = 0x10; // db 0x10 is used as a placeholder
@@ -891,6 +908,7 @@ auto dev::Disasm::AddCode(const size_t _idx, Addr& _addr, const uint32_t _cmd,
 	data &= cmdLen == 2 ? 0xFF : 0xFFFF;
 
 	auto& line = lines[_idx];
+	line.Init();
 	line.type = Line::Type::CODE;
 	line.addr = _addr;
 	line.opcode = opcode;

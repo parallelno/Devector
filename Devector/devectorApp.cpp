@@ -76,11 +76,11 @@ dev::DevectorApp::~DevectorApp()
 void dev::DevectorApp::WindowsInit()
 {
 	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", ""));
-	bool autorunFdd = GetSettingsBool("autorunFdd", false);
+	bool restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", false);
 
 	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
-	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqHardwareStatsReset, autorunFdd);
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqHardwareStatsReset, restartOnLoadFdd);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
 		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasm, m_reqHardwareStatsReset, m_reqMainWindowReload);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
@@ -111,7 +111,7 @@ bool OpenFileDialog(WCHAR* filePath, int size)
 	ofn.lpstrFile = filePath;
 	ofn.lpstrFile[0] = '\0';
 	ofn.nMaxFile = size;
-	ofn.lpstrFilter = L"All Files\0*.*\0";
+	ofn.lpstrFilter = L"All Files (*.rom, *.fdd)\0*.rom;*.fdd\0";
 	ofn.nFilterIndex = 1;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
@@ -160,9 +160,6 @@ void dev::DevectorApp::LoadRom(const std::wstring& _path)
 
 	m_debuggerP->Reset();
 	m_hardwareP->Request(Hardware::Req::RUN);
-	
-	RecentFilesUpdate(_path);
-	RecentFilesStore();
 
 	Log(L"File loaded: {}", _path);
 }
@@ -196,9 +193,6 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 		m_hardwareP->Request(Hardware::Req::RUN);
 	}
 
-	RecentFilesUpdate(_path, _driveIdx, _autoBoot);
-	RecentFilesStore();
-
 	Log(L"File loaded: {}", _path);
 }
 
@@ -214,12 +208,15 @@ void dev::DevectorApp::Reload()
 
 void dev::DevectorApp::MainMenuUpdate()
 {
-	static std::wstring fddPath = L"";
+	static std::wstring pathRecent = L"";
+	static bool autoBootRecent = false;
+	static int driveIdxRecent = 0;
 	bool openFddPopup = false;
-	static LoadFddStatus loadFddStatus = LoadFddStatus::NONE;
-	static bool autoBoot = false;
-	static std::wstring mountedFddPath;
-	static int selectedDriveIdx = 0;
+	static LoadFddStatus fddStatusPopup = LoadFddStatus::NONE;
+	static bool autoBootPopup = false;
+	static std::wstring fddPathMounted;
+	static int driveIdxPopup = 0;
+	static bool reqRecentFilesUpdate = false;
 
 	if (ImGui::BeginMenuBar())
 	{
@@ -232,14 +229,17 @@ void dev::DevectorApp::MainMenuUpdate()
 				// Open the file dialog
 				if (OpenFileDialog(path, MAX_PATH))
 				{
-				
 					auto ext = StrToUpper(dev::GetExt(path));
-					if (ext == L".ROM") {
+					pathRecent = path;
+
+					if (ext == EXT_ROM) {
 						LoadRom(path);
+						driveIdxRecent = -1;
+						autoBootRecent = false;
+						reqRecentFilesUpdate = true;
 					}
-					else if (ext == L".FDD")
+					else if (ext == EXT_FDD)
 					{
-						fddPath = path;
 						openFddPopup = true;
 					}
 					else {
@@ -261,15 +261,20 @@ void dev::DevectorApp::MainMenuUpdate()
 					if (ImGui::MenuItem(itemS.c_str()))
 					{
 						if (driveIdx < 0){
-							auto copyPath(path);
-							LoadRom(copyPath);
+							LoadRom(path);
+							pathRecent = path;
+							reqRecentFilesUpdate = true;
+							driveIdxRecent = -1;
+							autoBootRecent = false;
 						}
 						else
 						{
-							auto copyPath(path);
-							LoadFdd(copyPath, driveIdx, autoBoot);
+							LoadFdd(path, driveIdx, autoBoot);
+							pathRecent = path;
+							reqRecentFilesUpdate = true;
+							driveIdxRecent = driveIdx;
+							autoBootRecent = autoBoot;
 						}
-						break; // because m_recentFilePaths were modified
 					}
 				}
 				ImGui::EndMenu();
@@ -290,6 +295,14 @@ void dev::DevectorApp::MainMenuUpdate()
 		ImGui::EndMenuBar();
 	}
 
+	// update recent filepaths
+	if (reqRecentFilesUpdate) 
+	{
+		reqRecentFilesUpdate = false;
+		RecentFilesUpdate(pathRecent, driveIdxRecent, autoBootRecent);
+		RecentFilesStore();
+	}
+
 	// FDD: "boot or mount?" popup window
 	if (openFddPopup) ImGui::OpenPopup(POPUP_FDD.c_str());
 
@@ -306,13 +319,13 @@ void dev::DevectorApp::MainMenuUpdate()
 		{ 
 			ImGui::CloseCurrentPopup();
 
-			autoBoot = ( driveSelect == 0 );
-			selectedDriveIdx = dev::Max(driveSelect - 1, 0); // "0" and "1" are both associated with FDisk 0
+			autoBootPopup = ( driveSelect == 0 );
+			driveIdxPopup = dev::Max(driveSelect - 1, 0); // "0" and "1" are both associated with FDisk 0
 			// check if the mounted disk is updated
 			auto fddInfo = *m_hardwareP->Request(
-				Hardware::Req::GET_FDD_INFO, { {"_driveIdx", selectedDriveIdx} });
-			loadFddStatus = fddInfo["updated"] ? LoadFddStatus::UPDATED : LoadFddStatus::LOAD;
-			mountedFddPath = dev::StrToStrW(fddInfo["path"]);
+				Hardware::Req::GET_FDD_INFO, { {"_driveIdx", driveIdxPopup} });
+			fddStatusPopup = fddInfo["updated"] ? LoadFddStatus::UPDATED : LoadFddStatus::LOAD;
+			fddPathMounted = dev::StrToStrW(fddInfo["path"]);
 		}
 		ImGui::SetItemDefaultFocus();
 		ImGui::SameLine();
@@ -321,35 +334,39 @@ void dev::DevectorApp::MainMenuUpdate()
 	}
 	
 	// Save or Discard mounted updated fdd image? 
-	if (loadFddStatus == LoadFddStatus::UPDATED)
+	if (fddStatusPopup == LoadFddStatus::UPDATED)
 	{
 		if (GetSettingsBool("showSaveDiscardFddDialog", true))
 		{
-			loadFddStatus = LoadFddStatus::SAVE_DISCARD_DIALOG;
+			fddStatusPopup = LoadFddStatus::SAVE_DISCARD_DIALOG;
 			ImGui::OpenPopup("Save or Discard");
 		}
 		else {
 			auto discardFddChanges = GetSettingsBool("discardFddChanges", true);
-			loadFddStatus = discardFddChanges ? LoadFddStatus::LOAD : LoadFddStatus::SAVE;
+			fddStatusPopup = discardFddChanges ? LoadFddStatus::LOAD : LoadFddStatus::SAVE;
 		}
 	}
-	else if (loadFddStatus == LoadFddStatus::SAVE)
+	else if (fddStatusPopup == LoadFddStatus::SAVE)
 	{
 		// store the mounted updated fdd image
 		auto res = *m_hardwareP->Request(
-			Hardware::Req::GET_FDD_IMAGE, { {"_driveIdx", selectedDriveIdx} });
+			Hardware::Req::GET_FDD_IMAGE, { {"_driveIdx", driveIdxPopup} });
 		auto data = res["data"];
-		dev::SaveFile(mountedFddPath, data);
-		loadFddStatus = LoadFddStatus::LOAD;
+		dev::SaveFile(fddPathMounted, data);
+		fddStatusPopup = LoadFddStatus::LOAD;
 	}
-	else if (loadFddStatus == LoadFddStatus::LOAD)
+	else if (fddStatusPopup == LoadFddStatus::LOAD)
 	{
-		LoadFdd(fddPath, dev::Max(selectedDriveIdx, 0), autoBoot);	
-		loadFddStatus = LoadFddStatus::NONE;
+		LoadFdd(pathRecent, dev::Max(driveIdxPopup, 0), autoBootPopup);	
+
+		driveIdxRecent = driveIdxPopup;
+		autoBootRecent = autoBootPopup;
+		reqRecentFilesUpdate = true;
+		fddStatusPopup = LoadFddStatus::NONE;
 	}
 
 	// Save or Discard mounted updated fdd
-	auto fddStatus = DrawSaveDiscardFddPopup(selectedDriveIdx, mountedFddPath);
+	auto fddStatus = DrawSaveDiscardFddPopup(driveIdxPopup, fddPathMounted);
 	switch (fddStatus)
 	{
 	case FddStatus::ALWAYS_DISCARD:
@@ -357,7 +374,7 @@ void dev::DevectorApp::MainMenuUpdate()
 		SettingsUpdate("discardFddChanges", true);
 		
 	case FddStatus::DISCARD:
-		loadFddStatus = LoadFddStatus::LOAD;
+		fddStatusPopup = LoadFddStatus::LOAD;
 		break;
 
 	case FddStatus::ALWAYS_SAVE:
@@ -365,7 +382,7 @@ void dev::DevectorApp::MainMenuUpdate()
 		SettingsUpdate("discardFddChanges", false);
 
 	case FddStatus::SAVE:
-		loadFddStatus = LoadFddStatus::SAVE;
+		fddStatusPopup = LoadFddStatus::SAVE;
 		break;
 	}
 
@@ -399,9 +416,6 @@ void dev::DevectorApp::RecentFilesStore()
 
 void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path, const int _driveIdx, const bool _autoBoot)
 {
-	// make a copy
-	auto path{ _path };
-
 	// remove if it contains
 	m_recentFilePaths.remove_if(
 		[&_path](const auto& tuple) {
@@ -410,7 +424,7 @@ void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path, const int _d
 	);
 
 	// add a new one
-	m_recentFilePaths.push_front({path, _driveIdx, _autoBoot });
+	m_recentFilePaths.push_front({_path, _driveIdx, _autoBoot });
 	// check the amount
 	if (m_recentFilePaths.size() > RECENT_FILES_MAX)
 	{

@@ -328,89 +328,10 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 	return _addr;
 }
 
-// _instructionsOffset defines the start address of the disasm. 
-// 				_instructionsOffset = 0 means the start address is the _addr, 
-//				_instructionsOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
-auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset)
-->DisasmLines
-{
-	DisasmLines out;
-	if (_lines == 0) return out;
-
-	auto instructionsOffset = _instructionOffset > 0 ? _instructionOffset : -_instructionOffset;
-
-	int lines = (int)_lines;
-
-	// calculate a new address that precedes the specified 'addr' by the instructionsOffset
-	Addr addr = GetAddr(_addr, _instructionOffset);
-
-	if (_instructionOffset < 0 && addr == _addr)
-	{
-		// a new addr is not found. it means a data blob is ahead
-		addr -= (Addr)instructionsOffset;
-		lines -= instructionsOffset;
-
-		for (int i = 0; i < instructionsOffset; i++)
-		{
-			if (m_labels.contains(addr))
-			{
-				DisasmLine disasmLine(DisasmLine::Type::LABELS, addr, GetDisasmLabels(addr));
-				out.emplace_back(std::move(disasmLine));
-			}
-			
-			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
-			GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
-
-			auto breakpointStatus = GetBreakpointStatus(globalAddr);
-			DisasmLine lineS(DisasmLine::Type::CODE, addr, GetDisasmLineDb(db), m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], "", breakpointStatus);
-			out.emplace_back(lineS);
-
-			addr++;
-		}
-	}
-
-	for (int i = 0; i < lines; i++)
-	{
-		auto resOpcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
-		auto resDataL = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 1 } });
-		auto resDataH = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr + 2 } });
-		uint8_t opcode = resOpcode->at("data");
-		uint8_t dataL = resDataL->at("data");
-		uint8_t dataH = resDataH->at("data");
-
-		auto data = dataH << 8 | dataL;
-		if (m_labels.contains(addr))
-		{
-			DisasmLine disasmLine(DisasmLine::Type::LABELS, addr, GetDisasmLabels(addr));
-			out.emplace_back(std::move(disasmLine));
-		}
-
-		std::string consts;
-		if (cmd_lens[opcode] == 2)
-		{
-			consts = LabelsToStr(dataL, LABEL_TYPE_CONST);
-		}
-		else if (cmd_lens[opcode] == 3)
-		{
-			consts = LabelsToStr(data, LABEL_TYPE_ALL);
-		}
-
-		GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
-
-		auto disasmS = GetDisasmLine(opcode, dataL, dataH);
-		auto breakpointStatus = GetBreakpointStatus(globalAddr);
-		DisasmLine lineS(DisasmLine::Type::CODE, addr, disasmS, m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], consts, breakpointStatus);
-		out.emplace_back(lineS);
-
-		addr = addr + cmd_lens[opcode];
-	}
-	return out;
-}
-
 // _instructionOffset defines the start address of the disasm. 
 // 				_instructionOffset = 0 means the start address is the _addr, 
 //				_instructionOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
-auto dev::Debugger::GetDisasm2(const Addr _addr, const size_t _lines, const int _instructionOffset)
+auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset)
 -> const Disasm::Lines*
 {
 	if (_lines <= 0) return nullptr;
