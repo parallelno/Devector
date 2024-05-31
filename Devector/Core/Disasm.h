@@ -36,7 +36,7 @@ namespace dev
 
 		struct Line
 		{
-			static constexpr size_t STATS_LEN = 256;
+			static constexpr size_t STATS_LEN = 256; 
 
 			enum class Type {
 				COMMENT,

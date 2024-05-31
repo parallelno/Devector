@@ -309,6 +309,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	static int copyToClipboardAddr = -1; // if it's -1, don't add the option, if it's >=0, add the option with the addr = copyToClipboardAddr
 	static int addrHighlighted = -1; // -1 - no highlight, >=0 - the addrHighlighted is highlighted
 	static int addrHighlightedTimer = 0; // the highlight slowly decays during addrHighlightedTimer
+	bool anyLineIsHovered = false;
 
 	ImVec2 selectionMin;
 	ImVec2 selectionMax = {-1.0, -1.0};
@@ -374,20 +375,22 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				DrawDisasmCode(_isRunning, line, addrHighlighted, addrHighlightedTimer, copyToClipboardAddr, openItemContextMenu);
 				DrawDisasmStats(line);
 				DrawDisasmConsts(line);
-				selectionMax = ImGui::GetItemRectMax();
+				selectionMax.y = ImGui::GetItemRectMax().y;
+				selectionMax.x = ImGui::GetWindowContentRegionMax().x;
 				break;
 			}
 			default:
 				break;
 			}
 
+			bool lineIsHovered = dev::IsHovered(selectionMin, selectionMax);
+			anyLineIsHovered |= lineIsHovered;
+
 			// check if right-click on the row
-			if (!_isRunning && selectionMax.x != -1.0f && selectionMax.y != -1.0f &&
+			if (!_isRunning &&
 				ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 			{
-				auto mousePos = ImGui::GetMousePos();
-				if (mousePos.x >= selectionMin.x && mousePos.x < selectionMax.x &&
-					mousePos.y >= selectionMin.y && mousePos.y < selectionMax.y)
+				if (lineIsHovered)
 				{
 					if (!openItemContextMenu) {
 						openItemContextMenu = true;
@@ -409,27 +412,19 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	/////////////////////////////////////////////////////////	
 	// check the keys
 	/////////////////////////////////////////////////////////	
-	if (ImGui::IsItemHovered() &&
+	if (!_isRunning && anyLineIsHovered &&
 		m_disasmLines >= DISASM_INSTRUCTION_OFFSET)
 	{
-		// TODO: BUG: the code below only handles up and down arrow keys once for some reason
-		/*
-		if (ImGui::IsKeyDown(ImGuiKey_PageUp))
+		if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
 		{
-			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 1, lineIdx - 1);
-			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, 1 + DISASM_INSTRUCTION_OFFSET, false);
+			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);
+			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, 2 + DISASM_INSTRUCTION_OFFSET, false);
 		}
 		else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
 		{
-			{
-				m_selectedLineIdx += 1;
-				if (m_selectedLineIdx > lineIdx - 1) {
-					m_selectedLineIdx = lineIdx - 1;
-					UpdateDisasm(m_disasmP->at(0).addr, -1 + DISASM_INSTRUCTION_OFFSET, false);
-				}
-			}
+			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
+			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, -2 + DISASM_INSTRUCTION_OFFSET, false);
 		}
-		*/
 		if (ImGui::GetIO().MouseWheel > 0.0f)
 		{
 			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);

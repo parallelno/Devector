@@ -42,6 +42,13 @@ void dev::ColumnClippingEnable(const float _dpiScale)
 		), true);
 }
 
+bool dev::IsHovered(const ImVec2& _rectMin, const ImVec2& _rectMax)
+{
+	const auto& mousePos = ImGui::GetMousePos();
+	return mousePos.x >= _rectMin.x && mousePos.x < _rectMax.x &&
+		mousePos.y >= _rectMin.y && mousePos.y < _rectMax.y;
+}
+
 void dev::ColumnClippingDisable()
 {
 	ImGui::PopClipRect();

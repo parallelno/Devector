@@ -291,7 +291,7 @@ void dev::ImGuiApp::RequestHandler()
         break;
     }
     default:
-        return;
+        return; 
     };
 
     m_req = static_cast<int32_t>(REQ::NONE);

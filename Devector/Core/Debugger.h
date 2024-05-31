@@ -152,9 +152,9 @@ namespace dev
 			uint8_t m_dataL;
 			uint8_t m_dataH;
 
-			auto ToStr() const->std::string;
+			auto ToStr() const -> std::string;
 			void Clear();
-			Addr GetOperandAddr() { return m_dataL | (m_dataH << 8); };
+			Addr GetOperandAddr() const { return m_dataL | (m_dataH << 8); };
 		};
 
 		std::array <TraceLog, TRACE_LOG_SIZE> m_traceLog;

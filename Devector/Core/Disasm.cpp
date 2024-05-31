@@ -842,7 +842,7 @@ const void dev::Disasm::Line::Init()
 auto dev::Disasm::Line::GetImmediateS() const
 -> const char*
 { 
-	return cmdImms[opcode] == CMD_IW_OFF1 ? AddrToAddrI16S(imm) : AddrToAddrI8S(imm);
+	return cmdImms[opcode] == CMD_IW_OFF1 ? AddrToAddrI16S(imm) : AddrToAddrI8S(static_cast<uint8_t>(imm));
 };
 
 auto dev::Disasm::AddLabes(const size_t _idx, const Addr _addr, const Labels& _labels)

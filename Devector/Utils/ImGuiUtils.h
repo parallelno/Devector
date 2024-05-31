@@ -76,6 +76,7 @@ namespace dev
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);
 	void PopStyleCompact();
 	void UpdatePropertyPrintStat(const char* _parameterName);
+	bool IsHovered(const ImVec2& _rectMin, const ImVec2& _rectMax);
 	void ColumnClippingEnable(const float _dpiScale = 1.0f);
 	void ColumnClippingDisable();
 
