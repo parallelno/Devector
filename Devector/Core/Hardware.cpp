@@ -160,11 +160,6 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             m_reqRes.emplace({});
             break;
 
-        case Req::SET_MEM:
-            m_memory.SetRam(dataJ["data"], dataJ["addr"]);
-            m_reqRes.emplace({});
-            break;
-
         case Req::EXECUTE_INSTR:
             ExecuteInstruction();
             m_reqRes.emplace({});
@@ -263,6 +258,11 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             m_reqRes.emplace({
                 {"data", m_fdc.GetFddImage(dataJ["_driveIdx"])},
                 });
+            break;
+
+        case Req::SET_MEM:
+            m_memory.SetRam(dataJ["addr"], dataJ["data"]);
+            m_reqRes.emplace({});
             break;
 
         case Req::IS_ROM_ENABLED:

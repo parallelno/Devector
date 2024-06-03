@@ -42,13 +42,6 @@ void dev::ColumnClippingEnable(const float _dpiScale)
 		), true);
 }
 
-bool dev::IsHovered(const ImVec2& _rectMin, const ImVec2& _rectMax)
-{
-	const auto& mousePos = ImGui::GetMousePos();
-	return mousePos.x >= _rectMin.x && mousePos.x < _rectMax.x &&
-		mousePos.y >= _rectMin.y && mousePos.y < _rectMax.y;
-}
-
 void dev::ColumnClippingDisable()
 {
 	ImGui::PopClipRect();
@@ -311,118 +304,48 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 	}
 }
 
-int dev::DrawImmediateOp(const bool _isRunning,
-	const char* _operandS, const int _operand, const ImVec4& _color, const ImVec4& _highlightColor,
-	std::function<void(const Addr _addr)> _onMouseLeft,
-	std::function<void(const Addr _addr)> _onMouseRight)
+auto dev::DrawAddr(const bool _isRunning,
+	const char* _operandS, const ImVec4& _color, 
+	const ImVec4& _highlightColor, bool _forceHighlight)
+-> UIItemMouseAction
 {
-	int reqUpdateAddr = - 1;
+	ImVec2 textPos;
+	ImVec2 textSize;
 
+	auto mouseAction = UIItemMouseAction::NONE;
 	if (!_isRunning &&
 		!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
 	{
-		ImVec2 textPos = ImGui::GetCursorScreenPos();
-		ImVec2 textSize = ImGui::CalcTextSize(_operandS);
+		textPos = ImGui::GetCursorScreenPos();
+		textSize = ImGui::CalcTextSize(_operandS);
+
 		if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
-		{
-			ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, 255));
-
-			reqUpdateAddr = _operand;
-
-			ImGui::BeginTooltip();
-			ImGui::Text("Address: 0x%04X\n", _operand);
-			ImGui::EndTooltip();
+		{	
+			mouseAction = UIItemMouseAction::HOVERED;
+			_forceHighlight = true;
 
 			// if it's clicked, scroll the disasm to highlighted addr
-			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-			{
-				_onMouseLeft(reqUpdateAddr);
-			}
-
-			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-			{
-				_onMouseRight(reqUpdateAddr);
-			}
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) mouseAction = UIItemMouseAction::LEFT;
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) mouseAction = UIItemMouseAction::RIGHT;
 		}
+	}
+
+	// draw a highlight box
+	if (_forceHighlight)
+	{
+		ImGui::GetWindowDrawList()->
+			AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), DASM_BG_CLR_ADDR_HIGHLIGHT);
 	}
 	// draw a hexadecimal literal
-	ImGui::TextColored(reqUpdateAddr < 0 ? _color : _highlightColor, _operandS);
+	ImGui::TextColored(_forceHighlight ? _highlightColor : _color, _operandS);
 
-	return reqUpdateAddr;
+	return mouseAction;
 }
 
-int dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::DisasmLine& _line,
-	std::function<void(const Addr _addr)> _onMouseLeft,
-	std::function<void(const Addr _addr)> _onMouseRight)
+auto dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Disasm::Line& _line)
+-> UIItemMouseAction
 {
-	int addrHighlighted = -1;
-	auto cmd_splitted = dev::Split(_line.str, ' ');
-	int i = 0;
-	for (const auto& cmd_parts : cmd_splitted)
-	{
-		if (i == 0)
-		{
-			// draw a mnenonic
-			if (_tab){
-				ImGui::TextColored(DASM_CLR_MNEMONIC, "\t%s ", cmd_parts.c_str());
-			}
-			else {
-				ImGui::TextColored(DASM_CLR_MNEMONIC, "%s ", cmd_parts.c_str());
-			}
-		}
-		else
-		{
-			// draw an operand separator
-			if (i == 2)
-			{
-				ImGui::SameLine();
-				ImGui::TextColored(DASM_CLR_NUMBER, ", ");
-			}
-
-			// draw an operand
-			auto operands = dev::Split(cmd_parts, ';'); // split into operands
-
-			int operandIdx = 0;
-			for (const auto& operand : operands)
-			{
-				if (operand[0] == '0' && operands.size() == 1) // if there is no CONST
-				{
-					// check if the hexadecimal literal is hovered
-					ImGui::SameLine();
-					addrHighlighted = DrawImmediateOp(_isRunning, operand.c_str(), -1, DASM_CLR_NUMBER, DASM_CLR_NUMBER_HIGHLIGHT, _onMouseLeft, _onMouseRight);
-				}
-				else if (cmd_parts.size() <= 2 || cmd_parts == "PSW")
-				{
-					// draw a reg
-					ImGui::SameLine();
-					ImGui::TextColored(DASM_CLR_REG, operand.c_str());
-				}
-				else
-				{
-					// draw a const value
-					if (operand[0] == '0') {
-						ImGui::SameLine();
-						ImGui::TextColored(DASM_CLR_COMMENT, ";%s", operand.c_str());
-					}
-					else {
-						// draw a const
-						ImGui::SameLine();
-						ImGui::TextColored(DASM_CLR_CONST, "%s ", operand.c_str());
-					}
-				}
-				operandIdx++;
-			}
-		}
-		i++;
-	}
-	return addrHighlighted;
-}
-
-int dev::DrawCodeLine2(const bool _tab, const bool _isRunning, const Disasm::Line& _line,
-	std::function<void(const Addr _addr)> _onMouseLeft,
-	std::function<void(const Addr _addr)> _onMouseRight)
-{
-	int addrHighlighted = -1;
+	auto uiItemMouseAction = UIItemMouseAction::NONE;
 	auto opcode = _line.opcode;
 	auto mnemonic = dev::GetMnemonic(opcode);
 	auto mnemonicLen = dev::GetMnemonicLen(opcode);
@@ -465,68 +388,35 @@ int dev::DrawCodeLine2(const bool _tab, const bool _isRunning, const Disasm::Lin
 		ImGui::SameLine();
 		ImGui::Text(" "); ImGui::SameLine();
 
-		const char* operand = _line.GetConst();
+		const char* operand = _line.GetFirstConst();
 		const ImVec4* color = &DASM_CLR_CONST;
 
-		if (immType == CMD_IW_OFF1) {
-			if (_line.labels) {
-				operand = _line.GetLabel();
+		if (immType == CMD_IW_OFF1 && _line.labels) 
+		{
+				operand = _line.GetFirstLabel();
 				color = operand[0] == '@' ? &DASM_CLR_LABEL_LOCAL_IMM  : &DASM_CLR_LABEL_GLOBAL_IMM;
-			}
 		}
+		bool immLabel = operand != nullptr;
+
 		color = operand ? color : &DASM_CLR_NUMBER;
 		operand = operand ? operand : _line.GetImmediateS();
-		addrHighlighted = DrawImmediateOp(_isRunning, operand, _line.imm, *color, DASM_CLR_NUMBER_HIGHLIGHT, _onMouseLeft, _onMouseRight);
-	}
-
-
-	return addrHighlighted;
-}
-
-
-void dev::DrawAddr(const bool _isRunning, const char* _addrS, uint8_t _highlightAlpha,
-			std::function<void()> _onMouseLeft,
-			std::function<void()> _onMouseRight)
-{
-	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
-
-	bool drawNormalLiteral = true;
-	if (!_isRunning &&
-		!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
-	{
-		ImVec2 textPos = ImGui::GetCursorScreenPos();
-		ImVec2 textSize = ImGui::CalcTextSize(_addrS);
-		if ((_highlightAlpha) ||
-			ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
-		{
-			ImGui::GetWindowDrawList()->AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), IM_COL32(100, 10, 150, _highlightAlpha));
-			// draw a highlighted hexadecimal literal
-			ImGui::TextColored(dev::IM_VEC4(0xFFFFFFFF), _addrS);
-			
-			// if it's clicked, scroll the disasm to highlighted addr
-			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-			{
-				_onMouseLeft();
-			}
-
-			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-			{
-				_onMouseRight();
-			}
-
-			drawNormalLiteral = false;
+		uiItemMouseAction = DrawAddr(_isRunning, operand, *color, DASM_CLR_NUMBER_HIGHLIGHT, 0);
+		
+		if (immLabel && uiItemMouseAction != UIItemMouseAction::NONE) {
+			ImGui::BeginTooltip();
+			ImGui::Text("Address: 0x%04X\n", _line.imm);
+			ImGui::EndTooltip();
 		}
+
 	}
-	if (drawNormalLiteral)
-	{
-		ImGui::TextColored(DASM_CLR_LABEL_MINOR, _addrS);
-	}
+
+	return uiItemMouseAction;
 }
 
-auto dev::DrawSaveDiscardFddPopup(int _selectedDriveIdx, std::wstring _mountedFddPath)
+auto dev::DrawSaveDiscardFddPopup(int _selectedDriveIdx, const std::wstring& _mountedFddPath)
 -> FddStatus
 {
-	auto out = FddStatus::NONE;
+	auto fddStatus = FddStatus::NONE;
 
 	// Dialog. Save or Discard mounted updated fdd image?
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
@@ -550,9 +440,9 @@ auto dev::DrawSaveDiscardFddPopup(int _selectedDriveIdx, std::wstring _mountedFd
 			ImGui::CloseCurrentPopup();
 			// save settings
 			if (doNotAskAgain) {
-				out = FddStatus::ALWAYS_SAVE;
+				fddStatus = FddStatus::ALWAYS_SAVE;
 			}
-			out = FddStatus::SAVE;
+			fddStatus = FddStatus::SAVE;
 		}
 		ImGui::SetItemDefaultFocus();
 		ImGui::SameLine();
@@ -561,12 +451,12 @@ auto dev::DrawSaveDiscardFddPopup(int _selectedDriveIdx, std::wstring _mountedFd
 			ImGui::CloseCurrentPopup();
 			// save settings
 			if (doNotAskAgain) {
-				out = FddStatus::ALWAYS_DISCARD;
+				fddStatus = FddStatus::ALWAYS_DISCARD;
 			}
-			out = FddStatus::DISCARD;
+			fddStatus = FddStatus::DISCARD;
 		}
 		ImGui::EndPopup();
 	}
 
-	return out;
+	return fddStatus;
 }

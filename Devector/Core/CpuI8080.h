@@ -23,6 +23,13 @@ namespace dev
 {
 	class CpuI8080
 	{
+		// consts
+		static constexpr uint8_t OPCODE_RST7 = 0xff;
+		static constexpr uint8_t OPCODE_OUT = 0xd3;
+		static constexpr uint64_t MACHINE_CC = 4; // a number of clock cycles one machine cycle takes
+		static constexpr int INSTR_EXECUTED = 0; // machine_cycle index indicating the instruction executon is over
+
+		// Registers
 		uint64_t m_cc; // clock cycles. it's the debug related data
 		Addr m_pc, m_sp; // program counter, stack pointer
 		uint8_t m_a, m_b, m_c, m_d, m_e, m_h, m_l; // registers
@@ -43,16 +50,12 @@ namespace dev
 		bool m_flagUnused5; // unused, always 0 in Vector06c
 
 		int m_machineCycle; // a machine cycle index of the currently executed instruction
-		static constexpr uint64_t MACHINE_CC = 4; // a number of clock cycles one machine cycle takes
-		static constexpr int INSTR_EXECUTED = 0; // machine_cycle index indicating the instruction executon is over
 
-		// interruption
+		// Interruption
 		bool m_INTE; // set if an iterrupt enabled
 		bool m_IFF; // set by the 50 Hz interruption timer. it is ON until an iterruption call (RST7)
 		bool m_HLTA; // indicates that HLT instruction is executed
 		bool m_eiPending; // if set, the interruption call is pending until the next instruction
-		static constexpr uint8_t OPCODE_RST7 = 0xff;
-		static constexpr uint8_t OPCODE_OUT = 0xd3;
 
 	public:
 		// memory + io interface

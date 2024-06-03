@@ -56,7 +56,7 @@ namespace dev
 		void Init();
 		// internal thread access
 		void SetMemType(const MemType _memType);
-		void SetRam(const std::vector<uint8_t>& _data, const Addr _addr = ROM_LOAD_ADDR);
+		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
 		auto GetByte(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
 		void SetByte(GlobalAddr _globalAddr, uint8_t _value, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		auto GetWord(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint16_t;

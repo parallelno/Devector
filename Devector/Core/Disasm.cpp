@@ -834,7 +834,7 @@ const void dev::Disasm::Line::Init()
 	statsS[0] = '\0'; // contains: runs, reads, writes
 	labels = nullptr;
 	consts = nullptr; // labels used as constants only
-	comments = nullptr;
+	comment = nullptr;
 	accessed = false; // no runs, reads, writes yet
 	breakpointStatus = Breakpoint::Status::DISABLED;
 }
@@ -859,6 +859,24 @@ auto dev::Disasm::AddLabes(const size_t _idx, const Addr _addr, const Labels& _l
 	line.type = Line::Type::LABELS;
 	line.addr = _addr;
 	line.labels = &labelsI->second;
+
+	return _idx + 1;
+}
+
+auto dev::Disasm::AddComment(const size_t _idx, const Addr _addr, const Comments& _comments)
+-> size_t
+{
+	if (_idx >= DISASM_LINES_MAX) return _idx;
+
+	auto commentI = _comments.find(_addr);
+	if (commentI == _comments.end()) return _idx;
+
+	auto& line = lines[_idx];
+	line.Init();
+
+	line.type = Line::Type::COMMENT;
+	line.addr = _addr;
+	line.comment = &commentI->second;
 
 	return _idx + 1;
 }
@@ -975,6 +993,10 @@ auto dev::Disasm::Line::GetStr() const
 		{
 			out += std::format("{} ", label);
 		}
+		return out;
+
+	case Type::COMMENT:
+		out += std::format("; ", *comment);
 		return out;
 	}
 

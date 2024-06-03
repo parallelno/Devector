@@ -26,7 +26,7 @@ void dev::Memory::SetMemType(const MemType _memType)
 {
 	m_memType = _memType;
 }
-void dev::Memory::SetRam(const std::vector<uint8_t>& _data, const Addr _addr)
+void dev::Memory::SetRam(const Addr _addr, const std::vector<uint8_t>& _data )
 {
 	std::copy(_data.begin(), _data.end(), m_ram.data() + _addr);
 }

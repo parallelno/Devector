@@ -351,6 +351,7 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 		for (; lineIdx < -_instructionOffset;)
 		{
 			lineIdx = m_disasm.AddLabes(lineIdx, addr, m_labels);
+			lineIdx = m_disasm.AddComment(lineIdx, addr, m_comments);
 
 			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 			auto breakpointStatus = GetBreakpointStatus(addr);
@@ -363,6 +364,7 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 	for (; lineIdx < lines;)
 	{
 		lineIdx = m_disasm.AddLabes(lineIdx, addr, m_labels);
+		lineIdx = m_disasm.AddComment(lineIdx, addr, m_comments);
 
 		uint32_t cmd = m_hardware.Request(Hardware::Req::GET_THREE_BYTES_RAM, { { "addr", addr } })->at("data");
 
@@ -401,18 +403,26 @@ void dev::Debugger::LoadDebugData(const std::wstring& _path)
 
 	// add labels
 	if (debugDataJ.contains("labels")){
-		for(auto& [labelName, addrS] : debugDataJ["labels"].items())
+		for(auto& [str, addrS] : debugDataJ["labels"].items())
 		{
 			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
-			m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
+			m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(str);
 		}
 	}
-
+	// add consts
 	if (debugDataJ.contains("consts")){
-		for(auto& [labelName, addrS] : debugDataJ["consts"].items())
+		for(auto& [str, addrS] : debugDataJ["consts"].items())
 		{
 			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
-			m_consts.emplace(addr, AddrLabels{}).first->second.emplace_back(labelName);
+			m_consts.emplace(addr, AddrLabels{}).first->second.emplace_back(str);
+		}
+	}
+	// add comments
+	if (debugDataJ.contains("comments")) {
+		for (auto& [addrS, str] : debugDataJ["comments"].items())
+		{
+			Addr addr = dev::StrHexToInt(addrS.c_str());
+			m_comments.emplace(addr, str);
 		}
 	}
 }
@@ -421,6 +431,19 @@ void dev::Debugger::ResetLabels()
 {
 	m_labels.clear();
 	m_consts.clear();
+	m_comments.clear();
+}
+
+auto dev::Debugger::GetComment(const Addr _addr) const
+-> const std::string*
+{
+	auto commentI = m_comments.find(_addr);
+	return (commentI != m_comments.end()) ? &commentI->second : nullptr;
+}
+
+void dev::Debugger::SetComment(const Addr _addr, const std::string& _comment)
+{
+	m_comments[_addr] = _comment;
 }
 
 //////////////////////////////////////////////////////////////
@@ -430,67 +453,60 @@ void dev::Debugger::ResetLabels()
 //////////////////////////////////////////////////////////////
 
 // a hardware thread
-void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _opcode, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl)
+void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, 
+	const uint8_t _opcode, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl)
 {
+	// skip repeataive HLT
 	if (_opcode == OPCODE_HLT && m_traceLog[m_traceLogIdx].m_opcode == OPCODE_HLT) {
 		return;
 	}
 
-	m_traceLogIdx = (m_traceLogIdx - 1) % TRACE_LOG_SIZE;
+	m_traceLogIdx = --m_traceLogIdx % TRACE_LOG_SIZE;
 	m_traceLog[m_traceLogIdx].m_globalAddr = _globalAddr;
 	m_traceLog[m_traceLogIdx].m_opcode = _opcode;
-
-	if (_opcode == OPCODE_PCHL)
-	{
-		m_traceLog[m_traceLogIdx].m_dataL = _hl & 0xff;
-		m_traceLog[m_traceLogIdx].m_dataH = _hl >> 8;
-	}
-	else {
-		m_traceLog[m_traceLogIdx].m_dataL = _dataL;
-		m_traceLog[m_traceLogIdx].m_dataH = _dataH;
-	}
+	m_traceLog[m_traceLogIdx].m_dataL = _opcode != OPCODE_PCHL ? _dataL : _hl & 0xff;
+	m_traceLog[m_traceLogIdx].m_dataH = _opcode != OPCODE_PCHL ? _dataH : _hl >> 8;
 }
 
 auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const size_t _filter)
-->DisasmLines
+-> const Disasm::Lines*
 {
-	size_t filter = dev::Min(_filter, OPCODE_TYPE_MAX);
-	size_t offset = dev::Max(_offset, 0);
+	//size_t filter = dev::Min(_filter, OPCODE_TYPE_MAX);
+	//size_t offset = dev::Max(_offset, 0);
 
-	DisasmLines out;
+	//DisasmLines out;
 
-	for (int i = 0; i < offset; i++)
-	{
-		m_traceLogIdxViewOffset = TraceLogNextLine(m_traceLogIdxViewOffset, _offset < 0, filter);
-	}
+	//for (int i = 0; i < offset; i++)
+	//{
+	//	m_traceLogIdxViewOffset = TraceLogNextLine(m_traceLogIdxViewOffset, _offset < 0, filter);
+	//}
 
-	size_t idx = m_traceLogIdx + m_traceLogIdxViewOffset;
-	size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
-	size_t line = 0;
+	//size_t idx = m_traceLogIdx + m_traceLogIdxViewOffset;
+	//size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
+	//size_t line = 0;
+	//size_t first_line_idx = TraceLogNearestForwardLine(m_traceLogIdx, filter);
 
-	size_t first_line_idx = TraceLogNearestForwardLine(m_traceLogIdx, filter);
+	//for (; idx <= idx_last && line < _lines; idx++)
+	//{
+	//	auto globalAddr = m_traceLog[idx % TRACE_LOG_SIZE].m_globalAddr;
+	//	if (globalAddr < 0) break;
 
-	for (; idx <= idx_last && line < _lines; idx++)
-	{
-		auto globalAddr = m_traceLog[idx % TRACE_LOG_SIZE].m_globalAddr;
+	//	if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
+	//	{
+	//		std::string str = m_traceLog[idx % TRACE_LOG_SIZE].ToStr();
 
-		if (globalAddr < 0) break;
+	//		const Addr operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
+	//		std::string constsS = LabelsToStr(operand_addr, LABEL_TYPE_ALL);
 
-		if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
-		{
-			std::string lineS = m_traceLog[idx % TRACE_LOG_SIZE].ToStr();
+	//		DisasmLine lineDisasm(DisasmLine::Type::CODE, Addr(globalAddr), str, 0,0,0, constsS);
+	//		out.emplace_back(std::move(lineDisasm));
 
-			const Addr operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
-			std::string constsS = LabelsToStr(operand_addr, LABEL_TYPE_ALL);
+	//		line++;
+	//	}
+	//}
 
-			DisasmLine lineDisasm(DisasmLine::Type::CODE, Addr(globalAddr), lineS, 0,0,0, constsS);
-			out.emplace_back(std::move(lineDisasm));
-
-			line++;
-		}
-	}
-
-	return out;
+	//return out;
+	return nullptr;
 }
 
 auto dev::Debugger::TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const

@@ -38,4 +38,7 @@ namespace dev
 		Type type = Type::NONE;
 		int addr = 0;
 	};
+
+	enum class UIItemMouseAction { NONE = 0, HOVERED, LEFT, RIGHT, MIDDLE };
+	enum class FddStatus { NONE, DISCARD, SAVE, ALWAYS_DISCARD, ALWAYS_SAVE };
 }

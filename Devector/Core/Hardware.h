@@ -43,7 +43,6 @@ namespace dev
 
 		enum class Req: int {
 			NONE = 0,
-			SET_MEM,
 			RUN,
 			STOP,
 			IS_RUNNING,
@@ -66,6 +65,7 @@ namespace dev
 			GET_FDD_IMAGE,
 			GET_RUSLAT,
 			GET_RUSLAT_HISTORY,
+			SET_MEM,
 			IS_ROM_ENABLED,
 			KEY_HANDLING,
 			SCROLL_VERT,

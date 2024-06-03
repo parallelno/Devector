@@ -54,6 +54,7 @@ namespace dev
 	// disasm background colors
 	static constexpr ImU32 DIS_BG_CLR_BRK = dev::IM_U32(0x353636FF);
 	static constexpr ImU32 DASM_BG_CLR_ADDR = dev::IM_U32(0x353636FF);
+	static constexpr ImU32 DASM_BG_CLR_ADDR_HIGHLIGHT = dev::IM_U32(0x640A96FF);
 
 	// disasm text colors
 	static constexpr ImVec4 DASM_CLR_COMMENT = dev::IM_VEC4(0x909090FF);
@@ -76,7 +77,6 @@ namespace dev
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);
 	void PopStyleCompact();
 	void UpdatePropertyPrintStat(const char* _parameterName);
-	bool IsHovered(const ImVec2& _rectMin, const ImVec2& _rectMax);
 	void ColumnClippingEnable(const float _dpiScale = 1.0f);
 	void ColumnClippingDisable();
 
@@ -121,20 +121,8 @@ namespace dev
 			const char* _hint = "", const char* _help = "", const ImGuiInputTextFlags _flags = ImGuiInputTextFlags_EnterReturnsTrue);
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val, const char* _help = "");
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
-	auto DrawCodeLine(const bool _tab, const bool _isRunning, const Debugger::DisasmLine& _line,
-			std::function<void(const Addr _addr)> _onMouseLeft,
-			std::function<void(const Addr _addr)> _onMouseRight) -> int;
-	auto DrawCodeLine2(const bool _tab, const bool _isRunning, const Disasm::Line& _line,
-		std::function<void(const Addr _addr)> _onMouseLeft,
-		std::function<void(const Addr _addr)> _onMouseRight) -> int;
-	auto DrawImmediateOp(const bool _isRunning, const char* _operandS,
-		const int _operand, const ImVec4& _color, const ImVec4& _highlightColor,
-		std::function<void(const Addr _addr)> _onMouseLeft,
-		std::function<void(const Addr _addr)> _onMouseRight) -> int;
-	void DrawAddr(const bool _isRunning, const char* _addrS, uint8_t _highlightAlpha,
-			std::function<void()> _onMouseLeft,
-			std::function<void()> _onMouseRight);
-
-	enum class FddStatus { NONE, DISCARD, SAVE, ALWAYS_DISCARD, ALWAYS_SAVE};
-	auto DrawSaveDiscardFddPopup(int _selectedDriveIdx, std::wstring _mountedFddPath) -> FddStatus;
+	auto DrawCodeLine(const bool _tab, const bool _isRunning, const Disasm::Line& _line) -> UIItemMouseAction;
+	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color, 
+		const ImVec4& _highlightColor, bool _forceHighlight = false) -> UIItemMouseAction;
+	auto DrawSaveDiscardFddPopup(int _selectedDriveIdx, const std::wstring& _mountedFddPath) -> FddStatus;
 }

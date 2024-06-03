@@ -121,6 +121,7 @@
     <ClCompile Include="Core\Keyboard.cpp" />
     <ClCompile Include="Core\Memory.cpp" />
     <ClCompile Include="Core\TimerI8253.cpp" />
+    <ClCompile Include="Core\TraceLog.cpp" />
     <ClCompile Include="Core\Watchpoint.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="DevectorApp.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="Core\Keyboard.h" />
     <ClInclude Include="Core\Memory.h" />
     <ClInclude Include="Core\TimerI8253.h" />
+    <ClInclude Include="Core\TraceLog.h" />
     <ClInclude Include="Core\Watchpoint.h" />
     <ClInclude Include="DevectorApp.h" />
     <ClInclude Include="UI\BaseWindow.h" />

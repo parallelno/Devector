@@ -151,92 +151,68 @@ void dev::DisasmWindow::DrawDsasmIcons(const bool _isRunning, const Disasm::Line
 	}
 }
 
-auto dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line, const uint8_t _addrHighlightedAlpha,
-	int& _copyToClipboardAddr, bool& _openItemContextMenu)
--> ImVec2
+void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line, 
+	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// the addr column
 	ImGui::TableNextColumn();
-	ColumnClippingEnable(*m_dpiScaleP); // enable clipping
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 
-	dev::DrawAddr(_isRunning, _line.GetAddrS(), _addrHighlightedAlpha,
-		// _onMouseLeft. Navigate to the address
-		[&]()
-		{
-			m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
-			m_reqDisasm.addr = _line.addr;
-		},
-		// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
-		[&]()
-		{
-			_copyToClipboardAddr = _line.addr;
-			_openItemContextMenu = true;
-		}
-	);
-	ColumnClippingDisable();
-	
-	return ImGui::GetItemRectMin();
+	auto mouseAction = DrawAddr(_isRunning, _line.GetAddrS(),
+		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF), _addrHighlight.IsEnabled(_line.addr));
+	switch (mouseAction)
+	{
+	case UIItemMouseAction::LEFT: // Navigate to the address
+		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
+		_reqDisasm.addr = _line.addr;
+		break;
+	case UIItemMouseAction::RIGHT: // Add the "Copy to Clipboard" option to the context menu
+		_contextMenu.Init(_line.addr, _line.GetAddrS());
+		break;
+	}
 }
 
 void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-	int& _addrHighlighted, int& _addrHighlightedTimer, int& _copyToClipboardAddr, bool& _openItemContextMenu)
+	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// draw code
 	ImGui::TableNextColumn();
-	ColumnClippingEnable(*m_dpiScaleP); // enable clipping
-	int currentLineAddrHighlighted = dev::DrawCodeLine2(true, _isRunning, _line,
-		// _onMouseLeft. Navigate to the address
-		[&](const Addr _addr)
-		{
-			m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
-			m_reqDisasm.addr = _addr;
-		},
-		// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
-		[&](const Addr _addr)
-		{
-			_copyToClipboardAddr = _addr;
-			_openItemContextMenu = true;
-		}
-	);
-	// handle the addr highlight
-	if (currentLineAddrHighlighted >= 0) {
-		// set the highlighted addr
-		_addrHighlightedTimer = ADDR_HIGHLIGHT_TIME;
-		_addrHighlighted = currentLineAddrHighlighted;
+	auto mouseAction = dev::DrawCodeLine(true, _isRunning, _line);
+	// when a user did action to the immediate operand
+	switch (mouseAction)
+	{
+	case UIItemMouseAction::LEFT: // Navigate to the address
+		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
+		_reqDisasm.addr = _line.imm;
+		break;
+	case UIItemMouseAction::RIGHT: // Add the "Copy to Clipboard" option to the context menu
+		_contextMenu.Init(_line.imm, _line.GetImmediateS());
+		break;
 	}
-	else {
-		// handle the addr highlight timer
-		_addrHighlightedTimer = dev::Max(0, --_addrHighlightedTimer);
+
+	// set the addr highlight
+	if (mouseAction != UIItemMouseAction::NONE) {
+		_addrHighlight.Init(_line.imm);
 	}
-	ColumnClippingDisable();
 }
 
-auto dev::DisasmWindow::DrawDisasmComment(const Disasm::Line& _line)
--> ImVec2
+void dev::DisasmWindow::DrawDisasmComment(const Disasm::Line& _line)
 {
 	ImGui::TableNextColumn();
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 	ImGui::TableNextColumn();
-	auto selectionMin = ImGui::GetItemRectMin();
 
 	if (m_fontCommentP) ImGui::PushFont(m_fontCommentP);
-	ImGui::TextColored(DASM_CLR_COMMENT, _line.comments->at(0).c_str());
+	ImGui::TextColored(DASM_CLR_COMMENT, _line.comment->c_str());
 	if (m_fontCommentP) { ImGui::PopFont(); }
-
-	return selectionMin;
 }
 
-auto dev::DisasmWindow::DrawDisasmLabels(const Disasm::Line& _line)
--> ImVec2
+void dev::DisasmWindow::DrawDisasmLabels(const Disasm::Line& _line)
 {
 	ImGui::TableNextColumn();
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 	ImGui::TableNextColumn();
-	auto selectionMin = ImGui::GetItemRectMin();
 	const ImVec4* mainLabelColorP = &DASM_CLR_LABEL_GLOBAL;
-
-	if (!_line.labels) return selectionMin;
 
 	int i = 0;
 	for (const auto& label : *_line.labels) 
@@ -264,8 +240,6 @@ auto dev::DisasmWindow::DrawDisasmLabels(const Disasm::Line& _line)
 			break;
 		}
 	}
-
-	return selectionMin;
 }
 
 void dev::DisasmWindow::DrawDisasmStats(const Disasm::Line& _line)
@@ -303,16 +277,9 @@ void dev::DisasmWindow::DrawDisasmConsts(const Disasm::Line& _line)
 void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 {
 	Addr regPC = m_hardware.Request(Hardware::Req::GET_REGS)->at("pc");
-	bool openItemContextMenu = false;
-	static int itemContextMenuAddr = -1;
-	static std::string copyToClipboardStr = "";
-	static int copyToClipboardAddr = -1; // if it's -1, don't add the option, if it's >=0, add the option with the addr = copyToClipboardAddr
-	static int addrHighlighted = -1; // -1 - no highlight, >=0 - the addrHighlighted is highlighted
-	static int addrHighlightedTimer = 0; // the highlight slowly decays during addrHighlightedTimer
 	bool anyLineIsHovered = false;
-
-	ImVec2 selectionMin;
-	ImVec2 selectionMax = {-1.0, -1.0};
+	ImVec2 selectionMin = ImGui::GetWindowContentRegionMin();
+	ImVec2 selectionMax = ImGui::GetWindowContentRegionMax();
 
 	if (!m_disasmP) return;
 	if (_isRunning) ImGui::BeginDisabled();
@@ -338,13 +305,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
 		for (int lineIdx = 0; lineIdx < m_disasmLines; lineIdx++)
 		{
-			// TODO: fix it. replace with fixed amount of lines and without a need to check the end of the window
-			//if (IsDisasmTableOutOfWindow()) break;
-
 			ImGui::TableNextRow();
-
-			auto& line = m_disasmP->at(lineIdx);
-			int addr = line.addr;
 
 			// the line selection/highlight
 			ImGui::TableNextColumn();
@@ -355,57 +316,52 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				m_selectedLineIdx = lineIdx;
 			}
 
+			auto& line = m_disasmP->at(lineIdx);
+			int addr = line.addr;
+
 			switch (line.type)
 			{
 			case Disasm::Line::Type::COMMENT:
 			{
-				selectionMin = DrawDisasmComment(line);
+				DrawDisasmComment(line);
 				break;
 			}
 			case Disasm::Line::Type::LABELS:
 			{
-				selectionMin = DrawDisasmLabels(line);
+				DrawDisasmLabels(line);
 				break;
 			}
 			case Disasm::Line::Type::CODE:
 			{
 				DrawDsasmIcons(_isRunning, line, lineIdx, regPC);
-				uint8_t addrHighlightedAlpha = (addrHighlighted == line.addr) ? addrHighlightedTimer * 255 / ADDR_HIGHLIGHT_TIME : 0;
-				selectionMin = DrawDisasmAddr(_isRunning, line, addrHighlightedAlpha, copyToClipboardAddr, openItemContextMenu);
-				DrawDisasmCode(_isRunning, line, addrHighlighted, addrHighlightedTimer, copyToClipboardAddr, openItemContextMenu);
+				DrawDisasmAddr(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
+				DrawDisasmCode(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
+
 				DrawDisasmStats(line);
 				DrawDisasmConsts(line);
-				selectionMax.y = ImGui::GetItemRectMax().y;
-				selectionMax.x = ImGui::GetWindowContentRegionMax().x;
 				break;
 			}
-			default:
-				break;
 			}
-
-			bool lineIsHovered = dev::IsHovered(selectionMin, selectionMax);
-			anyLineIsHovered |= lineIsHovered;
-
-			// check if right-click on the row
-			if (!_isRunning &&
-				ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			
+			if (!_isRunning)
 			{
-				if (lineIsHovered)
-				{
-					if (!openItemContextMenu) {
-						openItemContextMenu = true;
-						copyToClipboardAddr = -1;
-					}
-					itemContextMenuAddr = addr;
-					copyToClipboardStr = line.GetStr();
+				selectionMin.y = ImGui::GetItemRectMin().y;
+				selectionMax.y = ImGui::GetItemRectMax().y;
+				bool lineIsHovered = ImGui::IsMouseHoveringRect(selectionMin, selectionMax);
+				anyLineIsHovered |= lineIsHovered;
+
+				// line is hovered. check if right-clicked to open the Context menu
+				if (lineIsHovered && m_contextMenu.status == ContextMenu::Status::NONE &&
+					ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+					m_contextMenu.Init(addr, line.GetStr());
 				}
 			}
 		}
 
 		ImGui::EndTable();
 	}
-	copyToClipboardAddr = DrawDisasmContextMenu(openItemContextMenu, regPC, itemContextMenuAddr,
-		copyToClipboardAddr, copyToClipboardStr);
+
+	DrawDisasmContextMenu(regPC, m_contextMenu);
 
 	ImGui::PopStyleVar(2);
 
@@ -415,6 +371,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	if (!_isRunning && anyLineIsHovered &&
 		m_disasmLines >= DISASM_INSTRUCTION_OFFSET)
 	{
+		// Up/Down scrolling
 		if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
 		{
 			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);
@@ -435,21 +392,22 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
 			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, -2 + DISASM_INSTRUCTION_OFFSET, false);
 		}
-	}
 
-	// Alt + Left navigation
-	if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_LeftArrow) &&
-		m_navigateAddrsIdx - 1 >= 0)
-	{
-		auto addr = m_navigateAddrs[--m_navigateAddrsIdx];
-		UpdateDisasm(addr);
-	}
-	// Alt + Right navigation
-	else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_RightArrow) &&
-		m_navigateAddrsIdx + 1 < m_navigateAddrsSize)
-	{
-		auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
-		UpdateDisasm(addr);
+
+		// Alt + Left navigation
+		if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_LeftArrow) &&
+			m_navigateAddrsIdx - 1 >= 0)
+		{
+			auto addr = m_navigateAddrs[--m_navigateAddrsIdx];
+			UpdateDisasm(addr);
+		}
+		// Alt + Right navigation
+		else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_RightArrow) &&
+			m_navigateAddrsIdx + 1 < m_navigateAddrsSize)
+		{
+			auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
+			UpdateDisasm(addr);
+		}
 	}
 
 	/////////////////////////////////////////////////////////
@@ -511,49 +469,45 @@ void dev::DisasmWindow::UpdateData(const bool _isRunning)
 	UpdateDisasm(addr);
 }
 
+
 void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOffset, const bool _updateSelection)
 {
 	m_disasmP = m_debugger.GetDisasm(_addr, m_disasmLines, -_instructionsOffset);
 	if (_updateSelection) m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
 }
 
-int dev::DisasmWindow::DrawDisasmContextMenu(const bool _openContextMenu, const Addr _regPC, 
-		int _addr, int _copyToClipboardAddr, std::string& _str)
+void dev::DisasmWindow::DrawDisasmContextMenu(const Addr _regPC, ContextMenu& _contextMenu)
 {
-	if (_openContextMenu) {
-		ImGui::OpenPopup(m_itemContextMenu);
+	if (_contextMenu.status == ContextMenu::Status::INIT) {
+		ImGui::OpenPopup(_contextMenu.name);
+		_contextMenu.status = ContextMenu::Status::NONE;
 	}
 
-	if (ImGui::BeginPopup(m_itemContextMenu))
+	if (ImGui::BeginPopup(_contextMenu.name))
 	{
-		if (ImGui::MenuItem("Copy To Clipboard")) {
-				dev::CopyToClipboard(_str);
-			}
-		if (_copyToClipboardAddr >= 0 ){
-			if (ImGui::MenuItem("Copy Addr To Clipboard")) {
-				dev::CopyToClipboard(std::format("0x{:04X}", _copyToClipboardAddr));
-			}
+		if (ImGui::MenuItem("Copy")) {
+				dev::CopyToClipboard(_contextMenu.str);
 		}
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Show Current Break")) {
 			UpdateDisasm(_regPC);
 		}
 		ImGui::SeparatorText("");
-		if (ImGui::MenuItem("Run To Selected Line") && _addr >= 0)
+		if (ImGui::MenuItem("Run To"))
 		{
-			m_debugger.AddBreakpoint(_addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
+			m_debugger.AddBreakpoint(_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
 			m_hardware.Request(Hardware::Req::RUN);
 		}
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Add/Remove Beakpoint"))
 		{
-			auto bpStatus = m_debugger.GetBreakpointStatus(_addr);
+			auto bpStatus = m_debugger.GetBreakpointStatus(m_contextMenu.addr);
 
 			if (bpStatus == Breakpoint::Status::DELETED) {
-				m_debugger.AddBreakpoint(_addr);
+				m_debugger.AddBreakpoint(m_contextMenu.addr);
 			}
 			else {
-				m_debugger.DelBreakpoint(_addr);
+				m_debugger.DelBreakpoint(m_contextMenu.addr);
 			}
 			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
 		}
@@ -561,8 +515,12 @@ int dev::DisasmWindow::DrawDisasmContextMenu(const bool _openContextMenu, const 
 			m_debugger.DelBreakpoints();
 			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
 		};
+		ImGui::SeparatorText("");
+		if (ImGui::MenuItem("Add/Edit Comment")) {
+			//auto commentP = m_debugger.GetComment(_addr, );
+			//m_debugger.SetComment(addr, comment);
+			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+		};
 		ImGui::EndPopup();
 	}
-
-	return _copyToClipboardAddr;
 }

@@ -33,6 +33,7 @@ namespace dev
 		static constexpr size_t DISASM_LINES_MAX = 80;
 		using AddrLabels = std::vector<std::string>;
 		using Labels = std::map<GlobalAddr, AddrLabels>;
+		using Comments = std::map<GlobalAddr, std::string>;
 
 		struct Line
 		{
@@ -49,9 +50,9 @@ namespace dev
 			uint8_t opcode = 0;
 			uint16_t imm = 0; // immediate operand
 			char statsS[STATS_LEN] = {0}; // contains: runs, reads, writes
-			const AddrLabels* labels			= nullptr;
+			const AddrLabels* labels	= nullptr;
 			const AddrLabels* consts	= nullptr; // labels used as constants only
-			const AddrLabels* comments	= nullptr;
+			const std::string* comment	= nullptr;
 			bool accessed	= false; // no runs, reads, writes yet
 			Breakpoint::Status breakpointStatus = Breakpoint::Status::DISABLED;
 
@@ -60,15 +61,16 @@ namespace dev
 
 			inline const char* GetAddrS() const { return AddrToAddrI16S(addr); };
 			inline const char* GetImmediateS() const;
-			inline const char* GetLabel() const { return labels ? labels->at(0).c_str() : nullptr; };
+			inline const char* GetFirstLabel() const { return labels ? labels->at(0).c_str() : nullptr; };
 			inline const char* GetLabelConst() const { return labels ? labels->at(0).c_str() : consts ? consts->at(0).c_str() : nullptr; };
-			inline const char* GetConst() const { return consts ? consts->at(0).c_str() : nullptr; };
+			inline const char* GetFirstConst() const { return consts ? consts->at(0).c_str() : nullptr; };
 		};
 
 		using Lines = std::array<Line, DISASM_LINES_MAX>;
 		Lines lines;
 		
 		auto AddLabes(const size_t _idx, const Addr _addr, const Labels& _labels) -> size_t;
+		auto AddComment(const size_t _idx, const Addr _addr, const Comments& _comments) -> size_t;
 
 		auto AddDb(const size_t _idx, Addr& _addr, const uint8_t _data,
 			const Labels& _consts,
@@ -81,5 +83,6 @@ namespace dev
 			const Breakpoint::Status _breakpointStatus) -> size_t;
 
 		auto GetLines() -> const Lines* { return &lines; }
+		//auto GetImmAddrPairs
 	};
 }

@@ -28,52 +28,6 @@ namespace dev
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
 		Disasm m_disasm;
-
-		struct DisasmLine
-		{
-			enum class Type {
-				COMMENT,
-				LABELS,
-				CODE
-			};
-
-			Type type;
-			Addr addr;
-			std::string addrS;
-			std::string str; // labels, comments
-			std::string consts; // labels associated with arguments of an operation
-			std::string stats; // contains: runs, reads, writes
-			uint64_t runs;
-			uint64_t reads;
-			uint64_t writes;
-			const Breakpoint::Status breakpointStatus;
-
-			DisasmLine(Type _type, Addr _addr, std::string _str,
-				uint64_t _runs = UINT64_MAX, uint64_t _reads = UINT64_MAX, uint64_t _writes = UINT64_MAX, 
-				std::string _consts = "", const Breakpoint::Status _breakpointStatus = Breakpoint::Status::DELETED)
-				: 
-				type(_type), addr(_addr), str(_str), 
-				runs(_runs), reads(_reads), writes(_writes),
-				consts(_consts), breakpointStatus(_breakpointStatus)
-			{
-				if (type == Type::CODE) {
-					addrS = std::format("0x{:04X}", _addr);
-				}
-				if (runs != UINT64_MAX)
-				{
-					std::string runsS = std::to_string(runs);
-					std::string readsS = std::to_string(reads);
-					std::string writesS = std::to_string(writes);
-					stats = runsS + "," + readsS + "," + writesS;
-				}
-			};
-			DisasmLine()
-				: type(Type::CODE), addr(0), str(), stats(), 
-				runs(), reads(), writes(), 
-				consts(), breakpointStatus(Breakpoint::Status::DELETED)
-			{};
-		};
-		using DisasmLines = std::vector<DisasmLine>;
 		using Watchpoints = std::map<dev::Id, Watchpoint>;
 		using Breakpoints = std::map<GlobalAddr, Breakpoint>;
 
@@ -113,13 +67,15 @@ namespace dev
 
 		bool CheckBreak(const Addr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam);
 
-		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> DisasmLines;
+		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> const Disasm::Lines*;
 
 		void LoadDebugData(const std::wstring& _path);
 		void ResetLabels();
 
 		auto GetLastRW() -> const MemLastRW*;
 		void UpdateLastRW();
+		auto GetComment(const Addr _addr) const -> const std::string*;
+		void SetComment(const Addr _addr, const std::string& _comment);
 
 	private:
 		auto GetDisasmLine(const uint8_t _opcode, 
@@ -147,7 +103,7 @@ namespace dev
 
 		struct TraceLog
 		{
-			int64_t m_globalAddr;
+			GlobalAddr m_globalAddr;
 			uint8_t m_opcode;
 			uint8_t m_dataL;
 			uint8_t m_dataH;
@@ -163,8 +119,10 @@ namespace dev
 
 		using AddrLabels = std::vector<std::string>;
 		using Labels = std::map<GlobalAddr, AddrLabels>;
+		using Comments = std::map<GlobalAddr, std::string>;
 		Labels m_labels;		// labels
 		Labels m_consts;		// labels used as constants only
+		Comments m_comments;
 
 		Hardware& m_hardware;
 
