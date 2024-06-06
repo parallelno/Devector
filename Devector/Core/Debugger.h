@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <mutex>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <array>
 #include <format>
@@ -28,8 +28,8 @@ namespace dev
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
 		Disasm m_disasm;
-		using Watchpoints = std::map<dev::Id, Watchpoint>;
-		using Breakpoints = std::map<GlobalAddr, Breakpoint>;
+		using Watchpoints = std::unordered_map<dev::Id, Watchpoint>;
+		using Breakpoints = std::unordered_map<GlobalAddr, Breakpoint>;
 
 		Debugger(Hardware& _hardware);
 		~Debugger();
@@ -42,7 +42,7 @@ namespace dev
 		void Read(const GlobalAddr _globalAddr, const uint8_t _val);
 		void Write(const GlobalAddr _globalAddr, const uint8_t _val);
 
-		auto GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset) -> const Disasm::Lines*;
+		void UpdateDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset);
 
 		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
 		void AddBreakpoint(const Addr _addr,
@@ -118,8 +118,8 @@ namespace dev
 		int m_traceLogIdxViewOffset = 0;
 
 		using AddrLabels = std::vector<std::string>;
-		using Labels = std::map<GlobalAddr, AddrLabels>;
-		using Comments = std::map<GlobalAddr, std::string>;
+		using Labels = std::unordered_map<GlobalAddr, AddrLabels>;
+		using Comments = std::unordered_map<GlobalAddr, std::string>;
 		Labels m_labels;		// labels
 		Labels m_consts;		// labels used as constants only
 		Comments m_comments;

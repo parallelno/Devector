@@ -134,7 +134,7 @@ void dev::DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir, const floa
 
 	const auto totalSize = ImVec2{g.FontSize, g.FontSize};
 	ImVec2 pos = window->DC.CursorPos;
-	pos.x += _posXOffset * g.FontSize;
+	pos.x += _posXOffset;
 	pos.y += window->DC.CurrLineTextBaseOffset;
 	ImGui::ItemSize(_itemHasSize ? totalSize : ImVec2{}, 0.0f);
 	const ImRect bb(pos, pos + totalSize);
@@ -407,7 +407,6 @@ auto dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Disasm::Lin
 			ImGui::Text("Address: 0x%04X\n", _line.imm);
 			ImGui::EndTooltip();
 		}
-
 	}
 
 	return uiItemMouseAction;

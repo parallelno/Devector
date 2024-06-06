@@ -782,6 +782,48 @@ static char addrsS[0x10000 * I16_ADDRS_LEN]; // for fast Addr to AddrS conversio
 #define I8_ADDRS_LEN 5	// sizeof("0xFF");
 static char smallAddrsS[0x100 * I8_ADDRS_LEN]; // for fast Addr to AddrS conversion
 
+// 0 - call
+// 1 - c*
+// 2 - jmp, 
+// 3 - j*
+// 4 - ret, r*
+// 5 - pchl
+// 6 - rst
+// 7 - other
+#define OPTYPE_C__	0
+#define OPTYPE_CAL	1
+#define OPTYPE_J__	2
+#define OPTYPE_JMP	3
+#define OPTYPE_R__	5
+#define OPTYPE_RET	4
+#define OPTYPE_PCH	6
+#define OPTYPE_RST	7
+#define OPTYPE____	8
+static const uint8_t opcodeTypes[DISASM_CMDS] =
+{
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+
+	4, 8, 2, 3, 0, 8, 8, 7, 4, 5, 2, 8, 0, 1, 8, 7,
+	4, 8, 2, 8, 0, 8, 8, 7, 4, 8, 2, 8, 0, 8, 8, 7,
+	4, 8, 2, 8, 0, 8, 8, 7, 4, 6, 2, 8, 0, 8, 8, 7,
+	4, 8, 2, 8, 0, 8, 8, 7, 4, 8, 2, 8, 0, 8, 8, 7,
+};
+
+#define OPCODE_TYPE_MAX 7
+
 void InitAddrsS()
 {
 	static bool inited = false;
@@ -825,7 +867,7 @@ auto dev::GetMnemonicLen(const uint8_t _opcode) -> uint8_t { return mnenomicLens
 auto dev::GetMnemonicType(const uint8_t _opcode) -> const uint8_t* { return mnenomicTypes[_opcode]; }
 auto dev::GetImmediateType(const uint8_t _opcode) -> uint8_t { return cmdImms[_opcode]; }
 
-const void dev::Disasm::Line::Init()
+void dev::Disasm::Line::Init()
 {
 	type = Type::CODE;
 	addr = 0;
@@ -845,51 +887,49 @@ auto dev::Disasm::Line::GetImmediateS() const
 	return cmdImms[opcode] == CMD_IW_OFF1 ? AddrToAddrI16S(imm) : AddrToAddrI8S(static_cast<uint8_t>(imm));
 };
 
-auto dev::Disasm::AddLabes(const size_t _idx, const Addr _addr, const Labels& _labels)
--> size_t
+void dev::Disasm::AddLabes(const Addr _addr, const Labels& _labels)
 {
-	if (_idx >= DISASM_LINES_MAX) return _idx;
+	if (lineIdx >= DISASM_LINES_MAX) return;
 
 	auto labelsI = _labels.find(_addr);
-	if (labelsI == _labels.end()) return _idx;
+	if (labelsI == _labels.end()) return;
 
-	auto& line = lines[_idx];
+	auto& line = lines.at(lineIdx);
 	line.Init();
 
 	line.type = Line::Type::LABELS;
 	line.addr = _addr;
 	line.labels = &labelsI->second;
 
-	return _idx + 1;
+	lineIdx++;
 }
 
-auto dev::Disasm::AddComment(const size_t _idx, const Addr _addr, const Comments& _comments)
--> size_t
+void dev::Disasm::AddComment(const Addr _addr, const Comments& _comments)
 {
-	if (_idx >= DISASM_LINES_MAX) return _idx;
+	if (lineIdx >= DISASM_LINES_MAX) return;
 
 	auto commentI = _comments.find(_addr);
-	if (commentI == _comments.end()) return _idx;
+	if (commentI == _comments.end()) return;
 
-	auto& line = lines[_idx];
+	auto& line = lines.at(lineIdx);
 	line.Init();
 
 	line.type = Line::Type::COMMENT;
 	line.addr = _addr;
 	line.comment = &commentI->second;
 
-	return _idx + 1;
+	lineIdx++;
 }
 
-auto dev::Disasm::AddDb(const size_t _idx, Addr& _addr, const uint8_t _data,
+auto dev::Disasm::AddDb(const Addr _addr, const uint8_t _data,
 	const Labels& _consts,
 	const uint64_t _runs, const uint64_t _reads, const uint64_t _writes,
 	const Breakpoint::Status _breakpointStatus)
--> size_t
+-> Addr
 {
-	if (_idx >= DISASM_LINES_MAX) return _idx;
+	if (lineIdx >= DISASM_LINES_MAX) return 0;
 
-	auto& line = lines[_idx];
+	auto& line = lines.at(lineIdx);
 	line.Init();
 	line.type = Line::Type::CODE;
 	line.addr = _addr;
@@ -899,33 +939,33 @@ auto dev::Disasm::AddDb(const size_t _idx, Addr& _addr, const uint8_t _data,
 	line.breakpointStatus = _breakpointStatus;
 
 	auto constsI = _consts.find(_data);
-	line.consts = constsI == _consts.end() ? nullptr : &constsI->second;
+	line.consts = constsI == _consts.end() ? nullptr : &(constsI->second);
 
 	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", _runs, _reads, _writes);
-	_addr++;
-	return _idx + 1;
+	lineIdx++;
+	return 1;
 }
 
-auto dev::Disasm::AddCode(const size_t _idx, Addr& _addr, const uint32_t _cmd,
+auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 	const Labels& _labels, const Labels& _consts,
 	const uint64_t _runs, const uint64_t _reads, const uint64_t _writes,
 	const Breakpoint::Status _breakpointStatus)
--> size_t
+-> Addr
 {
-	if (_idx >= DISASM_LINES_MAX) return _idx;
+	if (lineIdx >= DISASM_LINES_MAX) return 0;
 
 	uint8_t opcode = _cmd & 0xFF;
 	auto immType = cmdImms[opcode];
 
 	if (immType == CMD_IB_OFF0) {
-		return AddDb(_idx, _addr, opcode, _consts, _runs, _reads, _writes, _breakpointStatus);
+		return AddDb(_addr, opcode, _consts, _runs, _reads, _writes, _breakpointStatus);
 	}
 
 	auto cmdLen = cmdLens[opcode];
 	uint16_t data = cmdLen == 1 ? 0 : _cmd>>8;
 	data &= cmdLen == 2 ? 0xFF : 0xFFFF;
 
-	auto& line = lines[_idx];
+	auto& line = lines.at(lineIdx);
 	line.Init();
 	line.type = Line::Type::CODE;
 	line.addr = _addr;
@@ -938,13 +978,13 @@ auto dev::Disasm::AddCode(const size_t _idx, Addr& _addr, const uint32_t _cmd,
 		auto labelsI = _labels.find(data);
 		auto constsI = _consts.find(data);
 		line.labels = labelsI == _labels.end() ? nullptr : &(labelsI->second);
-		line.consts = constsI == _consts.end() ? nullptr : &constsI->second;
+		line.consts = constsI == _consts.end() ? nullptr : &(constsI->second);
 	}
 
 	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", _runs, _reads, _writes);
 
-	_addr += cmdLen;
-	return _idx + 1;
+	lineIdx++;
+	return cmdLen;
 }
 
 auto dev::Disasm::Line::GetStr() const
@@ -1001,4 +1041,51 @@ auto dev::Disasm::Line::GetStr() const
 	}
 
 	return "";
+}
+
+void dev::Disasm::Init(const LineIdx _linesNum)
+{
+	linesNum = dev::Min(_linesNum, DISASM_LINES_MAX);
+	lineIdx = 0;
+	immAddrlinkNum = 0;
+}
+
+auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks* 
+{ 
+	Addr addrMin = lines.at(0).addr;
+	Addr addrMax = lines.at(linesNum - 1).addr;
+	uint8_t linkIdx = 0;
+
+	std::map<Addr, int> immAddrPairs;
+	// aggregate <Addr, LineIdx> pairs
+	for (int i = 0; i < linesNum; i++){
+		immAddrPairs.emplace(lines.at(i).addr, i);
+	}
+	// generate links
+	for (int i = 0; i < linesNum; i++)
+	{
+		const auto& line = lines.at(i);
+		if (line.type != Line::Type::CODE || opcodeTypes[line.opcode] > OPTYPE_JMP ||
+			line.imm < addrMin || line.imm > addrMax)
+		{
+			immAddrLinks[i].lineIdx = IMM_NO_LINK;
+			continue;
+		}/*
+		if (line.imm < addrMin) {
+			immAddrLinks[i].lineIdx = IMM_LINK_UP;
+			immAddrLinks[i].linkIdx = linkIdx++;
+			continue;
+		}
+		if (line.imm > addrMax) {
+			immAddrLinks[i].lineIdx = IMM_LINK_DOWN;
+			immAddrLinks[i].linkIdx = linkIdx++;
+			continue;
+		}
+		*/
+		immAddrLinks[i].lineIdx = immAddrPairs[lines[i].imm];
+		immAddrLinks[i].linkIdx = linkIdx++;
+		immAddrlinkNum++;
+	}
+
+	return &immAddrLinks; 
 }

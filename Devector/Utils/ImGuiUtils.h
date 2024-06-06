@@ -41,7 +41,7 @@ namespace dev
 			((_color & DEV_COL32_B_MASK) >> DEV_COL32_B_SHIFT) / 255.0f,
 			((_color & DEV_COL32_A_MASK) >> DEV_COL32_A_SHIFT) / 255.0f);
 	}
-	// 0xRRGGBBAA to 0xABGR
+	// 0xRGBA to 0xABGR
 	static constexpr ImU32 IM_U32(const uint32_t _color)
 	{
 		return

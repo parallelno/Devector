@@ -263,6 +263,7 @@ auto dev::Debugger::GetDisasmLineDb(const uint8_t _data) const
 // shifts the addr by _instructionsOffset instruction counter
 // if _instructionsOffset=3, it returns the addr of a third instruction after _addr, and vice versa
 #define MAX_ATTEMPTS 41 // max attemts to find an addr of an instruction before _addr 
+// check the perf of this func
 auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) const
 -> Addr
 {
@@ -329,14 +330,13 @@ auto dev::Debugger::GetAddr(const Addr _addr, const int _instructionOffset) cons
 }
 
 // _instructionOffset defines the start address of the disasm. 
-// 				_instructionOffset = 0 means the start address is the _addr, 
-//				_instructionOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
-auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset)
--> const Disasm::Lines*
+// _instructionOffset = 0 means the start address is the _addr, 
+// _instructionOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
+void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const int _instructionOffset)
 {
-	if (_lines <= 0) return nullptr;
-	size_t lines = dev::Max(_lines, Disasm::DISASM_LINES_MAX);
-	size_t lineIdx = 0;
+	if (_linesNum <= 0) return;
+	size_t lines = dev::Max(_linesNum, Disasm::DISASM_LINES_MAX);
+	m_disasm.Init(_linesNum);
 
 	// calculate a new address that precedes the specified 'addr' by the instructionOffset
 	Addr addr = GetAddr(_addr, _instructionOffset);
@@ -344,37 +344,37 @@ auto dev::Debugger::GetDisasm(const Addr _addr, const size_t _lines, const int _
 	if (_instructionOffset < 0 && addr == _addr)
 	{
 		// _instructionOffset < 0 means we want to disasm several intructions prior the _addr.
-		// but if the output addr is equal to _addr, that means 
-		// there is no valid instructions fit into the range (_addr+_instructionOffset, _addr). (_instructionOffset is negative!) That means a data blob is ahead
+		// if the GetAddr output addr is equal to input _addr, that means 
+		// there is no valid instructions fit into the range (_addr+_instructionOffset, _addr) 
+		// and that means a data blob is ahead
 		addr += (Addr)_instructionOffset;
 
-		for (; lineIdx < -_instructionOffset;)
+		for (; m_disasm.GetLineIdx() < -_instructionOffset;)
 		{
-			lineIdx = m_disasm.AddLabes(lineIdx, addr, m_labels);
-			lineIdx = m_disasm.AddComment(lineIdx, addr, m_comments);
+			m_disasm.AddLabes(addr, m_labels);
+			m_disasm.AddComment(addr, m_comments);
 
 			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 			auto breakpointStatus = GetBreakpointStatus(addr);
 			GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
-			lineIdx = m_disasm.AddDb(lineIdx, addr, db, m_consts,
+			addr += m_disasm.AddDb(addr, db, m_consts,
 				m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], breakpointStatus);
 		}
 	}
 
-	for (; lineIdx < lines;)
+	while (!m_disasm.IsDone())
 	{
-		lineIdx = m_disasm.AddLabes(lineIdx, addr, m_labels);
-		lineIdx = m_disasm.AddComment(lineIdx, addr, m_comments);
+		m_disasm.AddLabes(addr, m_labels);
+		m_disasm.AddComment(addr, m_comments);
 
 		uint32_t cmd = m_hardware.Request(Hardware::Req::GET_THREE_BYTES_RAM, { { "addr", addr } })->at("data");
 
 		GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
 		auto breakpointStatus = GetBreakpointStatus(globalAddr);
 
-		lineIdx = m_disasm.AddCode(lineIdx, addr, cmd, m_labels, m_consts,
+		addr += m_disasm.AddCode(addr, cmd, m_labels, m_consts,
 			m_memRuns[globalAddr], m_memReads[globalAddr], m_memWrites[globalAddr], breakpointStatus);
 	}
-	return m_disasm.GetLines();
 }
 
 bool IsConstLabel(const char* _s)

@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include <cstdint>
-#include <map>
+#include <unordered_map>
 #include <functional>
 
 #include "Utils/Types.h"
@@ -15,7 +15,7 @@ namespace dev
 		uint8_t m_encodingMatrix[8];
 		using KeyCode = int;
 		using RowColumnCode = int;
-		std::map<KeyCode, RowColumnCode> m_keymap;
+		std::unordered_map<KeyCode, RowColumnCode> m_keymap;
 
 	public:
 		enum class Operation {

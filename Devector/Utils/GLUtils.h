@@ -3,6 +3,7 @@
 #include "Consts.h"
 #include "Core/Hardware.h"
 #include <vector>
+#include <unordered_map>
 
 namespace dev 
 {
@@ -14,9 +15,9 @@ namespace dev
 			Vec4() : x(0.0f), y(0.0f), z(0.0f), w(1.0f) {};	
 			Vec4(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {};
 		};
-		using ShaderParamData = std::map<GLuint1, Vec4*>;
-		using ShaderParams = std::map<std::string, Vec4*>;
-		using ShaderTextureParams = std::map<GLenum1, GLuint1>;
+		using ShaderParamData = std::unordered_map<GLuint1, Vec4*>;
+		using ShaderParams = std::unordered_map<std::string, Vec4*>;
+		using ShaderTextureParams = std::unordered_map<GLenum1, GLuint1>;
 		using TextureIds = std::vector<GLuint1>;
 		using MaterialId = uint32_t;
 
@@ -51,10 +52,10 @@ namespace dev
 
 	private:
 		MaterialId m_materialId = 0;
-		std::map<MaterialId, Material> m_materials;
+		std::unordered_map<MaterialId, Material> m_materials;
 		GLuint1 vtxArrayObj = 0;
 		GLuint1 vtxBufferObj = 0;
-		std::map<GLuint1, Texture> m_textures;
+		std::unordered_map<GLuint1, Texture> m_textures;
 		std::vector<GLuint1> m_shaders;
 
 		GLenum1 m_glewInitCode;

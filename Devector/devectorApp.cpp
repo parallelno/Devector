@@ -127,6 +127,7 @@ void dev::DevectorApp::Update()
 	if (m_reqMainWindowReload) {
 		m_reqMainWindowReload = false;
 		Reload();
+		m_reqDisasm.type = ReqDisasm::Type::UPDATE; // disasm needs an update after reloading lbels and consts
 	}
 	MainMenuUpdate();
 
