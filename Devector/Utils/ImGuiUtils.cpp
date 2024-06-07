@@ -341,7 +341,7 @@ auto dev::DrawAddr(const bool _isRunning,
 	return mouseAction;
 }
 
-auto dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Disasm::Line& _line)
+auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab)
 -> UIItemMouseAction
 {
 	auto uiItemMouseAction = UIItemMouseAction::NONE;
@@ -356,15 +356,32 @@ auto dev::DrawCodeLine(const bool _tab, const bool _isRunning, const Disasm::Lin
 		switch (mnemonicType[i])
 		{
 		case MNT_CMD:
+		{
 			// draw a mnenonic
-			if (_tab) {
-				ImGui::TextColored(DASM_CLR_MNEMONIC, "\t%s", mnemonic[i]);
-			}
-			else {
-				ImGui::TextColored(DASM_CLR_MNEMONIC, "%s", mnemonic[i]);
-			}
-			break;
+			const char* cmdS = _tab ? "\t%s" : "%s";
+			const ImVec4* colorP;
 
+			switch (GetOpcodeType(opcode))
+			{
+			case OPTYPE_C__:
+			case OPTYPE_CAL:
+				colorP = &DASM_CLR_MNEMONIC_BRANCH;
+				break;
+			case OPTYPE_J__:
+			case OPTYPE_JMP:
+				colorP = &DASM_CLR_MNEMONIC_BRANCH;
+				break;
+			case OPTYPE_R__:
+			case OPTYPE_RET:
+				colorP = &DASM_CLR_MNEMONIC_BRANCH;
+				break;
+			default:
+				colorP = &DASM_CLR_MNEMONIC;
+				break;
+			}
+			ImGui::TextColored(*colorP, cmdS, mnemonic[i]);
+			break;
+		}
 		case MNT_IMM:
 			ImGui::SameLine();
 			ImGui::TextColored(DASM_CLR_CONST, " %s", mnemonic[i]);

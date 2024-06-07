@@ -68,7 +68,7 @@ void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Li
 {
 	// draw code
 	ImGui::TableNextColumn();
-	auto mouseAction = dev::DrawCodeLine(true, _isRunning, _line);
+	auto mouseAction = dev::DrawCodeLine(_isRunning, _line, true);
 	// when a user did action to the immediate operand
 	switch (mouseAction)
 	{

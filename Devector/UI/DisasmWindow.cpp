@@ -177,7 +177,7 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line
 {
 	// draw code
 	ImGui::TableNextColumn();
-	auto mouseAction = dev::DrawCodeLine(true, _isRunning, _line);
+	auto mouseAction = dev::DrawCodeLine(_isRunning, _line, true);
 	// when a user did action to the immediate operand
 	switch (mouseAction)
 	{
@@ -535,6 +535,7 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 {
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
 	bool enterPressed = false;
+	bool selectText = false;
 
 	if (_contextMenu.status == ContextMenu::Status::INIT_COMMENT_EDIT)
 	{
@@ -547,6 +548,7 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 		else {
 			m_comment[0] = '\0';
 		}
+		selectText = true;
 	}
 
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window
@@ -554,7 +556,8 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 	if (ImGui::BeginPopupModal(_contextMenu.commentEditName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		// edit comment
-		if (ImGui::InputTextWithHint("##comment", "", m_comment, IM_ARRAYSIZE(m_comment), ImGuiInputTextFlags_EnterReturnsTrue)) {
+		if (selectText) ImGui::SetKeyboardFocusHere();
+		if (ImGui::InputTextWithHint("##comment", "", m_comment, IM_ARRAYSIZE(m_comment), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
 			enterPressed = true;
 		}
 

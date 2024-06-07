@@ -22,12 +22,24 @@ namespace dev
 	#define CMD_IB_OFF1 2 // immediate byte, offset = 1
 	#define CMD_IW_OFF1 3 // immediate word, offset = 1
 
+	// opcode type
+	#define OPTYPE_C__	0
+	#define OPTYPE_CAL	1
+	#define OPTYPE_J__	2
+	#define OPTYPE_JMP	3
+	#define OPTYPE_R__	4
+	#define OPTYPE_RET	5
+	#define OPTYPE_PCH	6
+	#define OPTYPE_RST	7
+	#define OPTYPE____	8
+
 	auto AddrToAddrI16S(const Addr _addr) -> const char*;
 	auto AddrToAddrI8S(const uint8_t _addr) -> const char*;
 	auto GetMnemonic(const uint8_t _opcode) -> const char**;
 	auto GetMnemonicLen(const uint8_t _opcode) -> uint8_t;
 	auto GetMnemonicType(const uint8_t _opcode) -> const uint8_t*;
 	auto GetImmediateType(const uint8_t _opcode) -> uint8_t;
+	auto GetOpcodeType(const uint8_t _opcode) -> const uint8_t;
 
 	struct Disasm
 	{

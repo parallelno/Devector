@@ -782,23 +782,15 @@ static char addrsS[0x10000 * I16_ADDRS_LEN]; // for fast Addr to AddrS conversio
 #define I8_ADDRS_LEN 5	// sizeof("0xFF");
 static char smallAddrsS[0x100 * I8_ADDRS_LEN]; // for fast Addr to AddrS conversion
 
-// 0 - call
-// 1 - c*
-// 2 - jmp, 
-// 3 - j*
-// 4 - ret, r*
-// 5 - pchl
-// 6 - rst
-// 7 - other
-#define OPTYPE_C__	0
-#define OPTYPE_CAL	1
-#define OPTYPE_J__	2
-#define OPTYPE_JMP	3
-#define OPTYPE_R__	5
-#define OPTYPE_RET	4
-#define OPTYPE_PCH	6
-#define OPTYPE_RST	7
-#define OPTYPE____	8
+// 0 - c*
+// 1 - call
+// 2 - j*
+// 3 - jmp 
+// 4 - r*
+// 5 - ret
+// 6 - pchl
+// 7 - rst
+// 8 - other
 static const uint8_t opcodeTypes[DISASM_CMDS] =
 {
 	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -866,6 +858,7 @@ auto dev::GetMnemonic(const uint8_t _opcode) -> const char** { return mnenomics[
 auto dev::GetMnemonicLen(const uint8_t _opcode) -> uint8_t { return mnenomicLens[_opcode]; }
 auto dev::GetMnemonicType(const uint8_t _opcode) -> const uint8_t* { return mnenomicTypes[_opcode]; }
 auto dev::GetImmediateType(const uint8_t _opcode) -> uint8_t { return cmdImms[_opcode]; }
+auto dev::GetOpcodeType(const uint8_t _opcode) -> const uint8_t { return opcodeTypes[_opcode]; }
 
 void dev::Disasm::Line::Init()
 {

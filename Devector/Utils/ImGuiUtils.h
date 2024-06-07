@@ -58,7 +58,7 @@ namespace dev
 
 	// disasm text colors
 	static constexpr ImVec4 DASM_CLR_COMMENT = dev::IM_VEC4(0x909090FF);
-	static constexpr ImVec4 DASM_CLR_LABEL_GLOBAL = dev::IM_VEC4(0xD0C443FF);
+	static constexpr ImVec4 DASM_CLR_LABEL_GLOBAL = dev::IM_VEC4(0xE8DC5AFF);
 	static constexpr ImVec4 DASM_CLR_LABEL_GLOBAL_IMM = dev::IM_VEC4(0xB0A46CFF); // a label that replaces an immediate operand
 	static constexpr ImVec4 DASM_CLR_LABEL_LOCAL = dev::IM_VEC4(0xA8742FFF);
 	static constexpr ImVec4 DASM_CLR_LABEL_LOCAL_IMM = dev::IM_VEC4(0x9E8154FF); // a label that replaces an immediate operand
@@ -66,6 +66,7 @@ namespace dev
 	static constexpr ImVec4 DASM_CLR_ADDR = dev::IM_VEC4(0x909090FF);
 	static constexpr ImVec4 DASM_CLR_ZERO_STATS = dev::IM_VEC4(0x606060FF);
 	static constexpr ImVec4 DASM_CLR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
+	static constexpr ImVec4 DASM_CLR_MNEMONIC_BRANCH = dev::IM_VEC4(0x57FF6FFF);
 	static constexpr ImVec4 DASM_CLR_NUMBER = dev::IM_VEC4(0xD0D0D0FF);
 	static constexpr ImVec4 DASM_CLR_NUMBER_HIGHLIGHT = dev::IM_VEC4(0xFFFFFFFF);
 	static constexpr ImVec4 DASM_CLR_REG = dev::IM_VEC4(0x1ECF44FF);
@@ -121,7 +122,7 @@ namespace dev
 			const char* _hint = "", const char* _help = "", const ImGuiInputTextFlags _flags = ImGuiInputTextFlags_EnterReturnsTrue);
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val, const char* _help = "");
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
-	auto DrawCodeLine(const bool _tab, const bool _isRunning, const Disasm::Line& _line) -> UIItemMouseAction;
+	auto DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab) -> UIItemMouseAction;
 	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color, 
 		const ImVec4& _highlightColor, bool _forceHighlight = false) -> UIItemMouseAction;
 	auto DrawSaveDiscardFddPopup(int _selectedDriveIdx, const std::wstring& _mountedFddPath) -> FddStatus;
