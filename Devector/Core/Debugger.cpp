@@ -351,8 +351,8 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 
 		for (; m_disasm.GetLineIdx() < -_instructionOffset;)
 		{
-			m_disasm.AddLabes(addr, m_labels);
 			m_disasm.AddComment(addr, m_comments);
+			m_disasm.AddLabes(addr, m_labels);
 
 			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 			auto breakpointStatus = GetBreakpointStatus(addr);
@@ -364,8 +364,8 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 
 	while (!m_disasm.IsDone())
 	{
-		m_disasm.AddLabes(addr, m_labels);
 		m_disasm.AddComment(addr, m_comments);
+		m_disasm.AddLabes(addr, m_labels);
 
 		uint32_t cmd = m_hardware.Request(Hardware::Req::GET_THREE_BYTES_RAM, { { "addr", addr } })->at("data");
 
@@ -444,6 +444,12 @@ auto dev::Debugger::GetComment(const Addr _addr) const
 void dev::Debugger::SetComment(const Addr _addr, const std::string& _comment)
 {
 	m_comments[_addr] = _comment;
+}
+
+void dev::Debugger::DelComment(const Addr _addr)
+{
+	auto commentI = m_comments.find(_addr);
+	m_comments.erase(commentI);
 }
 
 //////////////////////////////////////////////////////////////

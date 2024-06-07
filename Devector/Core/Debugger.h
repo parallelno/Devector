@@ -76,6 +76,7 @@ namespace dev
 		void UpdateLastRW();
 		auto GetComment(const Addr _addr) const -> const std::string*;
 		void SetComment(const Addr _addr, const std::string& _comment);
+		void DelComment(const Addr _addr);
 
 	private:
 		auto GetDisasmLine(const uint8_t _opcode, 

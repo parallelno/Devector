@@ -3,10 +3,9 @@
 #include "Utils.h"
 #include "StrUtils.h"
 #include "Core/Disasm.h"
+#include "misc\cpp\imgui_stdlib.h"
 
 #include "imgui_internal.h"
-#include "imgui.h"
-#include "misc\cpp\imgui_stdlib.h"
 
 // Make the UI compact because there are so many fields
 // TODO: check it is not over extensively used

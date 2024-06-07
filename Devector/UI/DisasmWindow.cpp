@@ -185,7 +185,7 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line
 		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
 		_reqDisasm.addr = _line.imm;
 		break;
-	case UIItemMouseAction::RIGHT: // Add the "Copy to Clipboard" option to the context menu
+	case UIItemMouseAction::RIGHT: // Adds the "Copy to Clipboard" option to the context menu
 		_contextMenu.Init(_line.imm, _line.GetImmediateS());
 		break;
 	}
@@ -203,7 +203,7 @@ void dev::DisasmWindow::DrawDisasmComment(const Disasm::Line& _line)
 	ImGui::TableNextColumn();
 
 	if (m_fontCommentP) ImGui::PushFont(m_fontCommentP);
-	ImGui::TextColored(DASM_CLR_COMMENT, _line.comment->c_str());
+	ImGui::TextColored(DASM_CLR_COMMENT, "; %s", _line.comment->c_str());
 	if (m_fontCommentP) { ImGui::PopFont(); }
 }
 
@@ -366,10 +366,11 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	}
 
 	DrawDisasmContextMenu(regPC, m_contextMenu);
+	DrawCommentEdit(m_contextMenu);
 	ImGui::PopStyleVar(2);
 
 	/////////////////////////////////////////////////////////	
-	// check the keys
+	// check the keys and the mouse
 	/////////////////////////////////////////////////////////	
 	if (!_isRunning && anyLineIsHovered &&
 		m_disasmLines >= DISASM_INSTRUCTION_OFFSET)
@@ -378,22 +379,22 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
 		{
 			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);
-			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, 2 + DISASM_INSTRUCTION_OFFSET, false);
+			UpdateDisasm(m_disasmP->at(0).addr, 2, false);
 		}
 		else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
 		{
 			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
-			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, -2 + DISASM_INSTRUCTION_OFFSET, false);
+			UpdateDisasm(m_disasmP->at(0).addr, -2, false);
 		}
 		if (ImGui::GetIO().MouseWheel > 0.0f)
 		{
 			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);
-			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, 2 + DISASM_INSTRUCTION_OFFSET, false);
+			UpdateDisasm(m_disasmP->at(0).addr, 2, false);
 		}
 		else if (ImGui::GetIO().MouseWheel < 0.0f)
 		{
 			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
-			UpdateDisasm(m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr, -2 + DISASM_INSTRUCTION_OFFSET, false);
+			UpdateDisasm(m_disasmP->at(0).addr, -2, false);
 		}
 
 
@@ -485,12 +486,12 @@ void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOf
 
 void dev::DisasmWindow::DrawDisasmContextMenu(const Addr _regPC, ContextMenu& _contextMenu)
 {
-	if (_contextMenu.status == ContextMenu::Status::INIT) {
-		ImGui::OpenPopup(_contextMenu.name);
+	if (_contextMenu.status == ContextMenu::Status::INIT_CONTEXT_MENU) {
+		ImGui::OpenPopup(_contextMenu.contextMenuName);
 		_contextMenu.status = ContextMenu::Status::NONE;
 	}
 
-	if (ImGui::BeginPopup(_contextMenu.name))
+	if (ImGui::BeginPopup(_contextMenu.contextMenuName))
 	{
 		if (ImGui::MenuItem("Copy")) {
 				dev::CopyToClipboard(_contextMenu.str);
@@ -524,10 +525,96 @@ void dev::DisasmWindow::DrawDisasmContextMenu(const Addr _regPC, ContextMenu& _c
 		};
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Add/Edit Comment")) {
-			//auto commentP = m_debugger.GetComment(_addr, );
-			//m_debugger.SetComment(addr, comment);
-			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+			_contextMenu.status = ContextMenu::Status::INIT_COMMENT_EDIT;
 		};
+		ImGui::EndPopup();
+	}
+}
+
+void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
+{
+	static ImVec2 buttonSize = { 65.0f, 25.0f };
+	bool enterPressed = false;
+
+	if (_contextMenu.status == ContextMenu::Status::INIT_COMMENT_EDIT)
+	{
+		ImGui::OpenPopup(_contextMenu.commentEditName);
+		_contextMenu.status = ContextMenu::Status::NONE;
+		auto commentP = m_debugger.GetComment(_contextMenu.addr);
+		if (commentP) {
+			snprintf(m_comment, sizeof(m_comment), commentP->c_str());
+		}
+		else {
+			m_comment[0] = '\0';
+		}
+	}
+
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(_contextMenu.commentEditName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		// edit comment
+		if (ImGui::InputTextWithHint("##comment", "", m_comment, IM_ARRAYSIZE(m_comment), ImGuiInputTextFlags_EnterReturnsTrue)) {
+			enterPressed = true;
+		}
+
+		// Delete button
+		ImGui::SameLine(); ImGui::Dummy({ 12,10 }); ImGui::SameLine();
+		if (ImGui::Button("X", { 45.0f, 25.0f }))
+		{
+			m_comment[0] = '\0';
+		}
+
+		ImGui::SameLine();
+		ImGui::Dummy({ 12,10 });
+		ImGui::SameLine();
+		dev::DrawHelpMarker("A semicolon is not required.");
+
+		ImGui::SeparatorText("");
+
+		// property table
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##CETable", 2, flags))
+		{
+			ImGui::TableSetupColumn("##CEContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
+			ImGui::TableSetupColumn("##CEContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 200);		
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// warnings
+			std::string warningS = "";
+
+			// OK button
+			if (!warningS.empty()) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize) || enterPressed)
+			{
+				if (m_comment[0]){
+					m_debugger.SetComment(_contextMenu.addr, m_comment);
+				}
+				else {
+					m_debugger.DelComment(_contextMenu.addr);
+				}
+
+				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+				ImGui::CloseCurrentPopup();
+			}
+			if (!warningS.empty()) ImGui::EndDisabled();
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			// ESC pressed
+			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+
 		ImGui::EndPopup();
 	}
 }
@@ -554,7 +641,8 @@ void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 	ImU32 linkColor = _selected ? DIS_CLR_LINK_HIGHLIGHT : DIS_CLR_LINK;
 	
 	if (minorLink)
-	{	/*
+	{	// links to the addrs outside the disasm view
+		/*
 		// horizontal line from the command
 		ImGui::GetForegroundDrawList()->AddLine(pos0, pos1, linkColor);
 		// vertical link

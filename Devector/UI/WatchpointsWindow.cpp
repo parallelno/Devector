@@ -388,9 +388,11 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
+			
 			// warnings
-			GlobalAddr globalAddr = dev::StrHexToInt(globalAddrS.c_str());
 			std::string warningS = "";
+
+			GlobalAddr globalAddr = dev::StrHexToInt(globalAddrS.c_str());
 			if (globalAddr > Memory::GLOBAL_MEMORY_LEN - 1) {
 				warningS = "Too large address";
 			}

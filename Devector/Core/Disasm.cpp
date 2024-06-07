@@ -1082,6 +1082,9 @@ auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks*
 			continue;
 		}
 		*/
+		auto linkIdxI = immAddrPairs.find(lines[i].imm);
+		if (linkIdxI == immAddrPairs.end()) continue;
+
 		immAddrLinks[i].lineIdx = immAddrPairs[lines[i].imm];
 		immAddrLinks[i].linkIdx = linkIdx++;
 		immAddrlinkNum++;

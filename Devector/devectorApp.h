@@ -51,10 +51,12 @@ namespace dev
 		// path, driveIdx, autoBoot
 		std::list<std::tuple<std::wstring, int, bool>> m_recentFilePaths;
 
-		ReqHexViewer m_reqHexViewer;
-		ReqDisasm m_reqDisasm;
-		bool m_reqMainWindowReload = false;
-		bool m_reqHardwareStatsReset = false;
+		// TODO: combine all reqs deon the UI into one object because all  
+		// such requests are handled sequentially (no collisions) during the same or the next update
+		ReqHexViewer m_reqHexViewer; // requests to HexViewerWindow
+		ReqDisasm m_reqDisasm; // requests to DisasmWindow
+		bool m_reqMainWindowReload = false;  // requests to this
+		bool m_reqHardwareStatsReset = false; // requests to HardwareStatsWindow
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 		GLUtils m_glUtils;
 
