@@ -353,13 +353,15 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 
 	for (int i = 0; i < mnemonicLen; i++)
 	{
+		const char* str = nullptr;
+		const ImVec4* colorP;
+
 		switch (mnemonicType[i])
 		{
 		case MNT_CMD:
 		{
 			// draw a mnenonic
-			const char* cmdS = _tab ? "\t%s" : "%s";
-			const ImVec4* colorP;
+			str = _tab ? "\t%s" : "%s";
 
 			switch (GetOpcodeType(opcode))
 			{
@@ -379,19 +381,27 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 				colorP = &DASM_CLR_MNEMONIC;
 				break;
 			}
-			ImGui::TextColored(*colorP, cmdS, mnemonic[i]);
 			break;
 		}
 		case MNT_IMM:
 			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_CONST, " %s", mnemonic[i]);
+			colorP = &DASM_CLR_CONST;
+			str = " %s";
 			break;
 
 		case MNT_REG:
 			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_REG, " %s", mnemonic[i]);
+			colorP = &DASM_CLR_REG;
+			str = " %s";
+			break;
+
+		default:
+			colorP = &DASM_CLR_COMMENT;
+			str = " %s";
 			break;
 		}
+		ImGui::TextColored(*colorP, str, mnemonic[i]);
+
 		// draw an operand separator
 		if (i == 1 && (mnemonicLen == 3 || immType == CMD_IB_OFF1 || immType == CMD_IW_OFF1)) {
 			ImGui::SameLine();

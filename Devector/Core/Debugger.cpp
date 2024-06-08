@@ -438,7 +438,7 @@ auto dev::Debugger::GetComment(const Addr _addr) const
 -> const std::string*
 {
 	auto commentI = m_comments.find(_addr);
-	return (commentI != m_comments.end()) ? &commentI->second : nullptr;
+	return commentI != m_comments.end() ? &commentI->second : nullptr;
 }
 
 void dev::Debugger::SetComment(const Addr _addr, const std::string& _comment)
@@ -450,6 +450,23 @@ void dev::Debugger::DelComment(const Addr _addr)
 {
 	auto commentI = m_comments.find(_addr);
 	m_comments.erase(commentI);
+}
+
+auto dev::Debugger::GetLabels(const Addr _addr) const -> const AddrLabels*
+{
+	auto labelsI = m_labels.find(_addr);
+	return labelsI != m_labels.end() ? &labelsI->second : nullptr;
+}
+
+void dev::Debugger::SetLabels(const Addr _addr, const AddrLabels& _labels)
+{
+	if (_labels.empty()) {
+		auto labelsI = m_labels.find(_addr);
+		m_labels.erase(labelsI);
+	}
+	else {
+		m_labels[_addr] = _labels;
+	}
 }
 
 //////////////////////////////////////////////////////////////

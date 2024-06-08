@@ -77,13 +77,11 @@ namespace dev
 			void Init();
 			auto GetStr() const -> std::string;
 
-			inline const char* GetAddrS() const { return AddrToAddrI16S(addr); };
-			inline const char* GetImmediateS() const;
-			inline const char* GetFirstLabel() const { return labels ? labels->at(0).c_str() : nullptr; };
-			inline const char* GetLabelConst() const { return labels ? labels->at(0).c_str() : consts ? consts->at(0).c_str() : nullptr; };
-			inline const char* GetFirstConst() const { 
-				return consts ? consts->at(0).c_str() : nullptr; 
-			};
+			inline auto GetAddrS() const -> const char* { return AddrToAddrI16S(addr); };
+			inline auto GetImmediateS() const -> const char*;
+			inline auto GetFirstLabel() const -> const char* { return labels ? labels->at(0).c_str() : nullptr; };
+			inline auto GetLabelConst() const -> const char* { return labels ? labels->at(0).c_str() : consts ? consts->at(0).c_str() : nullptr; };
+			inline auto GetFirstConst() const -> const char* { return consts ? consts->at(0).c_str() : nullptr; };
 		};
 
 		using Lines = std::array<Line, DISASM_LINES_MAX>;

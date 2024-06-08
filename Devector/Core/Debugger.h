@@ -31,6 +31,10 @@ namespace dev
 		using Watchpoints = std::unordered_map<dev::Id, Watchpoint>;
 		using Breakpoints = std::unordered_map<GlobalAddr, Breakpoint>;
 
+		using AddrLabels = std::vector<std::string>;
+		using Labels = std::unordered_map<GlobalAddr, AddrLabels>;
+		using Comments = std::unordered_map<GlobalAddr, std::string>;
+
 		Debugger(Hardware& _hardware);
 		~Debugger();
 		void Init();
@@ -77,6 +81,8 @@ namespace dev
 		auto GetComment(const Addr _addr) const -> const std::string*;
 		void SetComment(const Addr _addr, const std::string& _comment);
 		void DelComment(const Addr _addr);
+		auto GetLabels(const Addr _addr) const -> const AddrLabels*;
+		void SetLabels(const Addr _addr, const AddrLabels& _labels);
 
 	private:
 		auto GetDisasmLine(const uint8_t _opcode, 
@@ -118,9 +124,6 @@ namespace dev
 		size_t m_traceLogIdx = 0;
 		int m_traceLogIdxViewOffset = 0;
 
-		using AddrLabels = std::vector<std::string>;
-		using Labels = std::unordered_map<GlobalAddr, AddrLabels>;
-		using Comments = std::unordered_map<GlobalAddr, std::string>;
 		Labels m_labels;		// labels
 		Labels m_consts;		// labels used as constants only
 		Comments m_comments;

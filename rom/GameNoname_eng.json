@@ -1,6 +1,7 @@
 {
   "labels": {
     "main_start": "0x100",
+    "other_label": "0x100",
     "@loop": "0x14A",
     "unpacker_start": "0x11B",
     "ram_disk_init": "0x257"

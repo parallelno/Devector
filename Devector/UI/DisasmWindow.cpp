@@ -367,6 +367,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
 	DrawDisasmContextMenu(regPC, m_contextMenu);
 	DrawCommentEdit(m_contextMenu);
+	DrawLabelEdit(m_contextMenu);
 	ImGui::PopStyleVar(2);
 
 	/////////////////////////////////////////////////////////	
@@ -527,6 +528,9 @@ void dev::DisasmWindow::DrawDisasmContextMenu(const Addr _regPC, ContextMenu& _c
 		if (ImGui::MenuItem("Add/Edit Comment")) {
 			_contextMenu.status = ContextMenu::Status::INIT_COMMENT_EDIT;
 		};
+		if (ImGui::MenuItem("Add/Edit Label")) {
+			_contextMenu.status = ContextMenu::Status::INIT_LABEL_EDIT;
+		};
 		ImGui::EndPopup();
 	}
 }
@@ -534,6 +538,8 @@ void dev::DisasmWindow::DrawDisasmContextMenu(const Addr _regPC, ContextMenu& _c
 void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 {
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
+	static ImVec2 buttonSizeX = { 45.0f, 25.0f };
+	static char comment[255] = "";
 	bool enterPressed = false;
 	bool selectText = false;
 
@@ -541,12 +547,12 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 	{
 		ImGui::OpenPopup(_contextMenu.commentEditName);
 		_contextMenu.status = ContextMenu::Status::NONE;
-		auto commentP = m_debugger.GetComment(_contextMenu.addr);
-		if (commentP) {
-			snprintf(m_comment, sizeof(m_comment), commentP->c_str());
+		auto currentComment = m_debugger.GetComment(_contextMenu.addr);
+		if (currentComment) {
+			snprintf(comment, sizeof(comment), currentComment->c_str());
 		}
 		else {
-			m_comment[0] = '\0';
+			comment[0] = '\0';
 		}
 		selectText = true;
 	}
@@ -557,15 +563,15 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 	{
 		// edit comment
 		if (selectText) ImGui::SetKeyboardFocusHere();
-		if (ImGui::InputTextWithHint("##comment", "", m_comment, IM_ARRAYSIZE(m_comment), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
+		if (ImGui::InputTextWithHint("##comment", "", comment, IM_ARRAYSIZE(comment), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
 			enterPressed = true;
 		}
-
+		
 		// Delete button
 		ImGui::SameLine(); ImGui::Dummy({ 12,10 }); ImGui::SameLine();
-		if (ImGui::Button("X", { 45.0f, 25.0f }))
+		if (ImGui::Button("X", buttonSizeX))
 		{
-			m_comment[0] = '\0';
+			comment[0] = '\0';
 		}
 
 		ImGui::SameLine();
@@ -585,24 +591,164 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 			ImGui::TableSetupColumn("##CEContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
 			ImGui::TableSetupColumn("##CEContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 200);		
 
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::TableNextColumn();
-
 			// warnings
 			std::string warningS = "";
 
+			// OK/CANCEL/... butons
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
 			// OK button
 			if (!warningS.empty()) ImGui::BeginDisabled();
 			if (ImGui::Button("Ok", buttonSize) || enterPressed)
 			{
-				if (m_comment[0]){
-					m_debugger.SetComment(_contextMenu.addr, m_comment);
+				if (comment[0]){ // non-empty string
+					m_debugger.SetComment(_contextMenu.addr, comment);
 				}
 				else {
 					m_debugger.DelComment(_contextMenu.addr);
 				}
 
+				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+				ImGui::CloseCurrentPopup();
+			}
+			if (!warningS.empty()) ImGui::EndDisabled();
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			// ESC pressed
+			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+void DeleteByIndex(dev::Debugger::AddrLabels& _labels, char* _label, int& _idx)
+{
+	if (_labels.size() > 1) {
+		_labels.erase(_labels.begin() + _idx);
+	}
+	else {
+		_labels[_idx].clear();
+	}
+	_idx = 0;
+	snprintf(_label, sizeof(_label), _labels.at(_idx).c_str());
+}
+
+void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
+{
+	static ImVec2 buttonSize = { 65.0f, 25.0f };
+	static ImVec2 buttonSizeX = { 45.0f, 25.0f };
+	static char label[255] = "";
+	static int editedLabelIdx = 0;
+	bool enterPressed = false;
+	bool selectText = false;
+	auto labelsP = m_debugger.GetLabels(_contextMenu.addr);
+	static Debugger::AddrLabels labels;
+
+	if (_contextMenu.status == ContextMenu::Status::INIT_LABEL_EDIT)
+	{
+		ImGui::OpenPopup(_contextMenu.labelEditName);
+		_contextMenu.status = ContextMenu::Status::NONE;
+		selectText = true;
+		editedLabelIdx = 0;
+		labels.clear();
+
+		if (labelsP) {
+			snprintf(label, sizeof(label), labelsP->at(editedLabelIdx).c_str());
+			for (const auto& str : *labelsP) {
+				labels.push_back(str);
+			}
+		}
+		else {
+			label[0] = '\0';
+			labels.push_back("");
+		}
+	}
+
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(_contextMenu.labelEditName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		// edit comment
+		if (selectText) ImGui::SetKeyboardFocusHere();
+		if (ImGui::InputTextWithHint("##label", "", label, IM_ARRAYSIZE(label), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
+			enterPressed = true;
+		}
+		labels[editedLabelIdx] = label;
+
+		// Delete button
+		ImGui::SameLine(); ImGui::Dummy({ 12,10 }); ImGui::SameLine();
+		if (ImGui::Button("X", buttonSizeX))
+		{
+			DeleteByIndex(labels, label, editedLabelIdx);
+		}
+
+		ImGui::SameLine(); ImGui::Dummy({ 12,10 }); ImGui::SameLine();
+		dev::DrawHelpMarker("A semicolon is not required.");
+		ImGui::SeparatorText("");
+
+		// list all labels
+		if (labelsP)
+		{	
+			if (ImGui::BeginListBox("##lListBox"))
+			{
+				auto labelsNum = labels.size();
+				for (int labelIdx = 0; labelIdx < labelsNum; labelIdx++)
+				{
+					auto& str = labels.at(labelIdx);
+					const bool is_selected = (editedLabelIdx == labelIdx);
+					if (ImGui::Selectable(std::format("{}##{}", str, labelIdx).c_str(), is_selected))
+					{
+						labels[editedLabelIdx] = label;
+						editedLabelIdx = labelIdx;
+						snprintf(label, sizeof(label), labels.at(editedLabelIdx).c_str());
+
+					}
+
+					if (is_selected) {// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndListBox();
+			}
+			ImGui::SameLine(); ImGui::Dummy({ 12,10 }); ImGui::SameLine();
+			dev::DrawHelpMarker("This list contains all labels for this address.\n"
+				"Specify which one fits this context best.");
+			ImGui::SeparatorText("");
+		}
+
+		// property table
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##CETable", 2, flags))
+		{
+			ImGui::TableSetupColumn("##CEContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
+			ImGui::TableSetupColumn("##CEContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 200);
+
+			// warnings
+			std::string warningS = "";
+
+			// OK/CANCEL/... butons
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+			// OK button
+			if (!warningS.empty()) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize) || enterPressed)
+			{
+				// remove empty labels
+				labels.erase(std::remove_if(labels.begin(), labels.end(),
+					[](const std::string& label) { return label.empty(); }), labels.end()); 
+				// store labels
+				m_debugger.SetLabels(_contextMenu.addr, labels);
 				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
 				ImGui::CloseCurrentPopup();
 			}
@@ -637,7 +783,7 @@ void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 	
 	auto pos0 = ImGui::GetCursorScreenPos();
 	pos0.x += IMM_ADDR_LINK_POS_X;
-	pos0.y -= fontSize * 0.5;
+	pos0.y -= fontSize * 0.5f;
 	auto pos1 = ImVec2(pos0.x - linkHorizLen - 5.0f, pos0.y);
 
 	bool minorLink = (link.lineIdx == Disasm::IMM_LINK_UP || link.lineIdx == Disasm::IMM_LINK_DOWN || link.lineIdx == Disasm::IMM_NO_LINK);

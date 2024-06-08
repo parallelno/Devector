@@ -62,7 +62,7 @@ static const char* MN_NOP	= "nop";
 
 static const char* MN_EI	= "ei";
 static const char* MN_DI	= "di";
-static const char* MN_HLT	= "HLT";
+static const char* MN_HLT	= "hlt";
 
 static const char* MN_IN	= "in";
 static const char* MN_OUT	= "out";
