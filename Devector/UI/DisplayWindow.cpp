@@ -48,6 +48,7 @@ const char* fragShaderS = R"#(
 	uniform sampler2D texture0;
 	uniform vec4 m_shaderData_scrollVert;
 	uniform vec4 m_shaderData_bordL_bordB_visBord_bordT;
+	uniform vec4 m_crtXY_highlightMul;
 
 	layout (location = 0) out vec4 out0;
 
@@ -56,11 +57,11 @@ const char* fragShaderS = R"#(
 		vec2 uv = uv0;
 		vec2 texPxlSize = vec2(1.0f / 768.0f, 1.0f / 312.0f);
 
+		// vertical scrolling
 		float borderLeft = m_shaderData_bordL_bordB_visBord_bordT.x * texPxlSize.x;
 		float borderRight = borderLeft + 512.0f * texPxlSize.x;
 		float borderTop = m_shaderData_bordL_bordB_visBord_bordT.w *  texPxlSize.y;
 		float borderBottom = borderTop + 256.0f * texPxlSize.y;
-
 		if (uv.x >= borderLeft &&
 			uv.x < borderRight &&
 			uv.y >= borderTop &&
@@ -70,7 +71,16 @@ const char* fragShaderS = R"#(
 			// wrap V
 			uv.y += uv.y < borderTop ? 256.0f * texPxlSize.y : 0.0f;
 		}
+
 		vec3 color = texture(texture0, uv).rgb;
+
+		// crt scanline highlight
+		if (uv.y > m_crtXY_highlightMul.y * texPxlSize.y ||
+			(uv.y >= m_crtXY_highlightMul.y * texPxlSize.y && uv.x > m_crtXY_highlightMul.x * texPxlSize.x))
+		{
+			color.xyz *= m_crtXY_highlightMul.z;
+		}
+
 		out0 = vec4(color, 1.0f);
 	}
 )#";
@@ -96,7 +106,8 @@ bool dev::DisplayWindow::Init()
 
 	GLUtils::ShaderParams shaderParams = {
 		{ "m_shaderData_scrollVert", &m_shaderData_scrollVert },
-		{ "m_shaderData_bordL_bordB_visBord_bordT", &m_shaderData_bordL_bordB_visBord_bordT }};
+		{ "m_shaderData_bordL_bordB_visBord_bordT", &m_shaderData_bordL_bordB_visBord_bordT },
+		{ "m_crtXY_highlightMul", &m_crtXY_highlightMul } };
 	auto vramMatRes = m_glUtils.InitMaterial(m_vramShaderId, RENDER_TARGET_W, RENDER_TARGET_H,
 			{m_vramTexRes}, shaderParams);
 	if (!vramMatRes) return false;
@@ -128,6 +139,7 @@ void dev::DisplayWindow::Update()
 	DrawDisplay();
 
 	m_isHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_None);
+
 	ImGui::End();
 }
 
@@ -149,12 +161,27 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 {
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& data = *res;
-
 	uint64_t cc = data["cc"];
 	auto ccDiff = cc - m_ccLast;
 	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
 	m_ccLast = cc;
-	if (ccDiff == 0) return;
+
+	if (!_isRunning && m_isHovered)
+	{
+		res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
+		const auto& displayData = *res;
+		int rasterPixel = displayData["rasterPixel"];
+		int rasterLine = displayData["rasterLine"];
+
+		m_crtXY_highlightMul.x = rasterPixel;
+		m_crtXY_highlightMul.y = rasterLine;
+		m_crtXY_highlightMul.z = SCANLINE_HIGHLIGHT_MUL;
+	}
+	else {
+		m_crtXY_highlightMul.z = 1.0f;
+	}
+
+	//if (ccDiff == 0) return;
 
 	// update
 	if (m_isGLInited)

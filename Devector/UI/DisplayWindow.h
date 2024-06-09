@@ -18,7 +18,7 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_H = static_cast<int>(DEFAULT_WINDOW_W * WINDOW_ASPECT);
 		static constexpr int RENDER_TARGET_W = Display::ACTIVE_AREA_W + Display::BORDER_VISIBLE * 2 * 2;
 		static constexpr int RENDER_TARGET_H = Display::ACTIVE_AREA_H + Display::BORDER_VISIBLE * 2;
-
+		static constexpr float SCANLINE_HIGHLIGHT_MUL = 0.3f;
 		const std::string m_name = "Display";
 
 		GLuint1 m_frameTextureId = 0;
@@ -29,6 +29,7 @@ namespace dev
 		
 		GLUtils& m_glUtils;
 		GLUtils::Vec4 m_shaderData_scrollVert = {255.0f, 0, 0, 0};
+		GLUtils::Vec4 m_crtXY_highlightMul = { 384.0f, 156.0f, 1.0f, 0};
 		GLUtils::Vec4 m_shaderData_bordL_bordB_visBord_bordT = {
 						(float)Display::BORDER_LEFT, 
 						static_cast<float>(Display::SCAN_VBLANK_BOTTOM), 
