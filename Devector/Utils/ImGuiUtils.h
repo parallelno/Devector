@@ -72,7 +72,8 @@ namespace dev
 	static constexpr ImVec4 DASM_CLR_REG = dev::IM_VEC4(0x1ECF44FF);
 	static constexpr ImVec4 DASM_CLR_CONST = dev::IM_VEC4(0x8BE0E9FF);
 
-	constexpr ImU32 DASM_CLR_PC = dev::IM_U32(0x88F038FF);
+	static constexpr ImU32 DASM_CLR_PC = dev::IM_U32(0x88F038FF);
+	static constexpr ImVec2 UI_LITTLE_SPACE = { 12,10 };
 
 	// Make the UI compact because there are so many fields
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);

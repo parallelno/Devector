@@ -27,13 +27,9 @@ namespace dev
 		using MemLastRW = std::array<uint32_t, Memory::GLOBAL_MEMORY_LEN>;
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
-		Disasm m_disasm;
+		Disasm disasm;
 		using Watchpoints = std::unordered_map<dev::Id, Watchpoint>;
 		using Breakpoints = std::unordered_map<GlobalAddr, Breakpoint>;
-
-		using AddrLabels = std::vector<std::string>;
-		using Labels = std::unordered_map<GlobalAddr, AddrLabels>;
-		using Comments = std::unordered_map<GlobalAddr, std::string>;
 
 		Debugger(Hardware& _hardware);
 		~Debugger();
@@ -45,8 +41,6 @@ namespace dev
 			const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
 		void Read(const GlobalAddr _globalAddr, const uint8_t _val);
 		void Write(const GlobalAddr _globalAddr, const uint8_t _val);
-
-		void UpdateDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset);
 
 		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
 		void AddBreakpoint(const Addr _addr,
@@ -73,40 +67,15 @@ namespace dev
 
 		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> const Disasm::Lines*;
 
-		void LoadDebugData(const std::wstring& _path);
-		void ResetLabels();
-
 		auto GetLastRW() -> const MemLastRW*;
 		void UpdateLastRW();
-		auto GetComment(const Addr _addr) const -> const std::string*;
-		void SetComment(const Addr _addr, const std::string& _comment);
-		void DelComment(const Addr _addr);
-		auto GetLabels(const Addr _addr) const -> const AddrLabels*;
-		void SetLabels(const Addr _addr, const AddrLabels& _labels);
+		void UpdateDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset);
 
 	private:
-		auto GetDisasmLine(const uint8_t _opcode, 
-			const uint8_t _dataL, const uint8_t _dataH) const ->const std::string;
-		auto GetDisasmLineDb(const uint8_t _data) const ->const std::string;
-		auto GetAddr(const Addr _endAddr, const int _instructionOffset) const -> Addr;
-
 		void TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _opcode, 
 			const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
 		auto TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const ->int;
 		auto TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const ->int;
-
-		static constexpr int LABEL_TYPE_LABEL		= 1 << 0;
-		static constexpr int LABEL_TYPE_CONST		= 1 << 1;
-		static constexpr int LABEL_TYPE_EXTERNAL	= 1 << 2;
-		static constexpr int LABEL_TYPE_ALL			= LABEL_TYPE_LABEL | LABEL_TYPE_CONST | LABEL_TYPE_EXTERNAL;
-
-		auto LabelsToStr(const Addr _addr, int _labelTypes) const -> const std::string;
-		auto GetDisasmLabels(const Addr _addr) const -> const std::string;
-
-		using MemStats = std::array<uint64_t, Memory::GLOBAL_MEMORY_LEN>;
-		MemStats m_memRuns;
-		MemStats m_memReads;
-		MemStats m_memWrites;
 
 		struct TraceLog
 		{
@@ -115,18 +84,14 @@ namespace dev
 			uint8_t m_dataL;
 			uint8_t m_dataH;
 
-			auto ToStr() const -> std::string;
-			void Clear();
+			//auto ToStr() const -> std::string;
+			//void Clear();
 			Addr GetOperandAddr() const { return m_dataL | (m_dataH << 8); };
 		};
 
 		std::array <TraceLog, TRACE_LOG_SIZE> m_traceLog;
 		size_t m_traceLogIdx = 0;
 		int m_traceLogIdxViewOffset = 0;
-
-		Labels m_labels;		// labels
-		Labels m_consts;		// labels used as constants only
-		Comments m_comments;
 
 		Hardware& m_hardware;
 

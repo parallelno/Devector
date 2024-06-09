@@ -166,7 +166,7 @@ void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line
 		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
 		_reqDisasm.addr = _line.addr;
 		break;
-	case UIItemMouseAction::RIGHT: // Add the "Copy to Clipboard" option to the context menu
+	case UIItemMouseAction::RIGHT:
 		_contextMenu.Init(_line.addr, _line.GetAddrS());
 		break;
 	}
@@ -181,16 +181,17 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line
 	// when a user did action to the immediate operand
 	switch (mouseAction)
 	{
+	// any case below means that the immediate addr was at least hovered
 	case UIItemMouseAction::LEFT: // Navigate to the address
 		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
 		_reqDisasm.addr = _line.imm;
 		break;
-	case UIItemMouseAction::RIGHT: // Adds the "Copy to Clipboard" option to the context menu
-		_contextMenu.Init(_line.imm, _line.GetImmediateS());
+	case UIItemMouseAction::RIGHT: // init the immediate value as an addr to let the context menu copy it
+		_contextMenu.Init(_line.imm, _line.GetImmediateS(), true);
 		break;
 	}
 
-	// set the addr highlight
+	// set the addr highlight when
 	if (mouseAction != UIItemMouseAction::NONE) {
 		_addrHighlight.Init(_line.imm);
 	}
@@ -263,6 +264,7 @@ void dev::DisasmWindow::DrawDisasmConsts(const Disasm::Line& _line)
 		if (i) {
 			ImGui::SameLine();
 			ImGui::TextColored(DASM_CLR_COMMENT, ", ");
+			ImGui::SameLine();
 		}
 		ImGui::TextColored(DASM_CLR_ADDR, const_.c_str());
 
@@ -276,15 +278,16 @@ void dev::DisasmWindow::DrawDisasmConsts(const Disasm::Line& _line)
 
 void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 {
+	if (!m_disasmPP || !*m_disasmPP) return;
+	auto& disasm = **m_disasmPP;
+
 	Addr regPC = m_hardware.Request(Hardware::Req::GET_REGS)->at("pc");
-	bool anyLineIsHovered = false;
+	int hoveredLineIdx = -1;
 	ImVec2 selectionMin = ImGui::GetWindowContentRegionMin();
 	ImVec2 selectionMax = ImGui::GetWindowContentRegionMax();
 	float winRegionYMin = ImGui::GetCursorScreenPos().y;
 	float winRegionYMax = winRegionYMin + selectionMax.y;
 	
-
-	if (!m_disasmP) return;
 	if (_isRunning) ImGui::BeginDisabled();
 
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
@@ -304,7 +307,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		ImGui::TableSetupColumn("stats", ImGuiTableColumnFlags_WidthFixed, STATS_W);
 		ImGui::TableSetupColumn("consts");
 
-		m_disasmLines = dev::Min((int)m_disasmP->size(), GetVisibleLines());
+		m_disasmLines = dev::Min((int)disasm.size(), GetVisibleLines());
 
 		for (int lineIdx = 0; lineIdx < m_disasmLines; lineIdx++)
 		{
@@ -318,45 +321,46 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			{
 				m_selectedLineIdx = lineIdx;
 			}
+			if (!_isRunning) {
+				selectionMin.y = ImGui::GetItemRectMin().y;
+				selectionMax.y = ImGui::GetItemRectMax().y;
+				hoveredLineIdx = ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ? lineIdx : hoveredLineIdx;
+			}
 
-			auto& line = m_disasmP->at(lineIdx);
+			auto& line = disasm.at(lineIdx);
 			int addr = line.addr;
 
 			switch (line.type)
 			{
-			case Disasm::Line::Type::COMMENT:
-			{
-				DrawDisasmComment(line);
-				break;
-			}
-			case Disasm::Line::Type::LABELS:
-			{
-				DrawDisasmLabels(line);
-				break;
-			}
-			case Disasm::Line::Type::CODE:
-			{
-				DrawAddrLinks(_isRunning, lineIdx, winRegionYMin, winRegionYMax, m_selectedLineIdx == lineIdx);
-				DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
-				DrawDisasmAddr(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
-				DrawDisasmCode(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
+				case Disasm::Line::Type::COMMENT:
+				{
+					DrawDisasmComment(line);
+					break;
+				}
+				case Disasm::Line::Type::LABELS:
+				{
+					DrawDisasmLabels(line);
+					break;
+				}
+				case Disasm::Line::Type::CODE:
+				{
+					DrawAddrLinks(_isRunning, lineIdx, winRegionYMin, winRegionYMax, hoveredLineIdx == lineIdx);
+					DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
+					DrawDisasmAddr(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
+					DrawDisasmCode(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
 
-				DrawDisasmStats(line);
-				DrawDisasmConsts(line);
-				break;
-			}
+					DrawDisasmStats(line);
+					DrawDisasmConsts(line);
+					break;
+				}
 			}
 			
 			if (!_isRunning)
 			{
-				selectionMin.y = ImGui::GetItemRectMin().y;
-				selectionMax.y = ImGui::GetItemRectMax().y;
-				bool lineIsHovered = ImGui::IsMouseHoveringRect(selectionMin, selectionMax);
-				anyLineIsHovered |= lineIsHovered;
-
 				// line is hovered. check if right-clicked to open the Context menu
-				if (lineIsHovered && m_contextMenu.status == ContextMenu::Status::NONE &&
-					ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+				if (hoveredLineIdx == lineIdx && m_contextMenu.status == ContextMenu::Status::NONE &&
+					ImGui::IsMouseClicked(ImGuiMouseButton_Right)) 
+				{
 					m_contextMenu.Init(addr, line.GetStr());
 				}
 			}
@@ -365,37 +369,38 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		ImGui::EndTable();
 	}
 
-	DrawDisasmContextMenu(regPC, m_contextMenu);
+	DrawContextMenu(regPC, m_contextMenu);
 	DrawCommentEdit(m_contextMenu);
 	DrawLabelEdit(m_contextMenu);
+	DrawConstEdit(m_contextMenu);
 	ImGui::PopStyleVar(2);
 
 	/////////////////////////////////////////////////////////	
 	// check the keys and the mouse
 	/////////////////////////////////////////////////////////	
-	if (!_isRunning && anyLineIsHovered &&
+	if (!_isRunning && hoveredLineIdx > 0 &&
 		m_disasmLines >= DISASM_INSTRUCTION_OFFSET)
 	{
 		// Up/Down scrolling
 		if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
 		{
 			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);
-			UpdateDisasm(m_disasmP->at(0).addr, 2, false);
+			UpdateDisasm(disasm[0].addr, 2, false);
 		}
 		else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
 		{
 			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
-			UpdateDisasm(m_disasmP->at(0).addr, -2, false);
+			UpdateDisasm(disasm[0].addr, -2, false);
 		}
 		if (ImGui::GetIO().MouseWheel > 0.0f)
 		{
 			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);
-			UpdateDisasm(m_disasmP->at(0).addr, 2, false);
+			UpdateDisasm(disasm[0].addr, 2, false);
 		}
 		else if (ImGui::GetIO().MouseWheel < 0.0f)
 		{
 			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
-			UpdateDisasm(m_disasmP->at(0).addr, -2, false);
+			UpdateDisasm(disasm[0].addr, -2, false);
 		}
 
 
@@ -448,8 +453,7 @@ void dev::DisasmWindow::ReqHandling()
 	{
 	case ReqDisasm::Type::UPDATE:
 	{
-		Addr addr = m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr;
-		UpdateDisasm(addr, DISASM_INSTRUCTION_OFFSET, false);
+		UpdateDisasm(m_disasmAddr, DISASM_INSTRUCTION_OFFSET, false);
 	}
 	break;
 
@@ -458,8 +462,10 @@ void dev::DisasmWindow::ReqHandling()
 		break;
 
 	case ReqDisasm::Type::NAVIGATE_TO_ADDR:
-		if (m_navigateAddrsIdx == 0) {
-			m_navigateAddrs[m_navigateAddrsIdx] = m_disasmP->at(DISASM_INSTRUCTION_OFFSET).addr;
+		if (m_navigateAddrsIdx == 0) 
+		{
+			if (!m_disasmPP || !*m_disasmPP) return;
+			m_navigateAddrs[m_navigateAddrsIdx] = (*m_disasmPP)->at(DISASM_INSTRUCTION_OFFSET).addr;
 			m_navigateAddrsSize++;
 		}
 		if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
@@ -477,15 +483,16 @@ void dev::DisasmWindow::ReqHandling()
 
 void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOffset, const bool _updateSelection)
 {
+	m_disasmAddr = _addr;
 	m_debugger.UpdateDisasm(_addr, m_disasmLines, -_instructionsOffset);
-	m_disasmP = m_debugger.m_disasm.GetLines();
-	m_immLinksP = m_debugger.m_disasm.GetImmLinks();
-	m_immLinksNum = m_debugger.m_disasm.GetImmAddrlinkNum();
+	m_disasmPP = m_debugger.disasm.GetLines();
+	m_immLinksP = m_debugger.disasm.GetImmLinks();
+	m_immLinksNum = m_debugger.disasm.GetImmAddrlinkNum();
 
 	if (_updateSelection) m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
 }
 
-void dev::DisasmWindow::DrawDisasmContextMenu(const Addr _regPC, ContextMenu& _contextMenu)
+void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu)
 {
 	if (_contextMenu.status == ContextMenu::Status::INIT_CONTEXT_MENU) {
 		ImGui::OpenPopup(_contextMenu.contextMenuName);
@@ -531,6 +538,9 @@ void dev::DisasmWindow::DrawDisasmContextMenu(const Addr _regPC, ContextMenu& _c
 		if (ImGui::MenuItem("Add/Edit Label")) {
 			_contextMenu.status = ContextMenu::Status::INIT_LABEL_EDIT;
 		};
+		if (_contextMenu.immHovered && ImGui::MenuItem("Add/Edit Const")) {
+			_contextMenu.status = ContextMenu::Status::INIT_CONST_EDIT;
+		};
 		ImGui::EndPopup();
 	}
 }
@@ -547,7 +557,7 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 	{
 		ImGui::OpenPopup(_contextMenu.commentEditName);
 		_contextMenu.status = ContextMenu::Status::NONE;
-		auto currentComment = m_debugger.GetComment(_contextMenu.addr);
+		auto currentComment = m_debugger.disasm.GetComment(_contextMenu.addr);
 		if (currentComment) {
 			snprintf(comment, sizeof(comment), currentComment->c_str());
 		}
@@ -568,15 +578,13 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 		}
 		
 		// Delete button
-		ImGui::SameLine(); ImGui::Dummy({ 12,10 }); ImGui::SameLine();
+		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
 		if (ImGui::Button("X", buttonSizeX))
 		{
 			comment[0] = '\0';
 		}
 
-		ImGui::SameLine();
-		ImGui::Dummy({ 12,10 });
-		ImGui::SameLine();
+		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
 		dev::DrawHelpMarker("A semicolon is not required.");
 
 		ImGui::SeparatorText("");
@@ -603,10 +611,10 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 			if (ImGui::Button("Ok", buttonSize) || enterPressed)
 			{
 				if (comment[0]){ // non-empty string
-					m_debugger.SetComment(_contextMenu.addr, comment);
+					m_debugger.disasm.SetComment(_contextMenu.addr, comment);
 				}
 				else {
-					m_debugger.DelComment(_contextMenu.addr);
+					m_debugger.disasm.DelComment(_contextMenu.addr);
 				}
 
 				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
@@ -628,7 +636,7 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 	}
 }
 
-void DeleteByIndex(dev::Debugger::AddrLabels& _labels, char* _label, int& _idx)
+void DeleteByIndex(dev::Disasm::AddrLabels& _labels, char* _label, int& _idx)
 {
 	if (_labels.size() > 1) {
 		_labels.erase(_labels.begin() + _idx);
@@ -640,6 +648,132 @@ void DeleteByIndex(dev::Debugger::AddrLabels& _labels, char* _label, int& _idx)
 	snprintf(_label, sizeof(_label), _labels.at(_idx).c_str());
 }
 
+void dev::DisasmWindow::DrawConstEdit(ContextMenu& _contextMenu)
+{
+	static ImVec2 buttonSize = { 65.0f, 25.0f };
+	static ImVec2 buttonSizeX = { 45.0f, 25.0f };
+	static char const_[255] = "";
+	static int editedConstIdx = 0;
+	bool enterPressed = false;
+	bool selectText = false;
+	auto constsP = m_debugger.disasm.GetConsts(_contextMenu.addr);
+	static Disasm::AddrLabels consts;
+
+	if (_contextMenu.status == ContextMenu::Status::INIT_CONST_EDIT)
+	{
+		ImGui::OpenPopup(_contextMenu.constEditName);
+		_contextMenu.status = ContextMenu::Status::NONE;
+		selectText = true;
+		editedConstIdx = 0;
+		consts.clear();
+
+		if (constsP) {
+			snprintf(const_, sizeof(const_), constsP->at(editedConstIdx).c_str());
+			for (const auto& str : *constsP) {
+				consts.push_back(str);
+			}
+		}
+		else {
+			const_[0] = '\0';
+			consts.push_back("");
+		}
+	}
+
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(_contextMenu.constEditName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		// edit comment
+		if (selectText) ImGui::SetKeyboardFocusHere();
+		if (ImGui::InputTextWithHint("##const", "", const_, IM_ARRAYSIZE(const_), 
+			ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsUppercase)) {
+			enterPressed = true;
+		}
+		consts[editedConstIdx] = const_;
+
+		// Delete button
+		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
+		if (ImGui::Button("X", buttonSizeX))
+		{
+			DeleteByIndex(consts, const_, editedConstIdx);
+		}
+		ImGui::SeparatorText("");
+
+		// list all consts
+		if (constsP)
+		{
+			if (ImGui::BeginListBox("##CListBox"))
+			{
+				auto constsNum = consts.size();
+				for (int constIdx = 0; constIdx < constsNum; constIdx++)
+				{
+					auto& str = consts.at(constIdx);
+					const bool is_selected = (editedConstIdx == constIdx);
+					if (ImGui::Selectable(std::format("{}##{}", str, constIdx).c_str(), is_selected))
+					{
+						consts[editedConstIdx] = const_;
+						editedConstIdx = constIdx;
+						snprintf(const_, sizeof(const_), consts.at(editedConstIdx).c_str());
+
+					}
+
+					if (is_selected) {// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndListBox();
+			}
+			ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
+			dev::DrawHelpMarker("This list contains all consts with the same value.\n"
+				"Specify which const fits this context best.");
+			ImGui::SeparatorText("");
+		}
+
+		// property table
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##CETable", 2, flags))
+		{
+			ImGui::TableSetupColumn("##CEContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
+			ImGui::TableSetupColumn("##CEContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 200);
+
+			// warnings
+			std::string warningS = "";
+
+			// OK/CANCEL/... butons
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+			// OK button
+			if (!warningS.empty()) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize) || enterPressed)
+			{
+				// remove empty consts
+				consts.erase(std::remove_if(consts.begin(), consts.end(),
+					[](const std::string& _const) { return _const.empty(); }), consts.end());
+				// store consts
+				m_debugger.disasm.SetConsts(_contextMenu.addr, consts);
+				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+				ImGui::CloseCurrentPopup();
+			}
+			if (!warningS.empty()) ImGui::EndDisabled();
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			// ESC pressed
+			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
 void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 {
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
@@ -648,8 +782,8 @@ void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 	static int editedLabelIdx = 0;
 	bool enterPressed = false;
 	bool selectText = false;
-	auto labelsP = m_debugger.GetLabels(_contextMenu.addr);
-	static Debugger::AddrLabels labels;
+	auto labelsP = m_debugger.disasm.GetLabels(_contextMenu.addr);
+	static Disasm::AddrLabels labels;
 
 	if (_contextMenu.status == ContextMenu::Status::INIT_LABEL_EDIT)
 	{
@@ -683,14 +817,14 @@ void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 		labels[editedLabelIdx] = label;
 
 		// Delete button
-		ImGui::SameLine(); ImGui::Dummy({ 12,10 }); ImGui::SameLine();
+		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
 		if (ImGui::Button("X", buttonSizeX))
 		{
 			DeleteByIndex(labels, label, editedLabelIdx);
 		}
 
-		ImGui::SameLine(); ImGui::Dummy({ 12,10 }); ImGui::SameLine();
-		dev::DrawHelpMarker("A semicolon is not required.");
+		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
+		dev::DrawHelpMarker("A colon is not required.");
 		ImGui::SeparatorText("");
 
 		// list all labels
@@ -717,7 +851,7 @@ void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 				}
 				ImGui::EndListBox();
 			}
-			ImGui::SameLine(); ImGui::Dummy({ 12,10 }); ImGui::SameLine();
+			ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
 			dev::DrawHelpMarker("This list contains all labels for this address.\n"
 				"Specify which one fits this context best.");
 			ImGui::SeparatorText("");
@@ -748,7 +882,7 @@ void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 				labels.erase(std::remove_if(labels.begin(), labels.end(),
 					[](const std::string& label) { return label.empty(); }), labels.end()); 
 				// store labels
-				m_debugger.SetLabels(_contextMenu.addr, labels);
+				m_debugger.disasm.SetLabels(_contextMenu.addr, labels);
 				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
 				ImGui::CloseCurrentPopup();
 			}

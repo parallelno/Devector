@@ -35,17 +35,19 @@ namespace dev
 		static constexpr ImU32 DIS_CLR_LINK_HIGHLIGHT = dev::IM_U32(0xD010FFFF);
 
 		struct ContextMenu {
-			enum class Status{ NONE = 0, INIT_CONTEXT_MENU, INIT_COMMENT_EDIT, INIT_LABEL_EDIT };
+			enum class Status{ NONE = 0, INIT_CONTEXT_MENU, INIT_COMMENT_EDIT, INIT_LABEL_EDIT, INIT_CONST_EDIT };
 			Status status = Status::NONE;
 			Addr addr = 0;
 			std::string str;
-			bool optionCopyAddr = false;
+			bool immHovered = false; // the context menu was opened on the immediate operand
 			const char* contextMenuName = "DisasmItemMenu";
-			const char* commentEditName = "CommentEdit";
-			const char* labelEditName = "LabelEdit";
+			const char* commentEditName = "Edit Comment";
+			const char* labelEditName = "Edit Label";
+			const char* constEditName = "Edit Const";
 
-			void Init(Addr _addr, const std::string& _lineS)
+			void Init(Addr _addr, const std::string& _lineS, const bool _immHovered = false)
 			{
+				immHovered = _immHovered;
 				status = Status::INIT_CONTEXT_MENU;
 				addr = _addr;
 				str = _lineS;
@@ -74,7 +76,8 @@ namespace dev
 		ImFont* m_fontCommentP = nullptr;
 		ReqDisasm& m_reqDisasm;
 		char m_searchText[255] = "";
-		const Disasm::Lines* m_disasmP = nullptr;
+		Addr m_disasmAddr = 0;
+		const Disasm::Lines** m_disasmPP = nullptr;
 		int m_disasmLines = Disasm::DISASM_LINES_MAX;
 		const Disasm::ImmAddrLinks* m_immLinksP = nullptr;
 		size_t m_immLinksNum = 0;
@@ -100,9 +103,10 @@ namespace dev
 		void DrawDisasmLabels(const Disasm::Line& _line);
 		void DrawDisasmStats(const Disasm::Line& _line);
 		void DrawDisasmConsts(const Disasm::Line& _line);
-		void DrawDisasmContextMenu(const Addr _regPC, ContextMenu& _contextMenu);
+		void DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu);
 		void DrawCommentEdit(ContextMenu& _contextMenu);
 		void DrawLabelEdit(ContextMenu& _contextMenu);
+		void DrawConstEdit(ContextMenu& _contextMenu);
 		void DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 			const float _posMin, const float _posMax, const bool _selected);
 		void UpdateData(const bool _isRunning);

@@ -6,6 +6,7 @@
 #include <vector>
 #include "Utils/StrUtils.h"
 #include "Utils/Utils.h"
+#include "Utils/JsonUtils.h"
 
 #define DISASM_CMDS			0x100
 
@@ -752,7 +753,7 @@ static const uint8_t cmdImms[DISASM_CMDS] =
 	CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IW_OFF1, CMD_IB_OFF0, CMD_IB_OFF1, CMD_IM_NONE,
 };
 
-// mnemonics names lens
+// mnemonics names lens. it defines how many element each mnemonic consists of
 static const uint8_t mnenomicLens[DISASM_CMDS] =
 {
 	1, 2, 2, 2,	2, 2, 2, 1, 1, 2, 2, 2,	2, 2, 2, 1,
@@ -859,6 +860,7 @@ auto dev::GetMnemonicLen(const uint8_t _opcode) -> uint8_t { return mnenomicLens
 auto dev::GetMnemonicType(const uint8_t _opcode) -> const uint8_t* { return mnenomicTypes[_opcode]; }
 auto dev::GetImmediateType(const uint8_t _opcode) -> uint8_t { return cmdImms[_opcode]; }
 auto dev::GetOpcodeType(const uint8_t _opcode) -> const uint8_t { return opcodeTypes[_opcode]; }
+auto dev::GetCmdLen(const uint8_t _opcode) -> const uint8_t { return cmdLens[_opcode]; }
 
 void dev::Disasm::Line::Init()
 {
@@ -880,12 +882,12 @@ auto dev::Disasm::Line::GetImmediateS() const
 	return cmdImms[opcode] == CMD_IW_OFF1 ? AddrToAddrI16S(imm) : AddrToAddrI8S(static_cast<uint8_t>(imm));
 };
 
-void dev::Disasm::AddLabes(const Addr _addr, const Labels& _labels)
+void dev::Disasm::AddLabes(const Addr _addr)
 {
 	if (lineIdx >= DISASM_LINES_MAX) return;
 
-	auto labelsI = _labels.find(_addr);
-	if (labelsI == _labels.end()) return;
+	auto labelsI = m_labels.find(_addr);
+	if (labelsI == m_labels.end()) return;
 
 	auto& line = lines.at(lineIdx);
 	line.Init();
@@ -897,12 +899,12 @@ void dev::Disasm::AddLabes(const Addr _addr, const Labels& _labels)
 	lineIdx++;
 }
 
-void dev::Disasm::AddComment(const Addr _addr, const Comments& _comments)
+void dev::Disasm::AddComment(const Addr _addr)
 {
 	if (lineIdx >= DISASM_LINES_MAX) return;
 
-	auto commentI = _comments.find(_addr);
-	if (commentI == _comments.end()) return;
+	auto commentI = m_comments.find(_addr);
+	if (commentI == m_comments.end()) return;
 
 	auto& line = lines.at(lineIdx);
 	line.Init();
@@ -915,12 +917,15 @@ void dev::Disasm::AddComment(const Addr _addr, const Comments& _comments)
 }
 
 auto dev::Disasm::AddDb(const Addr _addr, const uint8_t _data,
-	const Labels& _consts,
-	const uint64_t _runs, const uint64_t _reads, const uint64_t _writes,
 	const Breakpoint::Status _breakpointStatus)
 -> Addr
 {
 	if (lineIdx >= DISASM_LINES_MAX) return 0;
+
+	GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", _addr } })->at("data");
+	auto runs = m_memRuns[globalAddr];
+	auto reads = m_memReads[globalAddr];
+	auto writes = m_memWrites[globalAddr];
 
 	auto& line = lines.at(lineIdx);
 	line.Init();
@@ -928,30 +933,33 @@ auto dev::Disasm::AddDb(const Addr _addr, const uint8_t _data,
 	line.addr = _addr;
 	line.opcode = 0x10; // db 0x10 is used as a placeholder
 	line.imm = _data;
-	line.accessed = _runs != UINT64_MAX && _reads != UINT64_MAX && _writes != UINT64_MAX;
+	line.accessed = runs != UINT64_MAX && reads != UINT64_MAX && writes != UINT64_MAX;
 	line.breakpointStatus = _breakpointStatus;
 
-	auto constsI = _consts.find(_data);
-	line.consts = constsI == _consts.end() ? nullptr : &(constsI->second);
+	auto constsI = m_consts.find(_data);
+	line.consts = constsI == m_consts.end() ? nullptr : &(constsI->second);
 
-	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", _runs, _reads, _writes);
+	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", runs, reads, writes);
 	lineIdx++;
 	return 1;
 }
 
 auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
-	const Labels& _labels, const Labels& _consts,
-	const uint64_t _runs, const uint64_t _reads, const uint64_t _writes,
 	const Breakpoint::Status _breakpointStatus)
 -> Addr
 {
 	if (lineIdx >= DISASM_LINES_MAX) return 0;
 
+	GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", _addr } })->at("data");
+	auto runs = m_memRuns[globalAddr];
+	auto reads = m_memReads[globalAddr];
+	auto writes = m_memWrites[globalAddr];
+
 	uint8_t opcode = _cmd & 0xFF;
 	auto immType = cmdImms[opcode];
 
 	if (immType == CMD_IB_OFF0) {
-		return AddDb(_addr, opcode, _consts, _runs, _reads, _writes, _breakpointStatus);
+		return AddDb(_addr, opcode, _breakpointStatus);
 	}
 
 	auto cmdLen = cmdLens[opcode];
@@ -964,17 +972,17 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 	line.addr = _addr;
 	line.opcode = opcode;
 	line.imm = data;
-	line.accessed = _runs != UINT64_MAX && _reads != UINT64_MAX && _writes != UINT64_MAX;
+	line.accessed = runs != UINT64_MAX && reads != UINT64_MAX && writes != UINT64_MAX;
 	line.breakpointStatus = _breakpointStatus;
 
 	if (immType != CMD_IM_NONE) {
-		auto labelsI = _labels.find(data);
-		auto constsI = _consts.find(data);
-		line.labels = labelsI == _labels.end() ? nullptr : &(labelsI->second);
-		line.consts = constsI == _consts.end() ? nullptr : &(constsI->second);
+		auto labelsI = m_labels.find(data);
+		auto constsI = m_consts.find(data);
+		line.labels = labelsI == m_labels.end() ? nullptr : &(labelsI->second);
+		line.consts = constsI == m_consts.end() ? nullptr : &(constsI->second);
 	}
 
-	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", _runs, _reads, _writes);
+	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", runs, reads, writes);
 
 	lineIdx++;
 	return cmdLen;
@@ -1036,11 +1044,25 @@ auto dev::Disasm::Line::GetStr() const
 	return "";
 }
 
+dev::Disasm::Disasm(Hardware& _hardware)
+	: m_hardware(_hardware)
+{}
+
 void dev::Disasm::Init(const LineIdx _linesNum)
 {
 	linesNum = dev::Min(_linesNum, DISASM_LINES_MAX);
 	lineIdx = 0;
 	immAddrlinkNum = 0;
+}
+
+void dev::Disasm::Reset() 
+{
+	m_memRuns.fill(0);
+	m_memReads.fill(0);
+	m_memWrites.fill(0);
+
+	linesP = nullptr;
+	m_debugPath.clear();
 }
 
 auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks* 
@@ -1084,4 +1106,242 @@ auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks*
 	}
 
 	return &immAddrLinks; 
+}
+
+bool IsConstLabel(const char* _s)
+{
+	// Iterate through each character in the string
+	while (*_s != '\0') {
+		// Check if the character is uppercase or underscore
+		if (!(std::isupper(*_s) || *_s == '_' || (*_s >= '0' && *_s <= '9'))) {
+			return false; // Not all characters are capital letters or underscores
+		}
+		++_s; // Move to the next character
+	}
+	return true; // All characters are capital letters or underscores
+}
+
+auto dev::Disasm::GetComment(const Addr _addr) const
+-> const std::string*
+{
+	auto commentI = m_comments.find(_addr);
+	return commentI != m_comments.end() ? &commentI->second : nullptr;
+}
+
+void dev::Disasm::SetComment(const Addr _addr, const std::string& _comment)
+{
+	m_comments[_addr] = _comment;
+	SaveDebugData();
+}
+
+void dev::Disasm::DelComment(const Addr _addr)
+{
+	auto commentI = m_comments.find(_addr);
+	m_comments.erase(commentI);
+	SaveDebugData();
+}
+
+auto dev::Disasm::GetLabels(const Addr _addr) const -> const AddrLabels*
+{
+	auto labelsI = m_labels.find(_addr);
+	return labelsI != m_labels.end() ? &labelsI->second : nullptr;
+}
+
+void dev::Disasm::SetLabels(const Addr _addr, const AddrLabels& _labels)
+{
+	if (_labels.empty()) {
+		auto labelsI = m_labels.find(_addr);
+		m_labels.erase(labelsI);
+	}
+	else {
+		m_labels[_addr] = _labels;
+	}
+	SaveDebugData();
+}
+
+auto dev::Disasm::GetConsts(const Addr _addr) const -> const AddrLabels*
+{
+	auto constsI = m_consts.find(_addr);
+	return constsI != m_consts.end() ? &constsI->second : nullptr;
+}
+
+void dev::Disasm::SetConsts(const Addr _addr, const AddrLabels& _consts)
+{
+	if (_consts.empty()) {
+		auto constsI = m_consts.find(_addr);
+		m_consts.erase(constsI);
+	}
+	else {
+		m_consts[_addr] = _consts;
+	}
+	SaveDebugData();
+}
+
+void dev::Disasm::ResetConstsLabelsComments()
+{
+	m_labels.clear();
+	m_consts.clear();
+	m_comments.clear();
+
+	// invalidate the pointer to lines
+	linesP = nullptr;
+}
+
+void dev::Disasm::LoadDebugData(const std::wstring& _romPath)
+{
+	// check if the file exists
+	auto romDir = dev::GetDir(_romPath);
+	auto debugPath = romDir + L"\\" + dev::GetFilename(_romPath) + L".json";
+	if (!dev::IsFileExist(debugPath)) return;
+
+	ResetConstsLabelsComments();
+
+	m_debugDataJ = LoadJson(debugPath);
+
+	// add labels
+	if (m_debugDataJ.contains("labels")) {
+		for (auto& [str, addrS] : m_debugDataJ["labels"].items())
+		{
+			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
+			m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(str);
+		}
+	}
+	// add consts
+	if (m_debugDataJ.contains("consts")) {
+		for (auto& [str, addrS] : m_debugDataJ["consts"].items())
+		{
+			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
+			m_consts.emplace(addr, AddrLabels{}).first->second.emplace_back(str);
+		}
+	}
+	// add comments
+	if (m_debugDataJ.contains("comments")) {
+		for (auto& [addrS, str] : m_debugDataJ["comments"].items())
+		{
+			Addr addr = dev::StrHexToInt(addrS.c_str());
+			m_comments.emplace(addr, str);
+		}
+	}
+
+	m_debugPath = debugPath;
+	linesP = nullptr;
+}
+
+void dev::Disasm::SaveDebugData()
+{
+	if (m_debugPath.empty()) return;
+	// update labels
+	if (m_debugDataJ.contains("labels")) 
+	{ 
+		m_debugDataJ["labels"].clear(); 
+	}
+	else { 
+		m_debugDataJ["labels"] = {};
+	}
+	auto& debugLabels = m_debugDataJ["labels"];
+	for (const auto& [addr, labels] : m_labels)
+	{
+		for (int i = 0; i < labels.size(); i++) debugLabels[labels[i]] = std::format("0x{:04X}", addr);
+	}
+
+	// update consts
+	if (m_debugDataJ.contains("consts"))
+	{
+		m_debugDataJ["consts"].clear();
+	}
+	else {
+		m_debugDataJ["consts"] = {};
+	}
+	auto& debugConsts = m_debugDataJ["consts"];
+	for (const auto& [addr, consts] : m_consts)
+	{
+		for (int i = 0; i < consts.size(); i++) debugConsts[consts[i]] = std::format("0x{:04X}", addr);
+	}
+
+	// update comments
+	if (m_debugDataJ.contains("comments"))
+	{
+		m_debugDataJ["comments"].clear();
+	}
+	else {
+		m_debugDataJ["comments"] = {};
+	}
+	auto& debugComments = m_debugDataJ["comments"];
+	for (const auto& [addr, comment] : m_comments)
+	{
+		debugComments[std::format("0x{:04X}", addr)] = comment;
+	}
+	
+
+	dev::SaveJson(m_debugPath, m_debugDataJ);
+}
+
+
+// shifts the addr by _instructionsOffset instruction counter
+// if _instructionsOffset=3, it returns the addr of a third instruction after _addr, and vice versa
+#define MAX_ATTEMPTS 41 // max attemts to find an addr of an instruction before _addr 
+// check the perf of this func
+auto dev::Disasm::GetAddr(const Addr _addr, const int _instructionOffset) const
+-> Addr
+{
+	int instructions = dev::Abs(_instructionOffset);
+
+	if (_instructionOffset > 0)
+	{
+		Addr addr = _addr;
+		for (int i = 0; i < instructions; i++)
+		{
+			auto resOpcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
+			uint8_t opcode = resOpcode->at("data");
+
+			auto cmdLen = GetCmdLen(opcode);
+			addr = addr + cmdLen;
+		}
+		return addr;
+	}
+	else if (_instructionOffset < 0)
+	{
+		std::vector<Addr> possibleDisasmStartAddrs;
+
+		int disasmStartAddr = _addr - instructions * CMD_LEN_MAX;
+
+		for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++)
+		{
+			int addr = disasmStartAddr;
+			int currentInstruction = 0;
+
+			while (addr < _addr && currentInstruction < instructions)
+			{
+				auto resOpcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
+				uint8_t opcode = resOpcode->at("data");
+
+				auto cmdLen = GetCmdLen(opcode);
+				addr = addr + cmdLen;
+				currentInstruction++;
+			}
+
+			// if we reached the _addr address with counted instructions equals instructions
+			if (addr == _addr && currentInstruction == instructions)
+			{
+				possibleDisasmStartAddrs.push_back((Addr)disasmStartAddr);
+			}
+			disasmStartAddr++;
+
+			// return _addr if it fails to find a seaquence legal instructons
+			if (disasmStartAddr + instructions > _addr)
+			{
+				break;
+			}
+		}
+		if (possibleDisasmStartAddrs.empty()) return _addr;
+
+		// get the best result basing on the execution counter
+		for (const auto possibleDisasmStartAddr : possibleDisasmStartAddrs)
+		{
+			if (m_memRuns[possibleDisasmStartAddr] > 0) return possibleDisasmStartAddr;
+		}
+		return possibleDisasmStartAddrs[0];
+	}
+
+	return _addr;
 }

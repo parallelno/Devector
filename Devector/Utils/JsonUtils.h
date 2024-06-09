@@ -19,6 +19,7 @@ namespace dev
 	auto LoadJson(const std::string& _path) ->nlohmann::json;
 	auto LoadJson(const std::wstring& _path) -> nlohmann::json;
 	void SaveJson(const std::string& _path, const nlohmann::json& _json);
+	void SaveJson(const std::wstring& _path, const nlohmann::json& _json);
 
 	void JsonParsingExit(const std::string& _fieldName);
 	void JsonParsingTypeMissmatchExit(

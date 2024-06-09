@@ -27,6 +27,12 @@ void dev::SaveJson(const std::string& _path, const nlohmann::json& _json)
 	file << std::setw(4) << _json << std::endl;
 }
 
+void dev::SaveJson(const std::wstring& _path, const nlohmann::json& _json)
+{
+	std::ofstream file(_path);
+	file << std::setw(4) << _json << std::endl;
+}
+
 void dev::JsonParsingExit(const std::string& _fieldName)
 {
 	auto msg = std::format("json doesn't have \"{}\" field.", _fieldName);

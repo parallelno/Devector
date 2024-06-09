@@ -154,12 +154,11 @@ void dev::DevectorApp::LoadRom(const std::wstring& _path)
 	m_hardwareP->Request(Hardware::Req::RESET);
 	m_hardwareP->Request(Hardware::Req::RESTART);
 
-	m_debuggerP->LoadDebugData(_path);
-
 	auto reqData = nlohmann::json({ {"data", *result}, {"addr", Memory::ROM_LOAD_ADDR} });
 	m_hardwareP->Request(Hardware::Req::SET_MEM, reqData);
 
 	m_debuggerP->Reset();
+	m_debuggerP->disasm.LoadDebugData(_path);
 	m_hardwareP->Request(Hardware::Req::RUN);
 
 	Log(L"File loaded: {}", _path);
