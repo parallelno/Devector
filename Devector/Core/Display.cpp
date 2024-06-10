@@ -130,7 +130,7 @@ void dev::Display::FillActiveArea256(const int _rasterizedPixels)
 		int rasterLine = GetRasterLine();
 		int rasterPixel = GetRasterPixel();
 
-		auto colorIdx = BytesToColorIdx(screenBytes, bitIdx);
+		auto colorIdx = BytesToColorIdx256(screenBytes, bitIdx);
 		auto color = m_io.GetColor(colorIdx);
 
 		m_frameBuffer[m_framebufferIdx++] = color;
@@ -158,7 +158,7 @@ void dev::Display::FillActiveArea256PortHandling(const int _rasterizedPixels)
 			m_scrollIdx = m_io.GetScroll();
 		}
 
-		auto colorIdx = BytesToColorIdx(screenBytes, bitIdx);
+		auto colorIdx = BytesToColorIdx256(screenBytes, bitIdx);
 		m_io.TryToCommit(colorIdx);
 		auto color = m_io.GetColor(colorIdx);
 
@@ -174,14 +174,52 @@ void dev::Display::FillActiveArea256PortHandling(const int _rasterizedPixels)
 
 void dev::Display::FillActiveArea512PortHandling(const int _rasterizedPixels)
 {
-	// TODO: replace with a proper code
-	FillActiveArea256PortHandling(_rasterizedPixels);
+	auto screenBytes = GetScreenBytes(); // 4 bytes. One byte per screen buffer
+	int pxlIdx = 15 - ((m_framebufferIdx - BORDER_LEFT) % RASTERIZED_PXLS_MAX); // 0-15
+
+	for (int i = 0; i < _rasterizedPixels; i++)
+	{
+		int rasterLine = GetRasterLine();
+		int rasterPixel = GetRasterPixel();
+		if (rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel == BORDER_LEFT)
+		{
+			m_scrollIdx = m_io.GetScroll();
+		}
+
+		auto colorIdx = BytesToColorIdx512(screenBytes, pxlIdx);
+		m_io.TryToCommit(colorIdx);
+		auto color = m_io.GetColor(colorIdx);
+
+		m_frameBuffer[m_framebufferIdx++] = color;
+
+		pxlIdx--;
+		if (pxlIdx < 0){
+			pxlIdx = 15;
+			screenBytes = GetScreenBytes();
+		}		
+	}
 }
 
 void dev::Display::FillActiveArea512(const int _rasterizedPixels)
 {
-	// TODO: replace with a proper code
-	FillActiveArea256();
+	auto screenBytes = GetScreenBytes(); // 4 bytes. One byte per screen buffer
+	int pxlIdx = 15 - ((m_framebufferIdx - BORDER_LEFT) % RASTERIZED_PXLS_MAX); // 0-15
+
+	for (int i = 0; i < _rasterizedPixels; i++)
+	{
+		int rasterLine = GetRasterLine();
+		int rasterPixel = GetRasterPixel();
+
+		auto colorIdx = BytesToColorIdx512(screenBytes, pxlIdx);
+		auto color = m_io.GetColor(colorIdx);
+		m_frameBuffer[m_framebufferIdx++] = color;
+		
+		pxlIdx--;
+		if (pxlIdx < 0){
+			pxlIdx = 15;
+			screenBytes = GetScreenBytes();
+		}
+	}
 }
 
 bool dev::Display::IsIRQ() { return m_irq; }
@@ -254,6 +292,12 @@ uint32_t dev::Display::BytesToColorIdxs()
 	return result;
 }
 */
+
+
+/**
+ * Retrieves four screen bytes at the current raster line and pixel.
+ * Each byte for each graphic buffer.
+ */
 uint32_t dev::Display::GetScreenBytes()
 {
 	int rasterLine = GetRasterLine();
@@ -266,10 +310,34 @@ uint32_t dev::Display::GetScreenBytes()
 	return m_memory.GetScreenBytes(screenAddrOffset);
 }
 
-uint32_t dev::Display::BytesToColorIdx(uint32_t _screenBytes, uint8_t _bitIdx)
+// 256 screen mode
+// extract a 4-bit color index from the four screen bytes.
+// _bitIdx is in the range [0..7]
+uint32_t dev::Display::BytesToColorIdx256(uint32_t _screenBytes, uint8_t _bitIdx)
 {
 	return (_screenBytes >> (_bitIdx - 0 + 0))  & 1 |
 		   (_screenBytes >> (_bitIdx - 1 + 8))  & 2 |
 		   (_screenBytes >> (_bitIdx - 2 + 16)) & 4 |
 		   (_screenBytes >> (_bitIdx - 3 + 24)) & 8;
+}
+
+// 512 screen mode
+// extract a 2-bit color index from the four screen bytes.
+// _bitIdx is in the range [0..15]
+// In the 512x256 mode, the even pixel colors are stored in screen buffers 3 and 2,
+// and the odd ones - in screen buffers 0 and 1
+uint32_t dev::Display::BytesToColorIdx512(uint32_t _screenBytes, uint8_t _bitIdx)
+{
+	bool even = _bitIdx & 1;
+	_bitIdx >>= 1;
+
+	auto colorIdx0 = 
+			(_screenBytes >> (_bitIdx - 0 + 0)) & 1 |
+			(_screenBytes >> (_bitIdx - 1 + 8)) & 2;
+
+	auto colorIdx1 = 
+			(_screenBytes >> (_bitIdx - 1 + 16)) & 2 |
+			(_screenBytes >> (_bitIdx - 0 + 24)) & 1;
+
+	return even ? colorIdx0 : colorIdx1;
 }

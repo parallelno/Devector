@@ -9,9 +9,8 @@
 
 int main(int argc, char** argv)
 {
-    // TODO: update
     dev::ArgsParser argsParser(argc, argv,
-        "This is an emulator of the Soviet personal computer Vector06C. It has built-in debugger functionality. It also expose debugging options to VS Code via the debugging protocall. Please, install VS Code extension...");
+        "This is an emulator of the Soviet personal computer Vector06C. It has built-in debugger functionality.");
     
     const auto settingsPath = argsParser.GetString("settingsPath",
         "The path to the settings.");

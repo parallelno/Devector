@@ -84,7 +84,8 @@ namespace dev
 	private:
 		uint32_t BytesToColorIdxs();
 		uint32_t GetScreenBytes();
-		uint32_t BytesToColorIdx(uint32_t _screenBytes, uint8_t _bitIdx);
+		uint32_t BytesToColorIdx256(uint32_t _screenBytes, uint8_t _bitIdx);
+		uint32_t BytesToColorIdx512(uint32_t _screenBytes, uint8_t _bitIdx);
 		void RasterizeActiveArea(const int _rasterizedPixels);
 		void FillActiveArea256(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 		void FillActiveArea512(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
