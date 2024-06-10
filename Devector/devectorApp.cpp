@@ -435,7 +435,7 @@ void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path, const int _d
 void dev::DevectorApp::KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes)
 {
 	// Retrieve the user pointer to access the class instance
-	// TODO: check if a mouse cursor hovers the Display window or a Display window or any its controls are selected.
+	// TODO: check if a mouse cursor hovers the Display window or any its controls are selected.
 	DevectorApp* instance = static_cast<DevectorApp*>(glfwGetWindowUserPointer(_window));
 	if (instance) 
 	{

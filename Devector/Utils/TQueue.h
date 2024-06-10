@@ -1,10 +1,4 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
-
-// this class works properly only between ywo threads
 #pragma once
-#ifndef QUEUE_H
-#define QUEUE_H
 
 #include "Utils/result.h"
 #include "Utils/utils.h"
@@ -14,6 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
+
 using namespace std::chrono_literals;
 
 namespace dev {
@@ -93,4 +88,3 @@ namespace dev {
         }
     };
 }
-#endif //QUEUE_H

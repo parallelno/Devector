@@ -51,7 +51,7 @@ namespace dev
 		// path, driveIdx, autoBoot
 		std::list<std::tuple<std::wstring, int, bool>> m_recentFilePaths;
 
-		// TODO: combine all reqs deon the UI into one object because all  
+		// TODO: combine all reqs to/from the UI into one object because all
 		// such requests are handled sequentially (no collisions) during the same or the next update
 		ReqHexViewer m_reqHexViewer; // requests to HexViewerWindow
 		ReqDisasm m_reqDisasm; // requests to DisasmWindow
