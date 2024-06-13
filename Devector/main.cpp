@@ -12,7 +12,7 @@ int main(int argc, char** argv)
     dev::ArgsParser argsParser(argc, argv,
         "This is an emulator of the Soviet personal computer Vector06C. It has built-in debugger functionality.");
     
-    const auto settingsPath = argsParser.GetString("settingsPath",
+    auto settingsPath = argsParser.GetString("settingsPath",
         "The path to the settings.");
     
     if (!argsParser.IsRequirementSatisfied())
@@ -20,15 +20,16 @@ int main(int argc, char** argv)
         dev::Exit("Required parameters are missing", dev::ERROR_UNSPECIFIED);
     }
 
+    nlohmann::json settingsJ;
     if (dev::IsFileExist(dev::StrToStrW(settingsPath)) == false)
     {
-        // TODO: make it working if there is no setting file (create default one with necessary settings)
-        auto msg = std::format("settingsPath is invalid. file path: {}",
+        auto msg = std::format("settings file is not found, created a new one with default settings: {}",
             settingsPath);
-        dev::Exit(msg, dev::ERROR_UNSPECIFIED);
+        settingsPath = "settings.json";
     }
-
-    auto settingsJ = dev::LoadJson(settingsPath);
+    else {
+        settingsJ = dev::LoadJson(settingsPath);
+    }
 
     auto app = dev::DevectorApp(settingsPath, settingsJ);
     if (!app.IsInited()) return dev::ERROR_UNSPECIFIED;

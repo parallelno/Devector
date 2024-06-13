@@ -26,7 +26,6 @@ namespace dev
 		bool m_keySS = false;
 		bool m_keyUS = false;
 		bool m_keyRus = false;
-		bool m_terminate = false;
 		Operation m_rebootType = Operation::NONE;
 
 		Keyboard();

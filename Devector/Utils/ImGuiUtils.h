@@ -126,5 +126,4 @@ namespace dev
 	auto DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab) -> UIItemMouseAction;
 	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color, 
 		const ImVec4& _highlightColor, bool _forceHighlight = false) -> UIItemMouseAction;
-	auto DrawSaveDiscardFddPopup(int _selectedDriveIdx, const std::wstring& _mountedFddPath) -> FddStatus;
 }

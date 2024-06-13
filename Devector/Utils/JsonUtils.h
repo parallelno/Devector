@@ -28,52 +28,53 @@ namespace dev
 		const std::string& _expectedType);
 
 	int GetJsonInt(
-		const nlohmann::json& _json,
+		nlohmann::json& _json,
 		const std::string& _fieldName,
 		const bool _exit = true,
 		int _defaultValue = 0);
 
+	/*
 	template <typename T>
 	int GetJsonInt(
-		const nlohmann::json& _json,
+		nlohmann::json& _json,
 		const std::string& _fieldName,
 		const T _exit = true,
 		int _defaultValue = 0) = delete;
-
+		*/
 	double GetJsonDouble(
-		const nlohmann::json& _json,
+		nlohmann::json& _json,
 		const std::string& _fieldName,
 		const bool _exit = true,
 		double _defaultValue = 0.0);
-	
+	/*
 	template <typename T>
 	double GetJsonDouble(
 		const nlohmann::json& _json,
 		const std::string& _fieldName,
 		const T _exit = true,
 		double _defaultValue = 0.0) = delete;
-
+		*/
 	bool GetJsonBool(
-		const nlohmann::json& _json,
+		nlohmann::json& _json,
 		const std::string& _fieldName,
 		const bool _exit = true,
 		bool _defaultValue = false);
 
 	auto GetJsonString(
-		const nlohmann::json& _json,
+		nlohmann::json& _json,
 		const std::string& _fieldName,
 		bool _exit = true,
 		const std::string& _defaultValue = "")
 		-> std::string;
 
 	auto GetJsonObject(
-		const nlohmann::json& _json,
+		nlohmann::json& _json,
 		const std::string& _fieldName,
 		const bool _exit = true)
 		-> nlohmann::json;
 
 	auto GetJsonVectorUint8(
-		const nlohmann::json& _json,
+		nlohmann::json& _json,
 		const std::string& _fieldName,
 		const bool _exit = true,
 		const std::vector<uint8_t>& _defaultValue = {})

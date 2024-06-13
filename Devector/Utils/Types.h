@@ -40,5 +40,4 @@ namespace dev
 	};
 
 	enum class UIItemMouseAction { NONE = 0, HOVERED, LEFT, RIGHT, MIDDLE };
-	enum class FddStatus { NONE, DISCARD, SAVE, ALWAYS_DISCARD, ALWAYS_SAVE };
 }

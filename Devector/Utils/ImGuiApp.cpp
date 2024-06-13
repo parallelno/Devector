@@ -307,16 +307,16 @@ void dev::ImGuiApp::LoadFonts()
 
     m_dpiScale = GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT;
 
-    auto fontCodePath = dev::GetJsonString(m_settingsJ, "fontPath", false);
-    m_fontSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false) * m_dpiScale;
+    auto fontCodePath = dev::GetJsonString(m_settingsJ, "fontPath", false, DEFAULT_FONT_PATH);
+    m_fontSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false, DEFAULT_FONT_SIZE) * m_dpiScale;
 
     if (!fontCodePath.empty() && dev::IsFileExist(fontCodePath))
     {
         m_font = io.Fonts->AddFontFromFileTTF(fontCodePath.c_str(), m_fontSize);
     }
 
-    auto fontCommentPath = dev::GetJsonString(m_settingsJ, "fontItalicPath", false, "");
-    auto fontCommentSize = (float)dev::GetJsonDouble(m_settingsJ, "fontItalicSize", false);
+    auto fontCommentPath = dev::GetJsonString(m_settingsJ, "fontItalicPath", false, DEFAULT_FONT_ITALIC_PATH);
+    auto fontCommentSize = (float)dev::GetJsonDouble(m_settingsJ, "fontItalicSize", false, DEFAULT_FONT_ITALIC_SIZE);
 
     if (!fontCommentPath.empty() && dev::IsFileExist(fontCommentPath))
     {

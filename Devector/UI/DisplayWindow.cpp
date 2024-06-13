@@ -173,8 +173,8 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 		int rasterPixel = displayData["rasterPixel"];
 		int rasterLine = displayData["rasterLine"];
 
-		m_crtXY_highlightMul.x = rasterPixel;
-		m_crtXY_highlightMul.y = rasterLine;
+		m_crtXY_highlightMul.x = (float)rasterPixel;
+		m_crtXY_highlightMul.y = (float)rasterLine;
 		m_crtXY_highlightMul.z = SCANLINE_HIGHLIGHT_MUL;
 	}
 	else {

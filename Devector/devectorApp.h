@@ -28,10 +28,40 @@ namespace dev
 		const std::string APP_NAME = "Devector";
 		const std::string FONT_CODE_PATH_DEFAULT = "Devector";
 		static constexpr int RECENT_FILES_MAX = 10;
-		const std::string LABELS_FILENAME = "debug.txt";
-		const std::string POPUP_FDD = "Fdd Setup";
 		const std::wstring EXT_ROM = L".ROM";
 		const std::wstring EXT_FDD = L".FDD";
+		
+		struct LoadingRes
+		{
+			enum class Status {
+				NONE, 
+				CHECK_MOUNTED, 
+				SAVE_DISCARD, 
+				OPEN_FILE,
+				OPEN_POPUP_SAVE_DISCARD, 
+				POPUP_SAVE_DISCARD,
+				OPEN_POPUP_SELECT_DRIVE,
+				POPUP_SELECT_DRIVE,
+				ALWAYS_DISCARD,
+				DISCARD, 
+				ALWAYS_SAVE,
+				SAVE,
+				LOAD,
+				UPDATE_RECENT,
+			};
+
+			const char* POPUP_SELECT_DRIVE = "Fdd Setup";
+			const char* POPUP_SAVE_DISCARD = "Save or Discard?";
+
+			Status status = Status::NONE;
+			std::wstring path;
+			int driveIdx = 0;
+			bool autoBoot = false;
+			bool recent = false; // opened from the recent files menu
+			std::wstring pathFddUpdated;
+			int driveIdxUpdated = 0;
+		};
+		LoadingRes m_loadingRes; // loading resource info
 
 		std::unique_ptr <dev::Hardware> m_hardwareP;
 		std::unique_ptr <dev::Debugger> m_debuggerP;
@@ -60,8 +90,6 @@ namespace dev
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 		GLUtils m_glUtils;
 
-		enum class LoadFddStatus { NONE, LOAD, UPDATED, SAVE_DISCARD_DIALOG, SAVE };
-
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ);
 		~DevectorApp();
@@ -80,5 +108,11 @@ namespace dev
 		void LoadFdd(const std::wstring& _path, const int _driveIdx, const bool _autoBoot);
 		void Reload();
 		static void KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes);
+		void DrawSaveDiscardFddPopup();
+		void CheckMountedFdd();
+		void SaveDiscardFdd();
+		void SaveUpdatedFdd();
+		void OpenFile();
+		void DrawSelectDrivePopup();
 	};
 }

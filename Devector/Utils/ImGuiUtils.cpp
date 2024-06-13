@@ -8,7 +8,7 @@
 #include "imgui_internal.h"
 
 // Make the UI compact because there are so many fields
-// TODO: check it is not over extensively used
+// TODO: check if it's not over extensively used
 void dev::PushStyleCompact(const float _paddingMulX, const float _paddingMulY)
 {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -436,52 +436,4 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 	}
 
 	return uiItemMouseAction;
-}
-
-auto dev::DrawSaveDiscardFddPopup(int _selectedDriveIdx, const std::wstring& _mountedFddPath)
--> FddStatus
-{
-	auto fddStatus = FddStatus::NONE;
-
-	// Dialog. Save or Discard mounted updated fdd image?
-	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
-	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Save or Discard", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		static const char* diskNames[] = { "A", "B", "C", "D" };
-		ImGui::Text("Previously mounted disk %s was updated\nSave or discard changes?", diskNames[_selectedDriveIdx]);
-		ImGui::SameLine();
-		dev::DrawHelpMarker(dev::StrWToStr(_mountedFddPath).c_str());
-
-		ImGui::NewLine();
-		static bool doNotAskAgain = false;
-		ImGui::Checkbox("##oldFddDoNotAskAgain", &doNotAskAgain);
-		ImGui::SameLine();
-		ImGui::Text("Don't ask again");
-		ImGui::Separator();
-
-		if (ImGui::Button("Save", ImVec2(120, 0)))
-		{
-			ImGui::CloseCurrentPopup();
-			// save settings
-			if (doNotAskAgain) {
-				fddStatus = FddStatus::ALWAYS_SAVE;
-			}
-			fddStatus = FddStatus::SAVE;
-		}
-		ImGui::SetItemDefaultFocus();
-		ImGui::SameLine();
-		if (ImGui::Button("Discard", ImVec2(120, 0)))
-		{
-			ImGui::CloseCurrentPopup();
-			// save settings
-			if (doNotAskAgain) {
-				fddStatus = FddStatus::ALWAYS_DISCARD;
-			}
-			fddStatus = FddStatus::DISCARD;
-		}
-		ImGui::EndPopup();
-	}
-
-	return fddStatus;
 }

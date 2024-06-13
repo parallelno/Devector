@@ -28,11 +28,6 @@ auto dev::Keyboard::KeyHandling(int _key, int _action)
 			return Operation::RESTART;
 		}
 		break;
-	case GLFW_KEY_PAUSE:
-		// TODO: figure out what this old comment is about -> on windows ctrl+break seems to magically become scroll lock, wtf
-		// TODO: find out what is m_terminate for
-		if (_action == GLFW_PRESS) m_terminate = true;
-		break;
 		// shift keys
 	case GLFW_KEY_LEFT_SHIFT:
 	case GLFW_KEY_RIGHT_SHIFT:

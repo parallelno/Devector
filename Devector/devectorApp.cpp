@@ -24,59 +24,13 @@ dev::DevectorApp::DevectorApp(
 dev::DevectorApp::~DevectorApp()
 {
 	// TODO: make it working. it is crashing the app because ImGui and probably other objects are dead already.
-	/*
-	// Save or Discard mounted updated fdd
-	bool showSaveDiscardFddDialog = GetSettingsBool("showSaveDiscardFddDialog", true);
-	auto discardFddChanges = GetSettingsBool("discardFddChanges", true);
-	FddStatus fddStatus = FddStatus::NONE;
 
-	for (int driveIdx = 0; driveIdx < Fdc1793::DRIVES_MAX; driveIdx++) 
-	{
-		// check if the mounted disk is updated
-		auto fddInfo = *m_hardwareP->Request(
-			Hardware::Req::GET_FDD_INFO, { {"_driveIdx", driveIdx} });
-		
-		bool updated = fddInfo["updated"];
-		if (!updated) continue;
-
-		auto mountedFddPath = dev::StrToStrW(fddInfo["path"]);
-
-		if (showSaveDiscardFddDialog)
-		{
-			auto fddStatus = DrawSaveDiscardFddPopup(driveIdx, mountedFddPath);
-		}
-		else {
-			fddStatus = discardFddChanges ? FddStatus::ALWAYS_DISCARD : FddStatus::ALWAYS_SAVE;
-		}
-
-		switch (fddStatus)
-		{
-		case FddStatus::ALWAYS_DISCARD:
-			SettingsUpdate("showSaveDiscardFddDialog", false);
-			SettingsUpdate("discardFddChanges", true);
-			break;
-
-		case FddStatus::ALWAYS_SAVE:
-			SettingsUpdate("showSaveDiscardFddDialog", false);
-			SettingsUpdate("discardFddChanges", false);
-
-		case FddStatus::SAVE:
-			// store the mounted updated fdd image
-			auto res = *m_hardwareP->Request(
-				Hardware::Req::GET_FDD_IMAGE, { {"_driveIdx", driveIdx} });
-			auto data = res["data"];
-			dev::SaveFile(mountedFddPath, data);
-			break;
-		}
-
-	}
-	*/
 }
 
 void dev::DevectorApp::WindowsInit()
 {
-	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", ""));
-	bool restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", false);
+	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", "boot//boots.bin"));
+	bool restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", true);
 
 	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
@@ -208,51 +162,21 @@ void dev::DevectorApp::Reload()
 
 void dev::DevectorApp::MainMenuUpdate()
 {
-	static std::wstring pathRecent = L"";
-	static bool autoBootRecent = false;
-	static int driveIdxRecent = 0;
-	bool openFddPopup = false;
-	static LoadFddStatus fddStatusPopup = LoadFddStatus::NONE;
-	static bool autoBootPopup = false;
-	static std::wstring fddPathMounted;
-	static int driveIdxPopup = 0;
-	static bool reqRecentFilesUpdate = false;
-
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
 		{
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
-				WCHAR path[MAX_PATH];
-
-				// Open the file dialog
-				if (OpenFileDialog(path, MAX_PATH))
-				{
-					auto ext = StrToUpper(dev::GetExt(path));
-					pathRecent = path;
-
-					if (ext == EXT_ROM) {
-						LoadRom(path);
-						driveIdxRecent = -1;
-						autoBootRecent = false;
-						reqRecentFilesUpdate = true;
-					}
-					else if (ext == EXT_FDD)
-					{
-						openFddPopup = true;
-					}
-					else {
-						dev::Log(L"Not supported file type: {}", path);
-					}
-				}
+				m_loadingRes.status = LoadingRes::Status::CHECK_MOUNTED;
+				m_loadingRes.recent = false;
 			}
 			if (ImGui::BeginMenu("Recent Files"))
 			{
 				for (const auto& [path, driveIdx, autoBoot] : m_recentFilePaths)
 				{
 					std::string itemS = dev::StrWToStr(path);
-					if (driveIdx >= 0) 
+					if (driveIdx >= 0)
 					{
 						itemS += std::format(":{}", driveIdx);
 						itemS += autoBoot ? "A" : "";
@@ -260,21 +184,11 @@ void dev::DevectorApp::MainMenuUpdate()
 					
 					if (ImGui::MenuItem(itemS.c_str()))
 					{
-						if (driveIdx < 0){
-							LoadRom(path);
-							pathRecent = path;
-							reqRecentFilesUpdate = true;
-							driveIdxRecent = -1;
-							autoBootRecent = false;
-						}
-						else
-						{
-							LoadFdd(path, driveIdx, autoBoot);
-							pathRecent = path;
-							reqRecentFilesUpdate = true;
-							driveIdxRecent = driveIdx;
-							autoBootRecent = autoBoot;
-						}
+						m_loadingRes.path = path;
+						m_loadingRes.driveIdx = driveIdx;
+						m_loadingRes.autoBoot = autoBoot;
+						m_loadingRes.status = LoadingRes::Status::CHECK_MOUNTED;
+						m_loadingRes.recent = true;
 					}
 				}
 				ImGui::EndMenu();
@@ -295,97 +209,80 @@ void dev::DevectorApp::MainMenuUpdate()
 		ImGui::EndMenuBar();
 	}
 
-	// update recent filepaths
-	if (reqRecentFilesUpdate) 
+	// handle the statuses
+	switch (m_loadingRes.status)
 	{
-		reqRecentFilesUpdate = false;
-		RecentFilesUpdate(pathRecent, driveIdxRecent, autoBootRecent);
-		RecentFilesStore();
-	}
+	case LoadingRes::Status::CHECK_MOUNTED:
+		CheckMountedFdd();
+		break;
 
-	// FDD: "boot or mount?" popup window
-	if (openFddPopup) ImGui::OpenPopup(POPUP_FDD.c_str());
+	case LoadingRes::Status::SAVE_DISCARD:
+		SaveDiscardFdd();
+		break;
 
-	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
-	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal(POPUP_FDD.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::Text("Specify the drive to mount the FDD file as \nwell as the auto boot option if required.");
-		ImGui::Separator();
-		static int driveSelect = 0;
-		ImGui::Combo("##DriveSelect", &driveSelect, "Drive A Boot\0Drive A\0Drive B\0Drive C\0Drive D\0");
+	case LoadingRes::Status::OPEN_POPUP_SAVE_DISCARD:
+		ImGui::OpenPopup(m_loadingRes.POPUP_SAVE_DISCARD);
+		m_loadingRes.status = LoadingRes::Status::POPUP_SAVE_DISCARD;
+		break;
 
-		if (ImGui::Button("OK", ImVec2(120, 0)))
-		{ 
-			ImGui::CloseCurrentPopup();
+	case LoadingRes::Status::POPUP_SAVE_DISCARD:
+		DrawSaveDiscardFddPopup();
+		break;
 
-			autoBootPopup = ( driveSelect == 0 );
-			driveIdxPopup = dev::Max(driveSelect - 1, 0); // "0" and "1" are both associated with FDisk 0
-			// check if the mounted disk is updated
-			auto fddInfo = *m_hardwareP->Request(
-				Hardware::Req::GET_FDD_INFO, { {"_driveIdx", driveIdxPopup} });
-			fddStatusPopup = fddInfo["updated"] ? LoadFddStatus::UPDATED : LoadFddStatus::LOAD;
-			fddPathMounted = dev::StrToStrW(fddInfo["path"]);
-		}
-		ImGui::SetItemDefaultFocus();
-		ImGui::SameLine();
-		if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-		ImGui::EndPopup();
-	}
-	
-	// Save or Discard mounted updated fdd image? 
-	if (fddStatusPopup == LoadFddStatus::UPDATED)
-	{
-		if (GetSettingsBool("showSaveDiscardFddDialog", true))
-		{
-			fddStatusPopup = LoadFddStatus::SAVE_DISCARD_DIALOG;
-			ImGui::OpenPopup("Save or Discard");
-		}
-		else {
-			auto discardFddChanges = GetSettingsBool("discardFddChanges", true);
-			fddStatusPopup = discardFddChanges ? LoadFddStatus::LOAD : LoadFddStatus::SAVE;
-		}
-	}
-	else if (fddStatusPopup == LoadFddStatus::SAVE)
-	{
-		// store the mounted updated fdd image
-		auto res = *m_hardwareP->Request(
-			Hardware::Req::GET_FDD_IMAGE, { {"_driveIdx", driveIdxPopup} });
-		auto data = res["data"];
-		dev::SaveFile(fddPathMounted, data);
-		fddStatusPopup = LoadFddStatus::LOAD;
-	}
-	else if (fddStatusPopup == LoadFddStatus::LOAD)
-	{
-		LoadFdd(pathRecent, dev::Max(driveIdxPopup, 0), autoBootPopup);	
-
-		driveIdxRecent = driveIdxPopup;
-		autoBootRecent = autoBootPopup;
-		reqRecentFilesUpdate = true;
-		fddStatusPopup = LoadFddStatus::NONE;
-	}
-
-	// Save or Discard mounted updated fdd
-	auto fddStatus = DrawSaveDiscardFddPopup(driveIdxPopup, fddPathMounted);
-	switch (fddStatus)
-	{
-	case FddStatus::ALWAYS_DISCARD:
+	case LoadingRes::Status::ALWAYS_DISCARD:
 		SettingsUpdate("showSaveDiscardFddDialog", false);
 		SettingsUpdate("discardFddChanges", true);
-		
-	case FddStatus::DISCARD:
-		fddStatusPopup = LoadFddStatus::LOAD;
+	case LoadingRes::Status::DISCARD:
+		m_loadingRes.status = LoadingRes::Status::OPEN_FILE;
 		break;
 
-	case FddStatus::ALWAYS_SAVE:
+	case LoadingRes::Status::ALWAYS_SAVE:
 		SettingsUpdate("showSaveDiscardFddDialog", false);
 		SettingsUpdate("discardFddChanges", false);
+	case LoadingRes::Status::SAVE:
+		SaveUpdatedFdd();
+		m_loadingRes.status = LoadingRes::Status::OPEN_FILE;
+		break;
 
-	case FddStatus::SAVE:
-		fddStatusPopup = LoadFddStatus::SAVE;
+	case LoadingRes::Status::OPEN_FILE:
+		if (m_loadingRes.recent == true) {
+			m_loadingRes.status = LoadingRes::Status::LOAD;
+			break;
+		}
+		OpenFile();
+		break;
+
+	case LoadingRes::Status::OPEN_POPUP_SELECT_DRIVE:
+		ImGui::OpenPopup(m_loadingRes.POPUP_SELECT_DRIVE);
+		m_loadingRes.status = LoadingRes::Status::POPUP_SELECT_DRIVE;
+		break;
+
+	case LoadingRes::Status::POPUP_SELECT_DRIVE:
+		DrawSelectDrivePopup();
+		break;
+
+	case LoadingRes::Status::LOAD:
+	{
+		auto ext = StrToUpper(dev::GetExt(m_loadingRes.path));
+
+		if (ext == EXT_ROM) {
+			LoadRom(m_loadingRes.path);
+		}
+		else if (ext == EXT_FDD) {
+			LoadFdd(m_loadingRes.path, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
+		}
+		m_loadingRes.status = LoadingRes::Status::UPDATE_RECENT;
 		break;
 	}
+	case LoadingRes::Status::UPDATE_RECENT:
+		RecentFilesUpdate(m_loadingRes.path, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
+		RecentFilesStore();
+		m_loadingRes.status = LoadingRes::Status::NONE;
+		break;
 
+	default:
+		break;
+	}
 }
 
 void dev::DevectorApp::RecentFilesInit()
@@ -511,3 +408,141 @@ void dev::DevectorApp::AppStyleInit()
 	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 }
 
+// check if any fdds were updated
+void dev::DevectorApp::CheckMountedFdd()
+{
+	m_loadingRes.status = LoadingRes::Status::OPEN_FILE;
+	for (int driveIdx = 0; driveIdx < Fdc1793::DRIVES_MAX; driveIdx++)
+	{
+		auto fddInfo = *m_hardwareP->Request(
+			Hardware::Req::GET_FDD_INFO, { {"_driveIdx", driveIdx} });
+		
+		if (fddInfo["updated"])
+		{
+			m_loadingRes.pathFddUpdated = dev::StrToStrW(fddInfo["path"]);
+			m_loadingRes.driveIdxUpdated = driveIdx;
+			m_loadingRes.status = LoadingRes::Status::SAVE_DISCARD;
+			break;
+		}
+	}
+}
+
+// check if we need to open a popup
+void dev::DevectorApp::SaveDiscardFdd()
+{
+	if (GetSettingsBool("showSaveDiscardFddDialog", true))
+	{
+		m_loadingRes.status = LoadingRes::Status::OPEN_POPUP_SAVE_DISCARD;
+	}
+	else {
+		auto discardFddChanges = GetSettingsBool("discardFddChanges", true);
+		m_loadingRes.status = discardFddChanges ? LoadingRes::Status::OPEN_FILE : LoadingRes::Status::SAVE;
+	}
+}
+
+// Popup. Save or Discard mounted updated fdd image?
+void dev::DevectorApp::DrawSaveDiscardFddPopup()
+{
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(m_loadingRes.POPUP_SAVE_DISCARD, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static const char* diskNames[] = { "A", "B", "C", "D" };
+		ImGui::Text("Previously mounted disk %s was updated\nSave or discard changes?", diskNames[m_loadingRes.driveIdx]);
+		ImGui::SameLine();
+		dev::DrawHelpMarker(dev::StrWToStr(m_loadingRes.path).c_str());
+
+		ImGui::NewLine();
+		static bool doNotAskAgain = false;
+		ImGui::Checkbox("##oldFddDoNotAskAgain", &doNotAskAgain);
+		ImGui::SameLine();
+		ImGui::Text("Don't ask again");
+		ImGui::Separator();
+
+		if (ImGui::Button("Save", ImVec2(120, 0)))
+		{
+			m_loadingRes.status = doNotAskAgain ? LoadingRes::Status::ALWAYS_SAVE : LoadingRes::Status::SAVE;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+		if (ImGui::Button("Discard", ImVec2(120, 0)))
+		{
+			m_loadingRes.status = doNotAskAgain ? LoadingRes::Status::ALWAYS_DISCARD : LoadingRes::Status::DISCARD;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+}
+
+// store the mounted updated fdd image
+void dev::DevectorApp::SaveUpdatedFdd()
+{
+	auto res = *m_hardwareP->Request(
+		Hardware::Req::GET_FDD_IMAGE, { {"_driveIdx", m_loadingRes.driveIdxUpdated} });
+	auto data = res["data"];
+	dev::SaveFile(m_loadingRes.pathFddUpdated, data);
+	// check remaining updated fdds
+	m_loadingRes.status = LoadingRes::Status::CHECK_MOUNTED;
+}
+
+// Open the file dialog
+void dev::DevectorApp::OpenFile()
+{
+	WCHAR path[MAX_PATH];
+
+	if (OpenFileDialog(path, MAX_PATH))
+	{
+		auto ext = StrToUpper(dev::GetExt(path));
+
+		if (ext == EXT_ROM) 
+		{
+			LoadRom(path);
+			m_loadingRes.path = path;
+			m_loadingRes.driveIdx = -1;
+			m_loadingRes.autoBoot = false;
+			m_loadingRes.status = LoadingRes::Status::UPDATE_RECENT;
+		}
+		else if (ext == EXT_FDD)
+		{
+			m_loadingRes.path = path;
+			m_loadingRes.status = LoadingRes::Status::OPEN_POPUP_SELECT_DRIVE;
+		}
+		else {
+			dev::Log(L"Not supported file type: {}", path);
+			m_loadingRes.status = LoadingRes::Status::NONE;
+		}
+	}
+	else {
+		m_loadingRes.status = LoadingRes::Status::NONE;
+	}
+}
+
+void dev::DevectorApp::DrawSelectDrivePopup()
+{
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(m_loadingRes.POPUP_SELECT_DRIVE, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Specify the drive to mount the FDD file as \nwell as the auto boot option if required.");
+		ImGui::Separator();
+		static int driveSelect = 0;
+		ImGui::Combo("##DriveSelect", &driveSelect, "Drive A Boot\0Drive A\0Drive B\0Drive C\0Drive D\0");
+
+		if (ImGui::Button("OK", ImVec2(120, 0)))
+		{
+			m_loadingRes.autoBoot = (driveSelect == 0);
+			m_loadingRes.driveIdx = dev::Max(driveSelect - 1, 0); // "0" and "1" are both associated with FDisk 0
+			m_loadingRes.status = LoadingRes::Status::LOAD;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel", ImVec2(120, 0))) 
+		{ 
+			m_loadingRes.status = LoadingRes::Status::NONE;
+			ImGui::CloseCurrentPopup(); 
+		}
+		ImGui::EndPopup();
+	}
+}
