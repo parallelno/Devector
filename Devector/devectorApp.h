@@ -33,7 +33,7 @@ namespace dev
 		
 		struct LoadingRes
 		{
-			enum class Status {
+			enum class State {
 				NONE, 
 				CHECK_MOUNTED, 
 				SAVE_DISCARD, 
@@ -48,18 +48,35 @@ namespace dev
 				SAVE,
 				LOAD,
 				UPDATE_RECENT,
+				EXIT,
+			};
+			enum class Type { // defines the action during State = OPEN_FILE
+				OPEN_FILE_DIALOG,
+				RECENT,
+				SAVE_THEN_EXIT,
 			};
 
 			const char* POPUP_SELECT_DRIVE = "Fdd Setup";
 			const char* POPUP_SAVE_DISCARD = "Save or Discard?";
 
-			Status status = Status::NONE;
+			State state = State::NONE;
 			std::wstring path;
 			int driveIdx = 0;
 			bool autoBoot = false;
-			bool recent = false; // opened from the recent files menu
+			Type type = Type::OPEN_FILE_DIALOG;
 			std::wstring pathFddUpdated;
 			int driveIdxUpdated = 0;
+
+			void Init(const State& _state, const Type _type = Type::OPEN_FILE_DIALOG, const std::wstring& _path = L"",
+				const int _driveIdx = -1, bool _autoBoot = false) 
+			{
+				if (state == LoadingRes::State::EXIT) return;
+				state = _state;
+				type = _type;
+				path = _path;
+				driveIdx = _driveIdx;
+				autoBoot = _autoBoot;
+			}
 		};
 		LoadingRes m_loadingRes; // loading resource info
 
@@ -92,7 +109,6 @@ namespace dev
 
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ);
-		~DevectorApp();
 
 		virtual void Update();
 
@@ -114,5 +130,6 @@ namespace dev
 		void SaveUpdatedFdd();
 		void OpenFile();
 		void DrawSelectDrivePopup();
+		void ResLoadingStatusHandling();
 	};
 }

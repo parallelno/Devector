@@ -31,7 +31,9 @@ namespace dev {
             FAILED_OPENGL_INIT,
             INITED,
             RUN,
-            EXIT
+            CHECK_MOUNTED_FDDS, // check/save mounted updated ffds
+            WAIT_FOR_SAVING,
+            EXIT,
         };
 
         ImGuiApp(nlohmann::json _settingsJ, const std::string& _stringPath, const std::string& _title = "New Window");

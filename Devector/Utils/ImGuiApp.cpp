@@ -132,7 +132,6 @@ dev::ImGuiApp::ImGuiApp(
 
 dev::ImGuiApp::~ImGuiApp()
 {
-    m_status = AppStatus::EXIT;
     m_autoUpdateThread.join();
 
     // Cleanup
@@ -229,7 +228,10 @@ void dev::ImGuiApp::Run()
 
         glfwSwapBuffers(m_window);
 
-        m_status = glfwWindowShouldClose(m_window) ? AppStatus::EXIT : m_status;
+        m_status = m_status != AppStatus::WAIT_FOR_SAVING && 
+            m_status != AppStatus::EXIT &&
+            glfwWindowShouldClose(m_window) ?
+            AppStatus::CHECK_MOUNTED_FDDS : m_status;
     }
 }
 

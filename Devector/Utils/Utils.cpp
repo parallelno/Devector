@@ -39,8 +39,6 @@ void dev::CopyToClipboard(const std::string& _str) {
 		}
 #elif defined(__linux__)
 		std::ofstream("/dev/clipboard") << _str;
-#else
-		// TODO: Implement copy to clipboard for this platform
 #endif
 	}
 

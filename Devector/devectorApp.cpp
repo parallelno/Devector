@@ -21,12 +21,6 @@ dev::DevectorApp::DevectorApp(
 	WindowsInit();
 }
 
-dev::DevectorApp::~DevectorApp()
-{
-	// TODO: make it working. it is crashing the app because ImGui and probably other objects are dead already.
-
-}
-
 void dev::DevectorApp::WindowsInit()
 {
 	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", "boot//boots.bin"));
@@ -84,6 +78,7 @@ void dev::DevectorApp::Update()
 		m_reqDisasm.type = ReqDisasm::Type::UPDATE; // disasm needs an update after reloading lbels and consts
 	}
 	MainMenuUpdate();
+	ResLoadingStatusHandling();
 
 	m_hardwareStatsWindowP->Update();
 	m_disasmWindowP->Update();
@@ -93,6 +88,12 @@ void dev::DevectorApp::Update()
 	m_memDisplayWindowP->Update();
 	m_hexViewerWindowP->Update();
 	m_traceLogWindowP->Update();
+
+	if (m_status == AppStatus::CHECK_MOUNTED_FDDS)
+	{
+		m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::SAVE_THEN_EXIT);
+		m_status = AppStatus::WAIT_FOR_SAVING;
+	}
 }
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)
@@ -168,8 +169,7 @@ void dev::DevectorApp::MainMenuUpdate()
 		{
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
-				m_loadingRes.status = LoadingRes::Status::CHECK_MOUNTED;
-				m_loadingRes.recent = false;
+				m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::OPEN_FILE_DIALOG);
 			}
 			if (ImGui::BeginMenu("Recent Files"))
 			{
@@ -181,14 +181,10 @@ void dev::DevectorApp::MainMenuUpdate()
 						itemS += std::format(":{}", driveIdx);
 						itemS += autoBoot ? "A" : "";
 					}
-					
+
 					if (ImGui::MenuItem(itemS.c_str()))
 					{
-						m_loadingRes.path = path;
-						m_loadingRes.driveIdx = driveIdx;
-						m_loadingRes.autoBoot = autoBoot;
-						m_loadingRes.status = LoadingRes::Status::CHECK_MOUNTED;
-						m_loadingRes.recent = true;
+						m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::RECENT, path, driveIdx, autoBoot);
 					}
 				}
 				ImGui::EndMenu();
@@ -205,63 +201,73 @@ void dev::DevectorApp::MainMenuUpdate()
 			ImGui::MenuItem("Memory Map", NULL, &m_memoryMapWindowShow);
 			ImGui::EndMenu();
 		}
-	
+
 		ImGui::EndMenuBar();
 	}
+}
 
+void dev::DevectorApp::ResLoadingStatusHandling()
+{
 	// handle the statuses
-	switch (m_loadingRes.status)
+	switch (m_loadingRes.state)
 	{
-	case LoadingRes::Status::CHECK_MOUNTED:
-		CheckMountedFdd();
+	case LoadingRes::State::CHECK_MOUNTED:
+		CheckMountedFdd(); 
 		break;
 
-	case LoadingRes::Status::SAVE_DISCARD:
+	case LoadingRes::State::SAVE_DISCARD:
 		SaveDiscardFdd();
 		break;
 
-	case LoadingRes::Status::OPEN_POPUP_SAVE_DISCARD:
+	case LoadingRes::State::OPEN_POPUP_SAVE_DISCARD:
 		ImGui::OpenPopup(m_loadingRes.POPUP_SAVE_DISCARD);
-		m_loadingRes.status = LoadingRes::Status::POPUP_SAVE_DISCARD;
+		m_loadingRes.state = LoadingRes::State::POPUP_SAVE_DISCARD;
 		break;
 
-	case LoadingRes::Status::POPUP_SAVE_DISCARD:
+	case LoadingRes::State::POPUP_SAVE_DISCARD:
 		DrawSaveDiscardFddPopup();
 		break;
 
-	case LoadingRes::Status::ALWAYS_DISCARD:
+	case LoadingRes::State::ALWAYS_DISCARD:
 		SettingsUpdate("showSaveDiscardFddDialog", false);
 		SettingsUpdate("discardFddChanges", true);
-	case LoadingRes::Status::DISCARD:
-		m_loadingRes.status = LoadingRes::Status::OPEN_FILE;
+	case LoadingRes::State::DISCARD:
+		m_loadingRes.state = LoadingRes::State::OPEN_FILE;
 		break;
 
-	case LoadingRes::Status::ALWAYS_SAVE:
+	case LoadingRes::State::ALWAYS_SAVE:
 		SettingsUpdate("showSaveDiscardFddDialog", false);
 		SettingsUpdate("discardFddChanges", false);
-	case LoadingRes::Status::SAVE:
+	case LoadingRes::State::SAVE:
 		SaveUpdatedFdd();
-		m_loadingRes.status = LoadingRes::Status::OPEN_FILE;
+		m_loadingRes.state = LoadingRes::State::OPEN_FILE;
 		break;
 
-	case LoadingRes::Status::OPEN_FILE:
-		if (m_loadingRes.recent == true) {
-			m_loadingRes.status = LoadingRes::Status::LOAD;
+	case LoadingRes::State::OPEN_FILE:
+		if (m_loadingRes.type == LoadingRes::Type::RECENT) {
+			m_loadingRes.state = LoadingRes::State::LOAD;
 			break;
 		}
+		else if (m_loadingRes.type == LoadingRes::Type::SAVE_THEN_EXIT) 
+		{
+			m_status = AppStatus::EXIT;
+			m_loadingRes.state = LoadingRes::State::EXIT;
+			break;
+		}
+
 		OpenFile();
 		break;
 
-	case LoadingRes::Status::OPEN_POPUP_SELECT_DRIVE:
+	case LoadingRes::State::OPEN_POPUP_SELECT_DRIVE:
 		ImGui::OpenPopup(m_loadingRes.POPUP_SELECT_DRIVE);
-		m_loadingRes.status = LoadingRes::Status::POPUP_SELECT_DRIVE;
+		m_loadingRes.state = LoadingRes::State::POPUP_SELECT_DRIVE;
 		break;
 
-	case LoadingRes::Status::POPUP_SELECT_DRIVE:
+	case LoadingRes::State::POPUP_SELECT_DRIVE:
 		DrawSelectDrivePopup();
 		break;
 
-	case LoadingRes::Status::LOAD:
+	case LoadingRes::State::LOAD:
 	{
 		auto ext = StrToUpper(dev::GetExt(m_loadingRes.path));
 
@@ -271,13 +277,13 @@ void dev::DevectorApp::MainMenuUpdate()
 		else if (ext == EXT_FDD) {
 			LoadFdd(m_loadingRes.path, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
 		}
-		m_loadingRes.status = LoadingRes::Status::UPDATE_RECENT;
+		m_loadingRes.state = LoadingRes::State::UPDATE_RECENT;
 		break;
 	}
-	case LoadingRes::Status::UPDATE_RECENT:
+	case LoadingRes::State::UPDATE_RECENT:
 		RecentFilesUpdate(m_loadingRes.path, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
 		RecentFilesStore();
-		m_loadingRes.status = LoadingRes::Status::NONE;
+		m_loadingRes.state = LoadingRes::State::NONE;
 		break;
 
 	default:
@@ -332,7 +338,6 @@ void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path, const int _d
 void dev::DevectorApp::KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes)
 {
 	// Retrieve the user pointer to access the class instance
-	// TODO: check if a mouse cursor hovers the Display window or any its controls are selected.
 	DevectorApp* instance = static_cast<DevectorApp*>(glfwGetWindowUserPointer(_window));
 	if (instance) 
 	{
@@ -411,7 +416,7 @@ void dev::DevectorApp::AppStyleInit()
 // check if any fdds were updated
 void dev::DevectorApp::CheckMountedFdd()
 {
-	m_loadingRes.status = LoadingRes::Status::OPEN_FILE;
+	m_loadingRes.state = LoadingRes::State::OPEN_FILE;
 	for (int driveIdx = 0; driveIdx < Fdc1793::DRIVES_MAX; driveIdx++)
 	{
 		auto fddInfo = *m_hardwareP->Request(
@@ -421,7 +426,7 @@ void dev::DevectorApp::CheckMountedFdd()
 		{
 			m_loadingRes.pathFddUpdated = dev::StrToStrW(fddInfo["path"]);
 			m_loadingRes.driveIdxUpdated = driveIdx;
-			m_loadingRes.status = LoadingRes::Status::SAVE_DISCARD;
+			m_loadingRes.state = LoadingRes::State::SAVE_DISCARD;
 			break;
 		}
 	}
@@ -432,11 +437,11 @@ void dev::DevectorApp::SaveDiscardFdd()
 {
 	if (GetSettingsBool("showSaveDiscardFddDialog", true))
 	{
-		m_loadingRes.status = LoadingRes::Status::OPEN_POPUP_SAVE_DISCARD;
+		m_loadingRes.state = LoadingRes::State::OPEN_POPUP_SAVE_DISCARD;
 	}
 	else {
 		auto discardFddChanges = GetSettingsBool("discardFddChanges", true);
-		m_loadingRes.status = discardFddChanges ? LoadingRes::Status::OPEN_FILE : LoadingRes::Status::SAVE;
+		m_loadingRes.state = discardFddChanges ? LoadingRes::State::OPEN_FILE : LoadingRes::State::SAVE;
 	}
 }
 
@@ -448,9 +453,9 @@ void dev::DevectorApp::DrawSaveDiscardFddPopup()
 	if (ImGui::BeginPopupModal(m_loadingRes.POPUP_SAVE_DISCARD, NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		static const char* diskNames[] = { "A", "B", "C", "D" };
-		ImGui::Text("Previously mounted disk %s was updated\nSave or discard changes?", diskNames[m_loadingRes.driveIdx]);
-		ImGui::SameLine();
-		dev::DrawHelpMarker(dev::StrWToStr(m_loadingRes.path).c_str());
+		ImGui::Text("Previously mounted disk %s was updated. Save or discard changes?", 
+			diskNames[m_loadingRes.driveIdxUpdated]);
+		ImGui::Text(dev::StrWToStr(m_loadingRes.pathFddUpdated).c_str());
 
 		ImGui::NewLine();
 		static bool doNotAskAgain = false;
@@ -461,14 +466,14 @@ void dev::DevectorApp::DrawSaveDiscardFddPopup()
 
 		if (ImGui::Button("Save", ImVec2(120, 0)))
 		{
-			m_loadingRes.status = doNotAskAgain ? LoadingRes::Status::ALWAYS_SAVE : LoadingRes::Status::SAVE;
+			m_loadingRes.state = doNotAskAgain ? LoadingRes::State::ALWAYS_SAVE : LoadingRes::State::SAVE;
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SetItemDefaultFocus();
 		ImGui::SameLine();
 		if (ImGui::Button("Discard", ImVec2(120, 0)))
 		{
-			m_loadingRes.status = doNotAskAgain ? LoadingRes::Status::ALWAYS_DISCARD : LoadingRes::Status::DISCARD;
+			m_loadingRes.state = doNotAskAgain ? LoadingRes::State::ALWAYS_DISCARD : LoadingRes::State::DISCARD;
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::EndPopup();
@@ -483,7 +488,7 @@ void dev::DevectorApp::SaveUpdatedFdd()
 	auto data = res["data"];
 	dev::SaveFile(m_loadingRes.pathFddUpdated, data);
 	// check remaining updated fdds
-	m_loadingRes.status = LoadingRes::Status::CHECK_MOUNTED;
+	m_loadingRes.state = LoadingRes::State::CHECK_MOUNTED;
 }
 
 // Open the file dialog
@@ -501,20 +506,20 @@ void dev::DevectorApp::OpenFile()
 			m_loadingRes.path = path;
 			m_loadingRes.driveIdx = -1;
 			m_loadingRes.autoBoot = false;
-			m_loadingRes.status = LoadingRes::Status::UPDATE_RECENT;
+			m_loadingRes.state = LoadingRes::State::UPDATE_RECENT;
 		}
 		else if (ext == EXT_FDD)
 		{
 			m_loadingRes.path = path;
-			m_loadingRes.status = LoadingRes::Status::OPEN_POPUP_SELECT_DRIVE;
+			m_loadingRes.state = LoadingRes::State::OPEN_POPUP_SELECT_DRIVE;
 		}
 		else {
 			dev::Log(L"Not supported file type: {}", path);
-			m_loadingRes.status = LoadingRes::Status::NONE;
+			m_loadingRes.state = LoadingRes::State::NONE;
 		}
 	}
 	else {
-		m_loadingRes.status = LoadingRes::Status::NONE;
+		m_loadingRes.state = LoadingRes::State::NONE;
 	}
 }
 
@@ -533,14 +538,14 @@ void dev::DevectorApp::DrawSelectDrivePopup()
 		{
 			m_loadingRes.autoBoot = (driveSelect == 0);
 			m_loadingRes.driveIdx = dev::Max(driveSelect - 1, 0); // "0" and "1" are both associated with FDisk 0
-			m_loadingRes.status = LoadingRes::Status::LOAD;
+			m_loadingRes.state = LoadingRes::State::LOAD;
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SetItemDefaultFocus();
 		ImGui::SameLine();
 		if (ImGui::Button("Cancel", ImVec2(120, 0))) 
 		{ 
-			m_loadingRes.status = LoadingRes::Status::NONE;
+			m_loadingRes.state = LoadingRes::State::NONE;
 			ImGui::CloseCurrentPopup(); 
 		}
 		ImGui::EndPopup();
