@@ -13,19 +13,17 @@ int main(int argc, char** argv)
         "This is an emulator of the Soviet personal computer Vector06C. It has built-in debugger functionality.");
     
     auto settingsPath = argsParser.GetString("settingsPath",
-        "The path to the settings.");
+        "The path to the settings.", false, "settings.json");
     
     if (!argsParser.IsRequirementSatisfied())
     {
-        dev::Exit("Required parameters are missing", dev::ERROR_UNSPECIFIED);
+        dev::Log("---Settings parameters are missing");
     }
 
     nlohmann::json settingsJ;
     if (dev::IsFileExist(dev::StrToStrW(settingsPath)) == false)
     {
-        auto msg = std::format("settings file is not found, created a new one with default settings: {}",
-            settingsPath);
-        settingsPath = "settings.json";
+        dev::Log("The settings wasn't found. Created new default settings: {}", settingsPath);
     }
     else {
         settingsJ = dev::LoadJson(settingsPath);
