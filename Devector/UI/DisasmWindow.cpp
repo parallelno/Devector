@@ -929,10 +929,10 @@ void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 		// horizontal line from the command
 		ImGui::GetForegroundDrawList()->AddLine(pos0, pos1, linkColor);
 		// vertical link
-		if (link.lineIdx == Disasm::IMM_LINK_UP) {
+		if (link.m_lineIdx == Disasm::IMM_LINK_UP) {
 			ImGui::GetForegroundDrawList()->AddLine(pos1, ImVec2(pos0.x - linkHorizLen - 5.0f, _posMin), linkColor);
 		}
-		else if (link.lineIdx == Disasm::IMM_LINK_DOWN) {
+		else if (link.m_lineIdx == Disasm::IMM_LINK_DOWN) {
 			ImGui::GetForegroundDrawList()->AddLine(pos1, ImVec2(pos0.x - linkHorizLen - 5.0f, _posMax), linkColor);
 		}
 		*/

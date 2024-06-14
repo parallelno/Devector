@@ -884,50 +884,50 @@ auto dev::Disasm::Line::GetImmediateS() const
 
 void dev::Disasm::AddLabes(const Addr _addr)
 {
-	if (lineIdx >= DISASM_LINES_MAX) return;
+	if (m_lineIdx >= DISASM_LINES_MAX) return;
 
 	auto labelsI = m_labels.find(_addr);
 	if (labelsI == m_labels.end()) return;
 
-	auto& line = lines.at(lineIdx);
+	auto& line = m_lines.at(m_lineIdx);
 	line.Init();
 
 	line.type = Line::Type::LABELS;
 	line.addr = _addr;
 	line.labels = &labelsI->second;
 
-	lineIdx++;
+	m_lineIdx++;
 }
 
 void dev::Disasm::AddComment(const Addr _addr)
 {
-	if (lineIdx >= DISASM_LINES_MAX) return;
+	if (m_lineIdx >= DISASM_LINES_MAX) return;
 
 	auto commentI = m_comments.find(_addr);
 	if (commentI == m_comments.end()) return;
 
-	auto& line = lines.at(lineIdx);
+	auto& line = m_lines.at(m_lineIdx);
 	line.Init();
 
 	line.type = Line::Type::COMMENT;
 	line.addr = _addr;
 	line.comment = &commentI->second;
 
-	lineIdx++;
+	m_lineIdx++;
 }
 
 auto dev::Disasm::AddDb(const Addr _addr, const uint8_t _data,
 	const Breakpoint::Status _breakpointStatus)
 -> Addr
 {
-	if (lineIdx >= DISASM_LINES_MAX) return 0;
+	if (m_lineIdx >= DISASM_LINES_MAX) return 0;
 
 	GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", _addr } })->at("data");
 	auto runs = m_memRuns[globalAddr];
 	auto reads = m_memReads[globalAddr];
 	auto writes = m_memWrites[globalAddr];
 
-	auto& line = lines.at(lineIdx);
+	auto& line = m_lines.at(m_lineIdx);
 	line.Init();
 	line.type = Line::Type::CODE;
 	line.addr = _addr;
@@ -940,7 +940,7 @@ auto dev::Disasm::AddDb(const Addr _addr, const uint8_t _data,
 	line.consts = constsI == m_consts.end() ? nullptr : &(constsI->second);
 
 	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", runs, reads, writes);
-	lineIdx++;
+	m_lineIdx++;
 	return 1;
 }
 
@@ -948,7 +948,7 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 	const Breakpoint::Status _breakpointStatus)
 -> Addr
 {
-	if (lineIdx >= DISASM_LINES_MAX) return 0;
+	if (m_lineIdx >= DISASM_LINES_MAX) return 0;
 
 	GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", _addr } })->at("data");
 	auto runs = m_memRuns[globalAddr];
@@ -966,7 +966,7 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 	uint16_t data = cmdLen == 1 ? 0 : _cmd>>8;
 	data &= cmdLen == 2 ? 0xFF : 0xFFFF;
 
-	auto& line = lines.at(lineIdx);
+	auto& line = m_lines.at(m_lineIdx);
 	line.Init();
 	line.type = Line::Type::CODE;
 	line.addr = _addr;
@@ -984,7 +984,7 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 
 	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", runs, reads, writes);
 
-	lineIdx++;
+	m_lineIdx++;
 	return cmdLen;
 }
 
@@ -1050,9 +1050,9 @@ dev::Disasm::Disasm(Hardware& _hardware)
 
 void dev::Disasm::Init(const LineIdx _linesNum)
 {
-	linesNum = dev::Min(_linesNum, DISASM_LINES_MAX);
-	lineIdx = 0;
-	immAddrlinkNum = 0;
+	m_linesNum = dev::Min(_linesNum, DISASM_LINES_MAX);
+	m_lineIdx = 0;
+	m_immAddrlinkNum = 0;
 }
 
 void dev::Disasm::Reset() 
@@ -1061,51 +1061,52 @@ void dev::Disasm::Reset()
 	m_memReads.fill(0);
 	m_memWrites.fill(0);
 
-	linesP = nullptr;
+	m_linesP = nullptr;
 	m_debugPath.clear();
 }
 
 auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks* 
 { 
-	Addr addrMin = lines.at(0).addr;
-	Addr addrMax = lines.at(linesNum - 1).addr;
+	Addr addrMin = m_lines.at(0).addr;
+	Addr addrMax = m_lines.at(m_linesNum - 1).addr;
 	uint8_t linkIdx = 0;
 
 	std::map<Addr, int> immAddrPairs;
 	// aggregate <Addr, LineIdx> pairs
-	for (int i = 0; i < linesNum; i++){
-		immAddrPairs.emplace(lines.at(i).addr, i);
+	for (int i = 0; i < m_linesNum; i++){
+		immAddrPairs.emplace(m_lines.at(i).addr, i);
 	}
 	// generate links
-	for (int i = 0; i < linesNum; i++)
+	for (int i = 0; i < m_linesNum; i++)
 	{
-		const auto& line = lines.at(i);
+		const auto& line = m_lines.at(i);
 		if (line.type != Line::Type::CODE || opcodeTypes[line.opcode] > OPTYPE_JMP ||
 			line.imm < addrMin || line.imm > addrMax)
 		{
-			immAddrLinks[i].lineIdx = IMM_NO_LINK;
+			m_immAddrLinks[i].lineIdx = IMM_NO_LINK;
 			continue;
 		}/*
+		// add the links that goes out of the visible scope of addrs
 		if (line.imm < addrMin) {
-			immAddrLinks[i].lineIdx = IMM_LINK_UP;
-			immAddrLinks[i].linkIdx = linkIdx++;
+			m_immAddrLinks[i].m_lineIdx = IMM_LINK_UP;
+			m_immAddrLinks[i].linkIdx = linkIdx++;
 			continue;
 		}
 		if (line.imm > addrMax) {
-			immAddrLinks[i].lineIdx = IMM_LINK_DOWN;
-			immAddrLinks[i].linkIdx = linkIdx++;
+			m_immAddrLinks[i].m_lineIdx = IMM_LINK_DOWN;
+			m_immAddrLinks[i].linkIdx = linkIdx++;
 			continue;
 		}
 		*/
-		auto linkIdxI = immAddrPairs.find(lines[i].imm);
+		auto linkIdxI = immAddrPairs.find(m_lines[i].imm);
 		if (linkIdxI == immAddrPairs.end()) continue;
 
-		immAddrLinks[i].lineIdx = immAddrPairs[lines[i].imm];
-		immAddrLinks[i].linkIdx = linkIdx++;
-		immAddrlinkNum++;
+		m_immAddrLinks[i].lineIdx = immAddrPairs[m_lines[i].imm];
+		m_immAddrLinks[i].linkIdx = linkIdx++;
+		m_immAddrlinkNum++;
 	}
 
-	return &immAddrLinks; 
+	return &m_immAddrLinks; 
 }
 
 bool IsConstLabel(const char* _s)
@@ -1183,8 +1184,8 @@ void dev::Disasm::ResetConstsLabelsComments()
 	m_consts.clear();
 	m_comments.clear();
 
-	// invalidate the pointer to lines
-	linesP = nullptr;
+	// invalidate the pointer to m_lines
+	m_linesP = nullptr;
 }
 
 void dev::Disasm::LoadDebugData(const std::wstring& _romPath)

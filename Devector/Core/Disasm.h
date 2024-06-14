@@ -111,12 +111,12 @@ namespace dev
 		auto AddCode(const Addr _addr, const uint32_t _cmd,
 			const Breakpoint::Status _breakpointStatus) -> Addr;
 
-		auto GetLines() -> const Lines** { return &linesP; };
-		auto GetLineNum() const -> LineIdx { return linesNum; }
-		auto GetLineIdx() const -> LineIdx { return lineIdx; }
+		auto GetLines() -> const Lines** { return &m_linesP; };
+		auto GetLineNum() const -> LineIdx { return m_linesNum; }
+		auto GetLineIdx() const -> LineIdx { return m_lineIdx; }
 		auto GetImmLinks() -> const ImmAddrLinks*;
-		bool IsDone() const { return lineIdx >= linesNum; }
-		auto GetImmAddrlinkNum() const -> size_t { return immAddrlinkNum; }
+		bool IsDone() const { return m_lineIdx >= m_linesNum; }
+		auto GetImmAddrlinkNum() const -> size_t { return m_immAddrlinkNum; }
 
 		auto GetComment(const Addr _addr) const -> const std::string*;
 		void SetComment(const Addr _addr, const std::string& _comment);
@@ -133,7 +133,7 @@ namespace dev
 
 		auto GetAddr(const Addr _endAddr, const int _instructionOffset) const->Addr;
 		void Reset();
-		void SetUpdated() { linesP = &lines; };
+		void SetUpdated() { m_linesP = &m_lines; };
 
 		inline void MemRunsUpdate(const GlobalAddr _globalAddr) { m_memRuns[_globalAddr]++; };
 		inline void MemReadsUpdate(const GlobalAddr _globalAddr) { m_memReads[_globalAddr]++; };
@@ -145,13 +145,13 @@ namespace dev
 		Labels m_consts;		// labels used as constants or they point to data
 		Comments m_comments;
 
-		Lines lines;
-		const Lines* linesP = nullptr; // exposed pointer. it invalidates every time labels/commets/consts are updated
-		LineIdx lineIdx = 0; // the next avalable line
-		LineIdx linesNum = 0; // the total number of lines
+		Lines m_lines;
+		const Lines* m_linesP = nullptr; // exposed pointer. it invalidates every time labels/commets/consts are updated
+		LineIdx m_lineIdx = 0; // the next avalable line
+		LineIdx m_linesNum = 0; // the total number of lines
 
-		ImmAddrLinks immAddrLinks;
-		size_t immAddrlinkNum = 0; // the total number of links between the immediate operand and the corresponding address
+		ImmAddrLinks m_immAddrLinks;
+		size_t m_immAddrlinkNum = 0; // the total number of links between the immediate operand and the corresponding address
 		Hardware& m_hardware;
 		
 		using MemStats = std::array<uint64_t, Memory::GLOBAL_MEMORY_LEN>;
