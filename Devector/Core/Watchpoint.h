@@ -12,18 +12,23 @@
 
 namespace dev
 {
-	#define WATCHPOINT_CONDITIONS_LEN 7
-	const std::string WATCHPOINT_CONDITION_STR[WATCHPOINT_CONDITIONS_LEN] = { "ANY", "=", "<", ">", "<=", ">=", "!="};
 	static Id watchpointId = 0;
+	static const char* wpAccessS[] = { "R", "W", "RW" };
+	static const char* wpCondsS[] = {
+				"ANY", "EQU", "LESS", "EQU", "LESS",
+				"GREATER", "LESS_EQU", "GREATER_EQU",
+				"NOT_EQU" };
+	static const char* wpTypesS[] = { "LEN", "WORD" };
 
 	class Watchpoint
 	{
 	public:
-		enum class Type : int { LEN = 0, WORD }; // LEN - m_len bytes to check, WORD - one word to check
-		enum class Access : int { R = 0, W, RW, COUNT };
-		const std::string ACCESS_STR[3] = { "R-", "-W", "RW" };
+		// LEN - breaks if the condition succeds for any bytes in m_len range
+		// WORD - breaks if the condition succeds for a word
+		enum class Type : uint8_t { LEN = 0, WORD };
+		enum class Access : uint8_t { R = 0, W, RW, COUNT };
 
-		enum class Condition : int { ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU, INVALID, COUNT };
+		enum class Condition : uint8_t { ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU, INVALID };
 
 		Watchpoint(const Access _access, const GlobalAddr _globalAddr, const Condition _cond,
 			const uint16_t _value, const Type _type = Type::LEN, const int _len = 1,
@@ -39,18 +44,17 @@ namespace dev
 		auto GetGlobalAddr() const -> GlobalAddr;
 		auto GetAccess() const -> Access;
 		auto GetAccessI() const -> int;
-		auto GetAccessS() const -> const std::string&;
 		auto GetCondition() const -> Condition;
-		auto GetConditionS() const -> const std::string&;
 		auto GetValue() const -> uint16_t;
 		auto GetType() const -> Type;
 		auto GetLen() const -> int;
 		auto GetComment() const -> const std::string&;
+		auto GetConditionS() const -> const char*;
+		auto GetAccessS() const -> const char*;
+		auto GetTypeS() const -> const char*;
 		auto GetId() const -> Id;
-		static auto StrToCondition(const std::string& _condS) -> Watchpoint::Condition;
 		void Reset();
 		void Print() const;
-		//auto operator=(const auto& _wp) const -> Watchpoint;
 		auto operator=(const dev::Watchpoint& _wp)->Watchpoint;
 
 	private:

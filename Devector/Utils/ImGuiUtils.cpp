@@ -282,6 +282,26 @@ void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::str
 	}
 }
 
+void dev::DrawProperty2Combo(const char* _name, const char* _label, 
+	int* _currentItem, const char* const _items[], int _itemsCount, const char* _help)
+{
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name, { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
+	ImGui::TableNextColumn();
+	ImGui::Combo(_label, _currentItem, _items, _itemsCount);
+	if (*_help != '\0') {
+		ImGui::SameLine();
+		ImGui::Dummy({ 12,10 });
+		ImGui::SameLine();
+		dev::DrawHelpMarker(_help);
+	}
+}
+
 void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label, 
 	bool* _val, const char* _help)
 {
@@ -298,6 +318,39 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 	if (*_help != '\0') {
 		ImGui::SameLine();
 		ImGui::Dummy({ 80,10 });
+		ImGui::SameLine();
+		dev::DrawHelpMarker(_help);
+	}
+}
+
+void dev::DrawProperty2RadioButtons(
+	const char* _name, int* _currentItem, 
+	const char* const _items[], int _itemsCount, const float _space,
+	const char* _help)
+{
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name, { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
+	ImGui::TableNextColumn();
+
+	for (int i = 0; i < _itemsCount; i++) 
+	{
+		ImGui::RadioButton(_items[i], _currentItem, i);
+		if (i != _itemsCount - 1) 
+		{
+			ImGui::SameLine();
+			ImGui::Dummy(ImVec2{ _space, 5.0f });
+			ImGui::SameLine();
+		}
+	}
+
+	if (*_help != '\0') {
+		ImGui::SameLine();
+		ImGui::Dummy({ 12,10 });
 		ImGui::SameLine();
 		dev::DrawHelpMarker(_help);
 	}

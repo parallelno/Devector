@@ -55,9 +55,6 @@ void dev::BreakpointsWindow::CheckIfItemClicked(const ImVec2& _rowMin, bool& _sh
 	}
 }
 
-
-//#define CHECK_IF_ITEM_CLICKED		if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {showItemContextMenu = true; editedBreakpointAddr = addr; }
-
 void dev::BreakpointsWindow::DrawTable()
 {
 	static int selectedAddr = -1;
@@ -106,16 +103,15 @@ void dev::BreakpointsWindow::DrawTable()
 
 		for (const auto& [addr, bp] : breakpoints)
 		{
-			auto bpData = bp.GetData();
 			ImGui::TableNextRow(ImGuiTableRowFlags_None, 21.0f);
 
 			// isActive
 			ImGui::TableNextColumn();
 						
-			bool isActive = (bool)bpData.status;
+			bool isActive = (bool)bp.status;
 			ImGui::Checkbox(std::format("##0x{:04X}", addr).c_str(), &isActive);
 
-			if (isActive != (bool)bpData.status)
+			if (isActive != (bool)bp.status)
 			{
 				m_debugger.SetBreakpointStatus(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED);
 				m_reqDisasm.type = ReqDisasm::Type::UPDATE;
@@ -124,7 +120,7 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGui::TableNextColumn();
 			ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
 			const bool isSelected = selectedAddr == (int)addr;
-			if (ImGui::Selectable(bpData.GetAddrMappingS(), isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
+			if (ImGui::Selectable(bp.GetAddrMappingS(), isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				selectedAddr = addr;
 				m_reqDisasm.type = ReqDisasm::Type::UPDATE_ADDR;
@@ -136,12 +132,12 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGui::PopStyleColor();
 
 			// Condition
-			const char* cond = bpData.autoDel ? "Auto delete" : "";
+			const char* cond = bp.autoDel ? "Auto delete" : "";
 			DrawProperty(cond);
 			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
 
 			// Comment
-			DrawProperty(bp.GetComment());
+			DrawProperty(bp.comment);
 			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
 		}
 
@@ -190,7 +186,7 @@ void dev::BreakpointsWindow::DrawTable()
 			{
 				const auto& bp = breakpoints.at(editedBreakpointAddr);
 
-				if (bp.GetData().IsActive()) {
+				if (bp.IsActive()) {
 					if (ImGui::MenuItem("Disable")) {
 						m_debugger.SetBreakpointStatus(editedBreakpointAddr, Breakpoint::Status::DISABLED);
 						m_reqDisasm.type = ReqDisasm::Type::UPDATE;
@@ -228,13 +224,14 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 		ImGui::OpenPopup("##BpEdit");
 	}
 
-	static auto bpData = Breakpoint::Data(0xFF);
-	static uint8_t mappingPages = bpData.mappingPages;
-	static bool isActive = bpData.IsActive();
-	static bool isAutoDel = bpData.autoDel;
-	static GlobalAddr addrOld = 0xFF;
+	static uint8_t mappingPages = Breakpoint::MAPPING_PAGES_ALL;
+	static bool isActive = true;
+	static bool isAutoDel = false;
+	static Addr addrOld = 0xFF;
 	static std::string addrS = "FF";
-	//static std::string conditionS = "";
+	static int selectedOp = 0;
+	static int selectedCond = 0;
+	static std::string valueS = "0";
 	static std::string commentS = "";
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
 
@@ -242,6 +239,8 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 	if (_reqPopup == ReqPopup::INIT_ADD) {
 		_reqPopup = ReqPopup::ADD;
 		commentS = "";
+		addrOld = 0xFF;
+		addrS = "FF";
 	}
 	// Init for editing BP
 	if (_reqPopup == ReqPopup::INIT_EDIT)
@@ -249,15 +248,14 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 		_reqPopup = ReqPopup::EDIT;
 
 		const auto& bp = _pbs.at(_addr);
-		bpData = bp.GetData();
-		isActive = bpData.status == Breakpoint::Status::ACTIVE;
-		addrOld = bpData.addr;
-		mappingPages = bpData.mappingPages;
-		isAutoDel = bpData.autoDel;
-		addrS = std::format("{:04X}", bpData.GetAddr());
-		
-		//conditionS = bp.GetConditionS();
-		commentS = bp.GetComment();
+		isActive = bp.IsActive();
+		addrOld = bp.addr;
+		mappingPages = bp.mappingPages;
+		isAutoDel = bp.autoDel;
+		addrS = std::format("{:04X}", bp.addr);
+		selectedOp = static_cast<int>(bp.operand);
+		selectedCond = static_cast<int>(bp.cond);
+		commentS = bp.comment;
 	}
 
 	if (ImGui::BeginPopup("##BpEdit"))
@@ -275,9 +273,8 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive, "Disable the breakpoint");
 			// addr
 			DrawProperty2EditableS("Address", "##BPContextAddress", &addrS, "FFFF",
-				"A hexademical address in the format 0x100 or 100.");
+				"A hexademical address in the format 0xFF or FF.");
 			// mapping
-			//DrawProperty2EditableMapping("Mapping", &bpData, "");
 			bool mainRam = mappingPages & Breakpoint::MAPPING_RAM;
 			bool mainRamDiskP0 = mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE0;
 			bool mainRamDiskP1 = mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE1;
@@ -294,13 +291,21 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 				(static_cast<int>(mainRamDiskP2)<< 3) |
 				(static_cast<int>(mainRamDiskP3)<< 4);
 
-			// condition
-			//DrawProperty2EditableS("Condition", "##BPContextCondition", &conditionS, "");
 			// auto delete
 			DrawProperty2EditableCheckBox("Auto Delete", "##BPContextAutoDel", &isAutoDel, "Removes the breakpoint when execution halts");
-			// comment
+			// Operand
+			DrawProperty2Combo("Operand", "##BPContextOperand", &selectedOp, 
+				dev::bpOperandsS, IM_ARRAYSIZE(dev::bpOperandsS), "CC - CPU Cicles counted from the last reset/reboot/reload");
+			// Condition
+			DrawProperty2Combo("Condition", "##BPContextCondition", &selectedCond, dev::bpCondsS, IM_ARRAYSIZE(dev::bpCondsS), "");
+			// Value
+			if (selectedCond == 0) ImGui::BeginDisabled();
+			DrawProperty2EditableS("Value", "##BPContextValue", &valueS, "FF",
+				"A hexademical value in the format FF",
+				ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+			if (selectedCond == 0) ImGui::EndDisabled();
+			// Comment
 			DrawProperty2EditableS("Comment", "##BPContextComment", &commentS, "");
-
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
@@ -308,9 +313,15 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 			// warning
 			int addr = dev::StrHexToInt(addrS.c_str());
 			std::string warningS = "";
-			if (addr > Memory::MEMORY_MAIN_LEN - 1) {
-				warningS = "Too large address";
-			}
+			warningS = addr >= Memory::MEMORY_MAIN_LEN ? 
+				"Too large address" : warningS;
+			int val = dev::StrHexToInt(valueS.c_str());
+			size_t maxVal = selectedOp == static_cast<int>(Breakpoint::Operand::CC) ?
+				UINT64_MAX : selectedOp > static_cast<int>(Breakpoint::Operand::PSW) ?
+				UINT16_MAX : UINT8_MAX;
+			warningS = val < 0 || val > maxVal ?
+				"A value is out of range" : warningS;
+
 			//ImGui::SameLine(); 
 			ImGui::TextColored(COLOR_WARNING, warningS.c_str());
 
@@ -326,7 +337,10 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 				{
 					m_debugger.DelBreakpoint(addrOld);
 				}
-				m_debugger.AddBreakpoint(addr, mappingPages, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, isAutoDel, commentS);
+				m_debugger.AddBreakpoint(addr, mappingPages, 
+					isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, 
+					isAutoDel, static_cast<Breakpoint::Operand>(selectedOp),
+					static_cast<Breakpoint::Condition>(selectedCond), val, commentS);
 				m_reqDisasm.type = ReqDisasm::Type::UPDATE;
 				ImGui::CloseCurrentPopup();
 				_reqPopup = ReqPopup::NONE;

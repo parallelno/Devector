@@ -31,8 +31,6 @@ namespace dev
 		void Update();
 
 		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });
-		void DrawProperty2Access(const char* _name, int* _access, const char* _hint = "");
-		void DrawProperty2Type(const char* _name, int* _type, const char* _hint = "");
 	};
 
 };

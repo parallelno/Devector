@@ -46,7 +46,10 @@ namespace dev
 		void AddBreakpoint(const Addr _addr,
 			const uint8_t _mappingPages = Breakpoint::MAPPING_PAGES_ALL,
 			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE,
-			const bool _autoDel = false, const std::string& _comment = "");
+			const bool _autoDel = false, 
+			const Breakpoint::Operand _op = Breakpoint::Operand::A, 
+			const Breakpoint::Condition _cond = Breakpoint::Condition::ANY, 
+			const size_t _val = 0, const std::string& _comment = "");
 		void DelBreakpoint(const Addr _addr);
 		void DelBreakpoints();
 		bool CheckBreakpoints(const Addr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam);

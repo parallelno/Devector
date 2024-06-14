@@ -10,9 +10,17 @@
 
 namespace dev
 {
-	class Breakpoint
+	static const char* bpOperandsS[] = { 
+		"A", "Flags", "B", "C", "D", "E", 
+		"H", "L", "PSW", "BC", "DE", "HL", "CC", "SP" };
+
+	static const char* bpCondsS[] = {
+	"ANY", "EQU", "LESS", "EQU", "LESS",
+	"GREATER", "LESS_EQU", "GREATER_EQU",
+	"NOT_EQU" };
+
+	struct Breakpoint
 	{
-	public:
 		static constexpr uint8_t MAPPING_RAM		   = 1 << 0;
 		static constexpr uint8_t MAPPING_RAMDISK_PAGE0 = 1 << 1;
 		static constexpr uint8_t MAPPING_RAMDISK_PAGE1 = 1 << 2;
@@ -29,43 +37,43 @@ namespace dev
 			ACTIVE,
 			DELETED,
 		};
-		struct Data {
-			Data(const Addr _addr,
-				const uint8_t _mappingPageRam = MAPPING_PAGES_ALL,
-				const Status _status = Status::ACTIVE, const bool _autoDel = false)
-				:
-				addr(_addr), mappingPages(_mappingPageRam),
-				status(_status), autoDel(_autoDel)
-			{}
-			Addr addr : 16;
-			uint8_t mappingPages : 5; // 3210R, R - ram, 0 - ram disk 0 page, 1 - ram disk 1 page, etc
-			Status status : 2;
-			bool autoDel : 1;
-			
-			auto GetAddr() const -> Addr { return addr; };
-			auto GetAddrMappingS() const -> const char*;
-			inline bool IsActive() const { return status == Breakpoint::Status::ACTIVE; };
-		};
+
+		enum class Operand : uint8_t { A = 0, F, B, C, D, E, H, L, PSW, BC, DE, HL, CC, SP };
+		enum class Condition : uint8_t { ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU };
+		
+		auto GetAddr() const -> Addr { return addr; };
+		auto GetAddrMappingS() const -> const char*;
+		inline bool IsActive() const { return status == Status::ACTIVE; };
 
 		Breakpoint(const Addr _addr,
 			const uint8_t _mappingPages = MAPPING_PAGES_ALL,
 			const Status _status = Status::ACTIVE, 
-			const bool _autoDel = false, const std::string& _comment = "");
+			const bool _autoDel = false, 
+			const Operand _op = Operand::A,
+			const Condition _cond = Condition::ANY,
+			const size_t _val = 0,
+			const std::string& _comment = "");
 		void Update(const Addr _addr,
 			const uint8_t _mappingPages = MAPPING_PAGES_ALL,
 			const Status _status = Status::ACTIVE,
-			const bool _autoDel = false, const std::string& _comment = "");
-		Data GetData() const { return m_data; };
+			const bool _autoDel = false, 
+			const Operand _op = Operand::A,
+			const Condition _cond = Condition::ANY,
+			const size_t _val = 0, const std::string& _comment = "");
+
 		bool CheckStatus(const uint8_t _mappingModeRam, const uint8_t _mappingPageRam) const;
-		void SetStatus(const Status _status) { m_data.status = _status; };
-		//auto GetConditionS() const -> std::string;
-		auto GetComment() const -> const std::string& { return m_comment; };
+		auto GetOperandS() const -> const char*;
+		auto GetConditionS() const -> const char*;
 		void Print() const;
-
-	private:
-		Data m_data;
-		std::string m_comment;
-
 		auto IsActiveS() const -> const char*;
+
+		Addr addr;
+		uint8_t mappingPages; // 3210R, R - ram, 0 - ram disk 0 page, 1 - ram disk 1 page, etc
+		Status status;
+		bool autoDel;
+		Operand operand;
+		Condition cond;
+		uint64_t value;
+		std::string comment;
 	};
 }

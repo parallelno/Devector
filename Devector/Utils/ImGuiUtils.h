@@ -114,14 +114,23 @@ namespace dev
 	}
 	void DrawHelpMarker(const char* _text);
 	void DrawPopup(const char* _title, const char* _text);
-	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
-	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, const float _posXOffset = -0.2f, const bool _itemHasSize = false);
+	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, 
+		const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
+	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, 
+		const float _posXOffset = -0.2f, const bool _itemHasSize = false);
 	void DrawProperty2(const std::string& _name, const std::string& _value, const std::string& _hint = "");
 	void DrawSeparator2(const std::string& _text);
 	void DrawProperty2EditableI(const char* _name, const char* _label, int* _value, const char* _help = "");
 	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
-			const char* _hint = "", const char* _help = "", const ImGuiInputTextFlags _flags = ImGuiInputTextFlags_EnterReturnsTrue);
-	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, bool* _val, const char* _help = "");
+			const char* _hint = "", const char* _help = "", 
+		const ImGuiInputTextFlags _flags = ImGuiInputTextFlags_EnterReturnsTrue);
+	void DrawProperty2Combo(const char* _name, const char* _label, int* _currentItem,
+		const char* const _items[], int _itemsCount, const char* _help = "");
+	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, 
+		bool* _val, const char* _help = "");
+	void DrawProperty2RadioButtons(const char* _name, int* _currentItem, 
+		const char* const _items[], int _itemsCount, const float _space = 15.0f, 
+		const char* _help = "");
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 	auto DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab) -> UIItemMouseAction;
 	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color, 

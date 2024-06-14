@@ -31,49 +31,6 @@ void dev::WatchpointsWindow::DrawProperty(const std::string& _name, const ImVec2
 	ImGui::PopStyleColor();
 }
 
-void dev::WatchpointsWindow::DrawProperty2Access(
-	const char* _name, int* _access, const char* _hint)
-{
-	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
-	ImGui::TableNextColumn();
-
-	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name, { 1.0f, 0.5f });
-	ImGui::PopStyleColor();
-
-	ImGui::TableNextColumn();
-
-	ImGui::RadioButton("R ###WpAccessR", _access, 0); ImGui::SameLine();
-	ImGui::RadioButton("W ###WpAccessW", _access, 1); ImGui::SameLine();
-	ImGui::RadioButton("RW ###WpAccessRW", _access, 2);
-
-	if (*_hint != '\0') {
-		ImGui::SameLine();
-		DrawHelpMarker(_hint);
-	}
-}
-
-void dev::WatchpointsWindow::DrawProperty2Type(
-	const char* _name, int* _type, const char* _hint)
-{
-	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
-	ImGui::TableNextColumn();
-
-	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name, { 1.0f, 0.5f });
-	ImGui::PopStyleColor();
-
-	ImGui::TableNextColumn();
-	
-	ImGui::RadioButton("byte ###WpSizeB", _type, 0); ImGui::SameLine();
-	ImGui::RadioButton("word ###WpSizeW", _type, 1);
-
-	if (*_hint != '\0') {
-		ImGui::SameLine();
-		DrawHelpMarker(_hint);
-	}
-}
-
 void dev::WatchpointsWindow::CheckIfItemClicked(const ImVec2& _rowMin, 
 	bool& _showItemContextMenu, const int _id, int& _editedWatchpointId, ReqPopup& _reqPopup)
 {
@@ -299,7 +256,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 	static int oldId = -1;
 	static std::string globalAddrS = "FF";
 	static int access = static_cast<int>(Watchpoint::Access::RW);
-	static std::string conditionS = "ANY";
+	static int cond = static_cast<int>(Watchpoint::Condition::ANY);
 	static std::string valueS = "";
 	static int type = static_cast<int>(Watchpoint::Type::LEN);
 	static std::string lenS = "FF";
@@ -310,6 +267,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 	if (_reqPopup == ReqPopup::INIT_ADD) {
 		_reqPopup = ReqPopup::ADD;
 		commentS = "";
+		globalAddrS = "FF";
 	}
 
 	// Init for editing WP
@@ -322,7 +280,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 		isActive = wp.IsActive();
 		globalAddrS = std::format("{:04X}", wp.GetGlobalAddr());
 		access = wp.GetAccessI();
-		conditionS = wp.GetConditionS();
+		cond = static_cast<int>(wp.GetCondition());
 		type = static_cast<int>(wp.GetType());
 		if (type == static_cast<int>(Watchpoint::Type::WORD)) {
 			valueS = std::format("{:04X}", wp.GetValue());
@@ -346,58 +304,55 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 		{
 			ImGui::TableSetupColumn("##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
 			ImGui::TableSetupColumn("##WpContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 200);
-			// status
+			// Status
 			DrawProperty2EditableCheckBox("Active", "##WpContextStatus", &isActive);
 			// addr
-			DrawProperty2EditableS("Global Address", "##WpContextAddress", &globalAddrS, "0x100",
-				"A hexademical address in the format 0x100 or 100");
-			// access
-			DrawProperty2Access("Access", &access, "R - read, W - write, RW - read or write");
-			// condition
-			DrawProperty2EditableS("Condition", "##WpContextCondition", &conditionS, "",
-				"Leave it empty to catch every change.\n"
-				"= to break when it's equal to a value.\n"
-				"> to break when it's bigger than a value.\n"
-				"also works <, >=, <=, !=, ==\n"
-			);
-			auto cond = Watchpoint::StrToCondition(conditionS);
+			DrawProperty2EditableS("Global Address", "##WpContextAddress", &globalAddrS, "FF",
+				"A hexademical address in the format 0xFF or FF");
+			// Access
+			/*DrawProperty2Access("Access", &access, "R - read, W - write, RW - read or write");*/
+			DrawProperty2RadioButtons("Type", &access, dev::wpAccessS, IM_ARRAYSIZE(dev::wpAccessS), 8.0f,
+				"R - read, W - write, RW - read or write");
 
-			// value
-			if (cond == Watchpoint::Condition::ANY) ImGui::BeginDisabled();
+			// Condition
+			DrawProperty2Combo("Condition", "##WpContextCondition", 
+				&cond, dev::wpCondsS, IM_ARRAYSIZE(dev::wpCondsS), "");
+
+			// Value
+			if (cond == static_cast<int>(Watchpoint::Condition::ANY)) ImGui::BeginDisabled();
 			DrawProperty2EditableS("Value", "##WpContextValue", &valueS, 
 				type == static_cast<int>(Watchpoint::Type::LEN) ? "FF" : "FFFF",
-				"A hexademical value in the format 0x100 or 100");
-			if (cond == Watchpoint::Condition::ANY) ImGui::EndDisabled();
+				"A hexademical value in the format 0xFF or FF");
+			if (cond == static_cast<int>(Watchpoint::Condition::ANY)) ImGui::EndDisabled();
 
-			// type
-			DrawProperty2Type("Type", &type);
+			// Type
+			DrawProperty2RadioButtons("Type", &type, wpTypesS, IM_ARRAYSIZE(wpTypesS), 15.0f,
+				"Byte - breaks if the condition succeeds for any bytes in the defined range\n"
+				"Word - breaks if the condition succeeds for a word");
 			
-			// len
+			// Length
 			if (type == static_cast<int>(Watchpoint::Type::WORD)) {
 				ImGui::BeginDisabled();
 				lenS = "2";
 			}
 			DrawProperty2EditableS("Length", "##WpContextLen", &lenS, "FFFF", 
-				"A hexademical value in the format 100", 
+				"A hexademical value in the format FF", 
 				ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 			if (type == static_cast<int>(Watchpoint::Type::WORD)) ImGui::EndDisabled();
 
-			// comment
+			// Comment
 			DrawProperty2EditableS("Comment", "##WpContextComment", &commentS, "");
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
 			
-			// warnings
+			// Warnings
 			std::string warningS = "";
 
 			GlobalAddr globalAddr = dev::StrHexToInt(globalAddrS.c_str());
 			if (globalAddr > Memory::GLOBAL_MEMORY_LEN - 1) {
 				warningS = "Too large address";
-			}
-			if (cond == Watchpoint::Condition::INVALID) {
-				warningS = "Unsupported condition";
 			}
 			if (lenS.size() > 4) {
 				warningS = "Too large length";
@@ -416,8 +371,10 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 				GlobalAddr len = dev::StrHexToInt(lenS.c_str());
 				GlobalAddr value = dev::StrHexToInt(valueS.c_str());
 
-				m_debugger.AddWatchpoint(id, static_cast<Watchpoint::Access>(access), globalAddr,
-					cond, value, static_cast<Watchpoint::Type>(type),
+				m_debugger.AddWatchpoint(
+					id, static_cast<Watchpoint::Access>(access), 
+					globalAddr, static_cast<Watchpoint::Condition>(cond),
+					value, static_cast<Watchpoint::Type>(type),
 					len, isActive, commentS);
 
 				m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;

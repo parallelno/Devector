@@ -10,38 +10,46 @@
 
 dev::Breakpoint::Breakpoint(const Addr _addr,
 	const uint8_t _mappingPages,
-	const Status _status, const bool _autoDel, const std::string& _comment)
+	const Status _status, const bool _autoDel, 
+	const Operand _op, const Condition _cond,
+	const size_t _val, const std::string& _comment)
 	:
-	m_data(_addr, _mappingPages, _status, _autoDel), m_comment(_comment)
+	addr(_addr), mappingPages(_mappingPages), status(_status), autoDel(_autoDel), 
+	operand(_op), cond(_cond), value(_val),
+	comment(_comment)
 {}
 
 void dev::Breakpoint::Update(const Addr _addr,
 	const uint8_t _mappingPages,
-	const Status _status, const bool _autoDel, const std::string& _comment)
+	const Status _status, const bool _autoDel, 
+	const Operand _op, const Condition _cond,
+	const size_t _val, const std::string& _comment)
 {
-	m_data = Data(_addr, _mappingPages, _status, _autoDel), m_comment = _comment;
+	addr = _addr;
+	mappingPages = _mappingPages;
+	status = _status;
+	autoDel = _autoDel;
+	comment = _comment;
 }
-/*
-auto dev::Breakpoint::GetConditionS() const
-->std::string
-{
-	return "";
-}
-*/
-auto dev::Breakpoint::IsActiveS() const -> const char* { return m_data.status == Status::ACTIVE ? "X" : "-"; }
+
+auto dev::Breakpoint::GetOperandS() const ->const char* { return bpOperandsS[static_cast<uint8_t>(operand)]; }
+auto dev::Breakpoint::GetConditionS() const ->const char* {	return bpCondsS[static_cast<uint8_t>(operand)]; }
+auto dev::Breakpoint::IsActiveS() const -> const char* { return status == Status::ACTIVE ? "X" : "-"; }
 
 bool dev::Breakpoint::CheckStatus(const uint8_t _mappingModeRam, const uint8_t _mappingPageRam) const
 {	
 	auto mapping = _mappingModeRam == 0 ? 1 : 1 << (_mappingPageRam + 1);
-	return m_data.status == Status::ACTIVE && mapping & m_data.mappingPages;
+	return status == Status::ACTIVE && mapping & mappingPages;
 }
 
 void dev::Breakpoint::Print() const
 {
-	std::printf("0x%04x, active: %d, mappingPages: %d, autoDel: %d \n", m_data.addr, m_data.status, m_data.mappingPages, m_data.autoDel);
+	std::printf("0x%04x, active: %d, mappingPages: %d, autoDel: %d, op: %s, cond: %s, val: %d\n", 
+		addr, status, mappingPages, autoDel,
+		GetOperandS(), GetConditionS(), value);
 }
 
-auto dev::Breakpoint::Data::GetAddrMappingS() const
+auto dev::Breakpoint::GetAddrMappingS() const
 -> const char*
 { 
 	static char out[] = "0xFFFF M01234";

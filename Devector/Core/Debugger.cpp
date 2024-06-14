@@ -313,27 +313,28 @@ void dev::Debugger::SetBreakpointStatus(const Addr _addr, const Breakpoint::Stat
 		std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 		auto bpI = m_breakpoints.find(_addr);
 		if (bpI != m_breakpoints.end()) {
-			bpI->second.SetStatus(_status);
+			bpI->second.status = _status;
 			return;
 		}
 	}
 	AddBreakpoint(_addr);
 }
 
-void dev::Debugger::AddBreakpoint(const Addr _addr, 
-	const uint8_t _mappingPages,
-	const Breakpoint::Status _status,
-	const bool _autoDel, const std::string& _comment)
+void dev::Debugger::AddBreakpoint( const Addr _addr, const uint8_t _mappingPages, 
+	const Breakpoint::Status _status, const bool _autoDel,
+	const Breakpoint::Operand _op, const Breakpoint::Condition _cond, 
+	const size_t _val, const std::string& _comment)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 	auto bpI = m_breakpoints.find(_addr);
 	if (bpI != m_breakpoints.end())
 	{
-		bpI->second.Update(_addr, _mappingPages, _status, _autoDel, _comment);
+		bpI->second.Update(_addr, _mappingPages, _status, _autoDel, _op, _cond, _val, _comment);
 		return;
 	}
 
-	m_breakpoints.emplace(_addr, std::move(Breakpoint(_addr, _mappingPages, _status, _autoDel, _comment)));
+	m_breakpoints.emplace(_addr, std::move(
+		Breakpoint(_addr, _mappingPages, _status, _autoDel, _op, _cond, _val, _comment)));
 }
 
 void dev::Debugger::DelBreakpoint(const Addr _addr)
@@ -358,7 +359,7 @@ bool dev::Debugger::CheckBreakpoints(const Addr _addr, const uint8_t _mappingMod
 	auto bpI = m_breakpoints.find(_addr);
 	if (bpI == m_breakpoints.end()) return false;
 	auto status = bpI->second.CheckStatus(_mappingModeRam, _mappingPageRam);
-	if (bpI->second.GetData().autoDel) m_breakpoints.erase(bpI);
+	if (bpI->second.autoDel) m_breakpoints.erase(bpI);
 	return status;
 }
 
@@ -379,7 +380,7 @@ auto dev::Debugger::GetBreakpointStatus(const Addr _addr)
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 	auto bpI = m_breakpoints.find(_addr);
 
-	return bpI == m_breakpoints.end() ? Breakpoint::Status::DELETED : bpI->second.GetData().status;
+	return bpI == m_breakpoints.end() ? Breakpoint::Status::DELETED : bpI->second.status;
 }
 
 //////////////////////////////////////////////////////////////
