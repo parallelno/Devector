@@ -27,7 +27,7 @@ namespace dev
 		static constexpr uint8_t OPCODE_RST7 = 0xff;
 		static constexpr uint8_t OPCODE_OUT = 0xd3;
 		static constexpr uint64_t MACHINE_CC = 4; // a number of clock cycles one machine cycle takes
-		static constexpr int INSTR_EXECUTED = 0; // machine_cycle index indicating the instruction executon is over
+		static constexpr uint8_t FIRST_MACHINE_CICLE_IDX = 0; // machine_cycle index indicating the instruction executon is over
 
 		// Registers
 		uint64_t m_cc; // clock cycles. it's the debug related data
@@ -36,8 +36,8 @@ namespace dev
 		uint8_t m_instructionReg; // an internal register that stores the fetched instruction
 
 		// Arithmetic and Logic Unit (ALU)
-		uint8_t m_TMP;    // an 8-bit temporary register
-		uint8_t m_ACT;    // an 8-bit temporary accumulator
+		uint8_t m_tmp;    // an 8-bit temporary register
+		uint8_t m_act;    // an 8-bit temporary accumulator
 		uint8_t m_W;      // an 8-bit temporary hi addr
 		uint8_t m_Z;      // an 8-bit temporary low addr
 		bool m_flagS; // sign
@@ -49,12 +49,12 @@ namespace dev
 		bool m_flagUnused3; // unused, always 0 in Vector06c
 		bool m_flagUnused5; // unused, always 0 in Vector06c
 
-		int m_machineCycle; // a machine cycle index of the currently executed instruction
+		uint8_t m_machineCycle; // a machine cycle index of the currently executed instruction
 
 		// Interruption
-		bool m_INTE; // set if an iterrupt enabled
-		bool m_IFF; // set by the 50 Hz interruption timer. it is ON until an iterruption call (RST7)
-		bool m_HLTA; // indicates that HLT instruction is executed
+		bool m_inte; // set if an iterrupt enabled
+		bool m_iff; // set by the 50 Hz interruption timer. it is ON until an iterruption call (RST7)
+		bool m_hlta; // indicates that HLT instruction is executed
 		bool m_eiPending; // if set, the interruption call is pending until the next instruction
 
 	public:

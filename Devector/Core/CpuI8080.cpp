@@ -1,4 +1,5 @@
 #include "CpuI8080.h"
+#include "Utils/Utils.h"
 
 dev::CpuI8080::CpuI8080(
 	Memory& _memory,
@@ -25,25 +26,25 @@ void dev::CpuI8080::Init()
 void dev::CpuI8080::Reset()
 {
 	m_cc = m_pc = m_sp = 0;
-	m_instructionReg = m_TMP = m_ACT = m_W = m_Z = 0;
-	m_flagS = m_flagZ = m_flagAC = m_flagP = m_flagC = m_INTE = false;
+	m_instructionReg = m_tmp = m_act = m_W = m_Z = 0;
+	m_flagS = m_flagZ = m_flagAC = m_flagP = m_flagC = m_inte = false;
 
 	m_machineCycle = 0;
-	m_HLTA = m_INTE = m_IFF = m_eiPending = false;
+	m_hlta = m_inte = m_iff = m_eiPending = false;
 }
 
 void dev::CpuI8080::ExecuteMachineCycle(bool _irq)
 {
-	m_IFF |= _irq & m_INTE;
+	m_iff |= _irq & m_inte;
 
 	if (m_machineCycle == 0)
 	{
 		// interrupt processing
-		if (m_IFF && !m_eiPending)
+		if (m_iff && !m_eiPending)
 		{
-			m_INTE = false;
-			m_IFF = false;
-			m_HLTA = false;
+			m_inte = false;
+			m_iff = false;
+			m_hlta = false;
 			m_instructionReg = OPCODE_RST7;
 		}
 		// normal instruction execution
@@ -60,11 +61,11 @@ void dev::CpuI8080::ExecuteMachineCycle(bool _irq)
 
 bool dev::CpuI8080::IsInstructionExecuted() const
 {
-	return m_machineCycle == CpuI8080::INSTR_EXECUTED || m_HLTA;
+	return m_machineCycle == CpuI8080::FIRST_MACHINE_CICLE_IDX || m_hlta;
 }
 
 // an instruction execution time in macine cycles. each machine cicle is 4 cc
-static constexpr int M_CYCLES[]
+static constexpr uint8_t M_CYCLES[]
 {
 //  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
 	1, 3, 2, 2, 2, 2, 2, 1, 1, 3, 2, 2, 2, 2, 2, 1, // 0
@@ -199,7 +200,7 @@ void dev::CpuI8080::Decode()
 		case 0xC1: POP(m_b, m_c); break; // POP B
 		case 0xD1: POP(m_d, m_e); break; // POP D
 		case 0xE1: POP(m_h, m_l); break; // POP H
-		case 0xF1: POP(m_a, m_TMP); SetFlags(m_TMP); break; // POP PSW
+		case 0xF1: POP(m_a, m_tmp); SetFlags(m_tmp); break; // POP PSW
 
 		case 0x87: ADD(m_a, m_a, false); break; // ADD A
 		case 0x80: ADD(m_a, m_b, false); break; // ADD B
@@ -373,8 +374,8 @@ void dev::CpuI8080::Decode()
 		case 0xDB: IN_(); break; // IN
 		case 0xD3: OUT_(); break; // OUT
 
-		case 0xF3: m_INTE = false; break; // DI
-		case 0xFB: m_INTE = true; m_eiPending = true; break; // EI
+		case 0xF3: m_inte = false; break; // DI
+		case 0xFB: m_inte = true; m_eiPending = true; break; // EI
 		case 0x76: HLT(); break; // HLT
 
 		case 0x00: break; // NOP
@@ -388,6 +389,8 @@ void dev::CpuI8080::Decode()
 
 
 	default:
+		dev::Log("Handling undocumented instruction. Opcode: {}", m_instructionReg);
+		dev::Exit("Exit", m_instructionReg);
 		break;
 	}
 	
@@ -528,9 +531,9 @@ bool dev::CpuI8080::GetFlagZ() const { return m_flagZ; }
 bool dev::CpuI8080::GetFlagAC() const { return m_flagAC; }
 bool dev::CpuI8080::GetFlagP() const { return m_flagP; }
 bool dev::CpuI8080::GetFlagC() const {	return m_flagC; }
-bool dev::CpuI8080::GetINTE() const { return m_INTE; }
-bool dev::CpuI8080::GetIFF() const { return m_IFF; }
-bool dev::CpuI8080::GetHLTA() const { return m_HLTA; }
+bool dev::CpuI8080::GetINTE() const { return m_inte; }
+bool dev::CpuI8080::GetIFF() const { return m_iff; }
+bool dev::CpuI8080::GetHLTA() const { return m_hlta; }
 auto dev::CpuI8080::GetMachineCycle() const -> int { return m_machineCycle; }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -614,241 +617,262 @@ void dev::CpuI8080::RAR()
 
 void dev::CpuI8080::MOVRegReg(uint8_t& _regDest, uint8_t _regSrc)
 {
-	if (m_machineCycle == 0)
-	{
-		m_TMP = _regSrc;
-	}
-	else
-	{
-		_regDest = m_TMP;
+	switch (m_machineCycle) {
+	case 0:
+		m_tmp = _regSrc;
+		return;
+	case 1:
+		_regDest = m_tmp;
+		return;
 	}
 }
 
 void dev::CpuI8080::LoadRegPtr(uint8_t& _regDest, Addr _addr)
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		_regDest = ReadByte(_addr);
+		return;
 	}
 }
 
 void dev::CpuI8080::MOVMemReg(uint8_t _sss)
 {
-	if (m_machineCycle == 0)
-	{
-		m_TMP = _sss;
-	}
-	else
-	{
-		WriteByte(GetHL(), m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		m_tmp = _sss;
+		return;
+	case 1:
+		WriteByte(GetHL(), m_tmp);
+		return;
 	}
 }
 
 void dev::CpuI8080::MVIRegData(uint8_t& _regDest)
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		_regDest = ReadByteMovePC();
+		return;
 	}
 }
 
 void dev::CpuI8080::MVIMemData()
 {
-	if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
-		WriteByte(GetHL(), m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
+		m_tmp = ReadByteMovePC();
+		return;
+	case 2:
+		WriteByte(GetHL(), m_tmp);
+		return;
 	}
 }
 
 void dev::CpuI8080::LDA()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_Z = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_W = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 3)
-	{
+		return;
+	case 3:
 		m_a = ReadByte(m_W << 8 | m_Z);
+		return;
 	}
 }
 
 void dev::CpuI8080::STA()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_Z = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_W = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 3)
-	{
+		return;
+	case 3:
 		WriteByte(m_W << 8 | m_Z, m_a);
+		return;
 	}
 }
 
 void dev::CpuI8080::STAX(Addr _addr)
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		WriteByte(_addr, m_a);
+		return;
 	}
 }
 
 void dev::CpuI8080::LXI(uint8_t& _regH, uint8_t& _regL)
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		_regL = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		_regH = ReadByteMovePC();
+		return;
 	}
 }
 
 void dev::CpuI8080::LXISP()
 {
-	if (m_machineCycle == 1)
-	{
-		auto _lb = ReadByteMovePC();
-		m_sp = m_sp & 0xff00 | _lb;
-	}
-	else if (m_machineCycle == 2)
-	{
-		auto _hb = ReadByteMovePC();
-		m_sp = _hb << 8 | m_sp & 0xff;
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:{
+			auto _lb = ReadByteMovePC();
+			m_sp = m_sp & 0xff00 | _lb;
+			return;
+		}
+	case 2: {
+			auto _hb = ReadByteMovePC();
+			m_sp = _hb << 8 | m_sp & 0xff;
+			return;
+		}
 	}
 }
 
 void dev::CpuI8080::LHLD()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_Z = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_W = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 3)
-	{
+		return;
+	case 3:
 		m_l = ReadByte(m_W << 8 | m_Z);
 		m_Z++;
 		m_W += m_Z == 0 ? 1 : 0;
-	}
-	else if (m_machineCycle == 4)
-	{
+		return;
+	case 4:
 		m_h = ReadByte(m_W << 8 | m_Z);
+		return;
 	}
 }
 
 void dev::CpuI8080::SHLD()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_Z = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_W = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 3)
-	{
+		return;
+	case 3:
 		WriteByte(m_W << 8 | m_Z, m_l);
 		m_Z++;
 		m_W += m_Z == 0 ? 1 : 0;
-	}
-	else if (m_machineCycle == 4)
-	{
+		return;
+	case 4:
 		WriteByte(m_W << 8 | m_Z, m_h);
+		return;
 	}
 }
 
 void dev::CpuI8080::SPHL()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_sp = GetHL();
+		return;
 	}
 }
 
 void dev::CpuI8080::XCHG()
 {
-	m_TMP = m_d;
+	m_tmp = m_d;
 	m_d = m_h;
-	m_h = m_TMP;
+	m_h = m_tmp;
 
-	m_TMP = m_e;
+	m_tmp = m_e;
 	m_e = m_l;
-	m_l = m_TMP;
+	m_l = m_tmp;
 }
 
 void dev::CpuI8080::XTHL()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_Z = ReadByte(m_sp, Memory::AddrSpace::STACK);
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_W = ReadByte(m_sp + 1u, Memory::AddrSpace::STACK);
-	}
-	else if (m_machineCycle == 3)
-	{
+		return;
+	case 3:
 		WriteByte(m_sp, m_l, Memory::AddrSpace::STACK);
-	}
-	else if (m_machineCycle == 4)
-	{
+		return;
+	case 4:
 		WriteByte(m_sp + 1u, m_h, Memory::AddrSpace::STACK);
-	}
-	else if (m_machineCycle == 5)
-	{
+		return;
+	case 5:
 		m_h = m_W;
 		m_l = m_Z;
+		return;
 	}
 }
 
 void dev::CpuI8080::PUSH(uint8_t _hb, uint8_t _lb)
 {
-	if (m_machineCycle == 0)
-	{
+	switch (m_machineCycle) {
+	case 0:
 		m_sp--;
-	}
-	else if (m_machineCycle == 1)
-	{
+		return;
+	case 1:
 		WriteByte(m_sp, _hb, Memory::AddrSpace::STACK);
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_sp--;
-	}
-	else if (m_machineCycle == 3)
-	{
+		return;
+	case 3:
 		WriteByte(m_sp, _lb, Memory::AddrSpace::STACK);
+		return;
 	}
 }
 
 void dev::CpuI8080::POP(uint8_t& _regH, uint8_t& _regL)
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		_regL = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		_regH = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
+		return;
 	}
 }
 
@@ -864,27 +888,27 @@ void dev::CpuI8080::ADD(uint8_t _a, uint8_t _b, bool _cy)
 
 void dev::CpuI8080::ADDMem(bool _cy)
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByte(GetHL());
-		ADD(m_ACT, m_TMP, _cy);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByte(GetHL());
+		ADD(m_act, m_tmp, _cy);
+		return;
 	}
 }
 
 void dev::CpuI8080::ADI(bool _cy)
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByteMovePC();
-		ADD(m_ACT, m_TMP, _cy);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByteMovePC();
+		ADD(m_act, m_tmp, _cy);
+		return;
 	}
 }
 
@@ -898,161 +922,169 @@ void dev::CpuI8080::SUB(uint8_t _a, uint8_t _b, bool _cy)
 
 void dev::CpuI8080::SUBMem(bool _cy)
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByte(GetHL());
-		SUB(m_ACT, m_TMP, _cy);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByte(GetHL());
+		SUB(m_act, m_tmp, _cy);
+		return;
 	}
 }
 
 void dev::CpuI8080::SBI(bool _cy)
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByteMovePC();
-		SUB(m_ACT, m_TMP, _cy);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByteMovePC();
+		SUB(m_act, m_tmp, _cy);
+		return;
 	}
 }
 
 void dev::CpuI8080::DAD(uint16_t _val)
 {
-	if (m_machineCycle == 1)
-	{
-		m_ACT = (uint8_t)(_val & 0xff);
-		m_TMP = m_l;
-		auto res = m_ACT + m_TMP;
-		m_flagC = (res >> 8) == 1;
-		m_l = (uint8_t)(res);
-	}
-	else if (m_machineCycle == 2)
-	{
-		m_ACT = (uint8_t)(_val >> 8);
-		m_TMP = m_h;
-		auto result = m_ACT + m_TMP + (m_flagC ? 1 : 0);
-		m_flagC = (result >> 8) == 1;
-		m_h = (uint8_t)(result);
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1: {
+			m_act = (uint8_t)(_val & 0xff);
+			m_tmp = m_l;
+			int res = m_act + m_tmp;
+			m_flagC = (res >> 8) == 1;
+			m_l = (uint8_t)(res);
+			return;
+		}
+	case 2: {
+			m_act = (uint8_t)(_val >> 8);
+			m_tmp = m_h;
+			int result = m_act + m_tmp + (m_flagC ? 1 : 0);
+			m_flagC = (result >> 8) == 1;
+			m_h = (uint8_t)(result);
+			return;
+		}
 	}
 }
 
 void dev::CpuI8080::INR(uint8_t& _regDest)
 {
-	if (m_machineCycle == 0)
-	{
-		m_TMP = _regDest;
-		m_TMP++;
-		m_flagAC = (m_TMP & 0xF) == 0;
-		SetZSP(m_TMP);
-	}
-	else if (m_machineCycle == 1)
-	{
-		_regDest = m_TMP;
+	switch (m_machineCycle) {
+	case 0:
+		m_tmp = _regDest;
+		m_tmp++;
+		m_flagAC = (m_tmp & 0xF) == 0;
+		SetZSP(m_tmp);
+		return;
+	case 1:
+		_regDest = m_tmp;
+		return;
 	}
 }
 
 void dev::CpuI8080::INRMem()
 {
-	if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByte(GetHL());
-		m_TMP++;
-		m_flagAC = (m_TMP & 0xF) == 0;
-		SetZSP(m_TMP);
-	}
-	else if (m_machineCycle == 2)
-	{
-		WriteByte(GetHL(), m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
+		m_tmp = ReadByte(GetHL());
+		m_tmp++;
+		m_flagAC = (m_tmp & 0xF) == 0;
+		SetZSP(m_tmp);
+		return;
+	case 2:
+		WriteByte(GetHL(), m_tmp);
+		return;
 	}
 }
 
 void dev::CpuI8080::DCR(uint8_t& _regDest)
 {
-	if (m_machineCycle == 0)
-	{
-		m_TMP = _regDest;
-		m_TMP--;
-		m_flagAC = !((m_TMP & 0xF) == 0xF);
-		SetZSP(m_TMP);
-	}
-	else if (m_machineCycle == 1)
-	{
-		_regDest = m_TMP;
+	switch (m_machineCycle) {
+	case 0:
+		m_tmp = _regDest;
+		m_tmp--;
+		m_flagAC = !((m_tmp & 0xF) == 0xF);
+		SetZSP(m_tmp);
+		return;
+	case 1:
+		_regDest = m_tmp;
+		return;
 	}
 }
 
 void dev::CpuI8080::DCRMem()
 {
-	if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByte(GetHL());
-		m_TMP--;
-		m_flagAC = !((m_TMP & 0xF) == 0xF);
-		SetZSP(m_TMP);
-	}
-	else if (m_machineCycle == 2)
-	{
-		WriteByte(GetHL(), m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
+		m_tmp = ReadByte(GetHL());
+		m_tmp--;
+		m_flagAC = !((m_tmp & 0xF) == 0xF);
+		SetZSP(m_tmp);
+		return;
+	case 2:
+		WriteByte(GetHL(), m_tmp);
+		return;
 	}
 }
 
 void dev::CpuI8080::INX(uint8_t& _regH, uint8_t& _regL)
 {
-	if (m_machineCycle == 0)
-	{
+	switch (m_machineCycle) {
+	case 0:
 		m_Z = (uint8_t)(_regL + 1);
 		m_W = (uint8_t)(m_Z == 0 ? _regH + 1 : _regH);
-	}
-	else if (m_machineCycle == 1)
-	{
+		return;
+	case 1:
 		_regH = m_W;
 		_regL = m_Z;
+		return;
 	}
 }
 
 void dev::CpuI8080::INXSP()
 {
-	if (m_machineCycle == 0)
-	{
+	switch (m_machineCycle) {
+	case 0:
 		m_Z = (uint8_t)(m_sp + 1);
 		m_W = (uint8_t)(m_Z == 0 ? (m_sp >> 8) + 1 : m_sp >> 8);
-	}
-	else if (m_machineCycle == 1)
-	{
+		return;
+	case 1:
 		m_sp = m_W << 8 | m_Z;
+		return;
 	}
 }
 
 void dev::CpuI8080::DCX(uint8_t& _regH, uint8_t& _regL)
 {
-	if (m_machineCycle == 0)
-	{
+	switch (m_machineCycle) {
+	case 0:
 		m_Z = (uint8_t)(_regL - 1);
 		m_W = (uint8_t)(m_Z == 0xff ? _regH - 1 : _regH);
-	}
-	else if (m_machineCycle == 1)
-	{
+		return;
+	case 1:
 		_regH = m_W;
 		_regL = m_Z;
+		return;
 	}
 }
 
 void dev::CpuI8080::DCXSP()
 {
-	if (m_machineCycle == 0)
-	{
+	switch (m_machineCycle) {
+	case 0:
 		m_Z = (uint8_t)(m_sp - 1);
 		m_W = (uint8_t)(m_Z == 0xff ? (m_sp >> 8) - 1 : m_sp >> 8);
-	}
-	else if (m_machineCycle == 1)
-	{
+		return;
+	case 1:
 		m_sp = m_W << 8 | m_Z;
+		return;
 	}
 }
 
@@ -1084,43 +1116,43 @@ void dev::CpuI8080::DAA()
 
 void dev::CpuI8080::ANA(uint8_t _sss)
 {
-	m_ACT = m_a;
-	m_TMP = _sss;
-	m_a = (uint8_t)(m_ACT & m_TMP);
+	m_act = m_a;
+	m_tmp = _sss;
+	m_a = (uint8_t)(m_act & m_tmp);
 	m_flagC = false;
-	m_flagAC = ((m_ACT | m_TMP) & 0x08) != 0;
+	m_flagAC = ((m_act | m_tmp) & 0x08) != 0;
 	SetZSP(m_a);
 }
 
 void dev::CpuI8080::AMAMem()
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByte(GetHL());
-		m_a = (uint8_t)(m_ACT & m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByte(GetHL());
+		m_a = (uint8_t)(m_act & m_tmp);
 		m_flagC = false;
-		m_flagAC = ((m_ACT | m_TMP) & 0x08) != 0;
+		m_flagAC = ((m_act | m_tmp) & 0x08) != 0;
 		SetZSP(m_a);
+		return;
 	}
 }
 
 void dev::CpuI8080::ANI()
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByteMovePC();
-		m_a = (uint8_t)(m_ACT & m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByteMovePC();
+		m_a = (uint8_t)(m_act & m_tmp);
 		m_flagC = false;
-		m_flagAC = ((m_ACT | m_TMP) & 0x08) != 0;
+		m_flagAC = ((m_act | m_tmp) & 0x08) != 0;
 		SetZSP(m_a);
+		return;
 	}
 }
 
@@ -1128,9 +1160,9 @@ void dev::CpuI8080::ANI()
 // result in register A
 void dev::CpuI8080::XRA(uint8_t _sss)
 {
-	m_ACT = m_a;
-	m_TMP = _sss;
-	m_a = (uint8_t)(m_ACT ^ m_TMP);
+	m_act = m_a;
+	m_tmp = _sss;
+	m_a = (uint8_t)(m_act ^ m_tmp);
 	m_flagC = false;
 	m_flagAC = false;
 	SetZSP(m_a);
@@ -1138,33 +1170,33 @@ void dev::CpuI8080::XRA(uint8_t _sss)
 
 void dev::CpuI8080::XRAMem()
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByte(GetHL());
-		m_a = (uint8_t)(m_ACT ^ m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByte(GetHL());
+		m_a = (uint8_t)(m_act ^ m_tmp);
 		m_flagC = false;
 		m_flagAC = false;
 		SetZSP(m_a);
+		return;
 	}
 }
 
 void dev::CpuI8080::XRI()
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByteMovePC();
-		m_a = (uint8_t)(m_ACT ^ m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByteMovePC();
+		m_a = (uint8_t)(m_act ^ m_tmp);
 		m_flagC = false;
 		m_flagAC = false;
 		SetZSP(m_a);
+		return;
 	}
 }
 
@@ -1172,9 +1204,9 @@ void dev::CpuI8080::XRI()
 // result in register A
 void dev::CpuI8080::ORA(uint8_t _sss)
 {
-	m_ACT = m_a;
-	m_TMP = _sss;
-	m_a = (uint8_t)(m_ACT | m_TMP);
+	m_act = m_a;
+	m_tmp = _sss;
+	m_a = (uint8_t)(m_act | m_tmp);
 	m_flagC = false;
 	m_flagAC = false;
 	SetZSP(m_a);
@@ -1182,245 +1214,245 @@ void dev::CpuI8080::ORA(uint8_t _sss)
 
 void dev::CpuI8080::ORAMem()
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByte(GetHL());
-		m_a = (uint8_t)(m_ACT | m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByte(GetHL());
+		m_a = (uint8_t)(m_act | m_tmp);
 		m_flagC = false;
 		m_flagAC = false;
 		SetZSP(m_a);
+		return;
 	}
 }
 
 void dev::CpuI8080::ORI()
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByteMovePC();
-		m_a = (uint8_t)(m_ACT | m_TMP);
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByteMovePC();
+		m_a = (uint8_t)(m_act | m_tmp);
 		m_flagC = false;
 		m_flagAC = false;
 		SetZSP(m_a);
+		return;
 	}
 }
 
 // compares the register A to another uint8_t
 void dev::CpuI8080::CMP(uint8_t _sss)
 {
-	m_ACT = m_a;
-	m_TMP = _sss;
-	auto res = m_ACT - m_TMP;
+	m_act = m_a;
+	m_tmp = _sss;
+	auto res = m_act - m_tmp;
 	m_flagC = (res >> 8) & 1;
-	m_flagAC = (~(m_ACT ^ (res & 0xFF) ^ m_TMP) & 0x10) == 0x10;
+	m_flagAC = (~(m_act ^ (res & 0xFF) ^ m_tmp) & 0x10) == 0x10;
 	SetZSP((uint8_t)(res & 0xFF));
 }
 
 void dev::CpuI8080::CMPMem()
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByte(GetHL());
-		auto res = m_ACT - m_TMP;
-		m_flagC = (res >> 8) & 1;
-		m_flagAC = (~(m_ACT ^ (res & 0xFF) ^ m_TMP) & 0x10) == 0x10;
-		SetZSP((uint8_t)(res & 0xFF));
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1: {
+			m_tmp = ReadByte(GetHL());
+			int res = m_act - m_tmp;
+			m_flagC = (res >> 8) & 1;
+			m_flagAC = (~(m_act ^ (res & 0xFF) ^ m_tmp) & 0x10) == 0x10;
+			SetZSP((uint8_t)(res & 0xFF));
+			return;
+		}
 	}
 }
 
 void dev::CpuI8080::CPI()
 {
-	if (m_machineCycle == 0)
-	{
-		m_ACT = m_a;
-	}
-	else if (m_machineCycle == 1)
-	{
-		m_TMP = ReadByteMovePC();
-		auto res = m_ACT - m_TMP;
+	switch (m_machineCycle) {
+	case 0:
+		m_act = m_a;
+		return;
+	case 1:
+		m_tmp = ReadByteMovePC();
+		auto res = m_act - m_tmp;
 		m_flagC = (res >> 8) & 1;
-		m_flagAC = (~(m_ACT ^ (res & 0xFF) ^ m_TMP) & 0x10) == 0x10;
+		m_flagAC = (~(m_act ^ (res & 0xFF) ^ m_tmp) & 0x10) == 0x10;
 		SetZSP((uint8_t)(res & 0xFF));
+		return;
 	}
 }
 
 void dev::CpuI8080::JMP(bool _condition)
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_Z = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_W = ReadByteMovePC();
 		if (_condition)
 		{
 			m_pc = (uint16_t)(m_W << 8 | m_Z);
 		}
+		return;
 	}
 }
 
 void dev::CpuI8080::PCHL()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_pc = GetHL();
+		return;
 	}
 }
 
 // pushes the current pc to the stack, then jumps to an address
 void dev::CpuI8080::CALL(bool _condition)
 {
-	if (m_machineCycle == 0)
-	{
-		if (_condition)
-		{
-			m_sp--;
-		}
-	}
-	else if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		m_sp -= _condition ? 1 : 0;
+		return;
+	case 1:
 		m_Z = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_W = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 3)
-	{
-		if (_condition)
-		{
+		return;
+	case 3:
+		if (_condition)	{
 			WriteByte(m_sp, (uint8_t)(m_pc >> 8), Memory::AddrSpace::STACK);
 			m_sp--;
-		}
-		else
-		{
+		} else {
 			// end execution
 			m_machineCycle = 5;
 		}
-	}
-	else if (m_machineCycle == 4)
-	{
+		return;
+	case 4:
 		WriteByte(m_sp, (uint8_t)(m_pc & 0xff), Memory::AddrSpace::STACK);
-	}
-	else if (m_machineCycle == 5)
-	{
+		return;
+	case 5:
 		m_pc = m_W << 8 | m_Z;
+		return;
 	}
 }
 
 // pushes the current pc to the stack, then jumps to an address
 void dev::CpuI8080::RST(uint8_t _arg)
 {
-	if (m_machineCycle == 0)
-	{
+	switch (m_machineCycle) {
+	case 0:
 		m_sp--;
-	}
-	else if (m_machineCycle == 1)
-	{
+		return;
+	case 1:
 		WriteByte(m_sp, (uint8_t)(m_pc >> 8), Memory::AddrSpace::STACK);
 		m_sp--;
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_W = 0;
 		m_Z = _arg << 3;
 		WriteByte(m_sp, (uint8_t)(m_pc & 0xff), Memory::AddrSpace::STACK);
-	}
-	else if (m_machineCycle == 3)
-	{
+		return;
+	case 3:
 		m_pc = m_W << 8 | m_Z;
+		return;
 	}
 }
 
 // returns from subroutine
 void dev::CpuI8080::RET()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_Z = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_W = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
 		m_pc = m_W << 8 | m_Z;
+		return;
 	}
 }
 
 // returns from subroutine if a condition is met
 void dev::CpuI8080::RETCond(bool _condition)
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		if (!_condition) m_machineCycle = 3;
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_Z = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
-	}
-	else if (m_machineCycle == 3)
-	{
+		return;
+	case 3:
 		m_W = ReadByte(m_sp, Memory::AddrSpace::STACK);
 		m_sp++;
 		m_pc = m_W << 8 | m_Z;
+		return;
 	}
 }
 
 void dev::CpuI8080::IN_()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_W = 0;
 		m_Z = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		m_a = Input(m_Z);
+		return;
 	}
 }
 
 void dev::CpuI8080::OUT_()
 {
-	if (m_machineCycle == 1)
-	{
+	switch (m_machineCycle) {
+	case 0:
+		return;
+	case 1:
 		m_W = 0;
 		m_Z = ReadByteMovePC();
-	}
-	else if (m_machineCycle == 2)
-	{
+		return;
+	case 2:
 		Output(m_Z, m_a);
+		return;
 	}
 }
 
 void dev::CpuI8080::HLT()
 {
-	if (m_machineCycle == 0)
-	{
+	switch (m_machineCycle) {
+	case 0:
 		m_pc--;
-	}
-	else if (m_machineCycle == 1)
-	{
+		return;
+	case 1:
 		ReadInstrMovePC();
 		// to loop into the M2 of HLT
-		if (!m_IFF) {
-			m_HLTA = true;
-			m_machineCycle -= 1;
+		if (!m_iff) {
+			m_hlta = true;
+			m_machineCycle--;
 			m_pc--;
 		}
+		return;
 	}
 }
-
