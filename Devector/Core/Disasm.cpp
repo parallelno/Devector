@@ -1191,89 +1191,77 @@ void dev::Disasm::LoadDebugData(const std::wstring& _romPath)
 {
 	// check if the file exists
 	auto romDir = dev::GetDir(_romPath);
-	auto debugPath = romDir + L"\\" + dev::GetFilename(_romPath) + L".json";
-	if (!dev::IsFileExist(debugPath)) return;
+	m_debugPath = romDir + L"\\" + dev::GetFilename(_romPath) + L".json";
 
 	ResetConstsLabelsComments();
 
-	m_debugDataJ = LoadJson(debugPath);
+	// init empty dictionaries when there is no file found
+	if (!dev::IsFileExist(m_debugPath)) return;
+	
+	auto debugDataJ = LoadJson(m_debugPath);
 
 	// add labels
-	if (m_debugDataJ.contains("labels")) {
-		for (auto& [str, addrS] : m_debugDataJ["labels"].items())
+	if (debugDataJ.contains("labels")) {
+		for (auto& [str, addrS] : debugDataJ["labels"].items())
 		{
 			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
 			m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(str);
 		}
 	}
 	// add consts
-	if (m_debugDataJ.contains("consts")) {
-		for (auto& [str, addrS] : m_debugDataJ["consts"].items())
+	if (debugDataJ.contains("consts")) {
+		for (auto& [str, addrS] : debugDataJ["consts"].items())
 		{
 			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
 			m_consts.emplace(addr, AddrLabels{}).first->second.emplace_back(str);
 		}
 	}
 	// add comments
-	if (m_debugDataJ.contains("comments")) {
-		for (auto& [addrS, str] : m_debugDataJ["comments"].items())
+	if (debugDataJ.contains("comments")) {
+		for (auto& [addrS, str] : debugDataJ["comments"].items())
 		{
 			Addr addr = dev::StrHexToInt(addrS.c_str());
 			m_comments.emplace(addr, str);
 		}
 	}
-
-	m_debugPath = debugPath;
-	linesP = nullptr;
 }
 
 void dev::Disasm::SaveDebugData()
 {
 	if (m_debugPath.empty()) return;
+
+	nlohmann::json debugDataJ = {};
+	debugDataJ["labels"] = {};
+	debugDataJ["consts"] = {};
+	debugDataJ["comments"] = {};
+
 	// update labels
-	if (m_debugDataJ.contains("labels")) 
-	{ 
-		m_debugDataJ["labels"].clear(); 
-	}
-	else { 
-		m_debugDataJ["labels"] = {};
-	}
-	auto& debugLabels = m_debugDataJ["labels"];
+	auto& debugLabels = debugDataJ["labels"];
 	for (const auto& [addr, labels] : m_labels)
 	{
-		for (int i = 0; i < labels.size(); i++) debugLabels[labels[i]] = std::format("0x{:04X}", addr);
+		for (int i = 0; i < labels.size(); i++) {
+			debugLabels[labels[i]] = std::format("0x{:04X}", addr);
+		}
 	}
 
 	// update consts
-	if (m_debugDataJ.contains("consts"))
-	{
-		m_debugDataJ["consts"].clear();
-	}
-	else {
-		m_debugDataJ["consts"] = {};
-	}
-	auto& debugConsts = m_debugDataJ["consts"];
+
+	auto& debugConsts = debugDataJ["consts"];
 	for (const auto& [addr, consts] : m_consts)
 	{
-		for (int i = 0; i < consts.size(); i++) debugConsts[consts[i]] = std::format("0x{:04X}", addr);
+		for (int i = 0; i < consts.size(); i++) {
+			debugConsts[consts[i]] = std::format("0x{:04X}", addr);
+		}
 	}
 
 	// update comments
-	if (m_debugDataJ.contains("comments"))
-	{
-		m_debugDataJ["comments"].clear();
-	}
-	else {
-		m_debugDataJ["comments"] = {};
-	}
-	auto& debugComments = m_debugDataJ["comments"];
+	auto& debugComments = debugDataJ["comments"];
 	for (const auto& [addr, comment] : m_comments)
 	{
 		debugComments[std::format("0x{:04X}", addr)] = comment;
 	}
 	
-
-	dev::SaveJson(m_debugPath, m_debugDataJ);
+	dev::SaveJson(m_debugPath, debugDataJ);
 }
 
 

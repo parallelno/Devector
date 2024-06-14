@@ -160,6 +160,5 @@ namespace dev
 		MemStats m_memWrites;
 
 		std::wstring m_debugPath;
-		nlohmann::json m_debugDataJ;
 	};
 }
