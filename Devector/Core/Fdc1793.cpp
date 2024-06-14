@@ -148,7 +148,7 @@ uint8_t dev::Fdc1793::Read(Port _reg)
 			m_regs[0] &= F_BUSY | F_NOTREADY | F_READONLY | F_DRQ;
 		}
 		return((int)_reg);
-	case Port::TRACK:
+	case Port::TRACK: [[fallthrough]];
 	case Port::SECTOR:
 		return(m_regs[(int)_reg]); // Return track/sector numbers
 	case Port::DATA:
@@ -239,11 +239,11 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			m_irq = WD1793_IRQ;
 			break;
 
-		case 0x20: // STEP
-		case 0x30: // STEP-AND-UPDATE
-		case 0x40: // STEP-IN
-		case 0x50: // STEP-IN-AND-UPDATE
-		case 0x60: // STEP-OUT
+		case 0x20: [[fallthrough]]; // STEP
+		case 0x30: [[fallthrough]]; // STEP-AND-UPDATE
+		case 0x40: [[fallthrough]]; // STEP-IN
+		case 0x50: [[fallthrough]]; // STEP-IN-AND-UPDATE
+		case 0x60: [[fallthrough]]; // STEP-OUT
 		case 0x70: // STEP-OUT-AND-UPDATE
 			// Either store or fetch step direction
 			if (_val & 0x40)
@@ -265,7 +265,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			m_irq = WD1793_IRQ;
 			break;
 
-		case 0x80:
+		case 0x80: [[fallthrough]];
 		case 0x90: // READ-SECTORS
 			// Seek to the requested sector
 			m_ptr = Seek(m_side, m_track,
@@ -287,7 +287,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			}
 			break;
 
-		case 0xA0:
+		case 0xA0: [[fallthrough]];
 		case 0xB0: // WRITE-SECTORS
 			// Seek to the requested sector
 			m_ptr = Seek(m_side, m_track,
@@ -361,7 +361,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 		}
 		break;
 
-	case Port::TRACK:
+	case Port::TRACK: [[fallthrough]];
 	case Port::SECTOR:
 		if (!(m_regs[0] & F_BUSY)) m_regs[(int)_reg] = _val;
 		break;

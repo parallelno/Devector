@@ -93,9 +93,9 @@ auto dev::IO::PortIn(uint8_t _port)
         break;
 
         // Timer
-    case 0x08:
-    case 0x09:
-    case 0x0a:
+    case 0x08: [[fallthrough]];
+    case 0x09: [[fallthrough]];
+    case 0x0a: [[fallthrough]];
     case 0x0b:
         //return m_timer.read(_port);
 
@@ -105,7 +105,7 @@ auto dev::IO::PortIn(uint8_t _port)
     case 0x0f:
         return joy_0f;
 
-    case 0x14:
+    case 0x14: [[fallthrough]];
     case 0x15:
         //result = ay.read(port & 1);
         break;
@@ -218,24 +218,24 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
         break;
 
         // Timer
-    case 0x08:
-    case 0x09:
-    case 0x0a:
+    case 0x08: [[fallthrough]];
+    case 0x09: [[fallthrough]];
+    case 0x0a: [[fallthrough]];
     case 0x0b:
         //m_timer.write(_port, _value);
         break;
 
         // palette (ask Svofski why 0x0d and 0x0e ports are for pallete)
-    case PORT_OUT_BORDER_COLOR:
-    case 0x0d:
-    case 0x0e:
+    case PORT_OUT_BORDER_COLOR: [[fallthrough]];
+    case 0x0d: [[fallthrough]];
+    case 0x0e: [[fallthrough]];
     case 0x0f:
         m_palettebyte = _value;
         break;
     case 0x10:
         m_memory.SetRamDiskMode(_value);
         break;
-    case 0x14:
+    case 0x14: [[fallthrough]];
     case 0x15:
         //ay.Write(port & 1, _value);
         break;

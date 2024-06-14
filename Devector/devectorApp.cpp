@@ -231,6 +231,7 @@ void dev::DevectorApp::ResLoadingStatusHandling()
 	case LoadingRes::State::ALWAYS_DISCARD:
 		SettingsUpdate("showSaveDiscardFddDialog", false);
 		SettingsUpdate("discardFddChanges", true);
+		[[fallthrough]];
 	case LoadingRes::State::DISCARD:
 		m_loadingRes.state = LoadingRes::State::OPEN_FILE;
 		break;
@@ -238,6 +239,7 @@ void dev::DevectorApp::ResLoadingStatusHandling()
 	case LoadingRes::State::ALWAYS_SAVE:
 		SettingsUpdate("showSaveDiscardFddDialog", false);
 		SettingsUpdate("discardFddChanges", false);
+		[[fallthrough]];
 	case LoadingRes::State::SAVE:
 		SaveUpdatedFdd();
 		m_loadingRes.state = LoadingRes::State::OPEN_FILE;

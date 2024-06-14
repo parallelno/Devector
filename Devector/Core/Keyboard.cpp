@@ -29,15 +29,15 @@ auto dev::Keyboard::KeyHandling(int _key, int _action)
 		}
 		break;
 		// shift keys
-	case GLFW_KEY_LEFT_SHIFT:
+	case GLFW_KEY_LEFT_SHIFT: [[fallthrough]];
 	case GLFW_KEY_RIGHT_SHIFT:
 		m_keySS = _action == GLFW_PRESS;
 		break; // shift/ss
 	case GLFW_KEY_LEFT_CONTROL:
 		m_keyUS = _action == GLFW_PRESS;
 		break; // ctrl/us
-	case GLFW_KEY_LEFT_SUPER:
-	case GLFW_KEY_LEFT_ALT:
+	case GLFW_KEY_LEFT_SUPER: [[fallthrough]];
+	case GLFW_KEY_LEFT_ALT: [[fallthrough]];
 	case GLFW_KEY_F6:
 		m_keyRus = _action == GLFW_PRESS;
 		break; // cmd/rus

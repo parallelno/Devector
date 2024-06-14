@@ -12,7 +12,7 @@
     },
     "labels": {
         "@loop": "0x014A",
-        "main_start": "0x0100",
+        "main_start1": "0x0100",
         "other_label": "0x0100",
         "ram_disk_init": "0x0257",
         "unpacker_start": "0x011B"
