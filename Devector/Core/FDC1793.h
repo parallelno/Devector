@@ -102,5 +102,6 @@ namespace dev
 		auto GetFdcInfo() -> Info;
 		auto GetFddInfo(const int _driveIdx) -> DiskInfo;
 		auto GetFddImage(const int _driveIdx) -> const std::vector<uint8_t>;
+		void ResetUpdate(const int _driveIdx);
 	};
 }

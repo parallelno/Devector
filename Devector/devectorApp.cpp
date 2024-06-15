@@ -422,7 +422,7 @@ void dev::DevectorApp::CheckMountedFdd()
 	for (int driveIdx = 0; driveIdx < Fdc1793::DRIVES_MAX; driveIdx++)
 	{
 		auto fddInfo = *m_hardwareP->Request(
-			Hardware::Req::GET_FDD_INFO, { {"_driveIdx", driveIdx} });
+			Hardware::Req::GET_FDD_INFO, { {"driveIdx", driveIdx} });
 		
 		if (fddInfo["updated"])
 		{
@@ -486,9 +486,12 @@ void dev::DevectorApp::DrawSaveDiscardFddPopup()
 void dev::DevectorApp::SaveUpdatedFdd()
 {
 	auto res = *m_hardwareP->Request(
-		Hardware::Req::GET_FDD_IMAGE, { {"_driveIdx", m_loadingRes.driveIdxUpdated} });
+		Hardware::Req::GET_FDD_IMAGE, { {"driveIdx", m_loadingRes.driveIdxUpdated} });
 	auto data = res["data"];
-	dev::SaveFile(m_loadingRes.pathFddUpdated, data);
+	dev::SaveFile(m_loadingRes.pathFddUpdated, data);	
+	m_hardwareP->Request(
+			Hardware::Req::RESET_UPDATE_FDD, { {"driveIdx", m_loadingRes.driveIdxUpdated} });
+
 	// check remaining updated fdds
 	m_loadingRes.state = LoadingRes::State::CHECK_MOUNTED;
 }

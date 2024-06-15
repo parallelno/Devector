@@ -70,6 +70,7 @@ namespace dev
 			KEY_HANDLING,
 			SCROLL_VERT,
 			LOAD_FDD,
+			RESET_UPDATE_FDD,
 		};
 
         Hardware(const std::wstring& _pathBootData);

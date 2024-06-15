@@ -334,6 +334,7 @@ static const char* JNZ[1]		= {MN_JNZ};
 static const char* JMP[1]		= {MN_JMP};
 static const char* CNZ[1]		= {MN_CNZ};
 static const char* PUSH_B[2]	= {MN_PUSH, MN_B};
+static const char* PUSH_D[2]	= {MN_PUSH, MN_D};
 static const char* ADI[1]		= {MN_ADI};
 static const char* RST_0[2]		= {MN_RST, MN_0};
 static const char* RZ[1]		= {MN_RZ};
@@ -412,7 +413,7 @@ static const char** mnenomics[DISASM_CMDS] =
 	ORA_B, ORA_C, ORA_D, ORA_E, ORA_H, ORA_L, ORA_M, ORA_A, CMP_B, CMP_C, CMP_D, CMP_E, CMP_H, CMP_L, CMP_M, CMP_A,
 
 	RNZ, POP_B,	  JNZ,	JMP,  CNZ, PUSH_B,	 ADI, RST_0, RZ,  RET,  JZ,  DB_,	CZ,  CALL,	 ACI, RST_1,
-	RNC, POP_D,	  JNC,	OUT1, CNC, PUSH,	 SUI, RST_2, RC,  DB_,	JC,  IN1,	CC,  DB_, SBI, RST_3,
+	RNC, POP_D,	  JNC,	OUT1, CNC, PUSH_D,	 SUI, RST_2, RC,  DB_,	JC,  IN1,	CC,  DB_, SBI, RST_3,
 	RPO, POP_H,	  JPO,	XTHL, CPO, PUSH_H,	 ANI, RST_4, RPE, PCHL, JPE, XCHG,	CPE, DB_, XRI, RST_5,
 	RP,  POP_PSW, JP,	DI,   CP,  PUSH_PSW, ORI, RST_6, RM,  SPHL, JM,  EI,	CM,  DB_, CPI, RST_7,
 };
@@ -622,6 +623,7 @@ const uint8_t T_CMD_IM[2]	= {MNT_CMD, MNT_IMM};
 #define T_JMP		T_CMD
 #define T_CNZ		T_CMD
 #define T_PUSH_B	T_CMD_R
+#define T_PUSH_D	T_CMD_R
 #define T_ADI		T_CMD_R
 #define T_RST_0		T_CMD_IM
 #define T_RZ		T_CMD
@@ -700,7 +702,7 @@ static const uint8_t* mnenomicTypes [DISASM_CMDS] =
 	T_ORA_B, T_ORA_C, T_ORA_D, T_ORA_E, T_ORA_H, T_ORA_L, T_ORA_M, T_ORA_A, T_CMP_B, T_CMP_C, T_CMP_D, T_CMP_E, T_CMP_H, T_CMP_L, T_CMP_M, T_CMP_A,
 
 	T_RNZ, T_POP_B,	  T_JNZ,	T_JMP,  T_CNZ, T_PUSH_B,	T_ADI, T_RST_0, T_RZ,  T_RET,   T_JZ,  T_DB,	T_CZ,  T_CALL,	T_ACI, T_RST_1,
-	T_RNC, T_POP_D,	  T_JNC,	T_OUT1, T_CNC, T_PUSH,		T_SUI, T_RST_2, T_RC,  T_DB,	T_JC,  T_IN1,	T_CC,  T_DB, T_SBI, T_RST_3,
+	T_RNC, T_POP_D,	  T_JNC,	T_OUT1, T_CNC, T_PUSH_D,	T_SUI, T_RST_2, T_RC,  T_DB,	T_JC,  T_IN1,	T_CC,  T_DB, T_SBI, T_RST_3,
 	T_RPO, T_POP_H,	  T_JPO,	T_XTHL, T_CPO, T_PUSH_H,	T_ANI, T_RST_4, T_RPE, T_PCHL,  T_JPE, T_XCHG,	T_CPE, T_DB, T_XRI, T_RST_5,
 	T_RP,  T_POP_PSW, T_JP,		T_DI,   T_CP,  T_PUSH_PSW,	T_ORI, T_RST_6, T_RM,  T_SPHL,  T_JM,  T_EI,	T_CM,  T_DB, T_CPI, T_RST_7,
 };
@@ -772,7 +774,7 @@ static const uint8_t mnenomicLens[DISASM_CMDS] =
 	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 
 	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2,
-	1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1,	1, 1, 1, 2,
+	1, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 1,	1, 1, 1, 2,
 	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1,	1, 1, 1, 2,
 	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1,	1, 1, 1, 2,
 };

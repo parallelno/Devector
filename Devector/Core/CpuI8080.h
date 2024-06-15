@@ -23,12 +23,7 @@ namespace dev
 {
 	class CpuI8080
 	{
-		// consts
-		static constexpr uint8_t OPCODE_RST7 = 0xff;
-		static constexpr uint8_t OPCODE_OUT = 0xd3;
-		static constexpr uint64_t MACHINE_CC = 4; // a number of clock cycles one machine cycle takes
-		static constexpr uint8_t FIRST_MACHINE_CICLE_IDX = 0; // machine_cycle index indicating the instruction executon is over
-
+		/*
 		// Registers
 		uint64_t m_cc; // clock cycles. it's the debug related data
 		Addr m_pc, m_sp; // program counter, stack pointer
@@ -56,6 +51,7 @@ namespace dev
 		bool m_iff; // set by the 50 Hz interruption timer. it is ON until an iterruption call (RST7)
 		bool m_hlta; // indicates that HLT instruction is executed
 		bool m_eiPending; // if set, the interruption call is pending until the next instruction
+		*/
 
 	public:
 		// memory + io interface
@@ -111,11 +107,10 @@ namespace dev
 		uint64_t GetCC() const;
 		uint16_t GetPC() const;
 		uint16_t GetSP() const;
-		uint16_t GetAF() const;
+		uint16_t GetPSW() const;
 		uint16_t GetBC() const;
 		uint16_t GetDE() const;
 		uint16_t GetHL() const;
-		uint8_t GetFlags() const;
 		bool GetFlagS() const;
 		bool GetFlagZ() const;
 		bool GetFlagAC() const;
@@ -127,10 +122,6 @@ namespace dev
 		int GetMachineCycle() const;
 
 	private:
-		void SetBC(uint16_t _val);
-		void SetDE(uint16_t _val);
-		void SetHL(uint16_t _val);
-		void SetFlags(uint8_t _psw);
 
 		////////////////////////////////////////////////////////////////////////////
 		//

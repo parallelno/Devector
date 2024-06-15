@@ -456,3 +456,5 @@ auto dev::Fdc1793::GetFddImage(const int _driveIdx)
 	auto data = m_disks[_driveIdx].GetData();
 	return { data, data + FDisk::dataLen };
 }
+
+void dev::Fdc1793::ResetUpdate(const int _driveIdx) { m_disks[_driveIdx].updated = false; }

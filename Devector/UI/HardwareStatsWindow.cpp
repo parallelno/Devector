@@ -303,7 +303,7 @@ void dev::HardwareStatsWindow::UpdateDataRuntime()
 	for (int driveIdx = 0; driveIdx < Fdc1793::DRIVES_MAX; driveIdx++)
 	{
 		auto fddInfo = *m_hardware.Request(
-			Hardware::Req::GET_FDD_INFO, { {"_driveIdx", driveIdx} });
+			Hardware::Req::GET_FDD_INFO, { {"driveIdx", driveIdx} });
 		size_t reads = fddInfo["reads"];
 		size_t writes = fddInfo["writes"];
 		m_fddPaths[driveIdx] = fddInfo["path"];

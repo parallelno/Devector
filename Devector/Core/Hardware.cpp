@@ -243,7 +243,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
         }
 
         case Req::GET_FDD_INFO: {
-            auto info = m_fdc.GetFddInfo(dataJ["_driveIdx"]);
+            auto info = m_fdc.GetFddInfo(dataJ["driveIdx"]);
             m_reqRes.emplace({
                 {"path", dev::StrWToStr(info.path)},
                 {"updated", info.updated},
@@ -256,7 +256,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
         
         case Req::GET_FDD_IMAGE:
             m_reqRes.emplace({
-                {"data", m_fdc.GetFddImage(dataJ["_driveIdx"])},
+                {"data", m_fdc.GetFddImage(dataJ["driveIdx"])},
                 });
             break;
 
@@ -291,11 +291,15 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             break;
 
         case Req::LOAD_FDD:
-        {
             m_fdc.Mount(dataJ["driveIdx"], dataJ["data"], dev::StrToStrW(dataJ["path"]));
             m_reqRes.emplace({});
-        }
             break;
+
+        case Req::RESET_UPDATE_FDD:
+            m_fdc.ResetUpdate(dataJ["driveIdx"]);
+            m_reqRes.emplace({});
+            break;
+
         default:
             break;
         }
@@ -321,7 +325,7 @@ auto dev::Hardware::GetRegs() const
         {"cc", m_cpu.GetCC() },
         {"pc", m_cpu.GetPC() },
         {"sp", m_cpu.GetSP() },
-        {"af", m_cpu.GetAF() },
+        {"af", m_cpu.GetPSW() },
         {"bc", m_cpu.GetBC() },
         {"de", m_cpu.GetDE() },
         {"hl", m_cpu.GetHL() },
