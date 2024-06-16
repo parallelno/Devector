@@ -72,7 +72,7 @@ void dev::Hardware::Execution()
                 ReqHandling();
 
                 auto CheckBreak = m_checkBreak.load();
-                if (CheckBreak && *CheckBreak && (*CheckBreak)(m_cpu.GetPC(), m_memory.m_mappingModeRam, m_memory.m_mappingPageRam))
+                if (CheckBreak && *CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.m_mappingModeRam, m_memory.m_mappingPageRam))
                 {
                     m_status = Status::STOP;
                 }

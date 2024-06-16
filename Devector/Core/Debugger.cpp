@@ -287,7 +287,7 @@ auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _
 //////////////////////////////////////////////////////////////
 
 // m_hardware thread
-bool dev::Debugger::CheckBreak(const Addr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam)
+bool dev::Debugger::CheckBreak(const CpuI8080::State& _state, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam)
 {
 	if (m_wpBreak)
 	{
@@ -296,7 +296,7 @@ bool dev::Debugger::CheckBreak(const Addr _addr, const uint8_t _mappingModeRam, 
 		return true;
 	}
 
-	auto break_ = CheckBreakpoints(_addr, _mappingModeRam, _mappingPageRam);
+	auto break_ = CheckBreakpoints(_state, _mappingModeRam, _mappingPageRam);
 
 	return break_;
 }
@@ -353,12 +353,13 @@ void dev::Debugger::DelBreakpoints()
 	m_breakpoints.clear();
 }
 
-bool dev::Debugger::CheckBreakpoints(const Addr _addr, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam)
+bool dev::Debugger::CheckBreakpoints(const CpuI8080::State& _state, 
+	const uint8_t _mappingModeRam, const uint8_t _mappingPageRam)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bpI = m_breakpoints.find(_addr);
+	auto bpI = m_breakpoints.find(_state.regs.pc);
 	if (bpI == m_breakpoints.end()) return false;
-	auto status = bpI->second.CheckStatus(_mappingModeRam, _mappingPageRam);
+	auto status = bpI->second.CheckStatus(_state, _mappingModeRam, _mappingPageRam);
 	if (bpI->second.autoDel) m_breakpoints.erase(bpI);
 	return status;
 }

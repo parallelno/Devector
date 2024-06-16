@@ -9,72 +9,7 @@ static constexpr uint64_t MACHINE_CC = 4;
 static constexpr uint8_t FIRST_MACHINE_CICLE_IDX = 0; 
 static constexpr uint16_t PSW_INIT = 0b00000010;
 static constexpr uint16_t PSW_NUL_FLAGS = !0b00101000;
-#pragma pack(push, 1)
-union RegPair {
-	struct {
-		uint8_t l;
-		uint8_t h;
-	};
-	uint16_t word;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-union AF {
-	struct {
-		bool c : 1; // carry flag
-		bool _1 : 1; // unused, always 1 in Vector06c
-		bool p : 1; // parity flag
-		bool _3 : 1; // unused, always 0 in Vector06c
-		bool ac : 1; // auxiliary carry (half-carry) flag
-		bool _5 : 1; // unused, always 0 in Vector06c
-		bool z : 1; // zero flag
-		bool s : 1; // sign flag
-		uint8_t a : 8;	// register A
-	};
-	RegPair af;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct Regs {
-	dev::Addr pc; // program counter
-	dev::Addr sp; // stack pointer
-	AF psw;	// accumulator & flags
-	RegPair bc; // register pair BC
-	RegPair de; // register pair DE
-	RegPair hl; // register pair HL
-	uint8_t ir; // internal register to fetch instructions
-	uint8_t tmp; // temporary register
-	uint8_t act; // temporary accumulator
-	uint8_t w; // temporary high address
-	uint8_t z; // temporary low address
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-union Int {
-	struct {
-		uint8_t mc : 4; // machine cycle index of the currently executed instruction
-		bool inte : 1; // set if an iterrupt enabled
-		bool iff : 1; // set by the 50 Hz interruption timer. it is ON until an iterruption call (RST7)
-		bool hlta : 1; // indicates that HLT instruction is executed
-		bool eiPending : 1; // if set, the interruption call is pending until the next instruction
-	};
-	uint8_t data;
-};
-#pragma pack(pop)
-
-// defines the machine state
-#pragma pack(push, 1)
-struct State {
-	uint64_t cc : 64; // clock cycles, debug related data
-	Regs regs;
-	Int ints;
-};
-#pragma pack(pop)
-
-State state;
 
 #define CC			state.cc
 #define PC			state.regs.pc
@@ -558,10 +493,12 @@ uint8_t dev::CpuI8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)
 
 ////////////////////////////////////////////////////////////////////////////
 //
-// Register helpers
+// Get the status
 //
 ////////////////////////////////////////////////////////////////////////////
 
+
+auto dev::CpuI8080::GetState() const -> const State& { return state; }
 uint16_t dev::CpuI8080::GetPSW() const { return PSW; }
 uint16_t dev::CpuI8080::GetBC() const { return BC; }
 uint16_t dev::CpuI8080::GetDE() const {	return DE; }
@@ -569,6 +506,14 @@ uint16_t dev::CpuI8080::GetHL() const {	return HL; }
 uint64_t dev::CpuI8080::GetCC() const { return CC; }
 uint16_t dev::CpuI8080::GetPC() const { return PC; }
 uint16_t dev::CpuI8080::GetSP() const { return SP; }
+uint8_t dev::CpuI8080::GetA() const { return A; }
+uint8_t dev::CpuI8080::GetF() const { return F; }
+uint8_t dev::CpuI8080::GetB() const { return B; }
+uint8_t dev::CpuI8080::GetC() const { return C; }
+uint8_t dev::CpuI8080::GetD() const { return D; }
+uint8_t dev::CpuI8080::GetE() const { return E; }
+uint8_t dev::CpuI8080::GetH() const { return H; }
+uint8_t dev::CpuI8080::GetL() const { return L; }
 bool dev::CpuI8080::GetFlagS() const {	return FS; }
 bool dev::CpuI8080::GetFlagZ() const { return FZ; }
 bool dev::CpuI8080::GetFlagAC() const { return FAC; }
@@ -577,7 +522,7 @@ bool dev::CpuI8080::GetFlagC() const {	return FC; }
 bool dev::CpuI8080::GetINTE() const { return INTE; }
 bool dev::CpuI8080::GetIFF() const { return IFF; }
 bool dev::CpuI8080::GetHLTA() const { return HLTA; }
-auto dev::CpuI8080::GetMachineCycle() const -> int { return MC; }
+auto dev::CpuI8080::GetMachineCycles() const -> uint8_t { return MC; }
 
 ////////////////////////////////////////////////////////////////////////////
 //

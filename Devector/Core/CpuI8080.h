@@ -97,13 +97,80 @@ namespace dev
 		uint8_t ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		void WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		uint8_t ReadByteMovePC(Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-
-		////////////////////////////////////////////////////////////////////////////
-		//
-		// Register helpers
-		//
-		////////////////////////////////////////////////////////////////////////////
 	public:
+		////////////////////////////////////////////////////////////////////////////
+		//
+		// Get the state
+		//
+		////////////////////////////////////////////////////////////////////////////
+#pragma pack(push, 1)
+		union RegPair {
+			struct {
+				uint8_t l;
+				uint8_t h;
+			};
+			uint16_t word;
+		};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+		union AF {
+			struct {
+				bool c : 1; // carry flag
+				bool _1 : 1; // unused, always 1 in Vector06c
+				bool p : 1; // parity flag
+				bool _3 : 1; // unused, always 0 in Vector06c
+				bool ac : 1; // auxiliary carry (half-carry) flag
+				bool _5 : 1; // unused, always 0 in Vector06c
+				bool z : 1; // zero flag
+				bool s : 1; // sign flag
+				uint8_t a : 8;	// register A
+			};
+			RegPair af;
+		};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+		struct Regs {
+			dev::Addr pc; // program counter
+			dev::Addr sp; // stack pointer
+			AF psw;	// accumulator & flags
+			RegPair bc; // register pair BC
+			RegPair de; // register pair DE
+			RegPair hl; // register pair HL
+			uint8_t ir; // internal register to fetch instructions
+			uint8_t tmp; // temporary register
+			uint8_t act; // temporary accumulator
+			uint8_t w; // temporary high address
+			uint8_t z; // temporary low address
+		};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+		union Int {
+			struct {
+				uint8_t mc : 4; // machine cycle index of the currently executed instruction
+				bool inte : 1; // set if an iterrupt enabled
+				bool iff : 1; // set by the 50 Hz interruption timer. it is ON until an iterruption call (RST7)
+				bool hlta : 1; // indicates that HLT instruction is executed
+				bool eiPending : 1; // if set, the interruption call is pending until the next instruction
+			};
+			uint8_t data;
+		};
+#pragma pack(pop)
+
+		// defines the machine state
+#pragma pack(push, 1)
+		struct State {
+			uint64_t cc : 64; // clock cycles, debug related data
+			Regs regs;
+			Int ints;
+		};
+#pragma pack(pop)
+
+		State state;
+
+		auto GetState() const -> const State&;
 		uint64_t GetCC() const;
 		uint16_t GetPC() const;
 		uint16_t GetSP() const;
@@ -111,6 +178,14 @@ namespace dev
 		uint16_t GetBC() const;
 		uint16_t GetDE() const;
 		uint16_t GetHL() const;
+		uint8_t GetA() const;
+		uint8_t GetF() const;
+		uint8_t GetB() const;
+		uint8_t GetC() const;
+		uint8_t GetD() const;
+		uint8_t GetE() const;
+		uint8_t GetH() const;
+		uint8_t GetL() const;
 		bool GetFlagS() const;
 		bool GetFlagZ() const;
 		bool GetFlagAC() const;
@@ -119,7 +194,7 @@ namespace dev
 		bool GetINTE() const;
 		bool GetIFF() const;
 		bool GetHLTA() const;
-		int GetMachineCycle() const;
+		uint8_t GetMachineCycles() const;
 
 	private:
 

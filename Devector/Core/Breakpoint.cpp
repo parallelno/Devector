@@ -29,6 +29,9 @@ void dev::Breakpoint::Update(const Addr _addr,
 	mappingPages = _mappingPages;
 	status = _status;
 	autoDel = _autoDel;
+	operand = _op;
+	cond = _cond;
+	value = _val;
 	comment = _comment;
 }
 
@@ -36,10 +39,81 @@ auto dev::Breakpoint::GetOperandS() const ->const char* { return bpOperandsS[sta
 auto dev::Breakpoint::GetConditionS() const ->const char* {	return bpCondsS[static_cast<uint8_t>(operand)]; }
 auto dev::Breakpoint::IsActiveS() const -> const char* { return status == Status::ACTIVE ? "X" : "-"; }
 
-bool dev::Breakpoint::CheckStatus(const uint8_t _mappingModeRam, const uint8_t _mappingPageRam) const
-{	
+bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _state,
+	const uint8_t _mappingModeRam,
+	const uint8_t _mappingPageRam) const
+{
 	auto mapping = _mappingModeRam == 0 ? 1 : 1 << (_mappingPageRam + 1);
-	return status == Status::ACTIVE && mapping & mappingPages;
+	bool active = status == Status::ACTIVE && mapping & mappingPages;
+	if (!active) return false;
+	if (cond == dev::Breakpoint::Condition::ANY) return true;
+	
+	uint64_t op;
+	switch (operand)
+	{
+	case dev::Breakpoint::Operand::A:
+		op = _state.regs.psw.a;
+		break;
+	case dev::Breakpoint::Operand::F:
+		op = _state.regs.psw.af.l;
+		break;
+	case dev::Breakpoint::Operand::B:
+		op = _state.regs.bc.h;
+		break;
+	case dev::Breakpoint::Operand::C:
+		op = _state.regs.bc.l;
+		break;
+	case dev::Breakpoint::Operand::D:
+		op = _state.regs.de.h;
+		break;
+	case dev::Breakpoint::Operand::E:
+		op = _state.regs.de.l;
+		break;
+	case dev::Breakpoint::Operand::H:
+		op = _state.regs.hl.h;
+		break;
+	case dev::Breakpoint::Operand::L:
+		op = _state.regs.hl.l;
+		break;
+	case dev::Breakpoint::Operand::PSW:
+		op = _state.regs.psw.af.word;
+		break;
+	case dev::Breakpoint::Operand::BC:
+		op = _state.regs.bc.word;
+		break;
+	case dev::Breakpoint::Operand::DE:
+		op = _state.regs.de.word;
+		break;
+	case dev::Breakpoint::Operand::HL:
+		op = _state.regs.hl.word;
+		break;
+	case dev::Breakpoint::Operand::CC:
+		op = _state.cc;
+		break;
+	case dev::Breakpoint::Operand::SP:
+		op = _state.regs.sp;
+		break;
+	default:
+		op = 0;
+		break;
+	}
+
+	switch (cond)
+	{
+	case dev::Breakpoint::Condition::EQU:
+		return op == value;
+	case dev::Breakpoint::Condition::LESS:
+		return op < value;
+	case dev::Breakpoint::Condition::GREATER:
+		return op > value;
+	case dev::Breakpoint::Condition::LESS_EQU:
+		return op <= value;
+	case dev::Breakpoint::Condition::GREATER_EQU:
+		return op >= value;
+	case dev::Breakpoint::Condition::NOT_EQU:
+		return op != value;
+	}
+	return false;
 }
 
 void dev::Breakpoint::Print() const
