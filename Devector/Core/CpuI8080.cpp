@@ -453,14 +453,17 @@ uint8_t dev::CpuI8080::ReadInstrMovePC()
 {
 	auto globalAddr = m_memory.GetGlobalAddr(PC, Memory::AddrSpace::RAM);
 
-	uint8_t op_code = m_memory.GetByte(PC, Memory::AddrSpace::RAM);
-	uint8_t _dataL = m_memory.GetByte(PC + 1, Memory::AddrSpace::RAM);
-	uint8_t _dataH = m_memory.GetByte(PC + 2, Memory::AddrSpace::RAM);
+	uint8_t opcode = m_memory.GetByte(PC, Memory::AddrSpace::RAM);
+	uint8_t dataL = m_memory.GetByte(PC + 1, Memory::AddrSpace::RAM);
+	uint8_t dataH = m_memory.GetByte(PC + 2, Memory::AddrSpace::RAM);
+	state.opcode = opcode;
+	state.data.l = dataL;
+	state.data.h = dataH;
 
 	auto DebugOnReadInstr = m_debugOnReadInstr.load();
-	if (DebugOnReadInstr && *DebugOnReadInstr) (*DebugOnReadInstr)(globalAddr, op_code, _dataH, _dataL, HL);
+	if (DebugOnReadInstr) (*DebugOnReadInstr)(globalAddr, state);
 	PC++;
-	return op_code;
+	return opcode;
 }
 
 uint8_t dev::CpuI8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
@@ -469,7 +472,7 @@ uint8_t dev::CpuI8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
 
 	auto val = m_memory.GetByte(_addr, _addrSpace);
 	auto DebugOnRead = m_debugOnRead.load();
-	if (DebugOnRead && *DebugOnRead) (*DebugOnRead)(globalAddr, val);
+	if (DebugOnRead) (*DebugOnRead)(globalAddr, val);
 
 	return val;
 }
@@ -480,7 +483,7 @@ void dev::CpuI8080::WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpac
 	
 	m_memory.SetByte(_addr, _value, _addrSpace);
 	auto DebugOnWrite = m_debugOnWrite.load();
-	if (DebugOnWrite && *DebugOnWrite) (*DebugOnWrite)(globalAddr, _value);
+	if (DebugOnWrite) (*DebugOnWrite)(globalAddr, _value);
 }
 
 uint8_t dev::CpuI8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)

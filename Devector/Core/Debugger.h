@@ -37,8 +37,7 @@ namespace dev
 		void Reset();
 
 		void ReadInstr(
-			const GlobalAddr _globalAddr, const uint8_t _val, 
-			const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
+			const GlobalAddr _globalAddr, const CpuI8080::State& _state);
 		void Read(const GlobalAddr _globalAddr, const uint8_t _val);
 		void Write(const GlobalAddr _globalAddr, const uint8_t _val);
 
@@ -75,8 +74,7 @@ namespace dev
 		void UpdateDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset);
 
 	private:
-		void TraceLogUpdate(const GlobalAddr _globalAddr, const uint8_t _opcode, 
-			const uint8_t _dataH, const uint8_t _dataL, const Addr _hl);
+		void TraceLogUpdate(const GlobalAddr _globalAddr, const CpuI8080::State& _state);
 		auto TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const ->int;
 		auto TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const ->int;
 

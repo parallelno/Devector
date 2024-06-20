@@ -23,80 +23,6 @@ namespace dev
 {
 	class CpuI8080
 	{
-		/*
-		// Registers
-		uint64_t m_cc; // clock cycles. it's the debug related data
-		Addr m_pc, m_sp; // program counter, stack pointer
-		uint8_t m_a, m_b, m_c, m_d, m_e, m_h, m_l; // registers
-		uint8_t m_instructionReg; // an internal register that stores the fetched instruction
-
-		// Arithmetic and Logic Unit (ALU)
-		uint8_t m_tmp;    // an 8-bit temporary register
-		uint8_t m_act;    // an 8-bit temporary accumulator
-		uint8_t m_W;      // an 8-bit temporary hi addr
-		uint8_t m_Z;      // an 8-bit temporary low addr
-		bool m_flagS; // sign
-		bool m_flagZ; // zero
-		bool m_flagAC;// auxiliary carry (half-carry)
-		bool m_flagP; // parity
-		bool m_flagC; // carry
-		bool m_flagUnused1; // unused, always 1 in Vector06c
-		bool m_flagUnused3; // unused, always 0 in Vector06c
-		bool m_flagUnused5; // unused, always 0 in Vector06c
-
-		uint8_t m_machineCycle; // a machine cycle index of the currently executed instruction
-
-		// Interruption
-		bool m_inte; // set if an iterrupt enabled
-		bool m_iff; // set by the 50 Hz interruption timer. it is ON until an iterruption call (RST7)
-		bool m_hlta; // indicates that HLT instruction is executed
-		bool m_eiPending; // if set, the interruption call is pending until the next instruction
-		*/
-
-	public:
-		// memory + io interface
-		using InputFunc = std::function <uint8_t (const uint8_t _port)>;
-		using OutputFunc = std::function <void (const uint8_t _port, const uint8_t _value)>;
-		using DebugOnReadInstrFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl)>;
-		using DebugOnReadFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
-		using DebugOnWriteFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
-	
-		CpuI8080() = delete;
-		CpuI8080(
-			Memory& _memory,
-			InputFunc _input,
-			OutputFunc _output);
-
-		void Init();
-		void Reset();
-		void ExecuteMachineCycle(bool _irq);
-		bool IsInstructionExecuted() const;
-
-		void AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP);
-		void AttachDebugOnRead(DebugOnReadFunc* _funcP);
-		void AttachDebugOnWrite(DebugOnWriteFunc* _funcP);
-
-	private:
-		std::atomic <DebugOnReadInstrFunc*> m_debugOnReadInstr = nullptr;
-		std::atomic <DebugOnReadFunc*> m_debugOnRead = nullptr;
-		std::atomic <DebugOnWriteFunc*> m_debugOnWrite = nullptr;
-
-		Memory& m_memory;
-		InputFunc Input;
-		OutputFunc Output;
-
-		void Decode();
-
-		////////////////////////////////////////////////////////////////////////////
-		//
-		// i8080 Intructions
-		//
-		////////////////////////////////////////////////////////////////////////////
-
-		uint8_t ReadInstrMovePC();
-		uint8_t ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		void WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		uint8_t ReadByteMovePC(Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 	public:
 		////////////////////////////////////////////////////////////////////////////
 		//
@@ -165,6 +91,8 @@ namespace dev
 			uint64_t cc : 64; // clock cycles, debug related data
 			Regs regs;
 			Int ints;
+			uint8_t opcode;
+			RegPair data;
 		};
 #pragma pack(pop)
 
@@ -196,7 +124,49 @@ namespace dev
 		bool GetHLTA() const;
 		uint8_t GetMachineCycles() const;
 
+		// memory + io interface
+		using InputFunc = std::function <uint8_t(const uint8_t _port)>;
+		using OutputFunc = std::function <void(const uint8_t _port, const uint8_t _value)>;
+		using DebugOnReadInstrFunc = std::function<void(const GlobalAddr _globalAddr, const State& _state)>;
+		using DebugOnReadFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
+		using DebugOnWriteFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
+
+		CpuI8080() = delete;
+		CpuI8080(
+			Memory& _memory,
+			InputFunc _input,
+			OutputFunc _output);
+
+		void Init();
+		void Reset();
+		void ExecuteMachineCycle(bool _irq);
+		bool IsInstructionExecuted() const;
+
+		void AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP);
+		void AttachDebugOnRead(DebugOnReadFunc* _funcP);
+		void AttachDebugOnWrite(DebugOnWriteFunc* _funcP);
+
 	private:
+		std::atomic <DebugOnReadInstrFunc*> m_debugOnReadInstr = nullptr;
+		std::atomic <DebugOnReadFunc*> m_debugOnRead = nullptr;
+		std::atomic <DebugOnWriteFunc*> m_debugOnWrite = nullptr;
+
+		Memory& m_memory;
+		InputFunc Input;
+		OutputFunc Output;
+
+		void Decode();
+
+		////////////////////////////////////////////////////////////////////////////
+		//
+		// i8080 Intructions
+		//
+		////////////////////////////////////////////////////////////////////////////
+
+		uint8_t ReadInstrMovePC();
+		uint8_t ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		void WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		uint8_t ReadByteMovePC(Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 
 		////////////////////////////////////////////////////////////////////////////
 		//

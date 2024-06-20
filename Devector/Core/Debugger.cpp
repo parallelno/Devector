@@ -23,7 +23,7 @@ dev::Debugger::Debugger(Hardware& _hardware)
 void dev::Debugger::Init()
 {
 	m_checkBreakFunc = std::bind(&Debugger::CheckBreak, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-	m_debugOnReadInstrFunc = std::bind(&Debugger::ReadInstr, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
+	m_debugOnReadInstrFunc = std::bind(&Debugger::ReadInstr, this, std::placeholders::_1, std::placeholders::_2);
 	m_debugOnReadFunc = std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2);
 	m_debugOnWriteFunc = std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2);
 
@@ -68,10 +68,9 @@ void dev::Debugger::Reset()
 
 // a hardware thread
 void dev::Debugger::ReadInstr(
-	const GlobalAddr _globalAddr, const uint8_t _val, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl)
+	const GlobalAddr _globalAddr, const  CpuI8080::State& _state)
 {
 	disasm.MemRunsUpdate(_globalAddr);
-	TraceLogUpdate(_globalAddr, _val, _dataH, _dataL, _hl);
 }
 
 // a hardware thread
@@ -156,8 +155,7 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 //////////////////////////////////////////////////////////////
 
 // a hardware thread
-void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, 
-	const uint8_t _opcode, const uint8_t _dataH, const uint8_t _dataL, const Addr _hl)
+void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, const CpuI8080::State& _state)
 {
 	// skip repeataive HLT
 	/*if (_opcode == OPCODE_HLT && m_traceLog[m_traceLogIdx].m_opcode == OPCODE_HLT) {

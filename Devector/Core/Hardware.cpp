@@ -67,15 +67,22 @@ void dev::Hardware::Execution()
             
             // rasterizes a frame
             do {
+                auto CheckBreak = m_checkBreak.load();
+                if (CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.m_mappingModeRam, m_memory.m_mappingPageRam))
+                {
+                    m_status = Status::STOP;
+                    break;
+                }
+                //auto TraceLogUpdate = m_traceLogUpdate.load();
+                //if (TraceLogUpdate && *TraceLogUpdateate)
+                {
+                    //(*TraceLogUpdate)(_state);
+                }
                 ExecuteInstruction();
 
                 ReqHandling();
 
-                auto CheckBreak = m_checkBreak.load();
-                if (CheckBreak && *CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.m_mappingModeRam, m_memory.m_mappingPageRam))
-                {
-                    m_status = Status::STOP;
-                }
+                
 
             } while (m_status == Status::RUN && m_display.GetFrameNum() == frameNum);
 
