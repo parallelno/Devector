@@ -91,9 +91,14 @@ namespace dev
 		std::unique_ptr <dev::HexViewerWindow>m_hexViewerWindowP;
 		std::unique_ptr <dev::TraceLogWindow>m_traceLogWindowP;
 
-		bool m_hardwareStatsWindowShow = true;
-		bool m_disasmWindowShow = true;
-		bool m_memoryMapWindowShow = true;
+		bool m_displayWindowVisible = false;
+		bool m_disasmWindowVisible = false;
+		bool m_hardwareStatsWindowVisible = false;
+		bool m_breakpointsWindowVisisble = false;
+		bool m_watchpointsWindowVisible = false;
+		bool m_memDisplayWindowVisible = false;
+		bool m_hexViewerWindowVisible = false;
+		bool m_traceLogWindowVisible = false;
 
 		// path, driveIdx, autoBoot
 		std::list<std::tuple<std::wstring, int, bool>> m_recentFilePaths;
@@ -109,6 +114,7 @@ namespace dev
 
 	public:
 		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ);
+		~DevectorApp();
 
 		virtual void Update();
 

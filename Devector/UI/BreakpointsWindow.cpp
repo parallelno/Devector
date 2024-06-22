@@ -8,21 +8,20 @@
 dev::BreakpointsWindow::BreakpointsWindow(Debugger& _debugger,
 	const float* const _fontSizeP, const float* const _dpiScaleP, ReqDisasm& _reqDisasm)
 	:
-	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_debugger(_debugger),
 	m_reqDisasm(_reqDisasm)
 {}
 
-void dev::BreakpointsWindow::Update()
+void dev::BreakpointsWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
 
-	static bool open = true;
-	ImGui::Begin("Breakpoints", &open, ImGuiWindowFlags_NoCollapse);
-
-	DrawTable();
-
-	ImGui::End();
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible)) 
+	{
+		DrawTable();
+		ImGui::End();
+	}
 }
 
 void dev::BreakpointsWindow::DrawProperty(const std::string& _name, const ImVec2& _aligment)

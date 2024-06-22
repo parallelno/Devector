@@ -19,7 +19,6 @@ namespace dev
 		static constexpr int RENDER_TARGET_W = Display::ACTIVE_AREA_W + Display::BORDER_VISIBLE * 2 * 2;
 		static constexpr int RENDER_TARGET_H = Display::ACTIVE_AREA_H + Display::BORDER_VISIBLE * 2;
 		static constexpr float SCANLINE_HIGHLIGHT_MUL = 0.3f;
-		const std::string m_name = "Display";
 
 		GLuint1 m_frameTextureId = 0;
 		Hardware& m_hardware;
@@ -47,7 +46,7 @@ namespace dev
 
 	public:
 		DisplayWindow(Hardware& _hardware, const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils);
-		void Update();
+		void Update(bool& _visible);
 		bool IsHovered() const;
 	};
 

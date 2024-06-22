@@ -62,7 +62,7 @@ namespace dev
 	public:
 		MemDisplayWindow(Hardware& _hardware, Debugger& _debugger, 
 			const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils, ReqHexViewer& _reqHexViewer);
-		void Update();
+		void Update(bool& _visible);
 	};
 
 };

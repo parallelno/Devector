@@ -37,6 +37,6 @@ namespace dev
 	public:
 		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, 
 				const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer);
-		void Update();
+		void Update(bool& _visible);
 	};
 };

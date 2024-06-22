@@ -21,7 +21,6 @@ namespace dev
 		static constexpr ImU32 DASM_BG_CLR_ADDR = dev::IM_U32(0x353636FF);
 		static constexpr ImVec4 DASM_CLR_LABEL_MINOR = dev::IM_VEC4(0x909090FF);
 		static constexpr ImVec4 DASM_CLR_MNEMONIC = dev::IM_VEC4(0x578DDFFF);
-		const std::string m_name = "TraceLog";
 
 		struct ContextMenu {
 			enum class Status { NONE = 0, INIT };
@@ -59,6 +58,6 @@ namespace dev
 	public:
 		TraceLogWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, 
 				const float* const _dpiScaleP, ReqDisasm& _reqDisasm);
-		void Update();
+		void Update(bool& _visible);
 	};
 };

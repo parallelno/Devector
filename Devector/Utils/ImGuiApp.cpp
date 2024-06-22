@@ -132,6 +132,8 @@ dev::ImGuiApp::ImGuiApp(
 
 dev::ImGuiApp::~ImGuiApp()
 {
+    SettingsSave(m_stringPath);
+
     m_autoUpdateThread.join();
 
     // Cleanup

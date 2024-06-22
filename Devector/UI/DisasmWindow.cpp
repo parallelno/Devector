@@ -9,7 +9,7 @@ dev::DisasmWindow::DisasmWindow(
 		const float* const _fontSize, const float* const _dpiScale, 
 		ReqDisasm& _reqDisasm, bool& _reset, bool& _reload)
 	:
-	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
+	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
 	m_hardware(_hardware),
 	m_debugger(_debugger),
 	m_fontCommentP(fontComment),
@@ -20,24 +20,25 @@ dev::DisasmWindow::DisasmWindow(
 	UpdateData(false);
 }
 
-void dev::DisasmWindow::Update()
+void dev::DisasmWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
 
-	static bool open = true;
-	ImGui::Begin("Disasm", &open, ImGuiWindowFlags_NoCollapse);
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible))
+	{
+		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 
-	bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-
-	DrawDebugControls(isRunning);
-	DrawSearch(isRunning);
+		DrawDebugControls(isRunning);
+		DrawSearch(isRunning);
 
 
-	isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the bpStatus in DrawDebugControls
-	UpdateData(isRunning);
-	DrawDisasm(isRunning);
+		isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the bpStatus in DrawDebugControls
+		UpdateData(isRunning);
+		DrawDisasm(isRunning);
 
-	ImGui::End();
+		ImGui::End();
+	}
+
 }
 
 void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)

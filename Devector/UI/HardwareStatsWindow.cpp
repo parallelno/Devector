@@ -7,26 +7,25 @@ dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 		const float* const _fontSizeP, const float* const _dpiScaleP, 
 		bool& _reset, const bool _restartOnLoadFdd)
 	:
-	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Hardware Stats", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware),
 	m_reqHardwareStatsReset(_reset), m_restartOnLoadFdd(_restartOnLoadFdd)
 {
 	UpdateData(false);
 }
 
-void dev::HardwareStatsWindow::Update()
+void dev::HardwareStatsWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
 
-	static bool open = true;
-	ImGui::Begin("Hardware Stats", &open, ImGuiWindowFlags_NoCollapse);
-	
-	bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-	UpdateData(isRunning);
-	UpdateDataRuntime();
-	DrawStats(isRunning);
-
-	ImGui::End();
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible))
+	{
+		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+		UpdateData(isRunning);
+		UpdateDataRuntime();
+		DrawStats(isRunning);
+		ImGui::End();
+	}
 }
 
 void dev::HardwareStatsWindow::DrawRegs() const

@@ -21,6 +21,18 @@ dev::DevectorApp::DevectorApp(
 	WindowsInit();
 }
 
+dev::DevectorApp::~DevectorApp()
+{
+	 SettingsUpdate("breakpointsWindowVisisble", m_breakpointsWindowVisisble);
+	 SettingsUpdate("hardwareStatsWindowVisible", m_hardwareStatsWindowVisible);
+	 SettingsUpdate("disasmWindowVisible", m_disasmWindowVisible);
+	 SettingsUpdate("watchpointsWindowVisible", m_watchpointsWindowVisible);
+	 SettingsUpdate("displayWindowVisible", m_displayWindowVisible);
+	 SettingsUpdate("memDisplayWindowVisible", m_memDisplayWindowVisible);
+	 SettingsUpdate("hexViewerWindowVisible", m_hexViewerWindowVisible);
+	 SettingsUpdate("traceLogWindowVisible", m_traceLogWindowVisible);
+}
+
 void dev::DevectorApp::WindowsInit()
 {
 	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", "boot//boots.bin"));
@@ -48,6 +60,15 @@ void dev::DevectorApp::SettingsInit()
 	Request(REQ::LOAD_FONT);
 	AppStyleInit();
 	RecentFilesInit();
+
+	m_breakpointsWindowVisisble = GetSettingsBool("breakpointsWindowVisisble", false);
+	m_hardwareStatsWindowVisible = GetSettingsBool("hardwareStatsWindowVisible", false);
+	m_disasmWindowVisible = GetSettingsBool("disasmWindowVisible", false);
+	m_watchpointsWindowVisible = GetSettingsBool("watchpointsWindowVisible", false);
+	m_displayWindowVisible = GetSettingsBool("displayWindowVisible", false);
+	m_memDisplayWindowVisible = GetSettingsBool("memDisplayWindowVisible", false);
+	m_hexViewerWindowVisible = GetSettingsBool("hexViewerWindowVisible", false);
+	m_traceLogWindowVisible = GetSettingsBool("traceLogWindowVisible", false);
 }
 
 // Function to open a file dialog
@@ -80,14 +101,14 @@ void dev::DevectorApp::Update()
 	MainMenuUpdate();
 	ResLoadingStatusHandling();
 
-	m_hardwareStatsWindowP->Update();
-	m_disasmWindowP->Update();
-	m_displayWindowP->Update();
-	m_breakpointsWindowP->Update();
-	m_watchpointsWindowP->Update();
-	m_memDisplayWindowP->Update();
-	m_hexViewerWindowP->Update();
-	m_traceLogWindowP->Update();
+	m_hardwareStatsWindowP->Update(m_hardwareStatsWindowVisible);
+	m_disasmWindowP->Update(m_disasmWindowVisible);
+	m_displayWindowP->Update(m_displayWindowVisible);
+	m_breakpointsWindowP->Update(m_breakpointsWindowVisisble);
+	m_watchpointsWindowP->Update(m_watchpointsWindowVisible);
+	m_memDisplayWindowP->Update(m_memDisplayWindowVisible);
+	m_hexViewerWindowP->Update(m_hexViewerWindowVisible);
+	m_traceLogWindowP->Update(m_traceLogWindowVisible);
 
 	if (m_status == AppStatus::CHECK_MOUNTED_FDDS)
 	{
@@ -197,8 +218,14 @@ void dev::DevectorApp::MainMenuUpdate()
 		}
 		if (ImGui::BeginMenu("Tools"))
 		{
-			ImGui::MenuItem("Debugger", NULL, &m_hardwareStatsWindowShow);
-			ImGui::MenuItem("Memory Map", NULL, &m_memoryMapWindowShow);
+			ImGui::MenuItem(m_displayWindowP->m_name.c_str(), NULL, &m_displayWindowVisible);
+			ImGui::MenuItem(m_hardwareStatsWindowP->m_name.c_str(), NULL, &m_hardwareStatsWindowVisible);
+			ImGui::MenuItem(m_disasmWindowP->m_name.c_str(), NULL, &m_disasmWindowVisible);
+			ImGui::MenuItem(m_breakpointsWindowP->m_name.c_str(), NULL, &m_breakpointsWindowVisisble);
+			ImGui::MenuItem(m_watchpointsWindowP->m_name.c_str(), NULL, &m_watchpointsWindowVisible);
+			ImGui::MenuItem(m_memDisplayWindowP->m_name.c_str(), NULL, &m_memDisplayWindowVisible);
+			ImGui::MenuItem(m_hexViewerWindowP->m_name.c_str(), NULL, &m_hexViewerWindowVisible);
+			ImGui::MenuItem(m_traceLogWindowP->m_name.c_str(), NULL, &m_traceLogWindowVisible);
 			ImGui::EndMenu();
 		}
 

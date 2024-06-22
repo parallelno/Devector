@@ -88,7 +88,7 @@ const char* fragShaderS = R"#(
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
 	:
-	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware), m_isHovered(false), m_glUtils(_glUtils)
 {
 	m_isGLInited = Init();
@@ -116,31 +116,31 @@ bool dev::DisplayWindow::Init()
 	return true;
 }
 
-void dev::DisplayWindow::Update()
+void dev::DisplayWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
 
-	static bool open = true;
-	ImGui::Begin(m_name.c_str(), &open, ImGuiWindowFlags_NoCollapse);
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible))
+	{
+		static int dev_IRQ_COMMIT_PXL = 72;
 
-	static int dev_IRQ_COMMIT_PXL = 72;
+		//ImGui::SliderInt("OUT_COMMIT_TIME", &(dev::OUT_COMMIT_TIME), 0, 512);
+		//ImGui::SliderInt("PALETTE_COMMIT_TIME", &(dev::PALETTE_COMMIT_TIME), 0, 512);
+		//ImGui::SliderInt("IRQ_COMMIT_PXL", &dev_IRQ_COMMIT_PXL, 0, 512);
+		//ImGui::SliderInt("BORDER_LEFT", &(Display::BORDER_LEFT), 0, 512);
 
-	//ImGui::SliderInt("OUT_COMMIT_TIME", &(dev::OUT_COMMIT_TIME), 0, 512);
-	//ImGui::SliderInt("PALETTE_COMMIT_TIME", &(dev::PALETTE_COMMIT_TIME), 0, 512);
-	//ImGui::SliderInt("IRQ_COMMIT_PXL", &dev_IRQ_COMMIT_PXL, 0, 512);
-	//ImGui::SliderInt("BORDER_LEFT", &(Display::BORDER_LEFT), 0, 512);
+		//TODO: why dev::IRQ_COMMIT_PXL is not changing???
+		dev::IRQ_COMMIT_PXL = dev_IRQ_COMMIT_PXL;
 
-	//TODO: why dev::IRQ_COMMIT_PXL is not changing???
-	dev::IRQ_COMMIT_PXL = dev_IRQ_COMMIT_PXL;
+		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+		UpdateData(isRunning);
 
-	bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-	UpdateData(isRunning);
+		DrawDisplay();
 
-	DrawDisplay();
+		m_isHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_None);
 
-	m_isHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_None);
-
-	ImGui::End();
+		ImGui::End();
+	}
 }
 
 bool dev::DisplayWindow::IsHovered() const

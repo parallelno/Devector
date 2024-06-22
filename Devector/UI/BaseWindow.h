@@ -1,10 +1,11 @@
+#include <string>
+
 #pragma once
 
 namespace dev
 {
 	class BaseWindow
 	{
-		bool m_visible = true;
 		int m_defaultW;
 		int m_defaultH;
 
@@ -13,15 +14,17 @@ namespace dev
 		const float* const m_dpiScaleP = nullptr;
 
 	public:
-		BaseWindow(const int _defaultW, const int _defaultH, const float* const _fontSizeP, const  float* const _dpiScaleP)
+		const std::string m_name;
+
+		BaseWindow(const std::string& _name, 
+			const int _defaultW, const int _defaultH, 
+			const float* const _fontSizeP, const  float* const _dpiScaleP)
 			:
-			m_defaultW(_defaultW), m_defaultH(_defaultH), m_fontSizeP(_fontSizeP), m_dpiScaleP(_dpiScaleP)
+			m_name(_name), m_defaultW(_defaultW), m_defaultH(_defaultH), 
+			m_fontSizeP(_fontSizeP), m_dpiScaleP(_dpiScaleP)
 		{};
 
 		void Update();
-		void Close();
-		void Open();
-		void SetVisibility(const bool _visible);
 		void SetWindowDefaultPosSize();
 	};
 }

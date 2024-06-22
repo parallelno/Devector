@@ -81,7 +81,7 @@ namespace dev
 			const float* const _fontSizeP, const float* const _dpiScaleP, 
 			bool& _reset, const bool _restartOnLoadFdd);
 		
-		void Update();
+		void Update(bool& _visible);
 
 	};
 

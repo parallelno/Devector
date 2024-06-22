@@ -26,9 +26,7 @@ namespace dev
 	public:
 		BreakpointsWindow(Debugger& m_debugger,
 			const float* const _fontSizeP, const float* const _dpiScaleP, ReqDisasm& _reqDisasm);
-
-		void Update();
-
+		void Update(bool& _visible);
 		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });
 	};
 

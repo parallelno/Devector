@@ -27,9 +27,7 @@ namespace dev
 	public:
 		WatchpointsWindow(Debugger& _debugger,
 			const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer);
-
-		void Update();
-
+		void Update(bool& _visible);
 		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });
 	};
 

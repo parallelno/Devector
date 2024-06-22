@@ -6,21 +6,20 @@
 dev::WatchpointsWindow::WatchpointsWindow(Debugger& _debugger,
 	const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer)
 	:
-	BaseWindow(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Watchpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_debugger(_debugger),
 	m_reqHexViewer(_reqHexViewer)
 {}
 
-void dev::WatchpointsWindow::Update()
+void dev::WatchpointsWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
 
-	static bool open = true;
-	ImGui::Begin("Watchpoints", &open, ImGuiWindowFlags_NoCollapse);
-
-	DrawTable();
-
-	ImGui::End();
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible))
+	{
+		DrawTable();
+		ImGui::End();
+	}
 }
 
 void dev::WatchpointsWindow::DrawProperty(const std::string& _name, const ImVec2& _aligment)
