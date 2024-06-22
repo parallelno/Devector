@@ -12,20 +12,29 @@ static constexpr uint16_t PSW_NUL_FLAGS = !0b00101000;
 
 
 #define CC			state.cc
-#define PC			state.regs.pc
-#define SP			state.regs.sp
+#define PC			state.regs.pc.word
+#define PCH         state.regs.pc.h
+#define PCL         state.regs.pc.l
+#define SP			state.regs.sp.word
+#define SPP         state.regs.sp
+#define SPH         state.regs.sp.h
+#define SPL         state.regs.sp.l
 #define IR			state.regs.ir
 #define TMP			state.regs.tmp
 #define ACT			state.regs.act
-#define W			state.regs.w
-#define Z			state.regs.z
+#define W			state.regs.wz.h
+#define Z			state.regs.wz.l
+#define WZ          state.regs.wz.word
 
 #define A			state.regs.psw.af.h
 #define F			state.regs.psw.af.l
 #define PSW			state.regs.psw.af.word
 #define BC			state.regs.bc.word
+#define BCP         state.regs.bc
 #define DE			state.regs.de.word
+#define DEP         state.regs.de
 #define HL			state.regs.hl.word
+#define HLP         state.regs.hl
 #define B			state.regs.bc.h
 #define C			state.regs.bc.l
 #define D			state.regs.de.h
@@ -69,7 +78,7 @@ void dev::CpuI8080::Init()
 
 void dev::CpuI8080::Reset()
 {
-	CC = PC = SP = IR = TMP = ACT = W = Z = INTS = 0;
+	CC = PC = SP = WZ = INTS = IR = ACT = TMP = 0;
 	F = PSW_INIT;
 }
 
@@ -225,7 +234,7 @@ void dev::CpuI8080::Decode()
 		case 0x01: LXI(B, C); break; // LXI B,word
 		case 0x11: LXI(D, E); break; // LXI D,word
 		case 0x21: LXI(H, L); break; // LXI H,word
-		case 0x31: LXISP(); break; // LXI SP,word
+		case 0x31: LXI(SPH, SPL); break; // LXI SP,word
 		case 0x2A: LHLD(); break; // LHLD
 		case 0x22: SHLD(); break; // SHLD
 		case 0xF9: SPHL(); break; // SPHL
@@ -282,10 +291,10 @@ void dev::CpuI8080::Decode()
 		case 0x9E: SUBMem(FC); break; // SBB M
 		case 0xDE: SBI(FC); break; // SBI uint8_t
 
-		case 0x09: DAD(BC); break; // DAD B
-		case 0x19: DAD(DE); break; // DAD D
-		case 0x29: DAD(HL); break; // DAD H
-		case 0x39: DAD(SP); break; // DAD SP
+		case 0x09: DAD(BCP); break; // DAD B
+		case 0x19: DAD(DEP); break; // DAD D
+		case 0x29: DAD(HLP); break; // DAD H
+		case 0x39: DAD(SPP); break; // DAD SP
 
 		case 0x3C: INR(A); break; // INR A
 		case 0x04: INR(B); break; // INR B
@@ -305,15 +314,15 @@ void dev::CpuI8080::Decode()
 		case 0x2D: DCR(L); break; // DCR L
 		case 0x35: DCRMem(); break; // DCR M
 
-		case 0x03: INX(B, C); break; // INX B
-		case 0x13: INX(D, E); break; // INX D
-		case 0x23: INX(H, L); break; // INX H
-		case 0x33: INXSP(); break; // INX SP
+		case 0x03: INX(BC); break; // INX B
+		case 0x13: INX(DE); break; // INX D
+		case 0x23: INX(HL); break; // INX H
+		case 0x33: INX(SP); break; // INX SP
 
-		case 0x0B: DCX(B, C); break; // DCX B
-		case 0x1B: DCX(D, E); break; // DCX D
-		case 0x2B: DCX(H, L); break; // DCX H
-		case 0x3B: DCXSP(); break; // DCX SP
+		case 0x0B: DCX(BC); break; // DCX B
+		case 0x1B: DCX(DE); break; // DCX D
+		case 0x2B: DCX(HL); break; // DCX H
+		case 0x3B: DCX(SP); break; // DCX SP
 
 		case 0x27: DAA(); break; // DAA
 		case 0x2F: A = ~A; break; // CMA
@@ -477,11 +486,12 @@ uint8_t dev::CpuI8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
 	return val;
 }
 
-void dev::CpuI8080::WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _addrSpace)
+void dev::CpuI8080::WriteByte(const Addr _addr, uint8_t _value, 
+	Memory::AddrSpace _addrSpace, const uint8_t _byteNum)
 {
 	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
 	
-	m_memory.SetByte(_addr, _value, _addrSpace);
+	m_memory.SetByte(_addr, _value, _addrSpace, _byteNum);
 	auto DebugOnWrite = m_debugOnWrite.load();
 	if (DebugOnWrite) (*DebugOnWrite)(globalAddr, _value);
 }
@@ -568,14 +578,14 @@ bool dev::CpuI8080::GetCarry(int _bit_no, uint8_t _a, uint8_t _b, bool _cy)
 void dev::CpuI8080::SetZSP(uint8_t _val)
 {
 	FZ = _val == 0;
-	FS = (_val >> 7) == 1;
+	FS = _val & 0b10000000;
 	FP = GetParity(_val);
 }
 
 // rotate register A left
 void dev::CpuI8080::RLC()
 {
-	FC = A >> 7 == 1;
+	FC = A & 0x80;
 	A = (uint8_t)(A << 1);
 	A += (uint8_t)(FC ? 1 : 0);
 }
@@ -592,7 +602,7 @@ void dev::CpuI8080::RRC()
 void dev::CpuI8080::RAL()
 {
 	bool cy = FC;
-	FC = A >> 7 == 1;
+	FC = A & 0x80;
 	A = (uint8_t)(A << 1);
 	A |= (uint8_t)(cy ? 1 : 0);
 }
@@ -636,7 +646,7 @@ void dev::CpuI8080::MOVMemReg(uint8_t _sss)
 		TMP = _sss;
 		return;
 	case 1:
-		WriteByte(HL, TMP);
+		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 1);
 		return;
 	}
 }
@@ -661,7 +671,7 @@ void dev::CpuI8080::MVIMemData()
 		TMP = ReadByteMovePC();
 		return;
 	case 2:
-		WriteByte(HL, TMP);
+		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 1);
 		return;
 	}
 }
@@ -678,7 +688,7 @@ void dev::CpuI8080::LDA()
 		W = ReadByteMovePC();
 		return;
 	case 3:
-		A = ReadByte(W << 8 | Z);
+		A = ReadByte(WZ);
 		return;
 	}
 }
@@ -695,7 +705,7 @@ void dev::CpuI8080::STA()
 		W = ReadByteMovePC();
 		return;
 	case 3:
-		WriteByte(W << 8 | Z, A);
+		WriteByte(WZ, A, Memory::AddrSpace::RAM, 1);
 		return;
 	}
 }
@@ -706,7 +716,7 @@ void dev::CpuI8080::STAX(Addr _addr)
 	case 0:
 		return;
 	case 1:
-		WriteByte(_addr, A);
+		WriteByte(_addr, A, Memory::AddrSpace::RAM, 1);
 		return;
 	}
 }
@@ -725,24 +735,6 @@ void dev::CpuI8080::LXI(uint8_t& _regH, uint8_t& _regL)
 	}
 }
 
-void dev::CpuI8080::LXISP()
-{
-	switch (MC) {
-	case 0:
-		return;
-	case 1:{
-			auto _lb = ReadByteMovePC();
-			SP = SP & 0xff00 | _lb;
-			return;
-		}
-	case 2: {
-			auto _hb = ReadByteMovePC();
-			SP = _hb << 8 | SP & 0xff;
-			return;
-		}
-	}
-}
-
 void dev::CpuI8080::LHLD()
 {
 	switch (MC) {
@@ -755,12 +747,11 @@ void dev::CpuI8080::LHLD()
 		W = ReadByteMovePC();
 		return;
 	case 3:
-		L = ReadByte(W << 8 | Z);
-		Z++;
-		W += Z == 0 ? 1 : 0;
+		L = ReadByte(WZ);
+		WZ++;
 		return;
 	case 4:
-		H = ReadByte(W << 8 | Z);
+		H = ReadByte(WZ);
 		return;
 	}
 }
@@ -777,12 +768,11 @@ void dev::CpuI8080::SHLD()
 		W = ReadByteMovePC();
 		return;
 	case 3:
-		WriteByte(W << 8 | Z, L);
-		Z++;
-		W += Z == 0 ? 1 : 0;
+		WriteByte(WZ, L, Memory::AddrSpace::RAM, 1);
+		WZ++;
 		return;
 	case 4:
-		WriteByte(W << 8 | Z, H);
+		WriteByte(WZ, H, Memory::AddrSpace::RAM, 2);
 		return;
 	}
 }
@@ -821,14 +811,13 @@ void dev::CpuI8080::XTHL()
 		W = ReadByte(SP + 1u, Memory::AddrSpace::STACK);
 		return;
 	case 3:
-		WriteByte(SP, L, Memory::AddrSpace::STACK);
+		WriteByte(SP, L, Memory::AddrSpace::STACK, 1);
 		return;
 	case 4:
-		WriteByte(SP + 1u, H, Memory::AddrSpace::STACK);
+		WriteByte(SP + 1u, H, Memory::AddrSpace::STACK, 2);
 		return;
 	case 5:
-		H = W;
-		L = Z;
+		HL = WZ;
 		return;
 	}
 }
@@ -840,13 +829,13 @@ void dev::CpuI8080::PUSH(uint8_t _hb, uint8_t _lb)
 		SP--;
 		return;
 	case 1:
-		WriteByte(SP, _hb, Memory::AddrSpace::STACK);
+		WriteByte(SP, _hb, Memory::AddrSpace::STACK, 1);
 		return;
 	case 2:
 		SP--;
 		return;
 	case 3:
-		WriteByte(SP, _lb, Memory::AddrSpace::STACK);
+		WriteByte(SP, _lb, Memory::AddrSpace::STACK, 2);
 		return;
 	}
 }
@@ -937,24 +926,24 @@ void dev::CpuI8080::SBI(bool _cy)
 	}
 }
 
-void dev::CpuI8080::DAD(uint16_t _val)
+void dev::CpuI8080::DAD(RegPair _regPair)
 {
 	switch (MC) {
 	case 0:
 		return;
 	case 1: {
-			ACT = (uint8_t)(_val & 0xff);
+			ACT = _regPair.l;
 			TMP = L;
 			int res = ACT + TMP;
-			FC = (res >> 8) == 1;
+			FC = res & 0x100;
 			L = (uint8_t)(res);
 			return;
 		}
 	case 2: {
-			ACT = (uint8_t)(_val >> 8);
+			ACT = _regPair.h;
 			TMP = H;
 			int result = ACT + TMP + (FC ? 1 : 0);
-			FC = (result >> 8) == 1;
+			FC = result & 0x100;
 			H = (uint8_t)(result);
 			return;
 		}
@@ -988,7 +977,7 @@ void dev::CpuI8080::INRMem()
 		SetZSP(TMP);
 		return;
 	case 2:
-		WriteByte(HL, TMP);
+		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 1);
 		return;
 	}
 }
@@ -1020,61 +1009,31 @@ void dev::CpuI8080::DCRMem()
 		SetZSP(TMP);
 		return;
 	case 2:
-		WriteByte(HL, TMP);
+		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 1);
 		return;
 	}
 }
 
-void dev::CpuI8080::INX(uint8_t& _regH, uint8_t& _regL)
+void dev::CpuI8080::INX(uint16_t& _regPair)
 {
 	switch (MC) {
 	case 0:
-		Z = (uint8_t)(_regL + 1);
-		W = (uint8_t)(Z == 0 ? _regH + 1 : _regH);
+		WZ = (uint16_t)(_regPair + 1);
 		return;
 	case 1:
-		_regH = W;
-		_regL = Z;
+		_regPair = WZ;
 		return;
 	}
 }
 
-void dev::CpuI8080::INXSP()
+void dev::CpuI8080::DCX(uint16_t& _regPair)
 {
 	switch (MC) {
 	case 0:
-		Z = (uint8_t)(SP + 1);
-		W = (uint8_t)(Z == 0 ? (SP >> 8) + 1 : SP >> 8);
+		WZ = (uint16_t)(_regPair - 1);
 		return;
 	case 1:
-		SP = W << 8 | Z;
-		return;
-	}
-}
-
-void dev::CpuI8080::DCX(uint8_t& _regH, uint8_t& _regL)
-{
-	switch (MC) {
-	case 0:
-		Z = (uint8_t)(_regL - 1);
-		W = (uint8_t)(Z == 0xff ? _regH - 1 : _regH);
-		return;
-	case 1:
-		_regH = W;
-		_regL = Z;
-		return;
-	}
-}
-
-void dev::CpuI8080::DCXSP()
-{
-	switch (MC) {
-	case 0:
-		Z = (uint8_t)(SP - 1);
-		W = (uint8_t)(Z == 0xff ? (SP >> 8) - 1 : SP >> 8);
-		return;
-	case 1:
-		SP = W << 8 | Z;
+		_regPair = WZ;
 		return;
 	}
 }
@@ -1241,7 +1200,7 @@ void dev::CpuI8080::CMP(uint8_t _sss)
 	ACT = A;
 	TMP = _sss;
 	auto res = ACT - TMP;
-	FC = (res >> 8) & 1;
+	FC = res & 0x100;
 	FAC = (~(ACT ^ (res & 0xFF) ^ TMP) & 0x10) == 0x10;
 	SetZSP((uint8_t)(res & 0xFF));
 }
@@ -1255,7 +1214,7 @@ void dev::CpuI8080::CMPMem()
 	case 1: {
 			TMP = ReadByte(HL);
 			int res = ACT - TMP;
-			FC = (res >> 8) & 1;
+			FC = res & 0x100;
 			FAC = (~(ACT ^ (res & 0xFF) ^ TMP) & 0x10) == 0x10;
 			SetZSP((uint8_t)(res & 0xFF));
 			return;
@@ -1272,9 +1231,9 @@ void dev::CpuI8080::CPI()
 	case 1:
 		TMP = ReadByteMovePC();
 		auto res = ACT - TMP;
-		FC = (res >> 8) & 1;
+		FC = res & 0x100;
 		FAC = (~(ACT ^ (res & 0xFF) ^ TMP) & 0x10) == 0x10;
-		SetZSP((uint8_t)(res & 0xFF));
+		SetZSP((uint8_t)(res));
 		return;
 	}
 }
@@ -1291,7 +1250,7 @@ void dev::CpuI8080::JMP(bool _condition)
 		W = ReadByteMovePC();
 		if (_condition)
 		{
-			PC = (uint16_t)(W << 8 | Z);
+			PC = WZ;
 		}
 		return;
 	}
@@ -1323,7 +1282,7 @@ void dev::CpuI8080::CALL(bool _condition)
 		return;
 	case 3:
 		if (_condition)	{
-			WriteByte(SP, (uint8_t)(PC >> 8), Memory::AddrSpace::STACK);
+			WriteByte(SP, PCH, Memory::AddrSpace::STACK, 1);
 			SP--;
 		} else {
 			// end execution
@@ -1331,10 +1290,10 @@ void dev::CpuI8080::CALL(bool _condition)
 		}
 		return;
 	case 4:
-		WriteByte(SP, (uint8_t)(PC & 0xff), Memory::AddrSpace::STACK);
+		WriteByte(SP, PCL, Memory::AddrSpace::STACK, 2);
 		return;
 	case 5:
-		PC = W << 8 | Z;
+		PC = WZ;
 		return;
 	}
 }
@@ -1347,16 +1306,16 @@ void dev::CpuI8080::RST(uint8_t _arg)
 		SP--;
 		return;
 	case 1:
-		WriteByte(SP, (uint8_t)(PC >> 8), Memory::AddrSpace::STACK);
+		WriteByte(SP, PCH, Memory::AddrSpace::STACK, 1);
 		SP--;
 		return;
 	case 2:
 		W = 0;
 		Z = _arg << 3;
-		WriteByte(SP, (uint8_t)(PC & 0xff), Memory::AddrSpace::STACK);
+		WriteByte(SP, PCL, Memory::AddrSpace::STACK, 2);
 		return;
 	case 3:
-		PC = W << 8 | Z;
+		PC = WZ;
 		return;
 	}
 }
@@ -1374,7 +1333,7 @@ void dev::CpuI8080::RET()
 	case 2:
 		W = ReadByte(SP, Memory::AddrSpace::STACK);
 		SP++;
-		PC = W << 8 | Z;
+		PC = WZ;
 		return;
 	}
 }
@@ -1395,7 +1354,7 @@ void dev::CpuI8080::RETCond(bool _condition)
 	case 3:
 		W = ReadByte(SP, Memory::AddrSpace::STACK);
 		SP++;
-		PC = W << 8 | Z;
+		PC = WZ;
 		return;
 	}
 }

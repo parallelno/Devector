@@ -994,7 +994,7 @@ auto dev::Disasm::Line::GetStr() const
 -> std::string
 {
 	// print an addr
-	std::string out = std::format("{} ", GetAddrS());
+	std::string out(GetAddrS());
 
 	switch (type)
 	{
@@ -1010,7 +1010,7 @@ auto dev::Disasm::Line::GetStr() const
 			switch (mnemonicType[i])
 			{
 			case MNT_CMD:
-				out += std::format("{}", mnemonic[i]);
+				out += mnemonic[i];
 				break;
 
 			case MNT_IMM:
@@ -1047,7 +1047,7 @@ auto dev::Disasm::Line::GetStr() const
 }
 
 dev::Disasm::Disasm(Hardware& _hardware)
-	: m_hardware(_hardware)
+	: m_hardware(_hardware), m_memRuns(), m_memReads(), m_memWrites()
 {}
 
 void dev::Disasm::Init(const LineIdx _linesNum)
@@ -1088,7 +1088,7 @@ auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks*
 			m_immAddrLinks[i].lineIdx = IMM_NO_LINK;
 			continue;
 		}/*
-		// add the links that goes out of the visible scope of addrs
+		// adds the links that goes out of the visible scope of addrs
 		if (line.imm < addrMin) {
 			m_immAddrLinks[i].m_lineIdx = IMM_LINK_UP;
 			m_immAddrLinks[i].linkIdx = linkIdx++;

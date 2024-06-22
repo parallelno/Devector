@@ -58,8 +58,8 @@ namespace dev
 
 #pragma pack(push, 1)
 		struct Regs {
-			dev::Addr pc; // program counter
-			dev::Addr sp; // stack pointer
+			RegPair pc; // program counter
+			RegPair sp; // stack pointer
 			AF psw;	// accumulator & flags
 			RegPair bc; // register pair BC
 			RegPair de; // register pair DE
@@ -67,8 +67,7 @@ namespace dev
 			uint8_t ir; // internal register to fetch instructions
 			uint8_t tmp; // temporary register
 			uint8_t act; // temporary accumulator
-			uint8_t w; // temporary high address
-			uint8_t z; // temporary low address
+			RegPair wz; // temporary address reg
 		};
 #pragma pack(pop)
 
@@ -165,7 +164,8 @@ namespace dev
 
 		uint8_t ReadInstrMovePC();
 		uint8_t ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		void WriteByte(const Addr _addr, uint8_t _value, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		void WriteByte(const Addr _addr, uint8_t _value,
+			Memory::AddrSpace _addrSpace, const uint8_t _byteNum);
 		uint8_t ReadByteMovePC(Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 
 		////////////////////////////////////////////////////////////////////////////
@@ -190,7 +190,6 @@ namespace dev
 		void STA();
 		void STAX(Addr _addr);
 		void LXI(uint8_t& _regH, uint8_t& _regL);
-		void LXISP();
 		void LHLD();
 		void SHLD();
 		void SPHL();
@@ -204,15 +203,13 @@ namespace dev
 		void SUB(uint8_t _a, uint8_t _b, bool _cy);
 		void SUBMem(bool _cy);
 		void SBI(bool _cy);
-		void DAD(uint16_t _val);
+		void DAD(RegPair _val);
 		void INR(uint8_t& _regDest);
 		void INRMem();
 		void DCR(uint8_t& _regDest);
 		void DCRMem();
-		void INX(uint8_t& _regH, uint8_t& _regL);
-		void INXSP();
-		void DCX(uint8_t& _regH, uint8_t& _regL);
-		void DCXSP();
+		void INX(uint16_t& _regPair);
+		void DCX(uint16_t& _regPair);
 		void DAA();
 		void ANA(uint8_t _sss);
 		void AMAMem();

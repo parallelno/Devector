@@ -10,21 +10,16 @@ dev::Memory::Memory(const std::wstring& _pathBootData)
 void dev::Memory::Init()
 {
 	m_ram.fill(0);
-
-	m_mappingModeStack = false;
-	m_mappingPageStack = 0;
-	m_mappingModeRam = 0;
-	m_mappingPageRam = 0;
-
-	m_memType = MemType::ROM;
+	m_state.mapping.data = 0;
+	m_state.update.memType = MemType::ROM;
 }
 
-void dev::Memory::Restart() { m_memType = MemType::RAM; }
+void dev::Memory::Restart() { m_state.update.memType = MemType::RAM; }
 
 
 void dev::Memory::SetMemType(const MemType _memType)
 {
-	m_memType = _memType;
+	m_state.update.memType = _memType;
 }
 void dev::Memory::SetRam(const Addr _addr, const std::vector<uint8_t>& _data )
 {
@@ -36,7 +31,7 @@ auto dev::Memory::GetByte(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
 {
 	_globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
 
-	if (m_memType == MemType::ROM && _globalAddr < m_rom.size()) 
+	if (m_state.update.memType == MemType::ROM && _globalAddr < m_rom.size())
 	{
 		return m_rom[_globalAddr];
 	}
@@ -44,12 +39,20 @@ auto dev::Memory::GetByte(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
 	return m_ram[_globalAddr];
 }
 
-void dev::Memory::SetByte(GlobalAddr _globalAddr, uint8_t _value, const AddrSpace _addrSpace)
+// byteNum = 0 for the first byte stored by instr, 1 for the second
+void dev::Memory::SetByte(const Addr _addr, uint8_t _value, 
+	const AddrSpace _addrSpace, const uint8_t _byteNum)
 {
-	_globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
-	m_ram[_globalAddr] = _value;
+	auto globalAddr = GetGlobalAddr(_addr, _addrSpace);
+	m_ram[globalAddr] = _value;
+	m_state.update.addr = _addr;
+	m_state.update.len = _byteNum;
+	m_state.update.stack = static_cast<uint8_t>(_addrSpace);
+	m_state.update.b1 = _value * (1 - _byteNum) + m_state.update.b1 * _byteNum;
+	m_state.update.b2 = _value;
 }
 
+// help func. isn't called by cpu, not stored to the state
 auto dev::Memory::GetWord(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
 -> uint16_t
 {
@@ -69,11 +72,7 @@ auto dev::Memory::GetScreenBytes(Addr _screenAddrOffset) const
 	return byte8 << 24 | byteA << 16 | byteC << 8 | byteE;
 }
 
-auto dev::Memory::GetRam() const
--> const Ram*
-{
-	return &m_ram;
-}
+auto dev::Memory::GetRam() const -> const Ram* { return &m_ram; }
 
 // converts an addr to a global addr depending on the ram/stack mapping modes
 auto dev::Memory::GetGlobalAddr(GlobalAddr _globalAddr, const AddrSpace _addrSpace) const
@@ -83,24 +82,28 @@ auto dev::Memory::GetGlobalAddr(GlobalAddr _globalAddr, const AddrSpace _addrSpa
 
 	_globalAddr &= 0xFFFF;
 
-	if (m_mappingModeStack && _addrSpace == AddrSpace::STACK)
+	if (m_state.mapping.modeStack && _addrSpace == AddrSpace::STACK)
 	{
-		return _globalAddr + static_cast<GlobalAddr>(m_mappingPageStack + 1) * RAM_DISK_PAGE_LEN;
+		return _globalAddr + static_cast<GlobalAddr>(m_state.mapping.pageStack + 1) * RAM_DISK_PAGE_LEN;
 	}
 	else if (IsRamMapped((Addr)_globalAddr))
 	{
-		return _globalAddr + (m_mappingPageRam + 1) * RAM_DISK_PAGE_LEN;
+		return _globalAddr + (m_state.mapping.pageRam + 1) * RAM_DISK_PAGE_LEN;
 	}
 
 	return _globalAddr;
 }
 
+auto dev::Memory::GetState() const -> const State& { return m_state; }
+void dev::Memory::SetRamDiskMode(uint8_t _data) { m_state.mapping.data = _data; }
+bool dev::Memory::IsRomEnabled() const { return m_state.update.memType == MemType::ROM; };
+
 // check if the addr is mapped to the ram-disk
 bool dev::Memory::IsRamMapped(Addr _addr) const
 {
-	if ((m_mappingModeRam & MAPPING_RAM_MODE_A000) && (_addr >= 0xa000) && (_addr <= 0xdfff) ||
-		(m_mappingModeRam & MAPPING_RAM_MODE_8000) && (_addr >= 0x8000) && (_addr <= 0x9fff) ||
-		(m_mappingModeRam & MAPPING_RAM_MODE_E000) && (_addr >= 0xe000) && (_addr <= 0xffff))
+	if ((m_state.mapping.modeRamA && _addr >= 0xA000 && _addr <= 0xDFFF) ||
+		(m_state.mapping.modeRam8 && _addr >= 0x8000 && _addr <= 0x9FFF) ||
+		(m_state.mapping.modeRamE && _addr >= 0xE000 && _addr <= 0xFFFF))
 	{
 		return true;
 	}
@@ -108,22 +111,3 @@ bool dev::Memory::IsRamMapped(Addr _addr) const
 	return false;
 }
 
-bool dev::Memory::IsRomEnabled() const { return m_memType == MemType::ROM; };
-
-void dev::Memory::SetRamDiskMode(uint8_t _data)
-{
-	// _data is encoded as E8AsSSMM
-	//					E8A - enabling ram mapping
-	//						E - 0xe000-0xffff mapped into the the Ram-Disk, Barkar only
-	//						8 - 0x8000-0x9fff mapped into the the Ram-Disk, Barkar only
-	//						A - 0xa000-0xdfff mapped into the the Ram-Disk
-	//					s - enabling stack mapping
-	//					SS - Ram-Disk 64k page accesssed via the stack instructions (Push, Pop, XTHL)
-	//					MM - Ram-Disk 64k page accesssed via non-stack instructions (all except Push, Pop, XTHL)
-
-	m_mappingModeRam = _data & MAPPING_RAM_MODE_MASK;
-	m_mappingPageRam = _data & MAPPING_RAM_PAGE_MASK;
-	
-	m_mappingModeStack = static_cast<bool>(_data & MAPPING_STACK_MODE_MASK);
-	m_mappingPageStack = (_data & MAPPING_STACK_PAGE_MASK) >> 2;
-}

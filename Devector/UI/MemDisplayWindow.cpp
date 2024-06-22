@@ -139,10 +139,14 @@ void dev::MemDisplayWindow::Update()
 
 static const char* separatorsS[] = {
 	"The Main Ram",
-	"The Ram-Disk Page 0",
-	"The Ram-Disk Page 1",
-	"The Ram-Disk Page 2",
-	"The Ram-Disk Page 3"
+	"The Ram-Disk 1 Page 0",
+	"The Ram-Disk 1 Page 1",
+	"The Ram-Disk 1 Page 2",
+	"The Ram-Disk 1 Page 3",
+	"The Ram-Disk 2 Page 0",
+	"The Ram-Disk 2 Page 1",
+	"The Ram-Disk 2 Page 2",
+	"The Ram-Disk 2 Page 3"
 };
 
 dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale)

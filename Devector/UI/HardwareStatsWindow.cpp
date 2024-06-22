@@ -29,7 +29,7 @@ void dev::HardwareStatsWindow::Update()
 	ImGui::End();
 }
 
-void dev::HardwareStatsWindow::DrawRegs()
+void dev::HardwareStatsWindow::DrawRegs() const
 {
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
@@ -52,7 +52,7 @@ void dev::HardwareStatsWindow::DrawRegs()
 	}
 }
 
-void dev::HardwareStatsWindow::DrawFlags()
+void dev::HardwareStatsWindow::DrawFlags() const
 {
 	static ImGuiTableFlags tableFlags =
 		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
@@ -78,7 +78,7 @@ void dev::HardwareStatsWindow::DrawFlags()
 	}
 }
 
-void dev::HardwareStatsWindow::DrawStack()
+void dev::HardwareStatsWindow::DrawStack() const
 {
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
@@ -107,7 +107,7 @@ void dev::HardwareStatsWindow::DrawStack()
 	}
 }
 
-void dev::HardwareStatsWindow::DrawHardware()
+void dev::HardwareStatsWindow::DrawHardware() const
 {
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
@@ -255,32 +255,29 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 
 	// Hardware
 	res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
-	const auto& displayData = *res;
-	int rasterPixel = displayData["rasterPixel"];
-	int rasterLine = displayData["rasterLine"];
-	res = m_hardware.Request(Hardware::Req::GET_MEMORY_MODES);
-	const auto& memoryModes = *res;
-	bool mappingModeStack = memoryModes["mappingModeStack"];
-	size_t mappingPageStack = memoryModes["mappingPageStack"];
-	uint8_t mappingModeRam = memoryModes["mappingModeRam"];
-	uint8_t mappingPageRam = memoryModes["mappingPageRam"];
+	const auto& displayDataJ = *res;
+	int rasterPixel = displayDataJ["rasterPixel"];
+	int rasterLine = displayDataJ["rasterLine"];
+	res = m_hardware.Request(Hardware::Req::GET_MEMORY_MAPPING);
+	Memory::Mapping memMapping { res->at("mapping") };
 
-	m_ccS = std::format("{}", cc);
-	m_ccLastRunS = std::format("{}", m_ccLastRun);
-	m_rasterPixel_rasterLineS = std::format("X: {:03} Y: {:03}", rasterPixel, rasterLine);
 
 	m_mappingRamModeS = "Off";
-	if ((mappingModeRam & Memory::MAPPING_RAM_MODE_MASK) > 0)
+	if (memMapping.data & Memory::MAPPING_RAM_MODE_MASK)
 	{
-		std::string mapping_ram_mode_a = (mappingModeRam & Memory::MAPPING_RAM_MODE_A000) > 0 ? "AC" : "--";
-		std::string mapping_ram_mode_8 = (mappingModeRam & Memory::MAPPING_RAM_MODE_8000) > 0 ? "8" : "-";
-		std::string mapping_ram_mode_e = (mappingModeRam & Memory::MAPPING_RAM_MODE_E000) > 0 ? "E" : "-";
-		m_mappingRamModeS = mapping_ram_mode_8 + mapping_ram_mode_a + mapping_ram_mode_e;
+		auto modeA = memMapping.modeRamA ? "AC" : "--";
+		auto mode8 = memMapping.modeRam8 ? "8" : "-";
+		auto modeE = memMapping.modeRamE ? "E" : "-";
+		m_mappingRamModeS = std::format("{}{}{}", mode8, modeA, modeE);
 	}
 
-	m_mappingPageRamS = std::format("{}", mappingPageRam);
-	m_mappingModeStackS = dev::BoolToStrC(mappingModeStack, true);
-	m_mappingPageStackS = std::format("{}", mappingPageStack);
+	m_mappingPageRamS = std::to_string(memMapping.pageRam);
+	m_mappingModeStackS = dev::BoolToStrC(memMapping.modeStack, true);
+	m_mappingPageStackS = std::to_string(memMapping.pageStack);
+
+	m_ccS = std::to_string(cc);
+	m_ccLastRunS = std::to_string(m_ccLastRun);
+	m_rasterPixel_rasterLineS = std::format("X: {:03} Y: {:03}", rasterPixel, rasterLine);
 }
 
 void dev::HardwareStatsWindow::UpdateDataRuntime()

@@ -51,7 +51,7 @@ namespace dev
 			const size_t _val = 0, const std::string& _comment = "");
 		void DelBreakpoint(const Addr _addr);
 		void DelBreakpoints();
-		bool CheckBreakpoints(const CpuI8080::State& _state, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam);
+		bool CheckBreakpoints(const CpuI8080::State& _cpuState, const Memory::State& _memState);
 		auto GetBreakpoints() -> const Breakpoints;
 		auto GetBreakpointStatus(const Addr _addr) -> const Breakpoint::Status;
 
@@ -65,7 +65,7 @@ namespace dev
 		void ResetWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;
 
-		bool CheckBreak(const CpuI8080::State& _state, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam);
+		bool CheckBreak(const CpuI8080::State& _cpuState, const Memory::State& _memState);
 
 		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> const Disasm::Lines*;
 

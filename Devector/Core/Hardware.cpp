@@ -68,15 +68,16 @@ void dev::Hardware::Execution()
             // rasterizes a frame
             do {
                 auto CheckBreak = m_checkBreak.load();
-                if (CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.m_mappingModeRam, m_memory.m_mappingPageRam))
+                if (CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.GetState()))
                 {
                     m_status = Status::STOP;
                     break;
                 }
-                //auto TraceLogUpdate = m_traceLogUpdate.load();
-                //if (TraceLogUpdate && *TraceLogUpdateate)
+                auto TraceLogUpdate = m_traceLogUpdate.load();
+                if (TraceLogUpdate)
                 {
-                    //(*TraceLogUpdate)(_state);
+                   // TODO: provide internal states of io, fdc, etc components into the trace log update
+                    // (*TraceLogUpdate)(m_cpu.GetState(), m_memory.GetState(), m_);
                 }
                 ExecuteInstruction();
 
@@ -219,15 +220,14 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
                 });
             break;
 
-        case Req::GET_MEMORY_MODES:
+        case Req::GET_MEMORY_MAPPING:
+        {
+            auto mapping = m_memory.GetState().mapping.data;
             m_reqRes.emplace({
-                {"mappingModeStack", m_memory.m_mappingModeStack},
-                {"mappingPageStack", m_memory.m_mappingPageStack},
-                {"mappingModeRam", m_memory.m_mappingModeRam},
-                {"mappingPageRam", m_memory.m_mappingPageRam}
+                {"mapping", mapping},
                 });
             break;
-
+        }
         case Req::GET_GLOBAL_ADDR_RAM:
             m_reqRes.emplace({
                 {"data", m_memory.GetGlobalAddr(dataJ["addr"], Memory::AddrSpace::RAM)}

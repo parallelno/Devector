@@ -69,10 +69,10 @@ namespace dev
 		////////////////////
 
 		void DrawStats(const bool _isRunning);
-		void DrawRegs();
-		void DrawFlags();
-		void DrawStack();
-		void DrawHardware();
+		void DrawRegs() const;
+		void DrawFlags() const;
+		void DrawStack() const;
+		void DrawHardware() const;
 		void UpdateData(const bool _isRunning);
 		void UpdateDataRuntime();
 

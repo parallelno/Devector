@@ -22,7 +22,7 @@ dev::Debugger::Debugger(Hardware& _hardware)
 
 void dev::Debugger::Init()
 {
-	m_checkBreakFunc = std::bind(&Debugger::CheckBreak, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	m_checkBreakFunc = std::bind(&Debugger::CheckBreak, this, std::placeholders::_1, std::placeholders::_2);
 	m_debugOnReadInstrFunc = std::bind(&Debugger::ReadInstr, this, std::placeholders::_1, std::placeholders::_2);
 	m_debugOnReadFunc = std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2);
 	m_debugOnWriteFunc = std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2);
@@ -285,7 +285,7 @@ auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _
 //////////////////////////////////////////////////////////////
 
 // m_hardware thread
-bool dev::Debugger::CheckBreak(const CpuI8080::State& _state, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam)
+bool dev::Debugger::CheckBreak(const CpuI8080::State& _cpuState, const Memory::State& _memState)
 {
 	if (m_wpBreak)
 	{
@@ -294,7 +294,7 @@ bool dev::Debugger::CheckBreak(const CpuI8080::State& _state, const uint8_t _map
 		return true;
 	}
 
-	auto break_ = CheckBreakpoints(_state, _mappingModeRam, _mappingPageRam);
+	auto break_ = CheckBreakpoints(_cpuState, _memState);
 
 	return break_;
 }
@@ -351,13 +351,12 @@ void dev::Debugger::DelBreakpoints()
 	m_breakpoints.clear();
 }
 
-bool dev::Debugger::CheckBreakpoints(const CpuI8080::State& _state, 
-	const uint8_t _mappingModeRam, const uint8_t _mappingPageRam)
+bool dev::Debugger::CheckBreakpoints(const CpuI8080::State& _cpuState, const Memory::State& _memState)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bpI = m_breakpoints.find(_state.regs.pc);
+	auto bpI = m_breakpoints.find(_cpuState.regs.pc.word);
 	if (bpI == m_breakpoints.end()) return false;
-	auto status = bpI->second.CheckStatus(_state, _mappingModeRam, _mappingPageRam);
+	auto status = bpI->second.CheckStatus(_cpuState, _memState);
 	if (bpI->second.autoDel) m_breakpoints.erase(bpI);
 	return status;
 }

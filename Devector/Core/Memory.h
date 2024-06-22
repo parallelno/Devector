@@ -13,23 +13,8 @@ namespace dev
 	class Memory
 	{
 	public:
-		enum AddrSpace
-		{
-			RAM, STACK, GLOBAL
-		};
-		enum class MemType {
-			ROM,
-			RAM
-		};
-
-		static constexpr uint8_t MAPPING_RAM_MODE_A000 = 1 << 5;
-		static constexpr uint8_t MAPPING_RAM_MODE_8000 = 1 << 6;
-		static constexpr uint8_t MAPPING_RAM_MODE_E000 = 1 << 7;
-		static constexpr uint8_t MAPPING_RAM_MODE_MASK = MAPPING_RAM_MODE_A000 | MAPPING_RAM_MODE_8000 | MAPPING_RAM_MODE_E000;
-		static constexpr uint8_t MAPPING_RAM_PAGE_MASK = 0b11;
-
-		static constexpr uint8_t MAPPING_STACK_MODE_MASK = 0b10000;
-		static constexpr uint8_t MAPPING_STACK_PAGE_MASK = 0b1100;
+		enum AddrSpace : uint8_t { RAM = 0, STACK = 1, GLOBAL };
+		enum class MemType : uint8_t{ ROM = 0, RAM };
 
 		static constexpr GlobalAddr ROM_LOAD_ADDR = 0x100;
 
@@ -44,25 +29,58 @@ namespace dev
 		using Rom = std::vector<uint8_t>;
 		using Ram = std::array<uint8_t, GLOBAL_MEMORY_LEN>;
 
-		bool m_mappingModeStack = false;
-		size_t m_mappingPageStack = 0;
-		uint8_t m_mappingModeRam = 0;	// 0 - no mapping, 
-									// MAPPING_RAM_MODE_A000 - addr range [0xA000-0xDFFF] is mapped to the ram-disk 
-									// MAPPING_RAM_MODE_8000 - addr range [0x8000-0x9FFF] is mapped to the ram-disk 
-									// MAPPING_RAM_MODE_E000 - addr range [0xE000-0xFFFF] is mapped to the ram-disk
-		uint8_t m_mappingPageRam = 0; // 0 - mapping to the ram-disk page0, etc
+		static constexpr uint8_t MAPPING_RAM_MODE_MASK = 0b11100000;
+		#pragma pack(push, 1)
+		union Mapping {
+			struct {
+				uint8_t pageRam : 2;	// Ram-Disk 64k page idx accesssed via non-stack instructions (all instructions except mentioned below)
+				uint8_t pageStack : 2;	// Ram-Disk 64k page idx accesssed via the stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
+				bool modeStack : 1;		// enabling stack mapping
+				bool modeRamA : 1; // enabling ram [0xA000-0xDFFF] mapped into the the Ram-Disk
+				bool modeRam8 : 1; // enabling ram [0x8000-0x9FFF] mapped into the the Ram-Disk
+				bool modeRamE : 1; // enabling ram [0xE000-0xFFFF] mapped into the the Ram-Disk
+			};
+			uint8_t data = 0;
+			Mapping(const uint8_t _data = 0) : data(_data) {}
+		};
+        #pragma pack(pop)
+		// contains the data stored in memory by the last executed instruction
+        #pragma pack(push, 1)
+		struct Update
+		{
+			Addr addr : 16 = 0;
+			uint8_t b1 : 8 = 0;
+			uint8_t b2 : 8 = 0;
+			uint8_t len : 2 = 0;
+			uint8_t stack : 1 = 0; // 0: b2 addr = addr+1, 1: b2 addr = addr-1
+			MemType memType : 1 = MemType::RAM;
+		};
+        #pragma pack(pop)
 
+        #pragma pack(push, 1)
+		struct State
+		{
+			Mapping mapping;
+			Update update;
+		};
+        #pragma pack(pop)
+		
 		Memory(const std::wstring& _pathBootData);
 		void Init();
 		// internal thread access
 		void SetMemType(const MemType _memType);
 		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
-		auto GetByte(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
-		void SetByte(GlobalAddr _globalAddr, uint8_t _value, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		auto GetWord(GlobalAddr _globalAddr, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint16_t;
+		auto GetByte(GlobalAddr _globalAddr, 
+			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
+		void SetByte(const Addr _addr, uint8_t _value, 
+			const Memory::AddrSpace _addrSpace, const uint8_t _byteNum);
+		auto GetWord(GlobalAddr _globalAddr, 
+			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint16_t;
 		auto GetScreenBytes(Addr _screenAddrOffset) const -> uint32_t;
 		auto GetRam() const -> const Ram*;
-		auto GetGlobalAddr(GlobalAddr _globalAddr, const AddrSpace _addrSpace) const -> GlobalAddr;
+		auto GetGlobalAddr(GlobalAddr _globalAddr, 
+			const AddrSpace _addrSpace) const -> GlobalAddr;
+		auto GetState() const -> const State&;
 		bool IsRamMapped(const Addr _addr) const;
 		bool IsRomEnabled() const;
 		void SetRamDiskMode(uint8_t _data);
@@ -71,7 +89,6 @@ namespace dev
 	private:
 		Ram m_ram;
 		Rom m_rom;
-
-		MemType m_memType = MemType::ROM;
+		State m_state;
 	};
 }

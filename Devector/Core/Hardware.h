@@ -39,7 +39,8 @@ namespace dev
 		};
 
 	public:
-		using CheckBreakFunc = std::function<bool(const CpuI8080::State& _state, const uint8_t _mappingModeRam, const uint8_t _mappingPageRam)>;
+		using CheckBreakFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState)>;
+		using TraceLogUpdateFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState)>;
 
 		enum class Req: int {
 			NONE = 0,
@@ -58,7 +59,7 @@ namespace dev
 			GET_THREE_BYTES_RAM,
 			GET_WORD_STACK,
 			GET_DISPLAY_DATA,
-			GET_MEMORY_MODES,
+			GET_MEMORY_MAPPING,
 			GET_GLOBAL_ADDR_RAM,
 			GET_FDC_INFO,
 			GET_FDD_INFO,
@@ -83,9 +84,11 @@ namespace dev
 		void AttachDebugOnReadInstr(CpuI8080::DebugOnReadInstrFunc* _funcP);
 		void AttachDebugOnRead(CpuI8080::DebugOnReadFunc* _funcP);
 		void AttachDebugOnWrite(CpuI8080::DebugOnWriteFunc* _funcP);
+		void AttachTraceLogUpdate(TraceLogUpdateFunc* _funcP);
 
 	private:
 		std::atomic <CheckBreakFunc*> m_checkBreak;
+		std::atomic <TraceLogUpdateFunc*> m_traceLogUpdate;
 		std::thread m_executionThread;
 		std::thread m_reqHandlingThread;
 		std::atomic<Status> m_status;

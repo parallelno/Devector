@@ -8,6 +8,7 @@
 
 #include "Utils/Types.h"
 #include "Core/CpuI8080.h"
+#include "Core/Memory.h"
 
 namespace dev
 {
@@ -62,9 +63,7 @@ namespace dev
 			const Condition _cond = Condition::ANY,
 			const size_t _val = 0, const std::string& _comment = "");
 
-		bool CheckStatus(const CpuI8080::State& _state, 
-			const uint8_t _mappingModeRam,
-			const uint8_t _mappingPageRam) const;
+		bool CheckStatus(const CpuI8080::State& _cpuState, const Memory::State& _memState) const;
 		auto GetOperandS() const -> const char*;
 		auto GetConditionS() const -> const char*;
 		void Print() const;

@@ -39,11 +39,9 @@ auto dev::Breakpoint::GetOperandS() const ->const char* { return bpOperandsS[sta
 auto dev::Breakpoint::GetConditionS() const ->const char* {	return bpCondsS[static_cast<uint8_t>(operand)]; }
 auto dev::Breakpoint::IsActiveS() const -> const char* { return status == Status::ACTIVE ? "X" : "-"; }
 
-bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _state,
-	const uint8_t _mappingModeRam,
-	const uint8_t _mappingPageRam) const
+bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _cpuState, const Memory::State& _memState) const
 {
-	auto mapping = _mappingModeRam == 0 ? 1 : 1 << (_mappingPageRam + 1);
+	auto mapping = _memState.mapping.data && Memory::MAPPING_RAM_MODE_MASK ? 1 << (_memState.mapping.pageRam + 1) : 1;
 	bool active = status == Status::ACTIVE && mapping & mappingPages;
 	if (!active) return false;
 	if (cond == dev::Breakpoint::Condition::ANY) return true;
@@ -52,46 +50,46 @@ bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _state,
 	switch (operand)
 	{
 	case dev::Breakpoint::Operand::A:
-		op = _state.regs.psw.a;
+		op = _cpuState.regs.psw.a;
 		break;
 	case dev::Breakpoint::Operand::F:
-		op = _state.regs.psw.af.l;
+		op = _cpuState.regs.psw.af.l;
 		break;
 	case dev::Breakpoint::Operand::B:
-		op = _state.regs.bc.h;
+		op = _cpuState.regs.bc.h;
 		break;
 	case dev::Breakpoint::Operand::C:
-		op = _state.regs.bc.l;
+		op = _cpuState.regs.bc.l;
 		break;
 	case dev::Breakpoint::Operand::D:
-		op = _state.regs.de.h;
+		op = _cpuState.regs.de.h;
 		break;
 	case dev::Breakpoint::Operand::E:
-		op = _state.regs.de.l;
+		op = _cpuState.regs.de.l;
 		break;
 	case dev::Breakpoint::Operand::H:
-		op = _state.regs.hl.h;
+		op = _cpuState.regs.hl.h;
 		break;
 	case dev::Breakpoint::Operand::L:
-		op = _state.regs.hl.l;
+		op = _cpuState.regs.hl.l;
 		break;
 	case dev::Breakpoint::Operand::PSW:
-		op = _state.regs.psw.af.word;
+		op = _cpuState.regs.psw.af.word;
 		break;
 	case dev::Breakpoint::Operand::BC:
-		op = _state.regs.bc.word;
+		op = _cpuState.regs.bc.word;
 		break;
 	case dev::Breakpoint::Operand::DE:
-		op = _state.regs.de.word;
+		op = _cpuState.regs.de.word;
 		break;
 	case dev::Breakpoint::Operand::HL:
-		op = _state.regs.hl.word;
+		op = _cpuState.regs.hl.word;
 		break;
 	case dev::Breakpoint::Operand::CC:
-		op = _state.cc;
+		op = _cpuState.cc;
 		break;
 	case dev::Breakpoint::Operand::SP:
-		op = _state.regs.sp;
+		op = _cpuState.regs.sp.word;
 		break;
 	default:
 		op = 0;
@@ -118,8 +116,8 @@ bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _state,
 
 void dev::Breakpoint::Print() const
 {
-	std::printf("0x%04x, active: %d, mappingPages: %d, autoDel: %d, op: %s, cond: %s, val: %d\n", 
-		addr, status, mappingPages, autoDel,
+	dev::Log("0x{:04x}, status:{}, mappingPages: {}, autoDel: {}, op: {}, cond: {}, val: {}",
+		addr, static_cast<int>(status), mappingPages, autoDel,
 		GetOperandS(), GetConditionS(), value);
 }
 
