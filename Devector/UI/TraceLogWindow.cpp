@@ -16,7 +16,7 @@ void dev::TraceLogWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_HorizontalScrollbar))
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
 	{
 		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 		UpdateData(isRunning);

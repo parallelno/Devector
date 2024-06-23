@@ -35,7 +35,7 @@ dev::DevectorApp::~DevectorApp()
 
 void dev::DevectorApp::WindowsInit()
 {
-	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", "boot//boots.bin"));
+	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", "boot//boot.bin"));
 	bool restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", true);
 
 	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData);
@@ -49,6 +49,8 @@ void dev::DevectorApp::WindowsInit()
 	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_glUtils, m_reqHexViewer);
 	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqHexViewer);
 	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasm);
+	m_aboutWindowP = std::make_unique<dev::AboutWindow>(&m_fontSize, &m_dpiScale);
+	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(&m_fontSize, &m_dpiScale);
 
 	// Set the key callback function
 	glfwSetWindowUserPointer(m_window, this);
@@ -65,7 +67,7 @@ void dev::DevectorApp::SettingsInit()
 	m_hardwareStatsWindowVisible = GetSettingsBool("hardwareStatsWindowVisible", false);
 	m_disasmWindowVisible = GetSettingsBool("disasmWindowVisible", false);
 	m_watchpointsWindowVisible = GetSettingsBool("watchpointsWindowVisible", false);
-	m_displayWindowVisible = GetSettingsBool("displayWindowVisible", false);
+	m_displayWindowVisible = GetSettingsBool("displayWindowVisible", true);
 	m_memDisplayWindowVisible = GetSettingsBool("memDisplayWindowVisible", false);
 	m_hexViewerWindowVisible = GetSettingsBool("hexViewerWindowVisible", false);
 	m_traceLogWindowVisible = GetSettingsBool("traceLogWindowVisible", false);
@@ -109,6 +111,8 @@ void dev::DevectorApp::Update()
 	m_memDisplayWindowP->Update(m_memDisplayWindowVisible);
 	m_hexViewerWindowP->Update(m_hexViewerWindowVisible);
 	m_traceLogWindowP->Update(m_traceLogWindowVisible);
+	m_aboutWindowP->Update(m_aboutWindowVisible);
+	m_feedbackWindowP->Update(m_feedbackWindowVisible);
 
 	if (m_status == AppStatus::CHECK_MOUNTED_FDDS)
 	{
@@ -226,6 +230,13 @@ void dev::DevectorApp::MainMenuUpdate()
 			ImGui::MenuItem(m_memDisplayWindowP->m_name.c_str(), NULL, &m_memDisplayWindowVisible);
 			ImGui::MenuItem(m_hexViewerWindowP->m_name.c_str(), NULL, &m_hexViewerWindowVisible);
 			ImGui::MenuItem(m_traceLogWindowP->m_name.c_str(), NULL, &m_traceLogWindowVisible);
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Help"))
+		{
+			ImGui::MenuItem(m_feedbackWindowP->m_name.c_str(), NULL, &m_feedbackWindowVisible);
+			ImGui::MenuItem(m_aboutWindowP->m_name.c_str(), NULL, &m_aboutWindowVisible);
 			ImGui::EndMenu();
 		}
 

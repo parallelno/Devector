@@ -17,6 +17,8 @@
 #include "UI/MemDisplayWindow.h"
 #include "UI/HexViewerWindow.h"
 #include "UI/TraceLogWindow.h"
+#include "UI/AboutWindow.h"
+#include "UI/FeedbackWindow.h"
 
 #include "Core/Hardware.h"
 #include "Core/Debugger.h"
@@ -90,6 +92,8 @@ namespace dev
 		std::unique_ptr <dev::MemDisplayWindow>m_memDisplayWindowP;
 		std::unique_ptr <dev::HexViewerWindow>m_hexViewerWindowP;
 		std::unique_ptr <dev::TraceLogWindow>m_traceLogWindowP;
+		std::unique_ptr <dev::AboutWindow>m_aboutWindowP;
+		std::unique_ptr <dev::FeedbackWindow>m_feedbackWindowP;
 
 		bool m_displayWindowVisible = false;
 		bool m_disasmWindowVisible = false;
@@ -99,6 +103,8 @@ namespace dev
 		bool m_memDisplayWindowVisible = false;
 		bool m_hexViewerWindowVisible = false;
 		bool m_traceLogWindowVisible = false;
+		bool m_aboutWindowVisible = false;
+		bool m_feedbackWindowVisible = false;
 
 		// path, driveIdx, autoBoot
 		std::list<std::tuple<std::wstring, int, bool>> m_recentFilePaths;

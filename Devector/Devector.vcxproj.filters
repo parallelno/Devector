@@ -120,6 +120,12 @@
     <ClCompile Include="Core\TraceLog.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="UI\AboutWindow.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\FeedbackWindow.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -260,6 +266,12 @@
     </ClInclude>
     <ClInclude Include="Core\TraceLog.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\AboutWindow.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\FeedbackWindow.h">
+      <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

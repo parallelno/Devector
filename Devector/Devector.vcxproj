@@ -125,10 +125,12 @@
     <ClCompile Include="Core\Watchpoint.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="DevectorApp.cpp" />
+    <ClCompile Include="UI\AboutWindow.cpp" />
     <ClCompile Include="UI\BaseWindow.cpp" />
     <ClCompile Include="UI\BreakpointsWindow.cpp" />
     <ClCompile Include="UI\DisasmWindow.cpp" />
     <ClCompile Include="UI\DisplayWindow.cpp" />
+    <ClCompile Include="UI\FeedbackWindow.cpp" />
     <ClCompile Include="UI\HardwareStatsWindow.cpp" />
     <ClCompile Include="UI\MemDisplayWindow.cpp" />
     <ClCompile Include="UI\HexViewerWindow.cpp" />
@@ -169,10 +171,12 @@
     <ClInclude Include="Core\TraceLog.h" />
     <ClInclude Include="Core\Watchpoint.h" />
     <ClInclude Include="DevectorApp.h" />
+    <ClInclude Include="UI\AboutWindow.h" />
     <ClInclude Include="UI\BaseWindow.h" />
     <ClInclude Include="UI\BreakpointsWindow.h" />
     <ClInclude Include="UI\DisasmWindow.h" />
     <ClInclude Include="UI\DisplayWindow.h" />
+    <ClInclude Include="UI\FeedbackWindow.h" />
     <ClInclude Include="UI\HardwareStatsWindow.h" />
     <ClInclude Include="UI\MemDisplayWindow.h" />
     <ClInclude Include="UI\HexViewerWindow.h" />

@@ -19,6 +19,23 @@ void dev::RunApp(const std::wstring& _dir, const std::wstring& _appName)
 	system(dev::StrWToStr(command).c_str());
 }
 
+void dev::OsOpenInShell(const char* path)
+{
+#ifdef _WIN32
+	// Note: executable path must use backslashes!
+	::ShellExecuteA(NULL, "open", path, NULL, NULL, SW_SHOWDEFAULT);
+#else
+#if __APPLE__
+	const char* open_executable = "open";
+#else
+	const char* open_executable = "xdg-open";
+#endif
+	char command[256];
+	snprintf(command, 256, "%s \"%s\"", open_executable, path);
+	system(command);
+#endif
+}
+
 void dev::ThreadSleep(double _seconds) 
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds((long long)(_seconds * 1000.0)));

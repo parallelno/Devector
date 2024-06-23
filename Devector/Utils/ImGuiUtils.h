@@ -71,6 +71,8 @@ namespace dev
 	static constexpr ImVec4 DASM_CLR_NUMBER_HIGHLIGHT = dev::IM_VEC4(0xFFFFFFFF);
 	static constexpr ImVec4 DASM_CLR_REG = dev::IM_VEC4(0x1ECF44FF);
 	static constexpr ImVec4 DASM_CLR_CONST = dev::IM_VEC4(0x8BE0E9FF);
+	static constexpr ImU32 CLR_URL_HOVERED = dev::IM_U32(0x2081FFFF);
+	static constexpr ImU32 CLR_URL = dev::IM_U32(0x1080F0FF);
 
 	static constexpr ImU32 DASM_CLR_PC = dev::IM_U32(0x88F038FF);
 	static constexpr ImVec2 UI_LITTLE_SPACE = { 12,10 };
@@ -113,6 +115,7 @@ namespace dev
 		ImGui::PopStyleVar();
 	}
 	void DrawHelpMarker(const char* _text);
+	bool HyperLink(const char* label, bool underlineWhenHoveredOnly = true);
 	void DrawPopup(const char* _title, const char* _text);
 	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, 
 		const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);

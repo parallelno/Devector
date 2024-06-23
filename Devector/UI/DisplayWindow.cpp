@@ -120,7 +120,7 @@ void dev::DisplayWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible))
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
 	{
 		static int dev_IRQ_COMMIT_PXL = 72;
 

@@ -6,7 +6,7 @@
 dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 		const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer)
 	:
-	BaseWindow("Memory Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqHexViewer(_reqHexViewer)
 {}
 
@@ -15,7 +15,7 @@ void dev::HexViewerWindow::Update(bool& _visible)
 	BaseWindow::Update();
 
 	static bool open = true;
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_HorizontalScrollbar))
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
 	{
 		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 		UpdateData(isRunning);

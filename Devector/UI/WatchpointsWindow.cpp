@@ -15,7 +15,7 @@ void dev::WatchpointsWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible))
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
 	{
 		DrawTable();
 		ImGui::End();

@@ -100,6 +100,7 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	}
 
 	void RunApp(const std::wstring& dir, const std::wstring& appName);
+	void OsOpenInShell(const char* path);
 	void ThreadSleep(double seconds);
 
 	template <typename T>

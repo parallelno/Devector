@@ -127,7 +127,7 @@ void dev::MemDisplayWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_HorizontalScrollbar))
+	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
 	{
 		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 		UpdateData(isRunning);
@@ -205,7 +205,7 @@ void dev::MemDisplayWindow::DrawDisplay()
 	ImVec2 windowEndPos = ImVec2(windowPos.x + windowSize.x, windowPos.y + windowSize.y);
 	ImVec2 windowBottomRight = ImVec2(windowEndPos.x, windowPos.y + windowSize.y);
 
-	ImGui::BeginChild("ScrollingFrame", ImVec2(remainingSize.x, remainingSize.y), true, ImGuiWindowFlags_HorizontalScrollbar);
+	ImGui::BeginChild("ScrollingFrame", { remainingSize.x, remainingSize.y }, true, ImGuiWindowFlags_HorizontalScrollbar);
 
 	if (m_isGLInited)
 	{
