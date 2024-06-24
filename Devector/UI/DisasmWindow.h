@@ -108,7 +108,7 @@ namespace dev
 		void DrawLabelEdit(ContextMenu& _contextMenu);
 		void DrawConstEdit(ContextMenu& _contextMenu);
 		void DrawAddrLinks(const bool _isRunning, const int _lineIdx,
-			const float _posMin, const float _posMax, const bool _selected);
+			const bool _selected);
 		void UpdateData(const bool _isRunning);
 		void ReqHandling();
 		bool IsDisasmTableOutOfWindow() const;

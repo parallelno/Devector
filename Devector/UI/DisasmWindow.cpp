@@ -284,10 +284,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
 	Addr regPC = m_hardware.Request(Hardware::Req::GET_REGS)->at("pc");
 	int hoveredLineIdx = -1;
-	ImVec2 selectionMin = ImGui::GetWindowContentRegionMin();
-	ImVec2 selectionMax = ImGui::GetWindowContentRegionMax();
-	float winRegionYMin = ImGui::GetCursorScreenPos().y;
-	float winRegionYMax = winRegionYMin + selectionMax.y;
+	ImVec2 selectionMin = ImGui::GetCursorScreenPos();
+	ImVec2 selectionMax = ImVec2(selectionMin.x + ImGui::GetWindowWidth(), selectionMin.y);
 	
 	if (_isRunning) ImGui::BeginDisabled();
 
@@ -322,9 +320,10 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			{
 				m_selectedLineIdx = lineIdx;
 			}
-			if (!_isRunning) {
+			if (!_isRunning) 
+			{
 				selectionMin.y = ImGui::GetItemRectMin().y;
-				selectionMax.y = ImGui::GetItemRectMax().y;
+				selectionMax.y = ImGui::GetItemRectMax().y;	
 				hoveredLineIdx = ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ? lineIdx : hoveredLineIdx;
 			}
 
@@ -345,7 +344,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				}
 				case Disasm::Line::Type::CODE:
 				{
-					DrawAddrLinks(_isRunning, lineIdx, winRegionYMin, winRegionYMax, hoveredLineIdx == lineIdx);
+					DrawAddrLinks(_isRunning, lineIdx, hoveredLineIdx == lineIdx);
 					DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
 					DrawDisasmAddr(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
 					DrawDisasmCode(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
@@ -379,8 +378,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	/////////////////////////////////////////////////////////	
 	// check the keys and the mouse
 	/////////////////////////////////////////////////////////	
-	if (!_isRunning && hoveredLineIdx > 0 &&
-		m_disasmLines >= DISASM_INSTRUCTION_OFFSET)
+	if (!_isRunning && hoveredLineIdx >= 0)
 	{
 		// Up/Down scrolling
 		if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
@@ -904,7 +902,7 @@ void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 }
 
 void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx, 
-	const float _posMin, const float _posMax, const bool _selected)
+	const bool _selected)
 {
 	if (_isRunning) return;
 
