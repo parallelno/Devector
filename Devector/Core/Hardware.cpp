@@ -67,12 +67,6 @@ void dev::Hardware::Execution()
             
             // rasterizes a frame
             do {
-                auto CheckBreak = m_checkBreak.load();
-                if (CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.GetState()))
-                {
-                    m_status = Status::STOP;
-                    break;
-                }
                 auto TraceLogUpdate = m_traceLogUpdate.load();
                 if (TraceLogUpdate)
                 {
@@ -80,10 +74,14 @@ void dev::Hardware::Execution()
                     // (*TraceLogUpdate)(m_cpu.GetState(), m_memory.GetState(), m_);
                 }
                 ExecuteInstruction();
-
                 ReqHandling();
 
-                
+                auto CheckBreak = m_checkBreak.load();
+                if (CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.GetState()))
+                {
+                    m_status = Status::STOP;
+                    break;
+                }
 
             } while (m_status == Status::RUN && m_display.GetFrameNum() == frameNum);
 

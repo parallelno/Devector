@@ -5,11 +5,11 @@
 
 dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware, 
 		const float* const _fontSizeP, const float* const _dpiScaleP, 
-		bool& _reset, const bool _restartOnLoadFdd)
+		bool& _reset, bool& _ruslat)
 	:
 	BaseWindow("Hardware Stats", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware),
-	m_reqHardwareStatsReset(_reset), m_restartOnLoadFdd(_restartOnLoadFdd)
+	m_reqHardwareStatsReset(_reset), m_ruslat(_ruslat)
 {
 	UpdateData(false);
 }
@@ -308,24 +308,5 @@ void dev::HardwareStatsWindow::UpdateDataRuntime()
 	}
 
 	// ruslat
-	auto ruslatHistoryJ = *m_hardware.Request(Hardware::Req::GET_RUSLAT_HISTORY);
-	auto m_ruslatHistory = ruslatHistoryJ["data"].get<uint32_t>();
-	// auto press ruslat after loading fdd
-	if (m_restartOnLoadFdd) {
-		bool newRusLat = (m_ruslatHistory & 0b1000) != 0;
-
-		if (newRusLat != m_ruslat) {
-			if (m_rustLatSwitched++ > 2)
-			{
-				m_rustLatSwitched = 0;
-				auto romEnabledJ = *m_hardware.Request(Hardware::Req::IS_ROM_ENABLED);
-				if (romEnabledJ["data"]) {
-					m_hardware.Request(Hardware::Req::RESTART);
-				}
-			}
-		}
-	}
-
-	m_ruslat = (m_ruslatHistory & 0b1000) != 0;
 	m_ruslatS = m_ruslat ? "(*)" : "( )";
 }

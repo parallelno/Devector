@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <cstdint>
 #include "GLFW/glfw3.h"
 #include "DevectorApp.h"
 #include "Utils/Utils.h"
@@ -36,11 +37,11 @@ dev::DevectorApp::~DevectorApp()
 void dev::DevectorApp::WindowsInit()
 {
 	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", "boot//boot.bin"));
-	bool restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", true);
+	m_restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", true);
 
 	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
-	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqHardwareStatsReset, restartOnLoadFdd);
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqHardwareStatsReset, m_ruslat);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
 		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasm, m_reqHardwareStatsReset, m_reqMainWindowReload);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
@@ -119,6 +120,29 @@ void dev::DevectorApp::Update()
 		m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::SAVE_THEN_EXIT);
 		m_status = AppStatus::WAIT_FOR_SAVING;
 	}
+
+	if (m_restartOnLoadFdd) RestartOnLoadFdd();
+}
+
+// auto press ruslat after loading fdd
+void dev::DevectorApp::RestartOnLoadFdd()
+{
+	// ruslat
+	auto ruslatHistoryJ = *m_hardwareP->Request(Hardware::Req::GET_RUSLAT_HISTORY);
+	auto m_ruslatHistory = ruslatHistoryJ["data"].get<uint32_t>();
+	bool newRusLat = (m_ruslatHistory & 0b1000) != 0;
+
+	if (newRusLat != m_ruslat) {
+		if (m_rustLatSwitched++ > 2)
+		{
+			m_rustLatSwitched = 0;
+			auto romEnabledJ = *m_hardwareP->Request(Hardware::Req::IS_ROM_ENABLED);
+			if (romEnabledJ["data"]) {
+				m_hardwareP->Request(Hardware::Req::RESTART);
+			}
+		}
+	}
+	m_ruslat = (m_ruslatHistory & 0b1000) != 0;
 }
 
 void dev::DevectorApp::LoadRom(const std::wstring& _path)
@@ -235,7 +259,23 @@ void dev::DevectorApp::MainMenuUpdate()
 
 		if (ImGui::BeginMenu("Help"))
 		{
-			ImGui::MenuItem(m_feedbackWindowP->m_name.c_str(), NULL, &m_feedbackWindowVisible);
+			//ImGui::MenuItem(m_feedbackWindowP->m_name.c_str(), NULL, &m_feedbackWindowVisible);
+			if (ImGui::MenuItem("zx-pk.ru: Vector06C Development"))
+			{
+				dev::OsOpenInShell("https://zx-pk.ru/threads/34480-programmirovanie.html");
+			}
+			if (ImGui::MenuItem("Vector06C Software Catalog"))
+			{
+				dev::OsOpenInShell("https://caglrc.cc/scalar/recent20/");
+			}
+			if (ImGui::MenuItem("Telegram Channel: Guides & Updates"))
+			{
+				dev::OsOpenInShell("https://t.me/devector06C");
+			}
+			if (ImGui::MenuItem("zx-pk.ru: Devector Discussions"))
+			{
+				dev::OsOpenInShell("https://zx-pk.ru/threads/35808-devector-emulyator-kompyutera-vektor-06ts.html");
+			}
 			ImGui::MenuItem(m_aboutWindowP->m_name.c_str(), NULL, &m_aboutWindowVisible);
 			ImGui::EndMenu();
 		}

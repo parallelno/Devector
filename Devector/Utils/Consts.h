@@ -4,10 +4,10 @@
 
 namespace dev
 {
-	static constexpr int MAIN_WINDOW_W = 1200;
-	static constexpr int MAIN_WINDOW_H = 900;
+	static constexpr int MAIN_WINDOW_W = 820;
+	static constexpr int MAIN_WINDOW_H = 670;
 	static constexpr int MAIN_WINDOW_X = 0;
-	static constexpr int MAIN_WINDOW_Y = 0;
+	static constexpr int MAIN_WINDOW_Y = 32;
 	static constexpr int DEFAULT_FONT_SIZE = 18;
 	static constexpr int DEFAULT_FONT_ITALIC_SIZE = 18;
 	static const char* DEFAULT_FONT_PATH = "fonts//medium.ttf";

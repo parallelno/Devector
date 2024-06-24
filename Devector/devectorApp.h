@@ -106,6 +106,10 @@ namespace dev
 		bool m_aboutWindowVisible = false;
 		bool m_feedbackWindowVisible = false;
 
+		bool m_ruslat = false;
+		bool m_restartOnLoadFdd = false;
+		int m_rustLatSwitched = 0;
+
 		// path, driveIdx, autoBoot
 		std::list<std::tuple<std::wstring, int, bool>> m_recentFilePaths;
 
@@ -143,5 +147,6 @@ namespace dev
 		void OpenFile();
 		void DrawSelectDrivePopup();
 		void ResLoadingStatusHandling();
+		void RestartOnLoadFdd();
 	};
 }

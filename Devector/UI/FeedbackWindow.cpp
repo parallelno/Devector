@@ -5,8 +5,7 @@
 
 dev::FeedbackWindow::FeedbackWindow(const float* const _fontSizeP, const float* const _dpiScaleP)
 	:
-	BaseWindow("Send Feedback", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP)/*,
-	m_telegramBot("7058460483:AAEj56bVEZIFkVy6nikQcEoQcRqzq4W_Uls")*/
+	BaseWindow("Send Feedback", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP)
 {
 	m_userFeedback = m_defaultFeedback;
 }

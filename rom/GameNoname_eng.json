@@ -1,6 +1,6 @@
 {
     "comments": {
-        "0x0100": "Test comment",
+        "0x0100": "Test comment NEW!",
         "0x011B": "yet another cool comment"
     },
     "consts": {
@@ -11,7 +11,7 @@
         "SOMETHING2": "0x007F"
     },
     "labels": {
-        "@loop": "0x014A",
+        "@sure it's a loop ": "0x014A",
         "main_start1": "0x0100",
         "other_label": "0x0100",
         "ram_disk_init": "0x0257",
