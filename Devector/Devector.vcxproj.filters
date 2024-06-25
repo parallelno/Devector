@@ -3,12 +3,6 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="DevectorApp.cpp" />
-    <ClCompile Include="..\SharedSource\3rdParty\sqlite3\shell.c">
-      <Filter>SharedSource\3rdParty\sqlite3</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SharedSource\3rdParty\sqlite3\sqlite3.c">
-      <Filter>SharedSource\3rdParty\sqlite3</Filter>
-    </ClCompile>
     <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui.cpp">
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClCompile>
@@ -129,12 +123,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
-    <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3.h">
-      <Filter>SharedSource\3rdParty\sqlite3</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3ext.h">
-      <Filter>SharedSource\3rdParty\sqlite3</Filter>
-    </ClInclude>
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imconfig.h">
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClInclude>
@@ -283,9 +271,6 @@
     </Filter>
     <Filter Include="SharedSource\3rdParty\json">
       <UniqueIdentifier>{d63a61a7-4a5d-4aa2-9473-3b706b2162a9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SharedSource\3rdParty\sqlite3">
-      <UniqueIdentifier>{5f9506fd-ab86-4977-809b-0b260f8cb092}</UniqueIdentifier>
     </Filter>
     <Filter Include="SharedSource\3rdParty\doubleToStr">
       <UniqueIdentifier>{4bbd35c5-450f-44a5-bdb3-6f42cdbfbff9}</UniqueIdentifier>

@@ -108,8 +108,6 @@
     <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\SharedSource\3rdParty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.cpp" />
-    <ClCompile Include="..\SharedSource\3rdParty\sqlite3\shell.c" />
-    <ClCompile Include="..\SharedSource\3rdParty\sqlite3\sqlite3.c" />
     <ClCompile Include="Core\Breakpoint.cpp" />
     <ClCompile Include="Core\CpuI8080.cpp" />
     <ClCompile Include="Core\Debugger.cpp" />
@@ -155,8 +153,6 @@
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imgui.h" />
     <ClInclude Include="..\SharedSource\3rdParty\imgui\imgui_internal.h" />
     <ClInclude Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.h" />
-    <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3.h" />
-    <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3ext.h" />
     <ClInclude Include="Core\Breakpoint.h" />
     <ClInclude Include="Core\CpuI8080.h" />
     <ClInclude Include="Core\Debugger.h" />
