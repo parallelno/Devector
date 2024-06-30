@@ -11,28 +11,11 @@ const char* vtxShaderS = R"#(
 	layout (location = 0) in vec3 pos;
 	layout (location = 1) in vec2 uv;
 
-	uniform vec4 m_shaderData_bordL_bordB_visBord_bordT;
-
 	out vec2 uv0;
 
 	void main()
 	{
-		float bordL = 256.0f - m_shaderData_bordL_bordB_visBord_bordT.x;
-		float bordB = m_shaderData_bordL_bordB_visBord_bordT.y;
-		float visBord = m_shaderData_bordL_bordB_visBord_bordT.z;
-
-		vec2 texPxlSize = vec2(1.0f/768.0f , 1.0f/312.0f);
-		
-		float visibleArea = 256.0f + visBord * 2.0f;
-		vec2 visibleAreaCenter = vec2(bordL + 256.0f, bordB + 128.0f);
-
-		// Inverse y to match the display
 		uv0 = vec2(uv.x, 1.0f - uv.y);
-
-		uv0 -= visibleAreaCenter * texPxlSize;
-		uv0 *= vec2(visibleArea * 2.0f , visibleArea) * texPxlSize;
-		uv0 += vec2(0.5f, 0.5f);
-
 		gl_Position = vec4(pos.xyz, 1.0f);
 	}
 )#";
@@ -46,39 +29,34 @@ const char* fragShaderS = R"#(
 	in vec2 uv0;
 
 	uniform sampler2D texture0;
-	uniform vec4 m_shaderData_scrollVert;
-	uniform vec4 m_shaderData_bordL_bordB_visBord_bordT;
-	uniform vec4 m_crtXY_highlightMul;
+	uniform vec4 m_activeArea_pxlSize;
+	uniform vec4 m_bordsLRTB;
+	uniform vec4 m_scrollV_crtXY_highlightMul;
 
 	layout (location = 0) out vec4 out0;
 
 	void main()
 	{
 		vec2 uv = uv0;
-		vec2 texPxlSize = vec2(1.0f / 768.0f, 1.0f / 312.0f);
 
 		// vertical scrolling
-		float borderLeft = m_shaderData_bordL_bordB_visBord_bordT.x * texPxlSize.x;
-		float borderRight = borderLeft + 512.0f * texPxlSize.x;
-		float borderTop = m_shaderData_bordL_bordB_visBord_bordT.w *  texPxlSize.y;
-		float borderBottom = borderTop + 256.0f * texPxlSize.y;
-		if (uv.x >= borderLeft &&
-			uv.x < borderRight &&
-			uv.y >= borderTop &&
-			uv.y < borderBottom)
+		if (uv.x >= m_bordsLRTB.x &&
+			uv.x < m_bordsLRTB.y &&
+			uv.y >= m_bordsLRTB.z &&
+			uv.y < m_bordsLRTB.w)
 		{
-			uv.y -= m_shaderData_scrollVert.x * texPxlSize.y;
+			uv.y -= m_scrollV_crtXY_highlightMul.x;
 			// wrap V
-			uv.y += uv.y < borderTop ? 256.0f * texPxlSize.y : 0.0f;
+			uv.y += uv.y < m_bordsLRTB.z ? m_activeArea_pxlSize.y * m_activeArea_pxlSize.w : 0.0f;
 		}
 
 		vec3 color = texture(texture0, uv).rgb;
 
 		// crt scanline highlight
-		if (uv.y > m_crtXY_highlightMul.y * texPxlSize.y ||
-			(uv.y >= m_crtXY_highlightMul.y * texPxlSize.y && uv.x > m_crtXY_highlightMul.x * texPxlSize.x))
+		if (uv.y > m_scrollV_crtXY_highlightMul.z ||
+			(uv.y >= m_scrollV_crtXY_highlightMul.z && uv.x > m_scrollV_crtXY_highlightMul.y))
 		{
-			color.xyz *= m_crtXY_highlightMul.z;
+			color.xyz *= m_scrollV_crtXY_highlightMul.w;
 		}
 
 		out0 = vec4(color, 1.0f);
@@ -89,7 +67,7 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
 	:
 	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware), m_isHovered(false), m_glUtils(_glUtils)
+	m_hardware(_hardware), m_glUtils(_glUtils)
 {
 	m_isGLInited = Init();
 }
@@ -105,10 +83,10 @@ bool dev::DisplayWindow::Init()
 	m_vramTexId = *m_vramTexRes;
 
 	GLUtils::ShaderParams shaderParams = {
-		{ "m_shaderData_scrollVert", &m_shaderData_scrollVert },
-		{ "m_shaderData_bordL_bordB_visBord_bordT", &m_shaderData_bordL_bordB_visBord_bordT },
-		{ "m_crtXY_highlightMul", &m_crtXY_highlightMul } };
-	auto vramMatRes = m_glUtils.InitMaterial(m_vramShaderId, RENDER_TARGET_W, RENDER_TARGET_H,
+		{ "m_activeArea_pxlSize", &m_activeArea_pxlSize },
+		{ "m_scrollV_crtXY_highlightMul", &m_scrollV_crtXY_highlightMul },
+		{ "m_bordsLRTB", &m_bordsLRTB }};
+	auto vramMatRes = m_glUtils.InitMaterial(m_vramShaderId, Display::FRAME_W, Display::FRAME_H,
 			{m_vramTexRes}, shaderParams);
 	if (!vramMatRes) return false;
 	m_vramMatId = *vramMatRes;
@@ -124,20 +102,23 @@ void dev::DisplayWindow::Update(bool& _visible)
 	{
 		static int dev_IRQ_COMMIT_PXL = 72;
 
-		//ImGui::SliderInt("OUT_COMMIT_TIME", &(dev::OUT_COMMIT_TIME), 0, 512);
-		//ImGui::SliderInt("PALETTE_COMMIT_TIME", &(dev::PALETTE_COMMIT_TIME), 0, 512);
-		//ImGui::SliderInt("IRQ_COMMIT_PXL", &dev_IRQ_COMMIT_PXL, 0, 512);
-		//ImGui::SliderInt("BORDER_LEFT", &(Display::BORDER_LEFT), 0, 512);
-
 		//TODO: why dev::IRQ_COMMIT_PXL is not changing???
 		dev::IRQ_COMMIT_PXL = dev_IRQ_COMMIT_PXL;
 
 		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-		UpdateData(isRunning);
-
-		DrawDisplay();
-
 		m_isHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_None);
+		
+		// switch the border type
+		if (ImGui::IsKeyPressed(ImGuiKey_B) && ImGui::IsKeyPressed(ImGuiKey_LeftAlt)) {
+			m_borderType = static_cast<BorderType>((static_cast<int>(m_borderType) + 1) % static_cast<int>(BorderType::LEN));
+		}
+		// switch the display size
+		if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::IsKeyPressed(ImGuiKey_LeftAlt)) {
+			m_displaySize = static_cast<DisplaySize>((static_cast<int>(m_displaySize) + 1) % static_cast<int>(DisplaySize::LEN));
+		}
+
+		UpdateData(isRunning);
+		DrawDisplay();
 
 		ImGui::End();
 	}
@@ -146,15 +127,6 @@ void dev::DisplayWindow::Update(bool& _visible)
 bool dev::DisplayWindow::IsHovered() const
 {
 	return m_isHovered;
-}
-
-void dev::DisplayWindow::DrawDisplay()
-{
-	if (m_isGLInited)
-	{
-		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
-		ImGui::Image((void*)(intptr_t)framebufferTex, ImVec2(DEFAULT_WINDOW_W, DEFAULT_WINDOW_H));
-	}
 }
 
 void dev::DisplayWindow::UpdateData(const bool _isRunning)
@@ -166,31 +138,97 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
 	m_ccLast = cc;
 
-	if (!_isRunning && m_isHovered)
+	m_scrollV_crtXY_highlightMul.w = 1.0f;
+
+	if (!_isRunning)
 	{
-		res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
-		const auto& displayData = *res;
-		int rasterPixel = displayData["rasterPixel"];
-		int rasterLine = displayData["rasterLine"];
-
-		m_crtXY_highlightMul.x = (float)rasterPixel;
-		m_crtXY_highlightMul.y = (float)rasterLine;
-		m_crtXY_highlightMul.z = SCANLINE_HIGHLIGHT_MUL;
+		if (ccDiff) 
+		{
+			res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
+			const auto& displayData = *res;
+			m_rasterPixel = displayData["rasterPixel"];
+			m_rasterLine = displayData["rasterLine"];
+		}
+		if (m_isHovered)
+		{
+			m_scrollV_crtXY_highlightMul.y = (float)m_rasterPixel * FRAME_PXL_SIZE_W;
+			m_scrollV_crtXY_highlightMul.z = (float)m_rasterLine * FRAME_PXL_SIZE_H;
+			m_scrollV_crtXY_highlightMul.w = SCANLINE_HIGHLIGHT_MUL;
+		}
 	}
-	else {
-		m_crtXY_highlightMul.z = 1.0f;
-	}
-
-	//if (ccDiff == 0) return;
 
 	// update
 	if (m_isGLInited)
 	{
-		m_shaderData_bordL_bordB_visBord_bordT.x = (float)Display::BORDER_LEFT;
-		m_shaderData_scrollVert.x = static_cast<uint8_t>(m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert") + 1); // adding +1 offset because the default is 255
+		float scrollVert = static_cast<uint8_t>(m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert") + 1); // adding +1 offset because the default is 255
+		m_scrollV_crtXY_highlightMul.x = FRAME_PXL_SIZE_H * scrollVert;
 
 		auto frameP = m_hardware.GetFrame(_isRunning);
 		m_glUtils.UpdateTexture(m_vramTexId, (uint8_t*)frameP->data());
 		m_glUtils.Draw(m_vramMatId);
+	}
+}
+
+void dev::DisplayWindow::DrawDisplay()
+{
+	if (m_isGLInited)
+	{
+		float border = 0;
+		ImVec2 borderMin;
+		ImVec2 borderMax;
+		switch (m_borderType)
+		{
+		case dev::DisplayWindow::BorderType::NONE:
+			borderMin = { 0.0f, 0.0f };
+			borderMax = { 1.0f, 1.0f };
+			break;
+
+		case dev::DisplayWindow::BorderType::NORMAL:
+			border = Display::BORDER_VISIBLE;
+			[[fallthrough]];
+
+		case dev::DisplayWindow::BorderType::FULL:
+			borderMin = {
+				(Display::BORDER_LEFT - border * 2) * FRAME_PXL_SIZE_W,
+				(Display::SCAN_ACTIVE_AREA_TOP - border) * FRAME_PXL_SIZE_H };
+			borderMax = {
+				borderMin.x + (Display::ACTIVE_AREA_W + border * 4) * FRAME_PXL_SIZE_W,
+				borderMin.y + (Display::ACTIVE_AREA_H + border * 2) * FRAME_PXL_SIZE_H };
+			break;
+		}
+
+		ImVec2 displaySize;
+		switch (m_displaySize)
+		{
+		case dev::DisplayWindow::DisplaySize::R256_256:
+			displaySize.x = 256.0f;
+			displaySize.y = 256.0f;
+			break;
+		case dev::DisplayWindow::DisplaySize::R512_256:
+			displaySize.x = 512.0f;
+			displaySize.y = 256.0f;
+			break;
+		case dev::DisplayWindow::DisplaySize::R512_512:
+			displaySize.x = 512.0f;
+			displaySize.y = 512.0f;
+			break;
+		case dev::DisplayWindow::DisplaySize::MAX:
+		{
+			ImGuiStyle& style = ImGui::GetStyle();
+			displaySize.x = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
+			displaySize.y = displaySize.x * WINDOW_ASPECT;
+			break;
+		}
+		case dev::DisplayWindow::DisplaySize::FULLSCREEN:
+			// TODO:: make the fullscreen support
+		{
+			ImGuiStyle& style = ImGui::GetStyle();
+			displaySize.x = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
+			displaySize.y = displaySize.x * WINDOW_ASPECT;
+			break;
+		}
+
+		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
+		ImGui::Image((void*)(intptr_t)framebufferTex, displaySize, borderMin, borderMax);
 	}
 }
