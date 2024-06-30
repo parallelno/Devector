@@ -57,7 +57,13 @@ const char* memViewShaderFrag = R"(
 		vec3 bgColor = mix(globalColorBg.xyz, globalColorBg.xyz * BACK_COLOR_MULL, isOdd8K);
 
 		int bitIdx = 7 - int(uv0.x * 1024.0) & 7;
-		int isBitOn = GetBit(byte, bitIdx);
+		int isBitOn = GetBit(byte, bitIdx);		
+
+		// highlight every second column
+		int isByteOdd = (int(uv0.x * 512.0)>>2) & 1;
+		vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
+
+		vec3 color = mix(bgColor, byteColor, float(isBitOn));
 
 		// highlight
 		vec4 rw = texture(texture1, uv);
@@ -65,14 +71,13 @@ const char* memViewShaderFrag = R"(
 		float writes = (rw.z * 255.0f + rw.w ) * 4.0 / highlightIdxMax.x;
 		vec3 readsColor = reads * highlightRead.rgb * highlightRead.a;
 		vec3 writesColor = writes * highlightWrite.rgb * highlightWrite.a;
-		
+		vec3 rwColor = readsColor + writesColor;
+		color = mix(color * 0.8f, color * 0.5f + rwColor * 0.5f + color * rwColor * 2.0f, rwColor);
 
-		// highlight every second column
-		int isByteOdd = (int(uv0.x * 512.0)>>2) & 1;
-		vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
-		vec3 color = mix(bgColor, byteColor, float(isBitOn));
 
-		out0 = vec4(color + readsColor + writesColor, globalColorBg.a);
+
+
+		out0 = vec4(color, globalColorBg.a);
 	}
 )";
 
@@ -175,7 +180,9 @@ void dev::MemDisplayWindow::DrawDisplay()
 	dev::DrawHelpMarker(
 		"Blue highlights represent reads.\n"
 		"Red highlights represent writes.\n"
-		"The brighter the color, the more recent the change.");
+		"The brighter the color, the more recent the change.\n"
+		"Left Alt + Mouse Wheel - zoom."
+		);
 
 	switch (highlightMode)
 	{
