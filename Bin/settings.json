@@ -16,12 +16,17 @@
     "memDisplayWindowVisible": true,
     "recentFiles": [
         [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\test_ustroistv.rom",
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\ot.rom",
             -1,
             false
         ],
         [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\ot.rom",
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
+            -1,
+            false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\test_ustroistv.rom",
             -1,
             false
         ],
@@ -47,11 +52,6 @@
         ],
         [
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\bord2.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
             -1,
             false
         ],

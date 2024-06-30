@@ -219,14 +219,6 @@ void dev::DisplayWindow::DrawDisplay()
 			displaySize.y = displaySize.x * WINDOW_ASPECT;
 			break;
 		}
-		case dev::DisplayWindow::DisplaySize::FULLSCREEN:
-			// TODO:: make the fullscreen support
-		{
-			ImGuiStyle& style = ImGui::GetStyle();
-			displaySize.x = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
-			displaySize.y = displaySize.x * WINDOW_ASPECT;
-			break;
-		}
 		}
 
 		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);

@@ -29,7 +29,7 @@ namespace dev
 		int m_rasterLine = 0;
 		enum class BorderType : int { NONE = 0, NORMAL, FULL, LEN};
 		BorderType m_borderType = BorderType::NORMAL;
-		enum class DisplaySize : int { R256_256 = 0, R512_256, R512_512, MAX, FULLSCREEN, LEN };
+		enum class DisplaySize : int { R256_256 = 0, R512_256, R512_512, MAX, LEN };
 		DisplaySize m_displaySize = DisplaySize::MAX;
 		
 		GLUtils& m_glUtils;
