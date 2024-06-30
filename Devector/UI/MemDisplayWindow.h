@@ -46,8 +46,6 @@ namespace dev
 		GLuint1 m_highlightShaderId = -1;
 		std::array<GLUtils::MaterialId, RAM_TEXTURES> m_memViewMatIds;
 		std::array<GLuint1, RAM_TEXTURES> m_memViewTexIds;
-		//GLuint1 m_lastReadsTexId = -1;
-		//GLuint1 m_lastWritesTexId = -1;
 		Debugger::MemLastRW* m_lastRWIdxsP;
 		std::array<GLuint1, RAM_TEXTURES> m_lastRWTexIds;
 		bool m_isGLInited = false;

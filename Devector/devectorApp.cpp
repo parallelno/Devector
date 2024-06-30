@@ -423,7 +423,7 @@ void dev::DevectorApp::KeyHandling(GLFWwindow* _window, int _key, int _scancode,
 	{
 		instance->ImGui_ImplGlfw_KeyCallback(_window, _key, _scancode, _action, _modes);
 
-		if (instance->m_displayWindowP->IsHovered()) 
+		if (instance->m_displayWindowP->IsFocused()) 
 		{
 			instance->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "key", _key }, { "action", _action} });
 		}

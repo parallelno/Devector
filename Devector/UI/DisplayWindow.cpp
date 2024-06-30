@@ -3,6 +3,8 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3_loader.h"
 
+#include "Utils/ImGuiUtils.h"
+
 // Vertex shader source code
 const char* vtxShaderS = R"#(
 	#version 330 core
@@ -106,27 +108,31 @@ void dev::DisplayWindow::Update(bool& _visible)
 		dev::IRQ_COMMIT_PXL = dev_IRQ_COMMIT_PXL;
 
 		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-		m_isHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_None);
+		m_windowFocused = ImGui::IsWindowFocused();
 		
 		// switch the border type
-		if (ImGui::IsKeyPressed(ImGuiKey_B) && ImGui::IsKeyPressed(ImGuiKey_LeftAlt)) {
+		if (ImGui::IsKeyPressed(ImGuiKey_B) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl)) {
 			m_borderType = static_cast<BorderType>((static_cast<int>(m_borderType) + 1) % static_cast<int>(BorderType::LEN));
+			DrawTooltipTimer(m_borderTypeAS[(int)(m_borderType)]);
 		}
 		// switch the display size
-		if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::IsKeyPressed(ImGuiKey_LeftAlt)) {
+		if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl)) {
 			m_displaySize = static_cast<DisplaySize>((static_cast<int>(m_displaySize) + 1) % static_cast<int>(DisplaySize::LEN));
+			DrawTooltipTimer(m_displaySizeAS[(int)(m_displaySize)]);
 		}
 
 		UpdateData(isRunning);
+		DrawContextMenu();
 		DrawDisplay();
+		DrawTooltipTimer();
 
 		ImGui::End();
 	}
 }
 
-bool dev::DisplayWindow::IsHovered() const
+bool dev::DisplayWindow::IsFocused() const
 {
-	return m_isHovered;
+	return m_windowFocused;
 }
 
 void dev::DisplayWindow::UpdateData(const bool _isRunning)
@@ -149,7 +155,7 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 			m_rasterPixel = displayData["rasterPixel"];
 			m_rasterLine = displayData["rasterLine"];
 		}
-		if (m_isHovered)
+		if (m_displayIsHovered)
 		{
 			m_scrollV_crtXY_highlightMul.y = (float)m_rasterPixel * FRAME_PXL_SIZE_W;
 			m_scrollV_crtXY_highlightMul.z = (float)m_rasterLine * FRAME_PXL_SIZE_H;
@@ -160,7 +166,7 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 	// update
 	if (m_isGLInited)
 	{
-		float scrollVert = static_cast<uint8_t>(m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert") + 1); // adding +1 offset because the default is 255
+		uint8_t scrollVert = m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert") + 1; // adding +1 offset because the default is 255
 		m_scrollV_crtXY_highlightMul.x = FRAME_PXL_SIZE_H * scrollVert;
 
 		auto frameP = m_hardware.GetFrame(_isRunning);
@@ -178,7 +184,7 @@ void dev::DisplayWindow::DrawDisplay()
 		ImVec2 borderMax;
 		switch (m_borderType)
 		{
-		case dev::DisplayWindow::BorderType::NONE:
+		case dev::DisplayWindow::BorderType::FULL:
 			borderMin = { 0.0f, 0.0f };
 			borderMax = { 1.0f, 1.0f };
 			break;
@@ -187,7 +193,7 @@ void dev::DisplayWindow::DrawDisplay()
 			border = Display::BORDER_VISIBLE;
 			[[fallthrough]];
 
-		case dev::DisplayWindow::BorderType::FULL:
+		case dev::DisplayWindow::BorderType::NONE:
 			borderMin = {
 				(Display::BORDER_LEFT - border * 2) * FRAME_PXL_SIZE_W,
 				(Display::SCAN_ACTIVE_AREA_TOP - border) * FRAME_PXL_SIZE_H };
@@ -223,5 +229,32 @@ void dev::DisplayWindow::DrawDisplay()
 
 		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
 		ImGui::Image((void*)(intptr_t)framebufferTex, displaySize, borderMin, borderMax);
+		m_displayIsHovered = ImGui::IsItemHovered();
+		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+		{
+			ImGui::OpenPopup(m_contextMenuName);
+		}
+	}
+}
+
+void dev::DisplayWindow::DrawContextMenu()
+{
+	if (ImGui::BeginPopup(m_contextMenuName))
+	{
+		if (ImGui::BeginMenu("Options"))
+		{
+			ImGui::Combo("Border Type", (int*)(&m_borderType), m_borderTypeS);
+			ImGui::Combo("Display Size", (int*)(&m_displaySize), m_displaySizeS);
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Help")) 
+		{
+			ImGui::Text(
+				"Left Ctrl + S - set the display size,\n"
+				"Left Ctrl + B - set the border,\n"
+			);
+			ImGui::EndMenu();
+		}
+		ImGui::EndPopup();
 	}
 }

@@ -24,13 +24,17 @@ namespace dev
 		Hardware& m_hardware;
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
-		bool m_isHovered = false;
+		bool m_windowFocused = false;
 		int m_rasterPixel = 0;
 		int m_rasterLine = 0;
 		enum class BorderType : int { NONE = 0, NORMAL, FULL, LEN};
 		BorderType m_borderType = BorderType::NORMAL;
 		enum class DisplaySize : int { R256_256 = 0, R512_256, R512_512, MAX, LEN };
 		DisplaySize m_displaySize = DisplaySize::MAX;
+		const char* m_borderTypeS = " None\0 Normal\0 Full\0\0";
+		const char* m_displaySizeS = " 256x256\0 512x256\0 512x512\0 Maximize\0\0";
+		const char* m_borderTypeAS[3] = { "Border: None", "Border: Normal", "Border: Full" };
+		const char* m_displaySizeAS[4] = { "Display Size: 256x256", "Display Size: 512x256", "Display Size: 512x512", "Display Size: Maximize" };
 		
 		GLUtils& m_glUtils;
 		GLUtils::Vec4 m_activeArea_pxlSize = { Display::ACTIVE_AREA_W, Display::ACTIVE_AREA_H, FRAME_PXL_SIZE_W, FRAME_PXL_SIZE_H};
@@ -44,8 +48,11 @@ namespace dev
 		GLUtils::MaterialId m_vramMatId;
 		GLuint1 m_vramTexId = -1;
 		bool m_isGLInited = false;
+		bool m_displayIsHovered = false;
+		const char* m_contextMenuName = "##displayCMenu";
 
 		void DrawDisplay();
+		void DrawContextMenu();
 		void CreateTexture(const bool _vsync);
 		void UpdateData(const bool _isRunning);
 		bool Init();
@@ -53,7 +60,7 @@ namespace dev
 	public:
 		DisplayWindow(Hardware& _hardware, const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils);
 		void Update(bool& _visible);
-		bool IsHovered() const;
+		bool IsFocused() const;
 	};
 
 };

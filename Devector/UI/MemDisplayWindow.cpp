@@ -205,8 +205,8 @@ void dev::MemDisplayWindow::DrawDisplay()
 	ImVec2 mousePos = ImGui::GetMousePos();
 	static ImVec2 imgPixelPos;
 	static int imageHoveredId = 0;
-	ImVec2 remainingSize = ImGui::GetContentRegionAvail();
 
+	ImVec2 remainingSize = ImGui::GetContentRegionAvail();
 	ImGui::BeginChild("ScrollingFrame", { remainingSize.x, remainingSize.y }, true, ImGuiWindowFlags_HorizontalScrollbar);
 
 	if (m_isGLInited)
@@ -246,15 +246,20 @@ void dev::MemDisplayWindow::DrawDisplay()
 	ImGui::EndChild();
 
 	// addr pop-up
-	if (ImGui::IsItemHovered() &&
-		imageHoveredId >= 0 &&
-		!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+	if (ImGui::IsItemHovered())
 	{
-		ImGui::BeginTooltip();
-		Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
-		GlobalAddr val = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
-		ImGui::Text("0x%04X (0x%02X), %s", addr, val, separatorsS[imageHoveredId]);
-		ImGui::EndTooltip();
+		if (imageHoveredId >= 0 &&
+			!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+		{
+			ImGui::BeginTooltip();
+			Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
+			GlobalAddr val = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
+			ImGui::Text("0x%04X (0x%02X), %s", addr, val, separatorsS[imageHoveredId]);
+			ImGui::EndTooltip();
+		}
+
+		// tooltip zoom
+		DrawTooltipTimer();
 	}
 }
 
@@ -296,13 +301,14 @@ void dev::MemDisplayWindow::ScaleView()
 		{
 			float scaleAdjusted = m_scale < 1.0f ? SCALE_INC : m_scale * SCALE_INC;
 
-			if (ImGui::GetIO().MouseWheel > 0.0f)
-			{
+			if (ImGui::GetIO().MouseWheel > 0.0f){
 				m_scale = dev::Min( m_scale + scaleAdjusted, SCALE_MAX);
 			}
-			else if (ImGui::GetIO().MouseWheel < 0.0f)
-			{
+			else if (ImGui::GetIO().MouseWheel < 0.0f) {
 				m_scale = dev::Max(m_scale - scaleAdjusted, SCALE_MIN);
+			}
+			if (ImGui::GetIO().MouseWheel != 0.0f) {
+				DrawTooltipTimer(std::format("Zoom: {}", m_scale).c_str());
 			}
 		}
 	}

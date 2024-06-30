@@ -138,4 +138,5 @@ namespace dev
 	auto DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab) -> UIItemMouseAction;
 	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color, 
 		const ImVec4& _highlightColor, bool _forceHighlight = false) -> UIItemMouseAction;
+	void DrawTooltipTimer(const char* _text = nullptr, const float _timer = 0.7f);
 }

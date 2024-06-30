@@ -429,6 +429,31 @@ auto dev::DrawAddr(const bool _isRunning,
 	return mouseAction;
 }
 
+// draws a tooltip during the time = _timer 
+// _timer > 0.0f sets the timer, _timer == 0.0 evaluates the timer
+void dev::DrawTooltipTimer(const char* _text, const float _timer)
+{
+	static double timer = 0.0f;
+	static char tooltip[256] = "";
+	
+	if (_text && _timer > 0.0f) {
+		timer = _timer;
+		strcpy_s(tooltip, 256, _text);
+		return;
+	}
+
+	static auto lastTime = std::chrono::system_clock::now();
+	std::chrono::duration<double, std::milli> elapsedTime = std::chrono::system_clock::now() - lastTime;
+	lastTime = std::chrono::system_clock::now();
+	timer -= elapsedTime.count() / 1000.0f;
+
+	if (timer <= 0.0f) return;
+
+	ImGui::BeginTooltip();
+	ImGui::Text(tooltip);
+	ImGui::EndTooltip();
+}
+
 auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab)
 -> UIItemMouseAction
 {
