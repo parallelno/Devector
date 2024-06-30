@@ -227,6 +227,7 @@ void dev::DisplayWindow::DrawDisplay()
 			displaySize.y = displaySize.x * WINDOW_ASPECT;
 			break;
 		}
+		}
 
 		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
 		ImGui::Image((void*)(intptr_t)framebufferTex, displaySize, borderMin, borderMax);
