@@ -41,8 +41,8 @@ auto dev::Breakpoint::IsActiveS() const -> const char* { return status == Status
 
 bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _cpuState, const Memory::State& _memState) const
 {
-	auto mapping = _memState.mapping.data && Memory::MAPPING_RAM_MODE_MASK ? 1 << (_memState.mapping.pageRam + 1) : 1;
-	bool active = status == Status::ACTIVE && mapping & mappingPages;
+	auto mapping1 = _memState.mapping1.data && Memory::MAPPING_RAM_MODE_MASK ? 1 << (_memState.mapping1.pageRam + 1) : 1;
+	bool active = status == Status::ACTIVE && mapping1 & mappingPages;
 	if (!active) return false;
 	if (cond == dev::Breakpoint::Condition::ANY) return true;
 	

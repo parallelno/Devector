@@ -60,7 +60,8 @@ namespace dev
         #pragma pack(push, 1)
 		struct State
 		{
-			Mapping mapping;
+			Mapping mapping1; // mapping to the Ram-disk 1
+			Mapping mapping2; // mapping to the Ram-disk 2
 			Update update;
 		};
         #pragma pack(pop)

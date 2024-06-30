@@ -40,6 +40,7 @@ void dev::HardwareStatsWindow::DrawRegs() const
 	{
 		ImGui::TableSetupColumn("regsNames", ImGuiTableColumnFlags_WidthFixed, 30);
 
+		// regs
 		DrawProperty2("AF", m_regAFS);
 		DrawProperty2("BC", m_regBCS);
 		DrawProperty2("DE", m_regDES);
@@ -47,31 +48,13 @@ void dev::HardwareStatsWindow::DrawRegs() const
 		DrawProperty2("SP", m_regSPS);
 		DrawProperty2("PC", m_regPCS);
 
-		ImGui::EndTable();
-	}
-}
-
-void dev::HardwareStatsWindow::DrawFlags() const
-{
-	static ImGuiTableFlags tableFlags =
-		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
-		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_NoPadInnerX |
-		ImGuiTableFlags_ContextMenuInBody;
-
-	if (ImGui::BeginTable("flags", 2, tableFlags))
-	{
-		ImGui::TableSetupColumn("flagsNames", ImGuiTableColumnFlags_WidthFixed, 45);
-
+		// flags
+		ImGui::Dummy({1,8});
 		DrawProperty2("C", dev::BoolToStr(m_flagC));
 		DrawProperty2("Z", dev::BoolToStr(m_flagZ));
 		DrawProperty2("P", dev::BoolToStr(m_flagP));
 		DrawProperty2("S", dev::BoolToStr(m_flagS));
 		DrawProperty2("AC", dev::BoolToStr(m_flagAC));
-		DrawSeparator2("");
-		DrawProperty2("INTE", dev::BoolToStr(m_flagINTE));
-		DrawProperty2("IFF", dev::BoolToStr(m_flagIFF));
-		DrawProperty2("HLTA", dev::BoolToStr(m_flagHLTA));
 
 		ImGui::EndTable();
 	}
@@ -116,28 +99,56 @@ void dev::HardwareStatsWindow::DrawHardware() const
 
 	if (ImGui::BeginTable("hardware", 2, flags))
 	{
-		ImGui::TableSetupColumn("hardwareName", ImGuiTableColumnFlags_WidthFixed, 100);
-		ImGui::TableSetupColumn("hardwareValue", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableSetupColumn("hwName", ImGuiTableColumnFlags_WidthFixed, 80);
 
 		// cpu cycles
 		DrawProperty2("CPU Cicles", m_ccS);
 		DrawProperty2("Last Run", m_ccLastRunS);
-		DrawProperty2("CRT", m_rasterPixel_rasterLineS);
+		DrawProperty2("CRT X", m_rasterPixelS);
+		DrawProperty2("CRT Y", m_rasterLineS);
 		DrawProperty2("Rus/Lat", m_ruslatS);
 
-		// mapping
-		DrawSeparator2("Ram-Disk:");
-		DrawProperty2("RAM Mode", m_mappingRamModeS);
-		DrawProperty2("RAM Page", m_mappingPageRamS);
-		DrawProperty2("Stack Mode", m_mappingModeStackS);
-		DrawProperty2("Stack Page", m_mappingPageStackS);
+		// interuption states
+		ImGui::Dummy({ 1,8 });
+		DrawProperty2("INTE", dev::BoolToStr(m_flagINTE));
+		DrawProperty2("IFF", dev::BoolToStr(m_flagIFF));
+		DrawProperty2("HLTA", dev::BoolToStr(m_flagHLTA));
+
+		ImGui::EndTable();
+	}
+}
+
+void dev::HardwareStatsWindow::DrawPeripheral() const
+{
+	static ImGuiTableFlags tableFlags =
+		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
+		ImGuiTableFlags_SizingStretchSame |
+		ImGuiTableFlags_NoPadInnerX |
+		ImGuiTableFlags_ContextMenuInBody;
+
+	if (ImGui::BeginTable("Peripheral", 2, tableFlags))
+	{
+		ImGui::TableSetupColumn("pfNames", ImGuiTableColumnFlags_WidthFixed, 110);
+
+		// ram-disk 1 mapping
+		DrawSeparator2("Ram-Disk 1:");
+		DrawProperty2("RAM Mode", m_mappingRamMode1S);
+		DrawProperty2("RAM Page", m_mappingPageRam1S);
+		DrawProperty2("Stack Mode", m_mappingModeStack1S);
+		DrawProperty2("Stack Page", m_mappingPageStack1S);
+		// ram-disk 2 mapping
+		DrawSeparator2("Ram-Disk 2:");
+		DrawProperty2("RAM Mode", m_mappingRamMode2S);
+		DrawProperty2("RAM Page", m_mappingPageRam2S);
+		DrawProperty2("Stack Mode", m_mappingModeStack2S);
+		DrawProperty2("Stack Page", m_mappingPageStack2S);
 
 		// FDC
 		DrawSeparator2("FDC:");
 		static const std::string diskNames[] = { "Drive A", "Drive B", "Drive C", "Drive D" };
 		DrawProperty2("Selected", m_fdcDrive, m_fdcStats);
 
-		for (int i=0; i<Fdc1793::DRIVES_MAX; i++)
+		for (int i = 0; i < Fdc1793::DRIVES_MAX; i++)
 		{
 			DrawProperty2(diskNames[i], m_fddStats[i], m_fddPaths[i]);
 		}
@@ -159,9 +170,9 @@ void dev::HardwareStatsWindow::DrawStats(const bool _isRunning)
 	if (ImGui::BeginTable("Hardware Stats", 4, flags))
 	{
 		ImGui::TableSetupColumn("Regs", ImGuiTableColumnFlags_WidthFixed, 80);
-		ImGui::TableSetupColumn("Flags", ImGuiTableColumnFlags_WidthFixed, 70);
-		ImGui::TableSetupColumn("Stack", ImGuiTableColumnFlags_WidthFixed, 80);
-		ImGui::TableSetupColumn("Hardware", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableSetupColumn("Stack", ImGuiTableColumnFlags_WidthFixed, 76);
+		ImGui::TableSetupColumn("Hardware", ImGuiTableColumnFlags_WidthFixed, 140);
+		ImGui::TableSetupColumn("Peripheral", ImGuiTableColumnFlags_WidthStretch);
 		ImGui::TableHeadersRow();
 
 		if (_isRunning) ImGui::BeginDisabled();
@@ -171,12 +182,12 @@ void dev::HardwareStatsWindow::DrawStats(const bool _isRunning)
 		ImGui::TableNextColumn();
 		DrawRegs();
 		ImGui::TableNextColumn();
-		DrawFlags();
-		ImGui::TableNextColumn();
 		DrawStack();
 		ImGui::TableNextColumn();
 		DrawHardware();
-		
+		ImGui::TableNextColumn();
+		DrawPeripheral();
+
 		PopStyleCompact();
 		if (_isRunning) ImGui::EndDisabled();
 		
@@ -258,25 +269,40 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	int rasterPixel = displayDataJ["rasterPixel"];
 	int rasterLine = displayDataJ["rasterLine"];
 	res = m_hardware.Request(Hardware::Req::GET_MEMORY_MAPPING);
-	Memory::Mapping memMapping { res->at("mapping") };
+	Memory::Mapping memMapping1 { res->at("mapping1") };
+	Memory::Mapping memMapping2 { res->at("mapping2") };
 
-
-	m_mappingRamModeS = "Off";
-	if (memMapping.data & Memory::MAPPING_RAM_MODE_MASK)
+	// update ram-disk 1
+	m_mappingRamMode1S = "Off";
+	if (memMapping1.data & Memory::MAPPING_RAM_MODE_MASK)
 	{
-		auto modeA = memMapping.modeRamA ? "AC" : "--";
-		auto mode8 = memMapping.modeRam8 ? "8" : "-";
-		auto modeE = memMapping.modeRamE ? "E" : "-";
-		m_mappingRamModeS = std::format("{}{}{}", mode8, modeA, modeE);
+		auto modeA = memMapping1.modeRamA ? "AC" : "--";
+		auto mode8 = memMapping1.modeRam8 ? "8" : "-";
+		auto modeE = memMapping1.modeRamE ? "E" : "-";
+		m_mappingRamMode1S = std::format("{}{}{}", mode8, modeA, modeE);
 	}
+	m_mappingPageRam1S = std::to_string(memMapping1.pageRam);
+	m_mappingModeStack1S = dev::BoolToStrC(memMapping1.modeStack, 2);
+	m_mappingPageStack1S = std::to_string(memMapping1.pageStack);
+	
+	// update ram-disk 2
+	m_mappingRamMode2S = "Off";
+	if (memMapping2.data & Memory::MAPPING_RAM_MODE_MASK)
+	{
+		auto modeA = memMapping2.modeRamA ? "AC" : "--";
+		auto mode8 = memMapping2.modeRam8 ? "8" : "-";
+		auto modeE = memMapping2.modeRamE ? "E" : "-";
+		m_mappingRamMode2S = std::format("{}{}{}", mode8, modeA, modeE);
+	}
+	m_mappingPageRam2S = std::to_string(memMapping2.pageRam);
+	m_mappingModeStack2S = dev::BoolToStrC(memMapping2.modeStack, 2);
+	m_mappingPageStack2S = std::to_string(memMapping2.pageStack);
 
-	m_mappingPageRamS = std::to_string(memMapping.pageRam);
-	m_mappingModeStackS = dev::BoolToStrC(memMapping.modeStack, true);
-	m_mappingPageStackS = std::to_string(memMapping.pageStack);
-
+	// update hardware
 	m_ccS = std::to_string(cc);
 	m_ccLastRunS = std::to_string(m_ccLastRun);
-	m_rasterPixel_rasterLineS = std::format("X: {:03} Y: {:03}", rasterPixel, rasterLine);
+	m_rasterPixelS = std::to_string(rasterPixel);
+	m_rasterLineS = std::to_string(rasterLine);
 }
 
 void dev::HardwareStatsWindow::UpdateDataRuntime()

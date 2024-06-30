@@ -1,19 +1,19 @@
 {
     "bootPath": "boot//boot.bin",
-    "breakpointsWindowVisisble": true,
-    "disasmWindowVisible": true,
-    "displayWindowVisible": true,
+    "breakpointsWindowVisisble": false,
+    "disasmWindowVisible": false,
+    "displayWindowVisible": false,
     "fontItalicPath": "fonts//medium_italic.ttf",
     "fontItalicSize": 18.0,
     "fontPath": "fonts//medium.ttf",
     "fontSize": 18.0,
     "hardwareStatsWindowVisible": true,
-    "hexViewerWindowVisible": true,
+    "hexViewerWindowVisible": false,
     "mainWindowHeight": 1353,
     "mainWindowWidth": 2285,
     "mainWindowX": 6,
     "mainWindowY": 33,
-    "memDisplayWindowVisible": true,
+    "memDisplayWindowVisible": false,
     "recentFiles": [
         [
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
@@ -68,5 +68,5 @@
     ],
     "restartOnLoadFdd": true,
     "traceLogWindowVisible": false,
-    "watchpointsWindowVisible": true
+    "watchpointsWindowVisible": false
 }

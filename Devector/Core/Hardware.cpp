@@ -219,13 +219,11 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             break;
 
         case Req::GET_MEMORY_MAPPING:
-        {
-            auto mapping = m_memory.GetState().mapping.data;
             m_reqRes.emplace({
-                {"mapping", mapping},
+                {"mapping1", m_memory.GetState().mapping1.data},
+                {"mapping2", m_memory.GetState().mapping2.data},
                 });
             break;
-        }
         case Req::GET_GLOBAL_ADDR_RAM:
             m_reqRes.emplace({
                 {"data", m_memory.GetGlobalAddr(dataJ["addr"], Memory::AddrSpace::RAM)}

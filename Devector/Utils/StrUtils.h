@@ -16,8 +16,8 @@ namespace dev
 	auto StrToStrW(const std::string& _s) -> const std::wstring;
 	auto Utf8ToStrW(const std::string& _s) -> std::wstring;
 	auto StrWToStr(const std::wstring& _s) -> const std::string;
-	auto BoolToStrC(const bool _val, bool _text = false) -> const char*;
-	auto BoolToStr(const bool _val, bool _text = false) -> const std::string;
+	auto BoolToStrC(const bool _val, int _mode = 0) -> const char*;
+	auto BoolToStr(const bool _val, int _mode = 0) -> const std::string;
 	auto StrHexToInt(const char* _str) -> int;
 	auto GetSubstringCount(const std::string& _str, const std::string& _substr) -> int;
 	auto StrToUpper(const std::wstring _str) -> std::wstring;

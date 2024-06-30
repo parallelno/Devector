@@ -8,8 +8,8 @@ namespace dev
 {
 	class HardwareStatsWindow : public BaseWindow
 	{
-		static constexpr int DEFAULT_WINDOW_W = 500;
-		static constexpr int DEFAULT_WINDOW_H = 300;
+		static constexpr int DEFAULT_WINDOW_W = 600;
+		static constexpr int DEFAULT_WINDOW_H = 400;
 
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
@@ -49,11 +49,16 @@ namespace dev
 
 		std::string m_ccS;
 		std::string m_ccLastRunS;
-		std::string m_rasterPixel_rasterLineS;
-		std::string m_mappingRamModeS;
-		std::string m_mappingPageRamS;
-		std::string m_mappingModeStackS;
-		std::string m_mappingPageStackS;
+		std::string m_rasterPixelS;
+		std::string m_rasterLineS;
+		std::string m_mappingRamMode1S;
+		std::string m_mappingPageRam1S;
+		std::string m_mappingModeStack1S;
+		std::string m_mappingPageStack1S;
+		std::string m_mappingRamMode2S;
+		std::string m_mappingPageRam2S;
+		std::string m_mappingModeStack2S;
+		std::string m_mappingPageStack2S;
 		std::string m_fdcDrive;
 		std::string m_fdcSide;
 		std::string m_fdcTrack;
@@ -68,9 +73,9 @@ namespace dev
 
 		void DrawStats(const bool _isRunning);
 		void DrawRegs() const;
-		void DrawFlags() const;
 		void DrawStack() const;
 		void DrawHardware() const;
+		void DrawPeripheral() const;
 		void UpdateData(const bool _isRunning);
 		void UpdateDataRuntime();
 

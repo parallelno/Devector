@@ -68,33 +68,41 @@ auto dev::Utf8ToStrW(const std::string& _s)
 	return converter.from_bytes(_s);
 }
 */
-const char* dev::BoolToStrC(const bool _val, bool _text)
+const char* dev::BoolToStrC(const bool _val, int _mode)
 {
-	if (_text)
-	{
-		static const char* false_s = "False";
-		static const char* true_s = "True";
-		return _val ? true_s : false_s;
+	static const char* false_s0 = "False";
+	static const char* true_s0 = "True";
+	static const char* false_s1 = "0";
+	static const char* true_s1 = "1";
+	static const char* false_s2 = "Off";
+	static const char* true_s2 = "On";
+	switch (_mode) {
+	case 0:
+		return _val ? true_s0 : false_s0;
+	case 1:
+		return _val ? true_s1 : false_s1;
+	case 2:
+		return _val ? true_s2 : false_s2;
 	}
-
-	static const char* false_s0 = "0";
-	static const char* true_s0 = "1";
-	return _val ? true_s0 : false_s0;
 }
 
-auto dev::BoolToStr(const bool _val, bool _text)
+auto dev::BoolToStr(const bool _val, int _mode)
 -> const std::string
 {
-	if (_text)
-	{
-		static const std::string false_s = "False";
-		static const std::string true_s = "True";
-		return _val ? true_s : false_s;
+	static const std::string false_s0 = "False";
+	static const std::string true_s0 = "True";
+	static const std::string false_s1 = "0";
+	static const std::string true_s1 = "1";
+	static const std::string false_s2 = "Off";
+	static const std::string true_s2 = "On";
+	switch (_mode) {
+	case 0:
+		return _val ? true_s0 : false_s0;
+	case 1:
+		return _val ? true_s1 : false_s1;
+	case 2:
+		return _val ? true_s2 : false_s2;
 	}
-
-	static const std::string false_s0 = "0";
-	static const std::string true_s0 = "1";
-	return _val ? true_s0 : false_s0;
 }
 
 auto dev::StrHexToInt(const char* _str)

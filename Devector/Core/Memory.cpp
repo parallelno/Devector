@@ -10,7 +10,7 @@ dev::Memory::Memory(const std::wstring& _pathBootData)
 void dev::Memory::Init()
 {
 	m_ram.fill(0);
-	m_state.mapping.data = 0;
+	m_state.mapping1.data = 0;
 	m_state.update.memType = MemType::ROM;
 }
 
@@ -82,28 +82,28 @@ auto dev::Memory::GetGlobalAddr(GlobalAddr _globalAddr, const AddrSpace _addrSpa
 
 	_globalAddr &= 0xFFFF;
 
-	if (m_state.mapping.modeStack && _addrSpace == AddrSpace::STACK)
+	if (m_state.mapping1.modeStack && _addrSpace == AddrSpace::STACK)
 	{
-		return _globalAddr + static_cast<GlobalAddr>(m_state.mapping.pageStack + 1) * RAM_DISK_PAGE_LEN;
+		return _globalAddr + static_cast<GlobalAddr>(m_state.mapping1.pageStack + 1) * RAM_DISK_PAGE_LEN;
 	}
 	else if (IsRamMapped((Addr)_globalAddr))
 	{
-		return _globalAddr + (m_state.mapping.pageRam + 1) * RAM_DISK_PAGE_LEN;
+		return _globalAddr + (m_state.mapping1.pageRam + 1) * RAM_DISK_PAGE_LEN;
 	}
 
 	return _globalAddr;
 }
 
 auto dev::Memory::GetState() const -> const State& { return m_state; }
-void dev::Memory::SetRamDiskMode(uint8_t _data) { m_state.mapping.data = _data; }
+void dev::Memory::SetRamDiskMode(uint8_t _data) { m_state.mapping1.data = _data; }
 bool dev::Memory::IsRomEnabled() const { return m_state.update.memType == MemType::ROM; };
 
 // check if the addr is mapped to the ram-disk
 bool dev::Memory::IsRamMapped(Addr _addr) const
 {
-	if ((m_state.mapping.modeRamA && _addr >= 0xA000 && _addr <= 0xDFFF) ||
-		(m_state.mapping.modeRam8 && _addr >= 0x8000 && _addr <= 0x9FFF) ||
-		(m_state.mapping.modeRamE && _addr >= 0xE000 && _addr <= 0xFFFF))
+	if ((m_state.mapping1.modeRamA && _addr >= 0xA000 && _addr <= 0xDFFF) ||
+		(m_state.mapping1.modeRam8 && _addr >= 0x8000 && _addr <= 0x9FFF) ||
+		(m_state.mapping1.modeRamE && _addr >= 0xE000 && _addr <= 0xFFFF))
 	{
 		return true;
 	}
