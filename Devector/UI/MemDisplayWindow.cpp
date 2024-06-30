@@ -205,12 +205,7 @@ void dev::MemDisplayWindow::DrawDisplay()
 	ImVec2 mousePos = ImGui::GetMousePos();
 	static ImVec2 imgPixelPos;
 	static int imageHoveredId = 0;
-
 	ImVec2 remainingSize = ImGui::GetContentRegionAvail();
-	ImVec2 windowPos = ImGui::GetWindowPos();
-	ImVec2 windowSize = ImGui::GetWindowSize();
-	ImVec2 windowEndPos = ImVec2(windowPos.x + windowSize.x, windowPos.y + windowSize.y);
-	ImVec2 windowBottomRight = ImVec2(windowEndPos.x, windowPos.y + windowSize.y);
 
 	ImGui::BeginChild("ScrollingFrame", { remainingSize.x, remainingSize.y }, true, ImGuiWindowFlags_HorizontalScrollbar);
 
@@ -228,10 +223,7 @@ void dev::MemDisplayWindow::DrawDisplay()
 			bool isInsideImg = mousePos.x >= imagePos.x && mousePos.x < imageEndPos.x &&
 				mousePos.y >= imagePos.y && mousePos.y < imageEndPos.y;
 
-			bool isInsideWindow = mousePos.x >= windowPos.x && mousePos.x < windowEndPos.x &&
-				mousePos.y >= windowPos.y && mousePos.y < windowBottomRight.y;
-
-			if (isInsideWindow && isInsideImg)
+			if (isInsideImg)
 			{
 				imgPixelPos = ImVec2(mousePos.x - imagePos.x, mousePos.y - imagePos.y);
 				imageHoveredId = i;
@@ -249,19 +241,21 @@ void dev::MemDisplayWindow::DrawDisplay()
 				m_reqHexViewer.len = 1;
 			}
 		}
-		// addr pop-up
-		if (imageHoveredId >= 0 &&
-			!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
-		{
-			ImGui::BeginTooltip();
-			Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
-			GlobalAddr val = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
-			ImGui::Text("0x%04X (0x%02X), %s", addr, val, separatorsS[imageHoveredId]);
-			ImGui::EndTooltip();
-		}
 	}
 	ScaleView();
 	ImGui::EndChild();
+
+	// addr pop-up
+	if (ImGui::IsItemHovered() &&
+		imageHoveredId >= 0 &&
+		!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+	{
+		ImGui::BeginTooltip();
+		Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
+		GlobalAddr val = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
+		ImGui::Text("0x%04X (0x%02X), %s", addr, val, separatorsS[imageHoveredId]);
+		ImGui::EndTooltip();
+	}
 }
 
 void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
