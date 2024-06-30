@@ -272,7 +272,7 @@ void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
 
 	uint64_t cc = data["cc"];
 	auto ccDiff = cc - m_ccLast;
-	if (ccDiff == 0) return;
+	//if (ccDiff == 0) return;
 	m_ccLast = cc;
 
 	// update
