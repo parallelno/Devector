@@ -10,7 +10,7 @@ dev::Hardware::Hardware(const std::wstring& _pathBootData)
     m_timer(),
     m_timerWrapper(m_timer),
     m_fdc(),
-    m_io(m_keyboard, m_memory, m_timer, m_fdc, &Display::VectorColorToArgb),
+    m_io(m_keyboard, m_memory, m_timer, m_fdc),
     m_cpu(
         m_memory,
         std::bind(&IO::PortIn, &m_io, std::placeholders::_1),

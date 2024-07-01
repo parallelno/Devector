@@ -2,7 +2,7 @@
     "bootPath": "boot//boot.bin",
     "breakpointsWindowVisisble": false,
     "disasmWindowVisible": false,
-    "displayWindowVisible": false,
+    "displayWindowVisible": true,
     "fontItalicPath": "fonts//medium_italic.ttf",
     "fontItalicSize": 18.0,
     "fontPath": "fonts//medium.ttf",
@@ -16,42 +16,7 @@
     "memDisplayWindowVisible": false,
     "recentFiles": [
         [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_eng.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\badaps.fdd",
-            0,
-            true
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\ot.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\test_ustroistv.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\helv06c.rom",
-            -1,
-            false
-        ],
-        [
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\clrspace.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\clrs.rom",
             -1,
             false
         ],
@@ -62,6 +27,41 @@
         ],
         [
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\bord2.rom",
+            -1,
+            false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_eng.rom",
+            -1,
+            false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\test_ustroistv.rom",
+            -1,
+            false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\badaps.fdd",
+            0,
+            true
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
+            -1,
+            false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\ot.rom",
+            -1,
+            false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\helv06c.rom",
+            -1,
+            false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\clrs.rom",
             -1,
             false
         ]

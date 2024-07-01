@@ -25,62 +25,70 @@ namespace dev
 	class IO
 	{
 	public:
-		static constexpr int PORT_OUT_BORDER_COLOR = 0x0c; // OUT 0x0c
-		static constexpr int PORT_NO_COMMIT = -1; // no-data to process
-		
+		static constexpr uint8_t PORT_OUT_BORDER_COLOR = 0x0c; // OUT 0x0c
+		static constexpr int8_t PORT_NO_COMMIT = -1; // no-data to process
 		static constexpr int PALETTE_LEN = 16;
-
-		using VectorColorToArgbFunc = std::function<ColorI(const uint8_t)>;
-
-		static constexpr bool DISPLAY_MODE_256 = false;
+		static constexpr bool MODE_256 = false;
 		static constexpr bool MODE_512 = true;
 
 	private:
-		using Palette = std::array <ColorI, PALETTE_LEN>;
-		Palette m_palette;
-		uint8_t m_borderColorIdx;
-		bool m_displayMode; // 256 or 512 modes
-		int m_outCommitTimer; // in pixels (12Mhz clock)
-		int m_paletteCommitTimer; // in pixels (12Mhz clock)
+#pragma pack(push, 1)
+		struct State
+		{
+			uint8_t palette[PALETTE_LEN];
+			uint8_t outport		: 8;
+			uint8_t outbyte		: 8;
 
-		uint8_t CW, m_portA, m_portB, m_portC;
-		uint8_t CW2, m_portA2, m_portB2, m_portC2;
-		uint32_t m_ruslat = 0;
+			uint8_t CW			: 8;
+			uint8_t portA		: 8;
+			uint8_t portB		: 8;
+			uint8_t portC		: 8;
+			uint8_t CW2			: 8;
+			uint8_t portA2		: 8;
+			uint8_t portB2		: 8;
+			uint8_t portC2		: 8;
+
+			int8_t outCommitTimer		: 8; // in pixels (12Mhz clock)
+			int8_t paletteCommitTimer	: 8; // in pixels (12Mhz clock)
+
+			uint8_t joy0 : 8;
+			uint8_t joy1 : 8;
+
+			uint8_t hwColor : 8; // Vector06C color format : uint8_t BBGGGRRR
+			uint8_t brdColorIdx : 4; // border color idx
+			bool displayMode : 1; // 256 or 512 modes
+			uint8_t ruslat : 1;
+		};
+#pragma pack(pop)
+
+		State m_state;
 		uint32_t m_ruslatHistory = 0;
-
-		int m_outport;
-		int m_outbyte;
-		int m_palettebyte;
-
-
-		uint8_t joy_0e, joy_0f;
+		
 
 		Keyboard& m_keyboard;
 		Memory& m_memory;
 		TimerI8253& m_timer;
 		Fdc1793& m_fdc;
 
-		VectorColorToArgbFunc VectorColorToArgb;
-
 		void PortOutHandling(uint8_t _port, uint8_t _value);
 
 	public:
-		IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer, Fdc1793& _fdc, VectorColorToArgbFunc _vecToArgbFunc);
+		IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer, Fdc1793& _fdc);
 		void Init();
 		auto PortIn(uint8_t _port) -> uint8_t;
 		void PortOut(uint8_t _port, uint8_t _value);
 		void PortOutCommit();
-		void PaletteCommit(const int _index);
 		inline auto GetKeyboard() -> Keyboard& { return m_keyboard; };
-		inline auto GetColor(const size_t _colorIdx) const -> ColorI { return m_palette[_colorIdx]; };
-		inline auto GetBorderColor() const -> ColorI { return m_palette[m_borderColorIdx]; };
-		inline auto GetBorderColorIdx() const -> uint8_t { return m_borderColorIdx; };
-		inline auto GetScroll() const -> uint8_t { return m_portA; };
-		inline auto GetRusLat() const -> uint32_t { return m_ruslat; }
+		inline auto GetColor(const uint8_t _colorIdx) const -> uint8_t { return m_state.palette[_colorIdx]; };
+		inline void SetColor(const uint8_t _idx) { m_state.palette[_idx] = m_state.hwColor; };
+		inline auto GetBorderColor() const -> uint8_t { return m_state.palette[m_state.brdColorIdx]; };
+		inline auto GetBorderColorIdx() const -> uint8_t { return m_state.brdColorIdx; };
+		inline auto GetScroll() const -> uint8_t { return m_state.portA; };
+		inline auto GetRusLat() const -> uint32_t { return m_state.ruslat; }
 		inline auto GetRusLatHistory() const -> uint32_t { return m_ruslatHistory; }
-		inline auto GetDisplayMode() const -> bool { return m_displayMode; };
-		inline auto GetOutCommitTimer() const -> int { return m_outCommitTimer; };
-		inline auto GetPaletteCommitTimer() const -> int { return m_paletteCommitTimer; };
+		inline auto GetDisplayMode() const -> bool { return m_state.displayMode; };
+		inline auto GetOutCommitTimer() const -> int { return m_state.outCommitTimer; };
+		inline auto GetPaletteCommitTimer() const -> int { return m_state.paletteCommitTimer; };
 		void TryToCommit(const uint8_t _colorIdx);
 	};
 }

@@ -66,6 +66,7 @@ namespace dev
 		int m_framebufferIdx;	// currently rendered pixel idx to m_frameBuffer
 
 		uint64_t m_frameNum; // counts frames
+		ColorI m_fullPallete[256];
 
 		Memory& m_memory;
 		IO& m_io;

@@ -5,6 +5,11 @@ dev::Display::Display(Memory& _memory, IO& _io)
 	:
 	m_memory(_memory), m_io(_io), m_scrollIdx(0xff)
 {
+	// init the full palette
+	for (int i = 0; i < 256; i++) {
+		m_fullPallete[i] = VectorColorToArgb(i);
+	}
+
 	Init();
 }
 
@@ -23,11 +28,11 @@ void dev::Display::RasterizeActiveArea(const int _rasterizedPixels)
 	bool scrollTime = rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel < BORDER_LEFT + RASTERIZED_PXLS_MAX;
 	if (commitTime || scrollTime)
 	{
-		if (m_io.GetDisplayMode() == IO::DISPLAY_MODE_256) FillActiveArea256PortHandling(_rasterizedPixels);
+		if (m_io.GetDisplayMode() == IO::MODE_256) FillActiveArea256PortHandling(_rasterizedPixels);
 		else FillActiveArea512PortHandling(_rasterizedPixels);
 	}
 	else {
-		if (m_io.GetDisplayMode() == IO::DISPLAY_MODE_256) FillActiveArea256(_rasterizedPixels);
+		if (m_io.GetDisplayMode() == IO::MODE_256) FillActiveArea256(_rasterizedPixels);
 		else FillActiveArea512(_rasterizedPixels);
 	}
 }
@@ -89,7 +94,7 @@ void dev::Display::Rasterize()
 
 void dev::Display::FillBorder(const int _rasterizedPixels)
 {
-	auto borderColor = m_io.GetBorderColor();
+	auto borderColor = m_fullPallete[m_io.GetBorderColor()];
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
 		m_frameBuffer[m_framebufferIdx++] = borderColor;
@@ -101,7 +106,7 @@ void dev::Display::FillBorderPortHandling(const int _rasterizedPixels)
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
 		m_io.TryToCommit(m_io.GetBorderColorIdx());
-		auto color = m_io.GetBorderColor();
+		auto color = m_fullPallete[m_io.GetBorderColor()];
 
 		m_frameBuffer[m_framebufferIdx++] = color;
 		int isNewFrame = m_framebufferIdx / FRAME_LEN;
@@ -131,7 +136,7 @@ void dev::Display::FillActiveArea256(const int _rasterizedPixels)
 		int rasterPixel = GetRasterPixel();
 
 		auto colorIdx = BytesToColorIdx256(screenBytes, bitIdx);
-		auto color = m_io.GetColor(colorIdx);
+		auto color = m_fullPallete[m_io.GetColor(colorIdx)];
 
 		m_frameBuffer[m_framebufferIdx++] = color;
 		m_frameBuffer[m_framebufferIdx++] = color;
@@ -160,7 +165,7 @@ void dev::Display::FillActiveArea256PortHandling(const int _rasterizedPixels)
 
 		auto colorIdx = BytesToColorIdx256(screenBytes, bitIdx);
 		m_io.TryToCommit(colorIdx);
-		auto color = m_io.GetColor(colorIdx);
+		auto color = m_fullPallete[m_io.GetColor(colorIdx)];
 
 		m_frameBuffer[m_framebufferIdx++] = color;
 
@@ -188,7 +193,7 @@ void dev::Display::FillActiveArea512PortHandling(const int _rasterizedPixels)
 
 		auto colorIdx = BytesToColorIdx512(screenBytes, pxlIdx);
 		m_io.TryToCommit(colorIdx);
-		auto color = m_io.GetColor(colorIdx);
+		auto color = m_fullPallete[m_io.GetColor(colorIdx)];
 
 		m_frameBuffer[m_framebufferIdx++] = color;
 
@@ -211,7 +216,7 @@ void dev::Display::FillActiveArea512(const int _rasterizedPixels)
 		int rasterPixel = GetRasterPixel();
 
 		auto colorIdx = BytesToColorIdx512(screenBytes, pxlIdx);
-		auto color = m_io.GetColor(colorIdx);
+		auto color = m_fullPallete[m_io.GetColor(colorIdx)];
 		m_frameBuffer[m_framebufferIdx++] = color;
 		
 		pxlIdx--;
@@ -252,47 +257,6 @@ auto dev::Display::VectorColorToArgb(const uint8_t _vColor)
 		(b << (6 + 16 ));
 	return color;
 }
-/*
-// it takes 4 bytes, each from every screen buffer
-// then it swizzels the bits like this:
-// bufferE000_byte = qwertyui
-// bufferC000_byte = opasdfgh
-// bufferA000_byte = jklzxcvb
-// buffer8000_byte = nm?!@#$%
-// out uint32_t = %bhi $vgu #cfy @xdt !zsr ?lae mkpw njoq
-// an examble:
-//	input:	1111 1111 0111 1111 0000 0000 0000 0000
-//	the input's similar to:
-//		bufferE000_byte = 0000 0000
-//		bufferC000_byte = 0000 0000
-//		bufferA000_byte = 0111 1111
-//		buffer8000_byte = 1111 1111
-//	output: 1100 1100 1100 1100 1100 1100 1100 1000
-uint32_t dev::Display::BytesToColorIdxs()
-{
-	int rasterLine = GetRasterLine();
-	int rasterPixel = GetRasterPixel();
-
-	auto addrHigh = (rasterPixel - BORDER_LEFT) / RASTERIZED_PXLS;
-	auto addrLow = ACTIVE_AREA_H - 1 - (rasterLine - SCAN_ACTIVE_AREA_TOP);
-	Addr screenAddrOffset = addrHigh<<8 | addrLow;
-
-	auto bytes = m_memory.GetScreenBytes(screenAddrOffset);
-
-	uint32_t result = 0;
-	for (int i = 0; i < 8; i++)
-	{
-		result <<= 4;
-		result |= (bytes >> (i - 0 + 0)) & 1;
-		result |= (bytes >> (i - 1 + 8)) & 2;
-		result |= (bytes >> (i - 2 + 16)) & 4;
-		result |= (bytes >> (i - 3 + 24)) & 8;
-	}
-
-	return result;
-}
-*/
-
 
 /**
  * Retrieves four screen bytes at the current raster line and pixel.
