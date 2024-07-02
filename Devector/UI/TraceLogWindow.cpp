@@ -31,10 +31,7 @@ void dev::TraceLogWindow::UpdateData(const bool _isRunning)
 	if (_isRunning) return;
 
 	// check if the hardware updated its state
-	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
-	const auto& data = *res;
-
-	uint64_t cc = data["cc"];
+	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
 	auto ccDiff = cc - m_ccLast;
 	if (ccDiff == 0) return;
 	m_ccLast = cc;

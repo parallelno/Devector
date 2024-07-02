@@ -50,11 +50,11 @@ void dev::HardwareStatsWindow::DrawRegs() const
 
 		// flags
 		ImGui::Dummy({1,8});
-		DrawProperty2("C", dev::BoolToStr(m_flagC));
-		DrawProperty2("Z", dev::BoolToStr(m_flagZ));
-		DrawProperty2("P", dev::BoolToStr(m_flagP));
-		DrawProperty2("S", dev::BoolToStr(m_flagS));
-		DrawProperty2("AC", dev::BoolToStr(m_flagAC));
+		DrawProperty2("C", dev::BoolToStr(m_regAF.c));
+		DrawProperty2("Z", dev::BoolToStr(m_regAF.z));
+		DrawProperty2("P", dev::BoolToStr(m_regAF.p));
+		DrawProperty2("S", dev::BoolToStr(m_regAF.s));
+		DrawProperty2("AC", dev::BoolToStr(m_regAF.ac));
 
 		ImGui::EndTable();
 	}
@@ -110,9 +110,47 @@ void dev::HardwareStatsWindow::DrawHardware() const
 
 		// interuption states
 		ImGui::Dummy({ 1,8 });
-		DrawProperty2("INTE", dev::BoolToStr(m_flagINTE));
-		DrawProperty2("IFF", dev::BoolToStr(m_flagIFF));
-		DrawProperty2("HLTA", dev::BoolToStr(m_flagHLTA));
+		DrawProperty2("INTE", dev::BoolToStr(m_ints.inte));
+		DrawProperty2("IFF", dev::BoolToStr(m_ints.iff));
+		DrawProperty2("HLTA", dev::BoolToStr(m_ints.hlta));
+
+		// palette
+		dev::DrawSeparator2("Palette");
+		float sz = ImGui::GetTextLineHeight();
+		for (int i = 0; i < IO::PALETTE_LEN; i++)
+		{
+			if (i % 8 == 0) ImGui::TableNextRow();
+			if (i % 4 == 0)
+			{
+				ImGui::TableNextColumn();
+				ImGui::Dummy({4,4});
+				ImGui::SameLine();
+			}
+
+			ImVec2 pos = ImGui::GetCursorScreenPos();
+			ColorI color = Display::VectorColorToArgb(m_palette.bytes[i]);
+			ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x + sz, pos.y + sz), color);
+			ImGui::Dummy(ImVec2(sz, sz));
+			if (ImGui::IsItemHovered()) 
+			{
+				ImGui::BeginTooltip();
+				ImGui::Text("idx: %d, HW Color: 0x%02X, RGB: 0x%06X", i, m_palette.bytes[i], color & 0xFFFFFF);
+				ImGui::EndTooltip();
+			}
+			
+			if (i % 4 != 3) ImGui::SameLine();
+		}
+
+		// ports
+		dev::DrawSeparator2("Ports");
+		DrawProperty2("CW", m_cwS);
+		DrawProperty2("Port A", m_portAS);
+		DrawProperty2("Port B", m_portBS);
+		DrawProperty2("Port C", m_portCS);
+		DrawProperty2("CW2", m_cw2S);
+		DrawProperty2("Port A2", m_portA2S);
+		DrawProperty2("Port A2", m_portB2S);
+		DrawProperty2("Port A2", m_portC2S);
 
 		ImGui::EndTable();
 	}
@@ -214,7 +252,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	if (ccDiff == 0) return;
 
 	// Regs
-	Addr regAF = data["af"];
+	m_regAF.af.word = data["af"];
 	Addr regBC = data["bc"];
 	Addr regDE = data["de"];
 	Addr regHL = data["hl"];
@@ -222,21 +260,16 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	Addr regPC = data["pc"];
 
 	// Flags
-	m_regAFS = std::format("{:04X}", regAF);
+	m_regAFS = std::format("{:04X}", m_regAF.af.word);
 	m_regBCS = std::format("{:04X}", regBC);
 	m_regDES = std::format("{:04X}", regDE);
 	m_regHLS = std::format("{:04X}", regHL);
 	m_regSPS = std::format("{:04X}", regSP);
 	m_regPCS = std::format("{:04X}", regPC);
 
-	m_flagC = data["flagC"];
-	m_flagZ = data["flagZ"];
-	m_flagP = data["flagP"];
-	m_flagS = data["flagS"];
-	m_flagAC = data["flagAC"];
-	m_flagINTE = data["flagINTE"];
-	m_flagIFF = data["flagIFF"];
-	m_flagHLTA = data["flagHLTA"];
+	dev::CpuI8080::Int ints{ data["ints"] };
+
+
 
 	// Stack
 	Addr dataAddrN10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 10 } })->at("data");
@@ -303,6 +336,24 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_ccLastRunS = std::to_string(m_ccLastRun);
 	m_rasterPixelS = std::to_string(rasterPixel);
 	m_rasterLineS = std::to_string(rasterLine);
+
+	res = m_hardware.Request(Hardware::Req::GET_PALETTE);
+	const auto& paletteDataJ = *res;
+	m_palette.low = paletteDataJ["low"];
+	m_palette.hi = paletteDataJ["hi"];
+
+	res = m_hardware.Request(Hardware::Req::GET_IO_PORTS);
+	const auto& portsDataJ = *res;
+	m_ports.data = portsDataJ["data"];
+
+	m_cwS = std::to_string(m_ports.CW);
+	m_portAS = std::to_string(m_ports.portA);
+	m_portBS = std::to_string(m_ports.portB);
+	m_portCS = std::to_string(m_ports.portC);
+	m_cw2S = std::to_string(m_ports.CW2);
+	m_portA2S = std::to_string(m_ports.portA2);
+	m_portB2S = std::to_string(m_ports.portB2);
+	m_portC2S = std::to_string(m_ports.portC2);
 }
 
 void dev::HardwareStatsWindow::UpdateDataRuntime()

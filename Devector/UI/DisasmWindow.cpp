@@ -282,7 +282,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	if (!m_disasmPP || !*m_disasmPP) return;
 	auto& disasm = **m_disasmPP;
 
-	Addr regPC = m_hardware.Request(Hardware::Req::GET_REGS)->at("pc");
+	Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
 	int hoveredLineIdx = -1;
 	ImVec2 selectionMin = ImGui::GetCursorScreenPos();
 	ImVec2 selectionMax = ImVec2(selectionMin.x + ImGui::GetWindowWidth(), selectionMin.y);
@@ -429,7 +429,7 @@ void dev::DisasmWindow::UpdateData(const bool _isRunning)
 
 	if (_isRunning) return;
 
-	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+	auto res = m_hardware.Request(Hardware::Req::GET_CC);
 	const auto& data = *res;
 
 	uint64_t cc = data["cc"];

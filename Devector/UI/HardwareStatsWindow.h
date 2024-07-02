@@ -3,6 +3,7 @@
 #include "Utils/Consts.h"
 #include "Ui/BaseWindow.h"
 #include "Core/Hardware.h"
+#include "Core/CpuI8080.h"
 
 namespace dev
 {
@@ -26,14 +27,8 @@ namespace dev
 		std::string m_regSPS;
 		std::string m_regPCS;
 
-		bool m_flagC = false;
-		bool m_flagZ = false;
-		bool m_flagP = false;
-		bool m_flagS = false;
-		bool m_flagAC = false;
-		bool m_flagINTE = false;
-		bool m_flagIFF = false;
-		bool m_flagHLTA = false;
+		dev::CpuI8080::AF m_regAF;
+		dev::CpuI8080::Int m_ints;
 
 		std::string m_dataAddrN10S;
 		std::string m_dataAddrN8S;
@@ -68,6 +63,18 @@ namespace dev
 		std::string m_fddStats[Fdc1793::DRIVES_MAX];
 		std::string m_fddPaths[Fdc1793::DRIVES_MAX];
 		std::string m_ruslatS;
+
+		IO::Palette m_palette;
+		IO::Ports m_ports;
+		std::string m_cwS;
+		std::string m_portAS;
+		std::string m_portBS;
+		std::string m_portCS;
+		std::string m_cw2S;
+		std::string m_portA2S;
+		std::string m_portB2S;
+		std::string m_portC2S;
+
 		// stats end
 		////////////////////
 

@@ -4,14 +4,14 @@
 
 #include "IO.h"
 
-#define CW		m_state.CW
-#define PORT_A	m_state.portA
-#define PORT_B	m_state.portB
-#define PORT_C	m_state.portC
-#define CW2		m_state.CW2
-#define PORT_A2	m_state.portA2
-#define PORT_B2	m_state.portB2
-#define PORT_C2	m_state.portC2
+#define CW		m_state.ports.CW
+#define PORT_A	m_state.ports.portA
+#define PORT_B	m_state.ports.portB
+#define PORT_C	m_state.ports.portC
+#define CW2		m_state.ports.CW2
+#define PORT_A2	m_state.ports.portA2
+#define PORT_B2	m_state.ports.portB2
+#define PORT_C2	m_state.ports.portC2
 
 #define OUT_PORT	m_state.outport
 #define OUT_BYTE	m_state.outbyte
@@ -26,6 +26,10 @@
 #define OUT_COMMIT_TIMER		m_state.outCommitTimer
 #define PALLETE_COMMIT_TIMER	m_state.paletteCommitTimer
 
+#define PALLETE_BYTES	m_state.palette.bytes
+#define PALLETE_LOW		m_state.palette.low
+#define PALLETE_HI		m_state.palette.hi
+
 dev::IO::IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer,
 	Fdc1793& _fdc)
 	:
@@ -33,7 +37,6 @@ dev::IO::IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer,
 	m_fdc(_fdc)
 {
 	Init();
-	int a = sizeof(m_state);
 }
 
 void dev::IO::Init()
@@ -41,17 +44,14 @@ void dev::IO::Init()
 	CW = 0x08;
 	CW2 = 0;
 	PORT_A = PORT_B = PORT_C = PORT_A2 = PORT_B2 = PORT_C2 = JOY_0 = JOY_1 = 0xFF;
-	OUT_PORT = OUT_BYTE = HW_COLOR = BRD_COLOR_IDX = 0;
+	OUT_PORT = OUT_BYTE = HW_COLOR = BRD_COLOR_IDX = PALLETE_LOW = PALLETE_HI = RUS_LAT = 0;
 
 	DISPLAY_MODE = MODE_256;
 
 	OUT_COMMIT_TIMER = IO::PORT_NO_COMMIT;
 	PALLETE_COMMIT_TIMER = IO::PORT_NO_COMMIT;
 
-	RUS_LAT = 0;
 	m_ruslatHistory = 0;
-
-	for (int i=0; i<PALETTE_LEN; i++) m_state.palette[i] = 0;
 }
 
 auto dev::IO::PortIn(uint8_t _port)

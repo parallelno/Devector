@@ -177,19 +177,21 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             m_reqRes.emplace({});
             break;
         }
-        case Req::GET_REGS:
-            m_reqRes.emplace(GetRegs());
-            break;
-
-        case Req::GET_REG_PC:
+        case Req::GET_CC:
             m_reqRes.emplace({
-                {"pc", m_cpu.GetPC() },
+                {"cc", m_cpu.GetCC() },
                 });
             break;
 
-        case Req::GET_RUSLAT:
+        case Req::GET_REGS:
+        {
+            auto regsJ = GetRegs();
+            m_reqRes.emplace(regsJ);
+            break;
+        }
+        case Req::GET_REG_PC:
             m_reqRes.emplace({
-                {"data", m_io.GetRusLat()},
+                {"pc", m_cpu.GetPC() },
                 });
             break;
 
@@ -199,6 +201,23 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
                 });
             break;
 
+        case Req::GET_PALETTE:
+        {
+            auto data = m_io.GetPalette();
+            m_reqRes.emplace({
+                {"low", data->low},
+                {"hi", data->hi},
+                });
+            break;
+        }
+        case Req::GET_IO_PORTS:
+        {
+            auto data = m_io.GetPorts();
+            m_reqRes.emplace({
+                {"data", data->data},
+                });
+            break;
+        }
         case Req::GET_BYTE_RAM:
             m_reqRes.emplace(GetByte(dataJ, Memory::AddrSpace::RAM));
             break;
@@ -324,22 +343,17 @@ void dev::Hardware::Restart()
 auto dev::Hardware::GetRegs() const
 -> nlohmann::json
 {
-    nlohmann::json out = {
-        {"cc", m_cpu.GetCC() },
-        {"pc", m_cpu.GetPC() },
-        {"sp", m_cpu.GetSP() },
-        {"af", m_cpu.GetPSW() },
-        {"bc", m_cpu.GetBC() },
-        {"de", m_cpu.GetDE() },
-        {"hl", m_cpu.GetHL() },
-        {"flagS",   m_cpu.GetFlagS() },
-        {"flagZ",   m_cpu.GetFlagZ() },
-        {"flagAC",  m_cpu.GetFlagAC() },
-        {"flagP",   m_cpu.GetFlagP() },
-        {"flagC",   m_cpu.GetFlagC() },
-        {"flagINTE",m_cpu.GetINTE() },
-        {"flagIFF", m_cpu.GetIFF() },
-        {"flagHLTA",m_cpu.GetHLTA() },
+    const auto cpuState = m_cpu.GetState();
+
+    nlohmann::json out {
+        {"cc", cpuState.cc },
+        {"pc", cpuState.regs.pc.word },
+        {"sp", cpuState.regs.sp.word },
+        {"af", cpuState.regs.psw.af.word },
+        {"bc", cpuState.regs.bc.word },
+        {"de", cpuState.regs.de.word },
+        {"hl", cpuState.regs.hl.word },
+        {"ints", cpuState.ints.data },
     };
     return out;
 }

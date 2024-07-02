@@ -137,9 +137,7 @@ bool dev::DisplayWindow::IsFocused() const
 
 void dev::DisplayWindow::UpdateData(const bool _isRunning)
 {
-	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
-	const auto& data = *res;
-	uint64_t cc = data["cc"];
+	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
 	auto ccDiff = cc - m_ccLast;
 	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
 	m_ccLast = cc;
@@ -150,7 +148,7 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 	{
 		if (ccDiff) 
 		{
-			res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
+			auto res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
 			const auto& displayData = *res;
 			m_rasterPixel = displayData["rasterPixel"];
 			m_rasterLine = displayData["rasterLine"];

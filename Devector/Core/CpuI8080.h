@@ -36,6 +36,8 @@ namespace dev
 				uint8_t h;
 			};
 			uint16_t word;
+			RegPair(const uint16_t _word) : word(_word) {};
+			RegPair() : word(0) {};
 		};
 #pragma pack(pop)
 
@@ -53,6 +55,8 @@ namespace dev
 				uint8_t a : 8;	// register A
 			};
 			RegPair af;
+			AF(const RegPair _af) : af(_af) {};
+			AF() : af(0) {};
 		};
 #pragma pack(pop)
 
@@ -81,13 +85,15 @@ namespace dev
 				bool eiPending : 1; // if set, the interruption call is pending until the next instruction
 			};
 			uint8_t data;
+			Int(const uint8_t _data) : data(_data) {};
+			Int() : data(0) {};
 		};
 #pragma pack(pop)
 
 		// defines the machine state
 #pragma pack(push, 1)
 		struct State {
-			uint64_t cc : 64; // clock cycles, debug related data
+			uint64_t cc; // clock cycles, debug related data
 			Regs regs;
 			Int ints;
 			uint8_t opcode;

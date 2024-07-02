@@ -1,7 +1,7 @@
 {
     "bootPath": "boot//boot.bin",
     "breakpointsWindowVisisble": false,
-    "disasmWindowVisible": false,
+    "disasmWindowVisible": true,
     "displayWindowVisible": true,
     "fontItalicPath": "fonts//medium_italic.ttf",
     "fontItalicSize": 18.0,
@@ -16,12 +16,12 @@
     "memDisplayWindowVisible": false,
     "recentFiles": [
         [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\clrspace.rom",
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
             -1,
             false
         ],
         [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\brdtestx.rom",
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_eng.rom",
             -1,
             false
         ],
@@ -31,7 +31,12 @@
             false
         ],
         [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_eng.rom",
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\clrspace.rom",
+            -1,
+            false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\brdtestx.rom",
             -1,
             false
         ],
@@ -44,11 +49,6 @@
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\badaps.fdd",
             0,
             true
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
-            -1,
-            false
         ],
         [
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\ot.rom",
