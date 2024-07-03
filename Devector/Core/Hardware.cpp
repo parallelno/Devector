@@ -1,5 +1,6 @@
 #include "Hardware.h"
 #include "Utils/StrUtils.h"
+#include "Core/Disasm.h"
 
 dev::Hardware::Hardware(const std::wstring& _pathBootData)
     :
@@ -280,6 +281,12 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
                 });
             break;
 
+        case Req::GET_STEP_OVER_ADDR:
+            m_reqRes.emplace({
+                {"data", GetStepOverAddr()},
+                });
+            break;
+
         case Req::SET_MEM:
             m_memory.SetRam(dataJ["addr"], dataJ["data"]);
             m_reqRes.emplace({});
@@ -413,4 +420,13 @@ void dev::Hardware::ExecuteFrameNoBreaks()
     do {
         ExecuteInstruction();
     } while (m_display.GetFrameNum() == frameNum);
+}
+
+auto dev::Hardware::GetStepOverAddr()
+-> const Addr
+{
+    auto pc = m_cpu.GetPC();
+    auto opcode = m_memory.GetByte(pc);
+    auto cmdLen = dev::GetCmdLen(opcode);
+    return pc + cmdLen;
 }

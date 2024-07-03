@@ -61,6 +61,13 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 		m_hardware.Request(Hardware::Req::EXECUTE_INSTR);
 	}
 	ImGui::SameLine();
+	if (ImGui::Button("Step Over"))
+	{
+		Addr addr = m_hardware.Request(Hardware::Req::GET_STEP_OVER_ADDR)->at("data");
+		m_debugger.AddBreakpoint(addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
+		m_hardware.Request(Hardware::Req::RUN);
+	}
+	ImGui::SameLine();
 	if (ImGui::Button("Step 0x100"))
 	{
 		for (int i = 0; i < 0x100; i++)

@@ -69,6 +69,7 @@ namespace dev
 			GET_RUSLAT_HISTORY,
 			GET_PALETTE,
 			GET_IO_PORTS,
+			GET_STEP_OVER_ADDR,
 			SET_MEM,
 			IS_ROM_ENABLED,
 			KEY_HANDLING,
@@ -116,5 +117,6 @@ namespace dev
 		auto GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto GetFddInfo(const int _driveIdx) -> Fdc1793::DiskInfo;
 		auto GetFddImage(const int _driveIdx) -> const std::vector<uint8_t>;
+		auto GetStepOverAddr() -> const Addr;
 	};
 }

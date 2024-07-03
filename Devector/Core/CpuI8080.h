@@ -97,7 +97,7 @@ namespace dev
 			uint64_t cc; // clock cycles, debug related data
 			Regs regs;
 			Int ints;
-			uint8_t opcode;
+			uint8_t opcode; // fetched instruction
 			RegPair data;
 		};
 #pragma pack(pop)
