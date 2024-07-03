@@ -36,7 +36,7 @@ namespace dev
 		const char* m_borderTypeAS[3] = { "Border: None", "Border: Normal", "Border: Full" };
 		const char* m_displaySizeAS[4] = { "Display Size: 256x256", "Display Size: 512x256", "Display Size: 512x512", "Display Size: Maximize" };
 		Hardware::ExecSpeed m_execSpeed = Hardware::ExecSpeed::NORMAL;
-		const char* m_execSpeedsS = " 10 PERCENT\0 HALF\0 NORMAL\0 X2\0 MAX\0\0";
+		const char* m_execSpeedsS = " 20%\0 50%\0 100%\0 200%\0 MAX\0\0";
 		
 		GLUtils& m_glUtils;
 		GLUtils::Vec4 m_activeArea_pxlSize = { Display::ACTIVE_AREA_W, Display::ACTIVE_AREA_H, FRAME_PXL_SIZE_W, FRAME_PXL_SIZE_H};
