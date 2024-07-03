@@ -248,30 +248,32 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
 	return pressed && hovered;
 }
 
-void dev::DrawProperty2(const std::string& _name, const std::string& _value, const std::string& _hint)
+void dev::DrawProperty2(const char* _name, const char* _value, const char* _hint, const ImVec4& _valColor)
 {
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
 
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name.c_str(), { 1.0f, 0.5f });
+	TextAligned(_name, { 1.0f, 0.5f });
 	ImGui::PopStyleColor();
 
 	ImGui::TableNextColumn();
 	ImGui::Dummy(ImVec2(5.0f, 0.0f)); ImGui::SameLine();
-	ImGui::Text(_value.c_str());
+	ImGui::PushStyleColor(ImGuiCol_Text, _valColor);
+	ImGui::Text(_value);
+	ImGui::PopStyleColor();
 
-	if (!_hint.empty()) {
+	if (_hint) {
 		ImGui::SameLine();
-		dev::DrawHelpMarker(_hint.c_str());
+		dev::DrawHelpMarker(_hint);
 	}
 }
 
-void dev::DrawSeparator2(const std::string& _text)
+void dev::DrawSeparator2(const char* _text)
 {
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
-	ImGui::SeparatorText(_text.c_str());
+	ImGui::SeparatorText(_text);
 	ImGui::TableNextColumn();
 	ImGui::SeparatorText("");
 }

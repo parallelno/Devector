@@ -779,12 +779,6 @@ static const uint8_t mnenomicLens[DISASM_CMDS] =
 	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1,	1, 1, 1, 2,
 };
 
-#define I16_ADDRS_LEN 7	// sizeof("0xFFFF");
-static char addrsS[0x10000 * I16_ADDRS_LEN]; // for fast Addr to AddrS conversion
-
-#define I8_ADDRS_LEN 5	// sizeof("0xFF");
-static char smallAddrsS[0x100 * I8_ADDRS_LEN]; // for fast Addr to AddrS conversion
-
 // 0 - c*
 // 1 - call
 // 2 - j*
@@ -819,44 +813,6 @@ static const uint8_t opcodeTypes[DISASM_CMDS] =
 
 #define OPCODE_TYPE_MAX 7
 
-void InitAddrsS()
-{
-	static bool inited = false;
-	if (inited) return;
-	inited = true;
-
-	char addrS[5]; // "FFFF"
-	for (int i = 0, addr = 0; i < sizeof(addrsS); addr++)
-	{
-		sprintf_s(addrS, 5, "%04X", addr);
-		addrsS[i++] = '0';
-		addrsS[i++] = 'x';
-		addrsS[i++] = addrS[0];
-		addrsS[i++] = addrS[1];
-		addrsS[i++] = addrS[2];
-		addrsS[i++] = addrS[3];
-		addrsS[i++] = 0;
-	}
-
-	char smallAddrS[3]; // "FF"
-	for (int i = 0, addr = 0; i < sizeof(smallAddrsS); addr++)
-	{
-		sprintf_s(smallAddrS, 3, "%02X", addr);
-		smallAddrsS[i++] = '0';
-		smallAddrsS[i++] = 'x';
-		smallAddrsS[i++] = smallAddrS[0];
-		smallAddrsS[i++] = smallAddrS[1];
-		smallAddrsS[i++] = 0;
-	}
-}
-
-struct IniterAddrsS {
-	IniterAddrsS() { InitAddrsS(); }
-};
-static IniterAddrsS initerAddrsS;
-
-auto dev::AddrToAddrI16S(const Addr _addr) -> const char* { return addrsS + _addr * I16_ADDRS_LEN; }
-auto dev::AddrToAddrI8S(const uint8_t _addr) -> const char* { return smallAddrsS + _addr * I8_ADDRS_LEN; }
 auto dev::GetMnemonic(const uint8_t _opcode) -> const char** { return mnenomics[_opcode]; }
 auto dev::GetMnemonicLen(const uint8_t _opcode) -> uint8_t { return mnenomicLens[_opcode]; }
 auto dev::GetMnemonicType(const uint8_t _opcode) -> const uint8_t* { return mnenomicTypes[_opcode]; }
@@ -881,7 +837,7 @@ void dev::Disasm::Line::Init()
 auto dev::Disasm::Line::GetImmediateS() const
 -> const char*
 { 
-	return cmdImms[opcode] == CMD_IW_OFF1 ? AddrToAddrI16S(imm) : AddrToAddrI8S(static_cast<uint8_t>(imm));
+	return cmdImms[opcode] == CMD_IW_OFF1 ? Uint16ToStrC0x(imm) : Uint8ToStrC0x(static_cast<uint8_t>(imm));
 };
 
 void dev::Disasm::AddLabes(const Addr _addr)

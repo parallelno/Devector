@@ -57,6 +57,7 @@ namespace dev
 	static constexpr ImU32 DASM_BG_CLR_ADDR_HIGHLIGHT = dev::IM_U32(0x640A96FF);
 
 	// disasm text colors
+	static constexpr ImVec4 CLR_WHITE = dev::IM_VEC4(0xFFFFFFFF);
 	static constexpr ImVec4 DASM_CLR_COMMENT = dev::IM_VEC4(0x909090FF);
 	static constexpr ImVec4 DASM_CLR_LABEL_GLOBAL = dev::IM_VEC4(0xE8DC5AFF);
 	static constexpr ImVec4 DASM_CLR_LABEL_GLOBAL_IMM = dev::IM_VEC4(0xB0A46CFF); // a label that replaces an immediate operand
@@ -71,6 +72,7 @@ namespace dev
 	static constexpr ImVec4 DASM_CLR_NUMBER_HIGHLIGHT = dev::IM_VEC4(0xFFFFFFFF);
 	static constexpr ImVec4 DASM_CLR_REG = dev::IM_VEC4(0x1ECF44FF);
 	static constexpr ImVec4 DASM_CLR_CONST = dev::IM_VEC4(0x8BE0E9FF);
+	static constexpr ImVec4 CLR_NUM_UPDATED = dev::IM_VEC4(0xD0902FFF);
 	static constexpr ImU32 CLR_URL_HOVERED = dev::IM_U32(0x2081FFFF);
 	static constexpr ImU32 CLR_URL = dev::IM_U32(0x1080F0FF);
 
@@ -121,8 +123,9 @@ namespace dev
 		const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
 	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, 
 		const float _posXOffset = -0.2f, const bool _itemHasSize = false);
-	void DrawProperty2(const std::string& _name, const std::string& _value, const std::string& _hint = "");
-	void DrawSeparator2(const std::string& _text);
+	void DrawProperty2(const char* _name, const char* _value,
+		const char* _hint = nullptr, const ImVec4& _valColor = CLR_WHITE);
+	void DrawSeparator2(const char* _text);
 	void DrawProperty2EditableI(const char* _name, const char* _label, int* _value, const char* _help = "");
 	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
 			const char* _hint = "", const char* _help = "", 

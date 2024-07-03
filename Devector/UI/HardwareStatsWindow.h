@@ -4,6 +4,7 @@
 #include "Ui/BaseWindow.h"
 #include "Core/Hardware.h"
 #include "Core/CpuI8080.h"
+#include "Utils/ImGuiUtils.h"
 
 namespace dev
 {
@@ -20,16 +21,6 @@ namespace dev
 		
 		////////////////////
 		// stats
-		std::string m_regAFS;
-		std::string m_regBCS;
-		std::string m_regDES;
-		std::string m_regHLS;
-		std::string m_regSPS;
-		std::string m_regPCS;
-
-		dev::CpuI8080::AF m_regAF;
-		dev::CpuI8080::Int m_ints;
-
 		std::string m_dataAddrN10S;
 		std::string m_dataAddrN8S;
 		std::string m_dataAddrN6S;
@@ -63,6 +54,20 @@ namespace dev
 		std::string m_fddStats[Fdc1793::DRIVES_MAX];
 		std::string m_fddPaths[Fdc1793::DRIVES_MAX];
 		std::string m_ruslatS;
+
+		CpuI8080::State m_cpuState;
+		const ImVec4* m_regAFColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regBCColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regDEColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regHLColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regSPColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regPCColor = &DASM_CLR_NUMBER;
+
+		const ImVec4* m_flagCColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_flagZColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_flagPColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_flagSColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_flagACColor = &DASM_CLR_NUMBER;
 
 		IO::Palette m_palette;
 		IO::Ports m_ports;

@@ -6,6 +6,7 @@
 #include <limits.h>
 
 #include "Utils/Types.h"
+#include "Utils/StrUtils.h"
 #include "Core/Breakpoint.h"
 #include "Core/Hardware.h"
 
@@ -35,8 +36,6 @@ namespace dev
 
 	#define CMD_LEN_MAX 3
 
-	auto AddrToAddrI16S(const Addr _addr) -> const char*;
-	auto AddrToAddrI8S(const uint8_t _addr) -> const char*;
 	auto GetMnemonic(const uint8_t _opcode) -> const char**;
 	auto GetMnemonicLen(const uint8_t _opcode) -> uint8_t;
 	auto GetMnemonicType(const uint8_t _opcode) -> const uint8_t*;
@@ -83,7 +82,7 @@ namespace dev
 			void Init();
 			auto GetStr() const->std::string;
 
-			inline auto GetAddrS() const -> const char* { return AddrToAddrI16S(addr); };
+			inline auto GetAddrS() const -> const char* { return Uint16ToStrC0x(addr); };
 			inline auto GetImmediateS() const -> const char*;
 			inline auto GetFirstLabel() const -> const char* { return labels ? labels->at(0).c_str() : nullptr; };
 			inline auto GetLabelConst() const -> const char* { return labels ? labels->at(0).c_str() : consts ? consts->at(0).c_str() : nullptr; };

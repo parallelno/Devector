@@ -41,20 +41,20 @@ void dev::HardwareStatsWindow::DrawRegs() const
 		ImGui::TableSetupColumn("regsNames", ImGuiTableColumnFlags_WidthFixed, 30);
 
 		// regs
-		DrawProperty2("AF", m_regAFS);
-		DrawProperty2("BC", m_regBCS);
-		DrawProperty2("DE", m_regDES);
-		DrawProperty2("HL", m_regHLS);
-		DrawProperty2("SP", m_regSPS);
-		DrawProperty2("PC", m_regPCS);
+		DrawProperty2("AF", Uint16ToStrC(m_cpuState.regs.psw.af.word), nullptr, *m_regAFColor);
+		DrawProperty2("BC", Uint16ToStrC(m_cpuState.regs.bc.word), nullptr, *m_regBCColor);
+		DrawProperty2("DE", Uint16ToStrC(m_cpuState.regs.de.word), nullptr, *m_regDEColor);
+		DrawProperty2("HL", Uint16ToStrC(m_cpuState.regs.hl.word), nullptr, *m_regHLColor);
+		DrawProperty2("SP", Uint16ToStrC(m_cpuState.regs.sp.word), nullptr, *m_regSPColor);
+		DrawProperty2("PC", Uint16ToStrC(m_cpuState.regs.pc.word), nullptr, *m_regPCColor);
 
 		// flags
 		ImGui::Dummy({1,8});
-		DrawProperty2("C", dev::BoolToStr(m_regAF.c));
-		DrawProperty2("Z", dev::BoolToStr(m_regAF.z));
-		DrawProperty2("P", dev::BoolToStr(m_regAF.p));
-		DrawProperty2("S", dev::BoolToStr(m_regAF.s));
-		DrawProperty2("AC", dev::BoolToStr(m_regAF.ac));
+		DrawProperty2("C", dev::BoolToStrC(m_cpuState.regs.psw.c, 1), nullptr, *m_flagCColor);
+		DrawProperty2("Z", dev::BoolToStrC(m_cpuState.regs.psw.z, 1), nullptr, *m_flagZColor);
+		DrawProperty2("P", dev::BoolToStrC(m_cpuState.regs.psw.p, 1), nullptr, *m_flagPColor);
+		DrawProperty2("S", dev::BoolToStrC(m_cpuState.regs.psw.s, 1), nullptr, *m_flagSColor);
+		DrawProperty2("AC", dev::BoolToStrC(m_cpuState.regs.psw.ac, 1), nullptr, *m_flagACColor);
 
 		ImGui::EndTable();
 	}
@@ -73,17 +73,17 @@ void dev::HardwareStatsWindow::DrawStack() const
 		ImGui::TableSetupColumn("stackAddrs", ImGuiTableColumnFlags_WidthFixed, 30);
 
 		// Stack		
-		DrawProperty2("-12", m_dataAddrN10S);
-		DrawProperty2("-10", m_dataAddrN8S);
-		DrawProperty2("-8", m_dataAddrN6S);
-		DrawProperty2("-6", m_dataAddrN4S);
-		DrawProperty2("-2", m_dataAddrN2S);
-		DrawProperty2("SP", m_dataAddr0S);
-		DrawProperty2("+2", m_dataAddrP2S);
-		DrawProperty2("+4", m_dataAddrP4S);
-		DrawProperty2("+6", m_dataAddrP6S);
-		DrawProperty2("+8", m_dataAddrP8S);
-		DrawProperty2("+10", m_dataAddrP10S);
+		DrawProperty2("-12", m_dataAddrN10S.c_str());
+		DrawProperty2("-10", m_dataAddrN8S.c_str());
+		DrawProperty2("-8", m_dataAddrN6S.c_str());
+		DrawProperty2("-6", m_dataAddrN4S.c_str());
+		DrawProperty2("-2", m_dataAddrN2S.c_str());
+		DrawProperty2("SP", m_dataAddr0S.c_str());
+		DrawProperty2("+2", m_dataAddrP2S.c_str());
+		DrawProperty2("+4", m_dataAddrP4S.c_str());
+		DrawProperty2("+6", m_dataAddrP6S.c_str());
+		DrawProperty2("+8", m_dataAddrP8S.c_str());
+		DrawProperty2("+10", m_dataAddrP10S.c_str());
 
 		ImGui::EndTable();
 	}
@@ -102,17 +102,17 @@ void dev::HardwareStatsWindow::DrawHardware() const
 		ImGui::TableSetupColumn("hwName", ImGuiTableColumnFlags_WidthFixed, 80);
 
 		// cpu cycles
-		DrawProperty2("CPU Cicles", m_ccS);
-		DrawProperty2("Last Run", m_ccLastRunS);
-		DrawProperty2("CRT X", m_rasterPixelS);
-		DrawProperty2("CRT Y", m_rasterLineS);
-		DrawProperty2("Rus/Lat", m_ruslatS);
+		DrawProperty2("CPU Cicles", m_ccS.c_str());
+		DrawProperty2("Last Run", m_ccLastRunS.c_str());
+		DrawProperty2("CRT X", m_rasterPixelS.c_str());
+		DrawProperty2("CRT Y", m_rasterLineS.c_str());
+		DrawProperty2("Rus/Lat", m_ruslatS.c_str());
 
 		// interuption states
 		ImGui::Dummy({ 1,8 });
-		DrawProperty2("INTE", dev::BoolToStr(m_ints.inte));
-		DrawProperty2("IFF", dev::BoolToStr(m_ints.iff));
-		DrawProperty2("HLTA", dev::BoolToStr(m_ints.hlta));
+		DrawProperty2("INTE", dev::BoolToStrC(m_cpuState.ints.inte));
+		DrawProperty2("IFF", dev::BoolToStrC(m_cpuState.ints.iff));
+		DrawProperty2("HLTA", dev::BoolToStrC(m_cpuState.ints.hlta));
 
 		// palette
 		dev::DrawSeparator2("Palette");
@@ -143,14 +143,14 @@ void dev::HardwareStatsWindow::DrawHardware() const
 
 		// ports
 		dev::DrawSeparator2("Ports");
-		DrawProperty2("CW", m_cwS);
-		DrawProperty2("Port A", m_portAS);
-		DrawProperty2("Port B", m_portBS);
-		DrawProperty2("Port C", m_portCS);
-		DrawProperty2("CW2", m_cw2S);
-		DrawProperty2("Port A2", m_portA2S);
-		DrawProperty2("Port A2", m_portB2S);
-		DrawProperty2("Port A2", m_portC2S);
+		DrawProperty2("CW", m_cwS.c_str());
+		DrawProperty2("Port A", m_portAS.c_str());
+		DrawProperty2("Port B", m_portBS.c_str());
+		DrawProperty2("Port C", m_portCS.c_str());
+		DrawProperty2("CW2", m_cw2S.c_str());
+		DrawProperty2("Port A2", m_portA2S.c_str());
+		DrawProperty2("Port A2", m_portB2S.c_str());
+		DrawProperty2("Port A2", m_portC2S.c_str());
 
 		ImGui::EndTable();
 	}
@@ -170,25 +170,25 @@ void dev::HardwareStatsWindow::DrawPeripheral() const
 
 		// ram-disk 1 mapping
 		DrawSeparator2("Ram-Disk 1:");
-		DrawProperty2("RAM Mode", m_mappingRamMode1S);
-		DrawProperty2("RAM Page", m_mappingPageRam1S);
-		DrawProperty2("Stack Mode", m_mappingModeStack1S);
-		DrawProperty2("Stack Page", m_mappingPageStack1S);
+		DrawProperty2("RAM Mode", m_mappingRamMode1S.c_str());
+		DrawProperty2("RAM Page", m_mappingPageRam1S.c_str());
+		DrawProperty2("Stack Mode", m_mappingModeStack1S.c_str());
+		DrawProperty2("Stack Page", m_mappingPageStack1S.c_str());
 		// ram-disk 2 mapping
 		DrawSeparator2("Ram-Disk 2:");
-		DrawProperty2("RAM Mode", m_mappingRamMode2S);
-		DrawProperty2("RAM Page", m_mappingPageRam2S);
-		DrawProperty2("Stack Mode", m_mappingModeStack2S);
-		DrawProperty2("Stack Page", m_mappingPageStack2S);
+		DrawProperty2("RAM Mode", m_mappingRamMode2S.c_str());
+		DrawProperty2("RAM Page", m_mappingPageRam2S.c_str());
+		DrawProperty2("Stack Mode", m_mappingModeStack2S.c_str());
+		DrawProperty2("Stack Page", m_mappingPageStack2S.c_str());
 
 		// FDC
 		DrawSeparator2("FDC:");
-		static const std::string diskNames[] = { "Drive A", "Drive B", "Drive C", "Drive D" };
-		DrawProperty2("Selected", m_fdcDrive, m_fdcStats);
+		static const char* diskNames[] = { "Drive A", "Drive B", "Drive C", "Drive D" };
+		DrawProperty2("Selected", m_fdcDrive.c_str(), m_fdcStats.c_str());
 
 		for (int i = 0; i < Fdc1793::DRIVES_MAX; i++)
 		{
-			DrawProperty2(diskNames[i], m_fddStats[i], m_fddPaths[i]);
+			DrawProperty2(diskNames[i], m_fddStats[i].c_str(), m_fddPaths[i].c_str());
 		}
 
 		ImGui::EndTable();
@@ -252,7 +252,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	if (ccDiff == 0) return;
 
 	// Regs
-	m_regAF.af.word = data["af"];
+	CpuI8080::AF regAF = { data["af"] };
 	Addr regBC = data["bc"];
 	Addr regDE = data["de"];
 	Addr regHL = data["hl"];
@@ -260,16 +260,43 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	Addr regPC = data["pc"];
 
 	// Flags
-	m_regAFS = std::format("{:04X}", m_regAF.af.word);
-	m_regBCS = std::format("{:04X}", regBC);
-	m_regDES = std::format("{:04X}", regDE);
-	m_regHLS = std::format("{:04X}", regHL);
-	m_regSPS = std::format("{:04X}", regSP);
-	m_regPCS = std::format("{:04X}", regPC);
+
+	bool cUpdated = regAF.c != m_cpuState.regs.psw.c;
+	m_flagCColor = cUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool zUpdated = regAF.z != m_cpuState.regs.psw.z;
+	m_flagZColor = zUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool pUpdated = regAF.p != m_cpuState.regs.psw.p;
+	m_flagPColor = pUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool sUpdated = regAF.s != m_cpuState.regs.psw.s;
+	m_flagSColor = sUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool acUpdated = regAF.ac != m_cpuState.regs.psw.ac;
+	m_flagACColor = acUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+
+	bool afUpdated = regAF.af.word != m_cpuState.regs.psw.af.word;
+	m_regAFColor = afUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_cpuState.regs.psw = regAF;
+
+	bool bcUpdated = regBC != m_cpuState.regs.bc.word;
+	m_regBCColor = bcUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_cpuState.regs.bc.word = regBC;
+
+	bool deUpdated = regDE != m_cpuState.regs.de.word;
+	m_regDEColor = deUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_cpuState.regs.de.word = regDE;
+
+	bool hlUpdated = regHL != m_cpuState.regs.hl.word;
+	m_regHLColor = hlUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_cpuState.regs.hl.word = regHL;
+
+	bool spUpdated = regSP != m_cpuState.regs.sp.word;
+	m_regSPColor = spUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_cpuState.regs.sp.word = regSP;
+
+	bool pcUpdated = regPC != m_cpuState.regs.pc.word;
+	m_regPCColor = pcUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_cpuState.regs.pc.word = regPC;
 
 	dev::CpuI8080::Int ints{ data["ints"] };
-
-
 
 	// Stack
 	Addr dataAddrN10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 10 } })->at("data");

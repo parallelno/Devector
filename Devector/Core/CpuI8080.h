@@ -56,6 +56,7 @@ namespace dev
 			};
 			RegPair af;
 			AF(const RegPair _af) : af(_af) {};
+			AF(const uint16_t _af) : af(_af) {};
 			AF() : af(0) {};
 		};
 #pragma pack(pop)
