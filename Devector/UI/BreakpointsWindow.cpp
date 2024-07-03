@@ -296,7 +296,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 			DrawProperty2Combo("Operand", "##BPContextOperand", &selectedOp, 
 				dev::bpOperandsS, IM_ARRAYSIZE(dev::bpOperandsS), "CC - CPU Cicles counted from the last reset/reboot/reload");
 			// Condition
-			DrawProperty2Combo("Condition", "##BPContextCondition", &selectedCond, dev::bpCondsS, IM_ARRAYSIZE(dev::bpCondsS), "");
+			DrawProperty2Combo("Condition", "##BPContextCondition", &selectedCond, dev::ConditionsS, IM_ARRAYSIZE(dev::ConditionsS), "");
 			// Value
 			if (selectedCond == 0) ImGui::BeginDisabled();
 			DrawProperty2EditableS("Value", "##BPContextValue", &valueS, "FF",
@@ -339,7 +339,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 				m_debugger.AddBreakpoint(addr, mappingPages, 
 					isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, 
 					isAutoDel, static_cast<Breakpoint::Operand>(selectedOp),
-					static_cast<Breakpoint::Condition>(selectedCond), val, commentS);
+					static_cast<dev::Condition>(selectedCond), val, commentS);
 				m_reqDisasm.type = ReqDisasm::Type::UPDATE;
 				ImGui::CloseCurrentPopup();
 				_reqPopup = ReqPopup::NONE;

@@ -138,7 +138,7 @@ void dev::WatchpointsWindow::DrawTable()
 
 			// Condition
 			std::string condS = wp.GetConditionS();
-			if (wp.GetCondition() != Watchpoint::Condition::ANY) {
+			if (wp.GetCondition() != dev::Condition::ANY) {
 				if (wp.GetType() == Watchpoint::Type::LEN) 
 				{
 					condS += std::format("{:02X}", wp.GetValue());
@@ -255,7 +255,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 	static int oldId = -1;
 	static std::string globalAddrS = "FF";
 	static int access = static_cast<int>(Watchpoint::Access::RW);
-	static int cond = static_cast<int>(Watchpoint::Condition::ANY);
+	static int cond = static_cast<int>(dev::Condition::ANY);
 	static std::string valueS = "";
 	static int type = static_cast<int>(Watchpoint::Type::LEN);
 	static std::string lenS = "FF";
@@ -315,14 +315,14 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 
 			// Condition
 			DrawProperty2Combo("Condition", "##WpContextCondition", 
-				&cond, dev::wpCondsS, IM_ARRAYSIZE(dev::wpCondsS), "");
+				&cond, dev::ConditionsS, IM_ARRAYSIZE(dev::ConditionsS), "");
 
 			// Value
-			if (cond == static_cast<int>(Watchpoint::Condition::ANY)) ImGui::BeginDisabled();
+			if (cond == static_cast<int>(dev::Condition::ANY)) ImGui::BeginDisabled();
 			DrawProperty2EditableS("Value", "##WpContextValue", &valueS, 
 				type == static_cast<int>(Watchpoint::Type::LEN) ? "FF" : "FFFF",
 				"A hexademical value in the format 0xFF or FF");
-			if (cond == static_cast<int>(Watchpoint::Condition::ANY)) ImGui::EndDisabled();
+			if (cond == static_cast<int>(dev::Condition::ANY)) ImGui::EndDisabled();
 
 			// Type
 			DrawProperty2RadioButtons("Type", &type, wpTypesS, IM_ARRAYSIZE(wpTypesS), 15.0f,
@@ -372,7 +372,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 
 				m_debugger.AddWatchpoint(
 					id, static_cast<Watchpoint::Access>(access), 
-					globalAddr, static_cast<Watchpoint::Condition>(cond),
+					globalAddr, static_cast<dev::Condition>(cond),
 					value, static_cast<Watchpoint::Type>(type),
 					len, isActive, commentS);
 

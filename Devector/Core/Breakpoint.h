@@ -16,11 +16,6 @@ namespace dev
 		"A", "Flags", "B", "C", "D", "E", 
 		"H", "L", "PSW", "BC", "DE", "HL", "CC", "SP" };
 
-	static const char* bpCondsS[] = {
-	"ANY", "EQU", "LESS", "EQU", "LESS",
-	"GREATER", "LESS_EQU", "GREATER_EQU",
-	"NOT_EQU" };
-
 	struct Breakpoint
 	{
 		static constexpr uint8_t MAPPING_RAM		   = 1 << 0;
@@ -41,7 +36,6 @@ namespace dev
 		};
 
 		enum class Operand : uint8_t { A = 0, F, B, C, D, E, H, L, PSW, BC, DE, HL, CC, SP };
-		enum class Condition : uint8_t { ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU };
 		
 		auto GetAddr() const -> Addr { return addr; };
 		auto GetAddrMappingS() const -> const char*;

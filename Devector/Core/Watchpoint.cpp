@@ -100,7 +100,7 @@ auto dev::Watchpoint::GetAccess() const -> Access {	return m_access; }
 auto dev::Watchpoint::GetAccessI() const -> int { return static_cast<int>(m_access); }
 auto dev::Watchpoint::GetAccessS() const -> const char* { return wpAccessS[static_cast<uint8_t>(m_access)]; }
 auto dev::Watchpoint::GetCondition() const -> Condition { return m_cond; }
-auto dev::Watchpoint::GetConditionS() const -> const char* { return wpCondsS[static_cast<uint8_t>(m_cond)];}
+auto dev::Watchpoint::GetConditionS() const -> const char* { return ConditionsS[static_cast<uint8_t>(m_cond)];}
 auto dev::Watchpoint::GetValue() const -> uint16_t { return m_value; }
 auto dev::Watchpoint::GetType() const -> Type { return m_type; }
 auto dev::Watchpoint::GetTypeS() const -> const char* {	return wpTypesS[static_cast<uint8_t>(m_type)]; }

@@ -36,7 +36,7 @@ void dev::Breakpoint::Update(const Addr _addr,
 }
 
 auto dev::Breakpoint::GetOperandS() const ->const char* { return bpOperandsS[static_cast<uint8_t>(operand)]; }
-auto dev::Breakpoint::GetConditionS() const ->const char* {	return bpCondsS[static_cast<uint8_t>(operand)]; }
+auto dev::Breakpoint::GetConditionS() const ->const char* {	return ConditionsS[static_cast<uint8_t>(operand)]; }
 auto dev::Breakpoint::IsActiveS() const -> const char* { return status == Status::ACTIVE ? "X" : "-"; }
 
 bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _cpuState, const Memory::State& _memState) const
@@ -44,7 +44,7 @@ bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _cpuState, const Memory
 	auto mapping1 = _memState.mapping1.data && Memory::MAPPING_RAM_MODE_MASK ? 1 << (_memState.mapping1.pageRam + 1) : 1;
 	bool active = status == Status::ACTIVE && mapping1 & mappingPages;
 	if (!active) return false;
-	if (cond == dev::Breakpoint::Condition::ANY) return true;
+	if (cond == dev::Condition::ANY) return true;
 	
 	uint64_t op;
 	switch (operand)
@@ -98,17 +98,17 @@ bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _cpuState, const Memory
 
 	switch (cond)
 	{
-	case dev::Breakpoint::Condition::EQU:
+	case dev::Condition::EQU:
 		return op == value;
-	case dev::Breakpoint::Condition::LESS:
+	case dev::Condition::LESS:
 		return op < value;
-	case dev::Breakpoint::Condition::GREATER:
+	case dev::Condition::GREATER:
 		return op > value;
-	case dev::Breakpoint::Condition::LESS_EQU:
+	case dev::Condition::LESS_EQU:
 		return op <= value;
-	case dev::Breakpoint::Condition::GREATER_EQU:
+	case dev::Condition::GREATER_EQU:
 		return op >= value;
-	case dev::Breakpoint::Condition::NOT_EQU:
+	case dev::Condition::NOT_EQU:
 		return op != value;
 	}
 	return false;

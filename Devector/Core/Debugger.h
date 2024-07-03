@@ -47,7 +47,7 @@ namespace dev
 			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE,
 			const bool _autoDel = false, 
 			const Breakpoint::Operand _op = Breakpoint::Operand::A, 
-			const Breakpoint::Condition _cond = Breakpoint::Condition::ANY, 
+			const dev::Condition _cond = dev::Condition::ANY, 
 			const size_t _val = 0, const std::string& _comment = "");
 		void DelBreakpoint(const Addr _addr);
 		void DelBreakpoints();
@@ -56,7 +56,7 @@ namespace dev
 		auto GetBreakpointStatus(const Addr _addr) -> const Breakpoint::Status;
 
 		void AddWatchpoint(const dev::Id _id, const Watchpoint::Access _access, 
-			const GlobalAddr _globalAddr, const Watchpoint::Condition _cond, 
+			const GlobalAddr _globalAddr, const dev::Condition _cond, 
 			const uint16_t _value, const Watchpoint::Type _type, const int _len = 1, 
 			const bool _active = true, const std::string& _comment = "");
 		void DelWatchpoint(const dev::Id _id);

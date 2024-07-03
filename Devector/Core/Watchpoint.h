@@ -14,10 +14,6 @@ namespace dev
 {
 	static Id watchpointId = 0;
 	static const char* wpAccessS[] = { "R", "W", "RW" };
-	static const char* wpCondsS[] = {
-				"ANY", "EQU", "LESS", "EQU", "LESS",
-				"GREATER", "LESS_EQU", "GREATER_EQU",
-				"NOT_EQU" };
 	static const char* wpTypesS[] = { "LEN", "WORD" };
 
 	class Watchpoint
@@ -27,8 +23,6 @@ namespace dev
 		// WORD - breaks if the condition succeds for a word
 		enum class Type : uint8_t { LEN = 0, WORD };
 		enum class Access : uint8_t { R = 0, W, RW, COUNT };
-
-		enum class Condition : uint8_t { ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU, INVALID };
 
 		Watchpoint(const Access _access, const GlobalAddr _globalAddr, const Condition _cond,
 			const uint16_t _value, const Type _type = Type::LEN, const int _len = 1,
