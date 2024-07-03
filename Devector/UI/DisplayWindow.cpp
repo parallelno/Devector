@@ -239,13 +239,21 @@ void dev::DisplayWindow::DrawContextMenu()
 {
 	if (ImGui::BeginPopup(m_contextMenuName))
 	{
-		if (ImGui::BeginMenu("Options"))
+		if (ImGui::BeginMenu("Display Settings"))
 		{
 			ImGui::Combo("Border Type", (int*)(&m_borderType), m_borderTypeS);
 			ImGui::Combo("Display Size", (int*)(&m_displaySize), m_displaySizeS);
 			ImGui::EndMenu();
 		}
-		if (ImGui::BeginMenu("Help")) 
+		if (ImGui::BeginMenu("Emulation Settings"))
+		{
+			if (ImGui::Combo("Cpu Speed", (int*)(&m_execSpeed), m_execSpeedsS)) 
+			{
+				m_hardware.Request(Hardware::Req::SET_CPU_SPEED, { {"speed", int(m_execSpeed)} });
+			};
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Help"))
 		{
 			ImGui::Text(
 				"Left Ctrl + S - set the display size,\n"

@@ -18,6 +18,7 @@
 #include <thread>
 #include <condition_variable>
 #include <atomic>
+#include <chrono>
 
 namespace dev 
 {
@@ -74,7 +75,9 @@ namespace dev
 			SCROLL_VERT,
 			LOAD_FDD,
 			RESET_UPDATE_FDD,
+			SET_CPU_SPEED,
 		};
+		enum class ExecSpeed : int { _10PERCENT = 0, HALF, NORMAL, X2, MAX };
 
         Hardware(const std::wstring& _pathBootData);
 		~Hardware();
@@ -96,6 +99,9 @@ namespace dev
 		std::atomic<Status> m_status;
 		TQueue <std::pair<Req, nlohmann::json>> m_reqs; // a request type
 		TQueue <nlohmann::json> m_reqRes;				// it's a result of a request sent back 
+
+		ExecSpeed m_execSpeed = ExecSpeed::NORMAL;
+		std::chrono::microseconds m_execDelays[5] = { 199680us, 39936us, 19968us, 9984us, 10us };
 
 		void Init();
 		void Execution();

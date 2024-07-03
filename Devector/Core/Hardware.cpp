@@ -1,6 +1,5 @@
 #include "Hardware.h"
 #include "Utils/StrUtils.h"
-#include <chrono>
 
 dev::Hardware::Hardware(const std::wstring& _pathBootData)
     :
@@ -54,7 +53,6 @@ void dev::Hardware::Execution()
 {    
     while (m_status != Status::EXIT)
     {
-        
         auto startCC = m_cpu.GetCC();
         auto startFrame = m_display.GetFrameNum();
         auto startTime = std::chrono::system_clock::now();
@@ -88,7 +86,7 @@ void dev::Hardware::Execution()
             // vsync
             if (m_status == Status::RUN)
             {
-                expectedTime = expectedTime + Display::VSYC_DELAY;
+                expectedTime = expectedTime + m_execDelays[static_cast<int>(m_execSpeed)];
 
                 if (std::chrono::system_clock::now() < expectedTime){
                     std::this_thread::sleep_until(expectedTime);
@@ -287,6 +285,14 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
             m_reqRes.emplace({});
             break;
 
+        case Req::SET_CPU_SPEED:
+        {
+            int speed = dataJ["speed"];
+            speed = std::clamp(speed, 0, int(sizeof(m_execDelays) - 1));
+            m_execSpeed = static_cast<ExecSpeed>(speed);
+            m_reqRes.emplace({});
+            break;
+        }
         case Req::IS_ROM_ENABLED:
             m_reqRes.emplace({
                 {"data", m_memory.IsRomEnabled() },
