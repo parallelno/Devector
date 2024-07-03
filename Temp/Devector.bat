@@ -1,1 +1,0 @@
-Devector.exe -settingsPath settings.json
