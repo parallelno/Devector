@@ -107,6 +107,7 @@ void dev::HardwareStatsWindow::DrawHardware() const
 		DrawProperty2("Last Run", m_ccLastRunS.c_str());
 		DrawProperty2("CRT X", m_rasterPixelS.c_str());
 		DrawProperty2("CRT Y", m_rasterLineS.c_str());
+		DrawProperty2("Scroll V", dev::Uint8ToStrC(m_scrollVert));
 		DrawProperty2("Rus/Lat", m_ruslatS.c_str());
 
 		// interuption states
@@ -404,6 +405,9 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 		m_portsOutDataColor[i] = updated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
 	}
 	m_portsOutData = portdataOut;
+
+	// Vertical scroll
+	m_scrollVert = m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert");
 }
 
 void dev::HardwareStatsWindow::UpdateDataRuntime()

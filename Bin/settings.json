@@ -9,16 +9,31 @@
     "fontSize": 18.0,
     "hardwareStatsWindowVisible": true,
     "hexViewerWindowVisible": true,
-    "mainWindowHeight": 1353,
-    "mainWindowWidth": 2285,
-    "mainWindowX": 6,
-    "mainWindowY": 33,
+    "mainWindowHeight": 1360,
+    "mainWindowWidth": 2476,
+    "mainWindowX": 3,
+    "mainWindowY": 31,
     "memDisplayWindowVisible": true,
     "recentFiles": [
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\DFIGHT.ROM",
+            -1,
+            false
+        ],
         [
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\ADSKOK.ROM",
             -1,
             false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\badaps.fdd",
+            0,
+            true
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\vetka - Copy.fdd",
+            0,
+            true
         ],
         [
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\ADSKOK#_.ROM",
@@ -49,24 +64,10 @@
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
             -1,
             false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_eng.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\bord2.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\clrspace.rom",
-            -1,
-            false
         ]
     ],
     "restartOnLoadFdd": true,
+    "showSaveDiscardFddDialog": true,
     "traceLogWindowVisible": false,
     "watchpointsWindowVisible": true
 }

@@ -77,6 +77,7 @@ namespace dev
 		PortsDataColors m_portsOutDataColor;
 
 		std::string m_upTimeS;
+		uint8_t m_scrollVert = 0;
 
 		// stats end
 		////////////////////
