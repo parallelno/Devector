@@ -35,7 +35,7 @@ namespace dev
 		static constexpr bool MODE_512 = true;
 
 #pragma pack(push, 1)
-		union Palette 
+		union Palette
 		{
 			struct {
 				uint64_t low	: 64;
@@ -83,11 +83,36 @@ namespace dev
 			uint8_t ruslat		: 1;
 		};
 #pragma pack(pop)
-	
+		// debug only info
+		union PortsData {
+			struct {
+				uint64_t data0;
+				uint64_t data1;
+				uint64_t data2;
+				uint64_t data3;
+				uint64_t data4;
+				uint64_t data5;
+				uint64_t data6;
+				uint64_t data7;
+			};
+			uint8_t data[256];
+			PortsData(
+				uint64_t _data0, uint64_t _data1, uint64_t _data2, uint64_t _data3,
+				uint64_t _data4, uint64_t _data5, uint64_t _data6, uint64_t _data7)
+				:
+				data0(_data0), data1(_data1), data2(_data2), data3(_data3),
+				data4(_data4), data5(_data5), data6(_data6), data7(_data7) {}
+			PortsData() :
+				data0(0), data1(0), data2(0), data3(0),
+				data4(0), data5(0), data6(0), data7(0) {};
+		};
+
 	private:
 		State m_state;
 		uint32_t m_ruslatHistory = 0;
-		
+		PortsData m_portsInData;
+		PortsData m_portsOutData;
+
 
 		Keyboard& m_keyboard;
 		Memory& m_memory;
@@ -95,6 +120,7 @@ namespace dev
 		Fdc1793& m_fdc;
 
 		void PortOutHandling(uint8_t _port, uint8_t _value);
+		auto PortInHandling(uint8_t _port) -> uint8_t;
 
 	public:
 		IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer, Fdc1793& _fdc);
@@ -115,6 +141,8 @@ namespace dev
 		inline auto GetPaletteCommitTimer() const -> int { return m_state.paletteCommitTimer; };
 		auto GetPalette() const -> const Palette* { return &m_state.palette; }
 		auto GetPorts() const -> const Ports* { return &m_state.ports; }
+		auto GetPortsInData() const -> const PortsData* { return &m_portsInData; }
+		auto GetPortsOutData() const -> const PortsData* { return &m_portsOutData; }
 		void TryToCommit(const uint8_t _colorIdx);
 	};
 }

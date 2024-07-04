@@ -43,7 +43,7 @@ void dev::DisasmWindow::Update(bool& _visible)
 
 void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 {
-	if (!_isRunning && ImGui::Button("Conti"))
+	if (!_isRunning && ImGui::Button(" Run "))
 	{
 		m_hardware.Request(Hardware::Req::RUN);
 	}

@@ -11,6 +11,7 @@ dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 	m_hardware(_hardware),
 	m_reqHardwareStatsReset(_reset), m_ruslat(_ruslat)
 {
+	Init();
 	UpdateData(false);
 }
 
@@ -101,7 +102,7 @@ void dev::HardwareStatsWindow::DrawHardware() const
 	{
 		ImGui::TableSetupColumn("hwName", ImGuiTableColumnFlags_WidthFixed, 80);
 
-		// cpu cycles
+		//DrawProperty2("Up Time", std::format());
 		DrawProperty2("CPU Cicles", m_ccS.c_str());
 		DrawProperty2("Last Run", m_ccLastRunS.c_str());
 		DrawProperty2("CRT X", m_rasterPixelS.c_str());
@@ -143,14 +144,8 @@ void dev::HardwareStatsWindow::DrawHardware() const
 
 		// ports
 		dev::DrawSeparator2("Ports");
-		DrawProperty2("CW", m_cwS.c_str());
-		DrawProperty2("Port A", m_portAS.c_str());
-		DrawProperty2("Port B", m_portBS.c_str());
-		DrawProperty2("Port C", m_portCS.c_str());
-		DrawProperty2("CW2", m_cw2S.c_str());
-		DrawProperty2("Port A2", m_portA2S.c_str());
-		DrawProperty2("Port A2", m_portB2S.c_str());
-		DrawProperty2("Port A2", m_portC2S.c_str());
+		DrawPortsDataProperty("In", m_portsInData, m_portsInDataColor);
+		DrawPortsDataProperty("Out", m_portsOutData, m_portsOutDataColor);
 
 		ImGui::EndTable();
 	}
@@ -241,6 +236,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	if (m_reqHardwareStatsReset) {
 		m_ccLast = 0;
 		m_reqHardwareStatsReset = false;
+		Init();
 	}
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& data = *res;
@@ -369,18 +365,45 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_palette.low = paletteDataJ["low"];
 	m_palette.hi = paletteDataJ["hi"];
 
-	res = m_hardware.Request(Hardware::Req::GET_IO_PORTS);
-	const auto& portsDataJ = *res;
-	m_ports.data = portsDataJ["data"];
-
-	m_cwS = std::to_string(m_ports.CW);
-	m_portAS = std::to_string(m_ports.portA);
-	m_portBS = std::to_string(m_ports.portB);
-	m_portCS = std::to_string(m_ports.portC);
-	m_cw2S = std::to_string(m_ports.CW2);
-	m_portA2S = std::to_string(m_ports.portA2);
-	m_portB2S = std::to_string(m_ports.portB2);
-	m_portC2S = std::to_string(m_ports.portC2);
+	// ports IN data
+	res = m_hardware.Request(Hardware::Req::GET_IO_PORTS_IN_DATA);
+	const auto& portsDataInJ = *res;
+	IO::PortsData portdataIn;
+	portdataIn.data0 = portsDataInJ["data0"];
+	portdataIn.data1 = portsDataInJ["data1"];
+	portdataIn.data2 = portsDataInJ["data2"];
+	portdataIn.data3 = portsDataInJ["data3"];
+	portdataIn.data4 = portsDataInJ["data4"];
+	portdataIn.data5 = portsDataInJ["data5"];
+	portdataIn.data6 = portsDataInJ["data6"];
+	portdataIn.data7 = portsDataInJ["data7"];
+	// check if updated, set the colors
+	for (int i = 0; i < 256; i++) 
+	{
+		bool updated = portdataIn.data[i] != m_portsInData.data[i];
+		m_portsInDataColor[i] = updated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	}
+	m_portsInData = portdataIn;
+	
+	// ports OUT data
+	res = m_hardware.Request(Hardware::Req::GET_IO_PORTS_OUT_DATA);
+	const auto& portsDataOutJ = *res;
+	IO::PortsData portdataOut;
+	portdataOut.data0 = portsDataOutJ["data0"];
+	portdataOut.data1 = portsDataOutJ["data1"];
+	portdataOut.data2 = portsDataOutJ["data2"];
+	portdataOut.data3 = portsDataOutJ["data3"];
+	portdataOut.data4 = portsDataOutJ["data4"];
+	portdataOut.data5 = portsDataOutJ["data5"];
+	portdataOut.data6 = portsDataOutJ["data6"];
+	portdataOut.data7 = portsDataOutJ["data7"];
+	// check if updated, set the colors
+	for (int i = 0; i < 256; i++)
+	{
+		bool updated = portdataOut.data[i] != m_portsOutData.data[i];
+		m_portsOutDataColor[i] = updated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	}
+	m_portsOutData = portdataOut;
 }
 
 void dev::HardwareStatsWindow::UpdateDataRuntime()
@@ -413,4 +436,55 @@ void dev::HardwareStatsWindow::UpdateDataRuntime()
 
 	// ruslat
 	m_ruslatS = m_ruslat ? "(*)" : "( )";
+}
+
+void dev::HardwareStatsWindow::DrawPortsDataProperty(const char* _name,
+	const IO::PortsData& _portsData, const PortsDataColors& _colors,
+	const char* _hint) const
+{
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name, { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
+	ImGui::TableNextColumn();
+	ImGui::Dummy(ImVec2(5.0f, 0.0f)); ImGui::SameLine();
+	ImGui::Text("Break&Hover");
+	if (ImGui::IsItemHovered())
+	{
+		for (int i=0; i<256; i++)
+		{
+			ImGui::BeginTooltip();
+			ImGui::PushStyleColor(ImGuiCol_Text, *_colors[i]);
+			ImGui::Text("%s, ", dev::Uint8ToStrC(_portsData.data[i]));
+			ImGui::PopStyleColor();
+			if (i % 16 != 15) ImGui::SameLine();
+			ImGui::EndTooltip();
+		}
+	}
+
+	if (_hint) {
+		ImGui::SameLine();
+		dev::DrawHelpMarker(_hint);
+	}
+}
+
+void dev::HardwareStatsWindow::Init()
+{
+	m_portsInDataColor.fill(&DASM_CLR_NUMBER);
+	m_portsOutDataColor.fill(&DASM_CLR_NUMBER);
+	m_regAFColor = &DASM_CLR_NUMBER;
+	m_regBCColor = &DASM_CLR_NUMBER;
+	m_regDEColor = &DASM_CLR_NUMBER;
+	m_regHLColor = &DASM_CLR_NUMBER;
+	m_regSPColor = &DASM_CLR_NUMBER;
+	m_regPCColor = &DASM_CLR_NUMBER;
+
+	m_flagCColor = &DASM_CLR_NUMBER;
+	m_flagZColor = &DASM_CLR_NUMBER;
+	m_flagPColor = &DASM_CLR_NUMBER;
+	m_flagSColor = &DASM_CLR_NUMBER;
+	m_flagACColor = &DASM_CLR_NUMBER;
 }

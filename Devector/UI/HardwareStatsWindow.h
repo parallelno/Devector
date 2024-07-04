@@ -70,15 +70,11 @@ namespace dev
 		const ImVec4* m_flagACColor = &DASM_CLR_NUMBER;
 
 		IO::Palette m_palette;
-		IO::Ports m_ports;
-		std::string m_cwS;
-		std::string m_portAS;
-		std::string m_portBS;
-		std::string m_portCS;
-		std::string m_cw2S;
-		std::string m_portA2S;
-		std::string m_portB2S;
-		std::string m_portC2S;
+		IO::PortsData m_portsInData;
+		IO::PortsData m_portsOutData;
+		using PortsDataColors = std::array<const ImVec4*, 256>;
+		PortsDataColors m_portsInDataColor;
+		PortsDataColors m_portsOutDataColor;
 
 		// stats end
 		////////////////////
@@ -88,8 +84,12 @@ namespace dev
 		void DrawStack() const;
 		void DrawHardware() const;
 		void DrawPeripheral() const;
+		void DrawPortsDataProperty(const char* _name, 
+			const IO::PortsData& _portsData, const PortsDataColors& _colors,
+			const char* _hint = nullptr) const;
 		void UpdateData(const bool _isRunning);
 		void UpdateDataRuntime();
+		void Init();
 
 	public:
 		HardwareStatsWindow(Hardware& _hardware,

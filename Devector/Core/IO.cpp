@@ -54,7 +54,8 @@ void dev::IO::Init()
 	m_ruslatHistory = 0;
 }
 
-auto dev::IO::PortIn(uint8_t _port)
+// handling the data receiving from ports
+auto dev::IO::PortInHandling(uint8_t _port)
 -> uint8_t
 {
 	int result = 0xFF;
@@ -147,28 +148,7 @@ auto dev::IO::PortIn(uint8_t _port)
 	return result;
 }
 
-// cpu OUT instruction callback
-void dev::IO::PortOut(uint8_t _port, uint8_t _value)
-{
-	OUT_PORT = _port;
-	OUT_BYTE = _value;
-
-	OUT_COMMIT_TIMER = OUT_COMMIT_TIME;
-	switch (_port) {
-	case PORT_OUT_BORDER_COLOR0: [[fallthrough]];
-	case PORT_OUT_BORDER_COLOR1: [[fallthrough]];
-	case PORT_OUT_BORDER_COLOR2: [[fallthrough]];
-	case PORT_OUT_BORDER_COLOR3:
-		PALLETE_COMMIT_TIMER = PALETTE_COMMIT_TIME;
-	}
-}
-
-void dev::IO::PortOutCommit()
-{
-	PortOutHandling(OUT_PORT, OUT_BYTE);
-}
-
-// data sent by cpu handled here at the commit time
+// called at the commit time. it's data sent by the cpu instruction OUT
 void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 {
 	//bool ruslat;
@@ -204,9 +184,6 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		m_ruslatHistory = (m_ruslatHistory<<1) + RUS_LAT;
 		PORT_C = _value;
 		//ontapeoutchange(PORT_C & 1);
-		/*if (((PORT_C & 8) > 0) != ruslat && onruslat) {
-			onruslat((PORT_C & 8) == 0);
-		}*/
 		break;
 	case 0x02:
 		PORT_B = _value;
@@ -273,6 +250,39 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 	}
 }
 
+// cpu IN instruction callback
+auto dev::IO::PortIn(uint8_t _port)
+->uint8_t
+{
+	auto out = PortInHandling(_port);
+	// store it for debbuging
+	m_portsInData.data[_port] = out;
+	return out;
+}
+
+// cpu OUT instruction callback
+void dev::IO::PortOut(uint8_t _port, uint8_t _value)
+{
+	// store it for debbuging
+	m_portsOutData.data[_port] = _value;
+
+	// store port/val data to handle when ports are available (commit time)
+	OUT_PORT = _port;
+	OUT_BYTE = _value;
+
+	// set the commit time for port output
+	OUT_COMMIT_TIMER = OUT_COMMIT_TIME;
+
+	// set the palette commit time
+	switch (_port) {
+	case PORT_OUT_BORDER_COLOR0: [[fallthrough]];
+	case PORT_OUT_BORDER_COLOR1: [[fallthrough]];
+	case PORT_OUT_BORDER_COLOR2: [[fallthrough]];
+	case PORT_OUT_BORDER_COLOR3:
+		PALLETE_COMMIT_TIMER = PALETTE_COMMIT_TIME;
+	}
+}
+
 void dev::IO::TryToCommit(const uint8_t _colorIdx)
 {
 	if (OUT_COMMIT_TIMER >= 0){
@@ -288,4 +298,9 @@ void dev::IO::TryToCommit(const uint8_t _colorIdx)
 			SetColor(_colorIdx);
 		}
 	}
+}
+
+void dev::IO::PortOutCommit()
+{
+	PortOutHandling(OUT_PORT, OUT_BYTE);
 }
