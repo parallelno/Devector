@@ -138,6 +138,12 @@ static constexpr uint8_t M_CYCLES[]
 	4, 3, 3, 1, 6, 4, 2, 4, 4, 2, 3, 1, 6, 6, 2, 4  // F
 };
 
+auto dev::CpuI8080::GetInstrCC(const uint8_t _opcode)
+-> uint8_t
+{
+	return M_CYCLES[_opcode] * 4;
+}
+
 void dev::CpuI8080::Decode()
 {
 	switch (IR)

@@ -415,17 +415,21 @@ void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path, const int _d
 	}
 }
 
+#define SCANCODE_ALT 0x38
 void dev::DevectorApp::KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes)
 {
 	// Retrieve the user pointer to access the class instance
 	DevectorApp* instance = static_cast<DevectorApp*>(glfwGetWindowUserPointer(_window));
 	if (instance) 
 	{
-		instance->ImGui_ImplGlfw_KeyCallback(_window, _key, _scancode, _action, _modes);
-
-		if (instance->m_displayWindowP->IsFocused()) 
+		auto displayFocused = instance->m_displayWindowP->IsFocused();
+		if (displayFocused)
 		{
 			instance->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "key", _key }, { "action", _action} });
+		}
+		
+		if (!displayFocused || _scancode != SCANCODE_ALT) {
+			instance->ImGui_ImplGlfw_KeyCallback(_window, _key, _scancode, _action, _modes);
 		}
 	}
 }

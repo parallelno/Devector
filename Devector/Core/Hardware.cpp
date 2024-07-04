@@ -9,6 +9,7 @@ dev::Hardware::Hardware(const std::wstring& _pathBootData)
 	m_keyboard(),
 	m_timer(),
 	m_timerWrapper(m_timer),
+	m_sound(m_timerWrapper),
 	m_fdc(),
 	m_io(m_keyboard, m_memory, m_timer, m_fdc),
 	m_cpu(
@@ -45,6 +46,8 @@ void dev::Hardware::ExecuteInstruction()
 	do
 	{
 		m_cpu.ExecuteMachineCycle(m_display.IsIRQ());
+		//m_sound.soundSteps(CpuI8080::GetInstrCC(m_cpu.GetState().opcode) / 2, 0, 0, 0);
+		m_sound.soundSteps(1, 0, 0, 0);
 		m_display.Rasterize();
 
 	} while (!m_cpu.IsInstructionExecuted());

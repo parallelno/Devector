@@ -152,6 +152,8 @@ namespace dev
 		void AttachDebugOnRead(DebugOnReadFunc* _funcP);
 		void AttachDebugOnWrite(DebugOnWriteFunc* _funcP);
 
+		static auto GetInstrCC(const uint8_t _opcode) -> uint8_t;
+
 	private:
 		std::atomic <DebugOnReadInstrFunc*> m_debugOnReadInstr = nullptr;
 		std::atomic <DebugOnReadFunc*> m_debugOnRead = nullptr;
