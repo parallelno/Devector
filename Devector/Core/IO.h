@@ -25,7 +25,10 @@ namespace dev
 	class IO
 	{
 	public:
-		static constexpr uint8_t PORT_OUT_BORDER_COLOR = 0x0c; // OUT 0x0c
+		static constexpr uint8_t PORT_OUT_BORDER_COLOR0 = 0x0C;
+		static constexpr uint8_t PORT_OUT_BORDER_COLOR1 = 0x0D;
+		static constexpr uint8_t PORT_OUT_BORDER_COLOR2 = 0x0E;
+		static constexpr uint8_t PORT_OUT_BORDER_COLOR3 = 0x0F;
 		static constexpr int8_t PORT_NO_COMMIT = -1; // no-data to process
 		static constexpr int PALETTE_LEN = 16;
 		static constexpr bool MODE_256 = false;

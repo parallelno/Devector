@@ -147,14 +147,18 @@ auto dev::IO::PortIn(uint8_t _port)
 	return result;
 }
 
-// cpu sends this data
+// cpu OUT instruction callback
 void dev::IO::PortOut(uint8_t _port, uint8_t _value)
 {
 	OUT_PORT = _port;
 	OUT_BYTE = _value;
 
 	OUT_COMMIT_TIMER = OUT_COMMIT_TIME;
-	if (_port == PORT_OUT_BORDER_COLOR) {
+	switch (_port) {
+	case PORT_OUT_BORDER_COLOR0: [[fallthrough]];
+	case PORT_OUT_BORDER_COLOR1: [[fallthrough]];
+	case PORT_OUT_BORDER_COLOR2: [[fallthrough]];
+	case PORT_OUT_BORDER_COLOR3:
 		PALLETE_COMMIT_TIMER = PALETTE_COMMIT_TIME;
 	}
 }
@@ -235,11 +239,10 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		//m_timer.write(_port, _value);
 		break;
 
-		// palette (ask Svofski why 0x0d and 0x0e ports are for pallete)
-	case PORT_OUT_BORDER_COLOR: [[fallthrough]];
-	case 0x0d: [[fallthrough]];
-	case 0x0e: [[fallthrough]];
-	case 0x0f:
+	case PORT_OUT_BORDER_COLOR0: [[fallthrough]];
+	case PORT_OUT_BORDER_COLOR1: [[fallthrough]];
+	case PORT_OUT_BORDER_COLOR2: [[fallthrough]];
+	case PORT_OUT_BORDER_COLOR3:
 		HW_COLOR = _value;
 		break;
 	case 0x10:
