@@ -102,7 +102,7 @@ void dev::HardwareStatsWindow::DrawHardware() const
 	{
 		ImGui::TableSetupColumn("hwName", ImGuiTableColumnFlags_WidthFixed, 80);
 
-		//DrawProperty2("Up Time", std::format());
+		DrawProperty2("Up Time", m_upTimeS.c_str());
 		DrawProperty2("CPU Cicles", m_ccS.c_str());
 		DrawProperty2("Last Run", m_ccLastRunS.c_str());
 		DrawProperty2("CRT X", m_rasterPixelS.c_str());
@@ -436,6 +436,8 @@ void dev::HardwareStatsWindow::UpdateDataRuntime()
 
 	// ruslat
 	m_ruslatS = m_ruslat ? "(*)" : "( )";
+
+	UpdateUpTime();
 }
 
 void dev::HardwareStatsWindow::DrawPortsDataProperty(const char* _name,
@@ -487,4 +489,15 @@ void dev::HardwareStatsWindow::Init()
 	m_flagPColor = &DASM_CLR_NUMBER;
 	m_flagSColor = &DASM_CLR_NUMBER;
 	m_flagACColor = &DASM_CLR_NUMBER;
+}
+
+void dev::HardwareStatsWindow::UpdateUpTime()
+{
+	// update the up time
+	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
+	uint64_t sec = cc / 3000000;
+	int hours = sec / 3600;
+	int minutes = (sec % 3600) / 60;
+	int seconds = sec % 60;
+	m_upTimeS = std::format("{0:02}:{1:02}:{2:02}", hours, minutes, seconds);
 }

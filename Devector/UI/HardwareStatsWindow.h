@@ -76,6 +76,8 @@ namespace dev
 		PortsDataColors m_portsInDataColor;
 		PortsDataColors m_portsOutDataColor;
 
+		std::string m_upTimeS;
+
 		// stats end
 		////////////////////
 
@@ -90,6 +92,7 @@ namespace dev
 		void UpdateData(const bool _isRunning);
 		void UpdateDataRuntime();
 		void Init();
+		void UpdateUpTime();
 
 	public:
 		HardwareStatsWindow(Hardware& _hardware,
