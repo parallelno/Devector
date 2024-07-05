@@ -122,6 +122,7 @@
     <ClCompile Include="Core\IO.cpp" />
     <ClCompile Include="Core\Keyboard.cpp" />
     <ClCompile Include="Core\Memory.cpp" />
+    <ClCompile Include="Core\PitI8253.cpp" />
     <ClCompile Include="Core\Sound.cpp" />
     <ClCompile Include="Core\TimerI8253.cpp" />
     <ClCompile Include="Core\TraceLog.cpp" />
@@ -170,6 +171,7 @@
     <ClInclude Include="Core\IO.h" />
     <ClInclude Include="Core\Keyboard.h" />
     <ClInclude Include="Core\Memory.h" />
+    <ClInclude Include="Core\PitI8253.h" />
     <ClInclude Include="Core\Sound.h" />
     <ClInclude Include="Core\TimerI8253.h" />
     <ClInclude Include="Core\TraceLog.h" />

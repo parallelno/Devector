@@ -17,19 +17,19 @@ namespace dev
     {
         friend class TestOfCounterUnit;
 
-        int latch_value;
-        int write_state;
-        int latch_mode;
-        int out;
-        int value;
-        int mode_int;
+        int latch_value = -1;
+        int write_state = 0;
+        int latch_mode = 0;
+        int out = 0;
+        int value = 0;
+        int mode_int = 0;
 
-        uint8_t write_lsb;
-        uint8_t write_msb;
-        uint16_t loadvalue;
+        uint8_t write_lsb = 0;
+        uint8_t write_msb = 0;
+        uint16_t loadvalue = 0;
 
         union {
-            uint32_t flags;
+            uint32_t flags = 0;
             struct {
                 bool armed : 1;
                 bool load : 1;
@@ -41,10 +41,16 @@ namespace dev
         int delay;
 
     public:
-        CounterUnit() : latch_value(-1), write_state(0), value(0), mode_int(0),
-            loadvalue(0), flags(0), delay(0)
+        CounterUnit()
         {
-        
+            reset();
+        }
+
+        void reset()
+        {
+            latch_value = -1;
+            write_state = value = mode_int = loadvalue = flags = delay = 0;
+            write_lsb = write_msb = out = latch_mode = 0;
         }
 
         void SetMode(int new_mode, int new_latch_mode, int new_bcd_mode)
@@ -327,6 +333,13 @@ namespace dev
     public:
         TimerI8253() : control_word(0) {}
 
+        void reset()
+        {
+            counters[0].reset();
+            counters[1].reset();
+            counters[2].reset();
+        };
+
         void write_cw(uint8_t w8)
         {
             unsigned counter_set = (w8 >> 6) & 3;
@@ -411,6 +424,10 @@ namespace dev
             this->last_sound = ch0 * ena_ch0 + ch1 * ena_ch1 + ch2 * ena_ch2;
             return this->last_sound;
         }
+        void reset()
+        {
+            this->timer.reset();
+        };
     };
 
 }

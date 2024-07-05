@@ -238,4 +238,5 @@ void dev::Sound::sample(float samp)
 void dev::Sound::reset()
 {
     //this->aywrapper.reset();
+    this->timerwrapper.reset();
 }

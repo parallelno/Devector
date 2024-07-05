@@ -46,8 +46,7 @@ void dev::Hardware::ExecuteInstruction()
 	do
 	{
 		m_cpu.ExecuteMachineCycle(m_display.IsIRQ());
-		//m_sound.soundSteps(CpuI8080::GetInstrCC(m_cpu.GetState().opcode) / 2, 0, 0, 0);
-		m_sound.soundSteps(1, 0, 0, 0);
+		m_sound.soundSteps(2, 0, 0, 0);
 		m_display.Rasterize();
 
 	} while (!m_cpu.IsInstructionExecuted());
@@ -378,11 +377,13 @@ void dev::Hardware::Reset()
 {
 	Init();
 	m_cpu.Reset();
+	m_sound.reset();
 }
 
 void dev::Hardware::Restart()
 {
 	m_cpu.Reset();
+	m_sound.reset();
 	m_memory.Restart();
 }
 

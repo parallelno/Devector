@@ -42,7 +42,6 @@ namespace dev
         static void callback(void* userdata, uint8_t* stream, int len);
         void sample(float samp);
         void soundSteps(int nclk1m5, int tapeout, int covox, int tapein);
-
         void reset();
     };
 
