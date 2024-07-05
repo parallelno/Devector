@@ -112,6 +112,7 @@
     <ClCompile Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\shell.c" />
     <ClCompile Include="..\SharedSource\3rdParty\sqlite3\sqlite3.c" />
+    <ClCompile Include="Core\Audio.cpp" />
     <ClCompile Include="Core\Breakpoint.cpp" />
     <ClCompile Include="Core\CpuI8080.cpp" />
     <ClCompile Include="Core\Debugger.cpp" />
@@ -123,7 +124,6 @@
     <ClCompile Include="Core\Keyboard.cpp" />
     <ClCompile Include="Core\Memory.cpp" />
     <ClCompile Include="Core\PitI8253.cpp" />
-    <ClCompile Include="Core\Sound.cpp" />
     <ClCompile Include="Core\TimerI8253.cpp" />
     <ClCompile Include="Core\TraceLog.cpp" />
     <ClCompile Include="Core\Watchpoint.cpp" />
@@ -161,6 +161,7 @@
     <ClInclude Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.h" />
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3.h" />
     <ClInclude Include="..\SharedSource\3rdParty\sqlite3\sqlite3ext.h" />
+    <ClInclude Include="Core\Audio.h" />
     <ClInclude Include="Core\Breakpoint.h" />
     <ClInclude Include="Core\CpuI8080.h" />
     <ClInclude Include="Core\Debugger.h" />
@@ -172,7 +173,6 @@
     <ClInclude Include="Core\Keyboard.h" />
     <ClInclude Include="Core\Memory.h" />
     <ClInclude Include="Core\PitI8253.h" />
-    <ClInclude Include="Core\Sound.h" />
     <ClInclude Include="Core\TimerI8253.h" />
     <ClInclude Include="Core\TraceLog.h" />
     <ClInclude Include="Core\Watchpoint.h" />
