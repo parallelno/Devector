@@ -1,233 +1,140 @@
 #include "Audio.h"
+#include <algorithm>
+#include "Utils/Utils.h"
 
-//#include "ay.h"
-//#include "resampler.h"
-
-/*
-static int print_driver_info()
+dev::Audio::Audio(TimerI8253& _timer/*, AYWrapper& aw*/) :
+	m_timer(_timer)/*, aywrapper(aw)*/
 {
-#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
-    // Print available audio drivers
-    int n = SDL_GetNumAudioDrivers();
-    if (n == 0) {
-        SDL_Log("No built-in audio drivers\n\n");
-    }
-    else {
-        int i;
-        SDL_Log("Built-in audio drivers:\n");
-        for (i = 0; i < n; ++i) {
-            SDL_Log("  %d: %s\n", i, SDL_GetAudioDriver(i));
-        }
-        SDL_Log("Select a driver with the SDL_AUDIODRIVER environment variable.\n");
-    }
-
-    SDL_Log("Using audio driver: %s\n\n", SDL_GetCurrentAudioDriver());
-#endif
-    return 1;
-}
-*/
-
-dev::Audio::Audio(TimerWrapper& tw/*, AYWrapper& aw*/) :
-    timerwrapper(tw)/*, aywrapper(aw)*/
-{
-    init();
+	Init();
 }
 
-void dev::Audio::init(/*WavRecorder* _rec*/)
+dev::Audio::~Audio()
 {
-    //this->rec = _rec;
-
-    /*if (Options.nosound) {
-        return;
-    }*/
-
-    SDL_AudioSpec want;
-    SDL_AudioSpec have;
-
-    SDL_memset(&want, 0, sizeof(want));
-    want.freq = 48000;
-    want.format = SDL_AUDIO_F32LE;//old AUDIO_F32;
-    want.channels = 2;
-
-    //if (!Options.vsync) {
-    this->sound_frame_size = want.freq / 50;
-    //}
-
-    //want.samples = this->sound_frame_size;
-    //want.callback = dev::Audio::callback;
-    //want.userdata = (void*)this;
-
-    SDL_Init(SDL_INIT_AUDIO);
-
-    //Options.log.audio&& ::print_driver_info();
-
-    if (!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO)) {
-        //fprintf(stderr, "SDL audio error: SDL_INIT_AUDIO not initialized\n");
-        return;
-    }
-    /*
-        if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have,
-            SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
-            fprintf(stderr, "SDL audio error: %s", SDL_GetError());
-            Options.nosound = true;
-            return;
-        };
-
-        if (have.samples == this->sound_frame_size / 2) {
-            // strange thing but we get a half buffer, try to get 2x
-            SDL_CloseAudioDevice(this->audiodev);
-
-            Options.log.audio&&
-                fprintf(stderr, "SDL audio: retrying to open device with 2x buffer size\n");
-            want.samples = this->sound_frame_size * 2;
-
-            if ((this->audiodev = SDL_OpenAudioDevice(NULL, 0, &want, &have,
-                SDL_AUDIO_ALLOW_FORMAT_CHANGE)) == 0) {
-                fprintf(stderr, "SDL audio error: %s", SDL_GetError());
-                Options.nosound = true;
-                return;
-            };
-
-            if (have.samples < this->sound_frame_size) {
-                fprintf(stderr, "SDL audio cannot get the right buffer size, giving up\n");
-                Options.nosound = true;
-            }
-        }
-        */
-
-    //this->sampleRate = have.freq;
-
-    // one second = 50 frames
-    // raster time in 12 MHz pixelclocks = 768 columns by 312 lines
-    // timer clocks = pixel clock / 8
-    int timer_cycles_per_second = 50 * 768 * 312 / 8; // 1497600
-    // for 48000: 3120
-    // for 44100: 3396, which gives 44098.9...
-    this->sound_accu_top = (int)(0.5 + 100.0 * timer_cycles_per_second / this->sampleRate);
-
-    /*
-    Options.log.audio&&
-        printf("SDL audio dev: %d, sample rate=%d "
-            "have.samples=%d have.channels=%d have.format=%d have.size=%d\n",
-            this->audiodev, this->sampleRate,
-            have.samples, have.channels, have.format, have.size);
-    */
-
-    /*
-    // filters
-    if (Options.nofilter) {
-        resampler.set_passthrough(true);
-    }
-    */
+	Pause(true);
+	SDL_DestroyAudioStream(m_stream);
 }
 
-void dev::Audio::soundSteps(int nclk1m5, int tapeout, int covox, int tapein)
+void dev::Audio::Pause(bool _pause)
 {
-    covox = covox - 255;
-    /*
-    int ech0 = Options.enable.timer_ch0,
-        ech1 = Options.enable.timer_ch1,
-        ech2 = Options.enable.timer_ch2,
-        aych0 = Options.enable.ay_ch0,
-        aych1 = Options.enable.ay_ch1,
-        aych2 = Options.enable.ay_ch2;
-        */
-    int ech0 = 65525, // TODO: for tests
-        ech1 = 65525,
-        ech2 = 65525,
-        aych0 = 65525,
-        aych1 = 65525,
-        aych2 = 65525;
-
-    for (int clk = 0; clk < nclk1m5; ++clk) {
-        //float ay = this->aywrapper.step2(2, aych0, aych1, aych2);
-
-        /* timerwrapper does the stepping of 8253, it must always be called */
-        float soundf = (this->timerwrapper.singlestep(ech0, ech1, ech2)) /* * Options.volume.timer
-            + (tapeout + tapein) * Options.volume.beeper
-            + Options.volume.covox * (covox / 256.0f)
-            + Options.volume.ay * ay */;
-
-            /*
-                    if (!Options.nosound)
-                    {
-                        soundf = this->resampler.sample(soundf);
-
-                        if (resampler.egg) {
-                            resampler.egg = false;
-                            this->sample(std::clamp(soundf * Options.volume.global, -1.f, 1.f));
-                        }
-                    }
-            */
-    }
+	//if (!Options.nosound)
+	if (_pause)
+	{
+		SDL_PauseAudioDevice(m_audioDevice);
+	}
+	else {
+		SDL_ResumeAudioDevice(m_audioDevice);
+	}
 }
 
-void dev::Audio::pause(int pause)
+void dev::Audio::Reset()
 {
-    //if (!Options.nosound) 
-    {
-        SDL_PauseAudioDevice(audiodev);
-    }
-    this->wrptr = 0;
-    this->rdbuf = 0;
-    this->wrbuf = 0;
+	//aywrapper.reset();
+	m_timer.Reset();
 }
 
-void dev::Audio::callback(void* userdata, uint8_t* stream, int len)
+void dev::Audio::Init()
 {
-    Audio* that = (Audio*)userdata;
-    float* fstream = (float*)stream;
+	const SDL_AudioSpec spec = { SDL_AUDIO_F32, 1, 50000 };
 
-    if (that->rdbuf == that->wrbuf) {
-        memcpy(stream, that->buffer[that->rdbuf], that->wrptr * sizeof(float));
-        for (int i = that->wrptr, end = that->sound_frame_size * 2; i < end; ++i) {
-            fstream[i] = that->last_value;
-        }
-        /*Options.log.audio&&
-            fprintf(stderr, "starve rdbuf=%d wrbuf=%d en manque=%d\n",
-                that->rdbuf, that->wrbuf, that->sound_frame_size - that->wrptr / 2);*/
-        that->wrptr = 0;
-    }
-    else
-    {
-        memcpy(stream, that->buffer[that->rdbuf], len);
-        if (++that->rdbuf == dev::Audio::NBUFFERS) {
-            that->rdbuf = 0;
-        }
-    }
+	SDL_Init(SDL_INIT_AUDIO);
 
-    //that->rec&&
-    //    that->rec->record_buffer(fstream, that->sound_frame_size * 2);
+	if (!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO)) {
+		dev::Log("SDL audio error: SDL_INIT_AUDIO not initialized\n");
+		return;
+	}
 
-    /* sound callback is also our frame interrupt source */
-    /*if (!(Options.vsync && Options.vsync_enable)) {
-        extern uint32_t timer_callback(uint32_t interval, void* param);
-        timer_callback(0, 0);
-        DBG_QUEUE(putchar('s'); fflush(stdout););
-    }*/
+	m_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_OUTPUT, &spec, Callback, this);
+	if (m_stream == NULL) {
+		dev::Log("SDL_OpenAudioDeviceStream: the stream failed to create: %s\n", SDL_GetError());
+	}
+
+	m_audioDevice = SDL_GetAudioStreamDevice(m_stream);
+	if (!m_audioDevice) {
+		dev::Log("SDL_GetAudioStreamDevice: the device failed to create: %s\n", SDL_GetError());
+	}
+	SDL_ResumeAudioDevice(m_audioDevice);
 }
 
-void dev::Audio::sample(float samp)
+// resamples an input audio sample to a lower rate using a linear interpolation.
+// _sample the input audio sample to be resampled
+// return true if the sample has been resampled, false otherwise 
+bool dev::Audio::Resampler(float& _sample)
 {
-    //if (!Options.nosound) 
-    {
-        //        SDL_LockAudioDevice(this->audiodev);
+	static int sampleCounter = 0;
+	static float accumulator = 0;
+	accumulator += _sample;
 
-        this->last_value = samp;
-        this->buffer[this->wrbuf][this->wrptr++] = samp;
-        this->buffer[this->wrbuf][this->wrptr++] = samp;
-        if (this->wrptr >= this->sound_frame_size * 2) {
-            this->wrptr = 0;
-            if (++this->wrbuf == dev::Audio::NBUFFERS) {
-                this->wrbuf = 0;
-            }
-        }
-        //        SDL_UnlockAudioDevice(this->audiodev);
-    }
+	if (++sampleCounter > DOWNSAMPLE_FACTOR)
+	{
+		_sample = accumulator / DOWNSAMPLE_FACTOR;
+		sampleCounter = 0;
+		accumulator = 0;
+		return true;
+	}
+	return false;
 }
 
-void dev::Audio::reset()
+// _ticks generated by a 1.5 Mhz timer
+void dev::Audio::Tick(int _ticks)
 {
-    //this->aywrapper.reset();
-    this->timerwrapper.reset();
+	//covox = covox - 255;
+
+	for (int tick = 0; tick < _ticks; ++tick)
+	{
+		//float ay = aywrapper.step2(2, aych0, aych1, aych2);
+
+		/* timerwrapper does the stepping of 8253, it must always be called */
+		float sample = m_timer.Tick(1) /* * Options.volume.timer
+			+ (tapeout + tapein) * Options.volume.beeper
+			+ Options.volume.covox * (covox / 256.0f)
+			+ Options.volume.ay * ay */;
+
+		//if (!Options.nosound)
+		{
+			if (Resampler(sample))
+			{
+				//resampler.egg = false;
+				Sample(sample);
+			}
+		}
+	}
+}
+
+void dev::Audio::Sample(float _sample)
+{
+	//if (!Options.nosound)
+	{
+		m_lastValue = _sample;
+
+		m_buffer[m_writeBuffIdx] = _sample;
+		// atomic increment in a loop
+		m_writeBuffIdx = m_writeBuffIdx == m_bufferSize - 1 ? 0 : m_writeBuffIdx + 1;
+	}
+}
+
+void dev::Audio::Callback(void* _userdata, SDL_AudioStream* _stream, int _additionalAmount, int _totalAmount)
+{
+	if (_additionalAmount <= 0) return;
+
+	int len = _additionalAmount / sizeof(float);
+
+	Uint8* data = SDL_stack_alloc(Uint8, _additionalAmount);
+	if (data) 
+	{
+		Audio* that = (Audio*)_userdata;
+		float* fstream = (float*)data;
+
+		uint32_t endIdx = (uint32_t(that->m_writeBuffIdx - 1)) % m_bufferSize;
+		for (int i = len - 1; i >= 0; i--)
+		{
+			fstream[i] = that->m_buffer[endIdx];
+			endIdx--;
+			endIdx %= m_bufferSize;
+		}
+
+		SDL_PutAudioStreamData(_stream, data, _additionalAmount);
+		SDL_stack_free(data);
+	}
+
+	return;
 }

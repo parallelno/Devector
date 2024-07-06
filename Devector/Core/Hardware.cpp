@@ -8,8 +8,7 @@ dev::Hardware::Hardware(const std::wstring& _pathBootData)
 	m_memory(_pathBootData),
 	m_keyboard(),
 	m_timer(),
-	m_timerWrapper(m_timer),
-	m_sound(m_timerWrapper),
+	m_audio(m_timer),
 	m_fdc(),
 	m_io(m_keyboard, m_memory, m_timer, m_fdc),
 	m_cpu(
@@ -46,7 +45,7 @@ void dev::Hardware::ExecuteInstruction()
 	do
 	{
 		m_cpu.ExecuteMachineCycle(m_display.IsIRQ());
-		m_sound.soundSteps(2, 0, 0, 0);
+		m_audio.Tick(2);
 		m_display.Rasterize();
 
 	} while (!m_cpu.IsInstructionExecuted());
@@ -377,13 +376,13 @@ void dev::Hardware::Reset()
 {
 	Init();
 	m_cpu.Reset();
-	m_sound.reset();
+	m_audio.Reset();
 }
 
 void dev::Hardware::Restart()
 {
 	m_cpu.Reset();
-	m_sound.reset();
+	m_audio.Reset();
 	m_memory.Restart();
 }
 

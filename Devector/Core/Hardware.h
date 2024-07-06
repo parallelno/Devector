@@ -10,7 +10,7 @@
 #include "Core/IO.h"
 #include "Core/Display.h"
 #include "Core/TimerI8253.h"
-#include "Core/Sound.h"
+#include "Core/Audio.h"
 #include "Core/fdc1793.h"
 #include "Utils/Utils.h"
 #include "Utils/Result.h"
@@ -31,8 +31,7 @@ namespace dev
 		IO m_io;
 		Display m_display;
 		TimerI8253 m_timer;
-		Sound m_sound;
-		TimerWrapper m_timerWrapper;
+		Audio m_audio;
 		Fdc1793 m_fdc;
 
 		enum class Status : int {

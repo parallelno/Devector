@@ -4,45 +4,38 @@
 #include "TimerI8253.h"
 //#include "ay.h"
 #include "SDL3/SDL.h"
-//#include "resampler.h"
-//#include "wav.h"
 
 namespace dev
 {
     class Audio
     {
     private:
-        TimerWrapper& timerwrapper;
+        static constexpr int INPUT_RATE = 1500000; // 1.5 MHz timer
+        static constexpr int OUTPUT_RATE = 50000; // 50 KHz
+        static constexpr int DOWNSAMPLE_FACTOR = INPUT_RATE / OUTPUT_RATE;
+        static constexpr int BUFFER_EXTRA = 48; // extra part to make sure there is enough data for audio streaming
+
+        TimerI8253& m_timer;
         //AYWrapper& aywrapper;
-#if !defined(__ANDROID_NDK__) && !defined(__GODOT__)
-        SDL_AudioDeviceID audiodev;
-#endif
-        static const int buffer_size = 2048 * 2; // 96000/50=1920, enough
-        int sound_frame_size = 2048;
+        SDL_AudioDeviceID m_audioDevice;
+        SDL_AudioStream* m_stream = nullptr;
 
-        static const int NBUFFERS = 8;
-        float buffer[NBUFFERS][buffer_size];
-        static const int mask = buffer_size - 1;
-        std::atomic_int wrptr;
-        int wrbuf;
-        int rdbuf;
-        float last_value;
+        static constexpr size_t m_bufferSize = OUTPUT_RATE / 25 + BUFFER_EXTRA; // 25 callbacks per sec
+        float m_buffer[m_bufferSize];
+        std::atomic_uint m_writeBuffIdx = 0;
+        float m_lastValue;
 
-        int sampleRate;
-
-        int sound_accu_top;
-
-        //Resampler resampler;
-        //WavRecorder* rec;
+        bool Resampler(float& _sample);
 
     public:
-        Audio(TimerWrapper& tw/*, AYWrapper& aw*/);
-        void init(/*WavRecorder* _rec = 0*/);
-        void pause(int pause);
-        static void callback(void* userdata, uint8_t* stream, int len);
-        void sample(float samp);
-        void soundSteps(int nclk1m5, int tapeout, int covox, int tapein);
-        void reset();
+        Audio(TimerI8253& _timer/*, AYWrapper& aw*/);
+        ~Audio();
+        void Init();
+        void Pause(bool _pause);
+        static void Callback(void* _userdata, SDL_AudioStream* _stream, int _additionalAmount, int _totalAmount);
+        void Sample(float _sample);
+        void Tick(int _ticks);
+        void Reset();
     };
 
 }

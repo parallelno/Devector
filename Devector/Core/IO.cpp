@@ -113,7 +113,7 @@ auto dev::IO::PortInHandling(uint8_t _port)
 	case 0x09: [[fallthrough]];
 	case 0x0a: [[fallthrough]];
 	case 0x0b:
-		return m_timer.read(~(_port & 3));
+		return m_timer.Read(~(_port & 3));
 
 		// Joystick "C"
 	case 0x0e:
@@ -213,7 +213,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 	case 0x09: [[fallthrough]];
 	case 0x0a: [[fallthrough]];
 	case 0x0b:
-		m_timer.write(~_port & 3, _value);
+		m_timer.Write(~_port & 3, _value);
 		break;
 
 	case PORT_OUT_BORDER_COLOR0: [[fallthrough]];
