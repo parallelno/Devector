@@ -8,6 +8,7 @@
 #include "Core/Keyboard.h"
 #include "Core/Memory.h"
 #include "Core/TimerI8253.h"
+#include "Core/SoundAY8910.h"
 #include "Core/fdc1793.h"
 
 namespace dev
@@ -117,13 +118,14 @@ namespace dev
 		Keyboard& m_keyboard;
 		Memory& m_memory;
 		TimerI8253& m_timer;
+		SoundAY8910& m_ay;
 		Fdc1793& m_fdc;
 
 		void PortOutHandling(uint8_t _port, uint8_t _value);
 		auto PortInHandling(uint8_t _port) -> uint8_t;
 
 	public:
-		IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer, Fdc1793& _fdc);
+		IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer, SoundAY8910& _ay, Fdc1793& _fdc);
 		void Init();
 		auto PortIn(uint8_t _port) -> uint8_t;
 		void PortOut(uint8_t _port, uint8_t _value);

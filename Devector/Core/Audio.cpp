@@ -2,8 +2,8 @@
 #include <algorithm>
 #include "Utils/Utils.h"
 
-dev::Audio::Audio(TimerI8253& _timer/*, AYWrapper& aw*/) :
-	m_timer(_timer)/*, aywrapper(aw)*/
+dev::Audio::Audio(TimerI8253& _timer, AYWrapper& _aywrapper) :
+	m_timer(_timer), m_aywrapper(_aywrapper)
 {
 	Init();
 }
@@ -22,14 +22,15 @@ void dev::Audio::Pause(bool _pause)
 	}
 	else {
 		m_buffer.fill(0);
-		m_lastSample = m_readBuffIdx = m_writeBuffIdx = 0;
+		m_lastSample = 0.0f;
+		m_readBuffIdx = m_writeBuffIdx = 0;
 		SDL_ResumeAudioDevice(m_audioDevice);
 	}
 }
 
 void dev::Audio::Reset()
 {
-	//aywrapper.reset();
+	m_aywrapper.reset();
 	m_timer.Reset();
 	m_buffer.fill(0);
 	m_lastSample = m_readBuffIdx = m_writeBuffIdx = 0;
@@ -70,13 +71,7 @@ void dev::Audio::Clock(int _cycles)
 
 	for (int tick = 0; tick < _cycles; ++tick)
 	{
-		//float ay = aywrapper.step2(2, aych0, aych1, aych2);
-
-		/* timerwrapper does the stepping of 8253, it must always be called */
-		float sample = m_timer.Clock(1) /* * Options.volume.timer
-			+ (tapeout + tapein) * Options.volume.beeper
-			+ Options.volume.covox * (covox / 256.0f)
-			+ Options.volume.ay * ay */;
+		float sample = m_timer.Clock(1) + m_aywrapper.Clock(2);
 
 		if (Downsample(sample))
 		{

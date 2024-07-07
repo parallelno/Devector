@@ -3,7 +3,7 @@
 #include <atomic>
 #include <array>
 #include "TimerI8253.h"
-//#include "ay.h"
+#include "SoundAY8910.h"
 #include "SDL3/SDL.h"
 
 namespace dev
@@ -20,7 +20,7 @@ namespace dev
         static constexpr int BUFFER_SIZE = SDL_BUFFER * SDL_BUFFERS;
 
         TimerI8253& m_timer;
-        //AYWrapper& aywrapper;
+        AYWrapper& m_aywrapper;
         SDL_AudioDeviceID m_audioDevice = 0;
         SDL_AudioStream* m_stream = nullptr;
 
@@ -35,7 +35,7 @@ namespace dev
         bool Downsample(float& _sample);
 
     public:
-        Audio(TimerI8253& _timer/*, AYWrapper& aw*/);
+        Audio(TimerI8253& _timer, AYWrapper& _aywrapper);
         ~Audio();
         void Init();
         void Pause(bool _pause);

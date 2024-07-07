@@ -31,10 +31,10 @@
 #define PALLETE_HI		m_state.palette.hi
 
 dev::IO::IO(Keyboard& _keyboard, Memory& _memory, TimerI8253& _timer,
-	Fdc1793& _fdc)
+	SoundAY8910& _ay, Fdc1793& _fdc)
 	:
 	m_keyboard(_keyboard), m_memory(_memory), m_timer(_timer),
-	m_fdc(_fdc)
+	m_ay(_ay), m_fdc(_fdc)
 {
 	Init();
 }
@@ -123,7 +123,7 @@ auto dev::IO::PortInHandling(uint8_t _port)
 
 	case 0x14: [[fallthrough]];
 	case 0x15:
-		//result = ay.read(port & 1);
+		result = m_ay.Read(_port & 1);
 		break;
 
 	case 0x18:
@@ -227,7 +227,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		break;
 	case 0x14: [[fallthrough]];
 	case 0x15:
-		//ay.Write(port & 1, _value);
+		m_ay.Write(_port & 1, _value);
 		break;
 
 	case 0x18:

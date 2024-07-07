@@ -10,6 +10,7 @@
 #include "Core/IO.h"
 #include "Core/Display.h"
 #include "Core/TimerI8253.h"
+#include "Core/SoundAY8910.h"
 #include "Core/Audio.h"
 #include "Core/fdc1793.h"
 #include "Utils/Utils.h"
@@ -31,6 +32,8 @@ namespace dev
 		IO m_io;
 		Display m_display;
 		TimerI8253 m_timer;
+		SoundAY8910 m_ay;
+		AYWrapper m_aywrapper;
 		Audio m_audio;
 		Fdc1793 m_fdc;
 
