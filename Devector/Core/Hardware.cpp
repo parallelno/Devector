@@ -45,7 +45,7 @@ void dev::Hardware::ExecuteInstruction()
 	do
 	{
 		m_cpu.ExecuteMachineCycle(m_display.IsIRQ());
-		m_audio.Tick(2);
+		m_audio.Clock(2);
 		m_display.Rasterize();
 
 	} while (!m_cpu.IsInstructionExecuted());

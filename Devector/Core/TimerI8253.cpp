@@ -19,7 +19,7 @@ void dev::CounterUnit::Reset()
 
 void dev::CounterUnit::SetMode(int _mode, int _latchMode, bool _flagBcd)
 {
-    Tick(LATCH_DELAY);
+    Clock(LATCH_DELAY);
     m_delay = LATCH_DELAY;
 
     m_flagBcd = _flagBcd;
@@ -62,12 +62,12 @@ void dev::CounterUnit::SetMode(int _mode, int _latchMode, bool _flagBcd)
 
 void dev::CounterUnit::Latch() 
 {
-    Tick(LATCH_DELAY);
+    Clock(LATCH_DELAY);
     m_delay = LATCH_DELAY;
     m_latchValue = m_value;
 }
 
-int dev::CounterUnit::Tick(int _cycles)
+int dev::CounterUnit::Clock(int _cycles)
 {
     //int cycles = 1; //incycles;
 
@@ -350,11 +350,11 @@ int dev::TimerI8253::Read(int _addr)
     }
 }
 
-auto dev::TimerI8253::Tick(int _cycles)
+auto dev::TimerI8253::Clock(int _cycles)
 -> float
 {
-    auto ch0 = m_counters[0].Tick(_cycles);
-    auto ch1 = m_counters[1].Tick(_cycles);
-    auto ch2 = m_counters[2].Tick(_cycles);
+    auto ch0 = m_counters[0].Clock(_cycles);
+    auto ch1 = m_counters[1].Clock(_cycles);
+    auto ch2 = m_counters[2].Clock(_cycles);
     return (ch0 + ch1 + ch2) / 3.0f;
 }

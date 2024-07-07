@@ -35,7 +35,7 @@ namespace dev
         void Reset();
         void SetMode(int _mode, int _latchMode, bool _flagBcd);
         void Latch();
-        int Tick(int _cycles);
+        int Clock(int _cycles);
         void Write(uint8_t _w8);
         int Read();
         static uint16_t ToBcd(uint16_t _x);
@@ -54,6 +54,6 @@ namespace dev
         void write_cw(uint8_t _w8);
         void Write(int _addr, uint8_t _w8);
         auto Read(int _addr) -> int;
-        auto Tick(int _cycles) -> float;
+        auto Clock(int _cycles) -> float;
     };
 }
