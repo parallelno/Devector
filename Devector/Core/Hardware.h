@@ -117,6 +117,8 @@ namespace dev
 		void ReqHandling(const bool _waitReq = false);
 		void Reset();
 		void Restart();
+		void Stop();
+		void Run();
 		auto GetRegs() const -> nlohmann::json;
 		auto GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto Get3Bytes(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace) -> nlohmann::json;

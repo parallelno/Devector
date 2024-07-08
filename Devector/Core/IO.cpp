@@ -62,7 +62,7 @@ auto dev::IO::PortInHandling(uint8_t _port)
 
 	switch (_port) {
 	case 0x00:
-		//result = 0xFF; TODO: learn what it's for
+		result = 0xFF;
 		break;
 	case 0x01:
 	{
@@ -151,11 +151,10 @@ auto dev::IO::PortInHandling(uint8_t _port)
 // called at the commit time. it's data sent by the cpu instruction OUT
 void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 {
-	//bool ruslat;
 	switch (_port) {
 		// PortInputA 
 	case 0x00:
-		//m_ruslat = (PORT_C >> 3) & 1;
+		RUS_LAT = (PORT_C >> 3) & 1;
 		if ((_value & 0x80) == 0) {
 			// port C BSR: 
 			//   bit 0: 1 = set, 0 = reset
@@ -167,7 +166,6 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 			else {
 				PORT_C &= ~(1 << bit);
 			}
-			//ontapeoutchange(PORT_C & 1);
 		}
 		else {
 			CW = _value;
@@ -175,15 +173,11 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 			PortOutHandling(2, 0);
 			PortOutHandling(3, 0);
 		}
-		/*if (((PORT_C & 8) > 0) != ruslat) {
-			m_ruslat((PORT_C & 8) == 0);
-		}*/
 		break;
 	case 0x01:
 		RUS_LAT = (PORT_C >> 3) & 1;
 		m_ruslatHistory = (m_ruslatHistory<<1) + RUS_LAT;
 		PORT_C = _value;
-		//ontapeoutchange(PORT_C & 1);
 		break;
 	case 0x02:
 		PORT_B = _value;

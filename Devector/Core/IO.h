@@ -141,10 +141,12 @@ namespace dev
 		inline auto GetDisplayMode() const -> bool { return m_state.displayMode; };
 		inline auto GetOutCommitTimer() const -> int { return m_state.outCommitTimer; };
 		inline auto GetPaletteCommitTimer() const -> int { return m_state.paletteCommitTimer; };
+
 		auto GetPalette() const -> const Palette* { return &m_state.palette; }
 		auto GetPorts() const -> const Ports* { return &m_state.ports; }
 		auto GetPortsInData() const -> const PortsData* { return &m_portsInData; }
 		auto GetPortsOutData() const -> const PortsData* { return &m_portsOutData; }
+		auto GetBeeper() const -> float { return m_state.ports.portC & 1; } // it also out to the tape
 		void TryToCommit(const uint8_t _colorIdx);
 	};
 }

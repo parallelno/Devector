@@ -1,0 +1,8 @@
+Полные названия и авторы музыки:
+
+gtoc64.rom - Greetings to C64 (MISTER BEEP)
+hvphas.rom - Heavy Phaser (Darkman007)
+phphun.rom - 1Bit Phazer Phunk (JREDD)
+pirat.rom - 1Bit Pirate (JREDD)
+rock.rom - 1Bit Rock (JREDD)
+rublov.rom - Rubber Love (MISTER BEEP)

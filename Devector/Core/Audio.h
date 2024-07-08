@@ -23,6 +23,7 @@ namespace dev
         AYWrapper& m_aywrapper;
         SDL_AudioDeviceID m_audioDevice = 0;
         SDL_AudioStream* m_stream = nullptr;
+        float m_muteMul = 1.0f;
 
         std::array<float, BUFFER_SIZE> m_buffer; // Audio system writes to it, SDL reads from it
         std::atomic_uint64_t m_readBuffIdx = 0; // the last sample played by SDL
@@ -39,8 +40,9 @@ namespace dev
         ~Audio();
         void Init();
         void Pause(bool _pause);
+        void Mute(const bool _mute);
         static void Callback(void* _userdata, SDL_AudioStream* _stream, int _additionalAmount, int _totalAmount);
-        void Clock(int _cycles);
+        void Clock(int _cycles, const float _beeper);
         void Reset();
     };
 

@@ -21,12 +21,11 @@ void dev::Audio::Pause(bool _pause)
 		SDL_PauseAudioDevice(m_audioDevice);
 	}
 	else {
-		m_buffer.fill(0);
-		m_lastSample = 0.0f;
-		m_readBuffIdx = m_writeBuffIdx = 0;
 		SDL_ResumeAudioDevice(m_audioDevice);
 	}
 }
+
+void dev::Audio::Mute(const bool _mute) { m_muteMul = _mute ? 0.0f : 1.0f; }
 
 void dev::Audio::Reset()
 {
@@ -34,6 +33,7 @@ void dev::Audio::Reset()
 	m_timer.Reset();
 	m_buffer.fill(0);
 	m_lastSample = m_readBuffIdx = m_writeBuffIdx = 0;
+	m_muteMul = 1.0f;
 }
 
 void dev::Audio::Init()
@@ -63,7 +63,7 @@ void dev::Audio::Init()
 
 // _cycles are ticks of the 1.5 Mhz timer.
 // it's a Hardware thread
-void dev::Audio::Clock(int _cycles)
+void dev::Audio::Clock(int _cycles, const float _beeper)
 {
 	if (!m_inited) return;
 
@@ -71,7 +71,7 @@ void dev::Audio::Clock(int _cycles)
 
 	for (int tick = 0; tick < _cycles; ++tick)
 	{
-		float sample = m_timer.Clock(1) + m_aywrapper.Clock(2);
+		float sample = (m_timer.Clock(1) + m_aywrapper.Clock(2) + _beeper) * m_muteMul;
 
 		if (Downsample(sample))
 		{
@@ -130,7 +130,7 @@ void dev::Audio::Callback(void* _userdata, SDL_AudioStream* _stream, int _additi
 		auto floatResampleRate = --audioP->m_downsampleRate;
 		dev::Log("SDL buffering is too low: {}. Sample rate is adjusted: {}", buffering, floatResampleRate);
 	}
-	else
+	else 
 	{
 		// copy the samples
 		for (int i = 0; i < fstreamLen; i++)
@@ -138,7 +138,9 @@ void dev::Audio::Callback(void* _userdata, SDL_AudioStream* _stream, int _additi
 			fstream[i] = audioP->m_buffer[(audioP->m_readBuffIdx++) % BUFFER_SIZE];
 		}
 
-		if (tooBuferring) {
+		if (tooBuferring)
+		{
+			audioP->m_readBuffIdx += fstreamLen;
 			auto floatResampleRate = ++audioP->m_downsampleRate;
 			dev::Log("SDL buffering is too big: {}. Sample rate is adjusted: {}", buffering, floatResampleRate);
 		}

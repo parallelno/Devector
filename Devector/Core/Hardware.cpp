@@ -47,7 +47,7 @@ void dev::Hardware::ExecuteInstruction()
 	do
 	{
 		m_cpu.ExecuteMachineCycle(m_display.IsIRQ());
-		m_audio.Clock(2);
+		m_audio.Clock(2, m_io.GetBeeper());
 		m_display.Rasterize();
 
 	} while (!m_cpu.IsInstructionExecuted());
@@ -81,7 +81,7 @@ void dev::Hardware::Execution()
 				auto CheckBreak = m_checkBreak.load();
 				if (CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.GetState()))
 				{
-					m_status = Status::STOP;
+					Stop();
 					break;
 				}
 
@@ -138,12 +138,12 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 		switch (req)
 		{
 		case Req::RUN:
-			m_status = Status::RUN;
+			Run();
 			m_reqRes.emplace({});
 			break;
 
 		case Req::STOP:
-			m_status = Status::STOP;
+			Stop();
 			m_reqRes.emplace({});
 			break;
 
@@ -330,6 +330,8 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 			int speed = dataJ["speed"];
 			speed = std::clamp(speed, 0, int(sizeof(m_execDelays) - 1));
 			m_execSpeed = static_cast<ExecSpeed>(speed);
+			if (m_execSpeed == ExecSpeed::_20PERCENT) { m_audio.Mute(true); }
+			else { m_audio.Mute(false); }
 			m_reqRes.emplace({});
 			break;
 		}
@@ -386,6 +388,19 @@ void dev::Hardware::Restart()
 	m_cpu.Reset();
 	m_audio.Reset();
 	m_memory.Restart();
+}
+
+void dev::Hardware::Stop()
+{
+	m_status = Status::STOP;
+	m_audio.Pause(true);
+}
+
+// to continue execution
+void dev::Hardware::Run()
+{
+	m_status = Status::RUN;
+	m_audio.Pause(false);
 }
 
 auto dev::Hardware::GetRegs() const
