@@ -3,7 +3,6 @@
 // from vector06sdl (c) 2018 Viacheslav Slavinsky
 // https://github.com/svofski/vector06sdl/blob/master/src/8253.h
 
-#include <array>
 #include <inttypes.h>
 
 namespace dev
