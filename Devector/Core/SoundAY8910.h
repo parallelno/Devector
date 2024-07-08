@@ -23,17 +23,9 @@ class SoundAY8910
     int ayreg;
 
 public:
-    SoundAY8910()
-    {
-        Reset();
-    }
-
-    void Reset()
-    {
-        init();
-    }
-
-    void init()
+    SoundAY8910() { Reset(); }
+    void Reset() { Init(); }
+    void Init()
     {
         memset(this->ayr, 0, sizeof(ayr));
         this->envc = 0;
@@ -171,15 +163,15 @@ private:
 public:
     AYWrapper(SoundAY8910& _ay) : ay(_ay)
     {
-        init();
+        Init();
     }
 
-    void reset()
+    void Reset()
     {
         ay.Reset();
     }
 
-    void init()
+    void Init()
     {
         ayAccu = instr_accu = 0;
         last = 0.0;

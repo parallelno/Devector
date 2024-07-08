@@ -29,7 +29,7 @@ void dev::Audio::Mute(const bool _mute) { m_muteMul = _mute ? 0.0f : 1.0f; }
 
 void dev::Audio::Reset()
 {
-	m_aywrapper.reset();
+	m_aywrapper.Reset();
 	m_timer.Reset();
 	m_buffer.fill(0);
 	m_lastSample = m_readBuffIdx = m_writeBuffIdx = 0;
