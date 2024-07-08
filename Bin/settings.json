@@ -1,73 +1,21 @@
 {
     "bootPath": "boot//boot.bin",
-    "breakpointsWindowVisisble": true,
-    "disasmWindowVisible": true,
+    "breakpointsWindowVisisble": false,
+    "disasmWindowVisible": false,
     "displayWindowVisible": true,
     "fontItalicPath": "fonts//medium_italic.ttf",
     "fontItalicSize": 18.0,
     "fontPath": "fonts//medium.ttf",
     "fontSize": 18.0,
-    "hardwareStatsWindowVisible": true,
-    "hexViewerWindowVisible": true,
-    "mainWindowHeight": 1360,
-    "mainWindowWidth": 2294,
-    "mainWindowX": 3,
-    "mainWindowY": 31,
-    "memDisplayWindowVisible": true,
-    "recentFiles": [
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\Robotz66a.fdd",
-            0,
-            true
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\Robotz65a.fdd",
-            0,
-            true
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\badaps.fdd",
-            0,
-            true
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\beeper\\gtoc64.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\beeper\\pirat.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\beeper\\phphunk.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\beeper\\hvphas.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\beeper\\start.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\cronex.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_eng.rom",
-            -1,
-            false
-        ]
-    ],
+    "hardwareStatsWindowVisible": false,
+    "hexViewerWindowVisible": false,
+    "mainWindowHeight": 670,
+    "mainWindowWidth": 820,
+    "mainWindowX": 0,
+    "mainWindowY": 32,
+    "memDisplayWindowVisible": false,
+    "recentFiles": null,
     "restartOnLoadFdd": true,
-    "showSaveDiscardFddDialog": true,
     "traceLogWindowVisible": false,
-    "watchpointsWindowVisible": true
+    "watchpointsWindowVisible": false
 }
