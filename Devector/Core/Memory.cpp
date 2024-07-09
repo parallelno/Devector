@@ -26,21 +26,21 @@ void dev::Memory::SetRam(const Addr _addr, const std::vector<uint8_t>& _data )
 	std::copy(_data.begin(), _data.end(), m_ram.data() + _addr);
 }
 
-auto dev::Memory::GetByte(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
+auto dev::Memory::GetByte(const Addr _addr, const AddrSpace _addrSpace)
 -> uint8_t
 {
-	_globalAddr = GetGlobalAddr(_globalAddr, _addrSpace);
+	auto globalAddr = GetGlobalAddr(_addr, _addrSpace);
 
-	if (m_state.update.memType == MemType::ROM && _globalAddr < m_rom.size())
+	if (m_state.update.memType == MemType::ROM && globalAddr < m_rom.size())
 	{
-		return m_rom[_globalAddr];
+		return m_rom[globalAddr];
 	}
 
-	return m_ram[_globalAddr];
+	return m_ram[globalAddr];
 }
 
 // byteNum = 0 for the first byte stored by instr, 1 for the second
-void dev::Memory::SetByte(const Addr _addr, uint8_t _value, 
+void dev::Memory::SetByte(const Addr _addr, uint8_t _value,
 	const AddrSpace _addrSpace, const uint8_t _byteNum)
 {
 	auto globalAddr = GetGlobalAddr(_addr, _addrSpace);
@@ -50,13 +50,6 @@ void dev::Memory::SetByte(const Addr _addr, uint8_t _value,
 	m_state.update.stack = static_cast<uint8_t>(_addrSpace);
 	m_state.update.b1 = _value * (1 - _byteNum) + m_state.update.b1 * _byteNum;
 	m_state.update.b2 = _value;
-}
-
-// help func. isn't called by cpu, not stored to the state
-auto dev::Memory::GetWord(GlobalAddr _globalAddr, const AddrSpace _addrSpace)
--> uint16_t
-{
-	return GetByte(_globalAddr + 1, _addrSpace) << 8 | GetByte(_globalAddr, _addrSpace);
 }
 
 // reads 4 bytes from every screen buffer.
@@ -74,40 +67,47 @@ auto dev::Memory::GetScreenBytes(Addr _screenAddrOffset) const
 
 auto dev::Memory::GetRam() const -> const Ram* { return &m_ram; }
 
-// converts an addr to a global addr depending on the ram/stack mapping modes
-auto dev::Memory::GetGlobalAddr(GlobalAddr _globalAddr, const AddrSpace _addrSpace) const
+// converts the addr to a global addr depending on the ram/stack mapping modes
+auto dev::Memory::GetGlobalAddr(Addr _addr, const AddrSpace _addrSpace) const
 -> GlobalAddr
 {
-	if (_addrSpace == AddrSpace::GLOBAL) return _globalAddr % GLOBAL_MEMORY_LEN;
+	// optimization. if mapping is off, return _addr
+	if (m_state.mapping1.data + m_state.mapping1.data == 0) return _addr;
 
-	_globalAddr &= 0xFFFF;
-
+	// check the STACK mapping
 	if (m_state.mapping1.modeStack && _addrSpace == AddrSpace::STACK)
 	{
-		return _globalAddr + static_cast<GlobalAddr>(m_state.mapping1.pageStack + 1) * RAM_DISK_PAGE_LEN;
+		return _addr + (m_state.mapping1.pageStack + 1) * RAM_DISK_PAGE_LEN;
 	}
-	else if (IsRamMapped((Addr)_globalAddr))
-	{
-		return _globalAddr + (m_state.mapping1.pageRam + 1) * RAM_DISK_PAGE_LEN;
-	}
-
-	return _globalAddr;
+	// the ram mapping can be applied to a stack operation as well if the addr falls into the ram-mapping range
+	return _addr + IsRamMapped(m_state.mapping1, _addr) * (m_state.mapping1.pageRam + 1) * RAM_DISK_PAGE_LEN;
 }
 
 auto dev::Memory::GetState() const -> const State& { return m_state; }
-void dev::Memory::SetRamDiskMode(uint8_t _data) { m_state.mapping1.data = _data; }
+void dev::Memory::SetRamDiskMode(uint8_t _diskIdx, uint8_t _data)
+{
+	switch (_diskIdx) {
+	case 0:
+		m_state.mapping1.data = _data;
+		break;
+	case 1:
+		m_state.mapping2.data = _data;
+		break;
+	}
+}
 bool dev::Memory::IsRomEnabled() const { return m_state.update.memType == MemType::ROM; };
 
 // check if the addr is mapped to the ram-disk
-bool dev::Memory::IsRamMapped(Addr _addr) const
+auto dev::Memory::IsRamMapped(const Mapping _mapping, Addr _addr) const
+-> GlobalAddr
 {
-	if ((m_state.mapping1.modeRamA && _addr >= 0xA000 && _addr <= 0xDFFF) ||
-		(m_state.mapping1.modeRam8 && _addr >= 0x8000 && _addr <= 0x9FFF) ||
-		(m_state.mapping1.modeRamE && _addr >= 0xE000 && _addr <= 0xFFFF))
+	if ((_mapping.modeRamA && _addr >= 0xA000 && _addr <= 0xDFFF) ||
+		(_mapping.modeRam8 && _addr >= 0x8000 && _addr <= 0x9FFF) ||
+		(_mapping.modeRamE && _addr >= 0xE000))
 	{
-		return true;
+		return 1;
 	}
 
-	return false;
+	return 0;
 }
 

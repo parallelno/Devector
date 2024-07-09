@@ -435,8 +435,12 @@ auto dev::Hardware::Get3Bytes(const nlohmann::json _addr, const Memory::AddrSpac
 -> nlohmann::json
 {
 	Addr addr = _addr["addr"];
+	auto data = m_memory.GetByte(addr, _addrSpace) |
+		m_memory.GetByte(addr + 1, _addrSpace) << 8 |
+		m_memory.GetByte(addr + 2, _addrSpace) << 16;
+
 	nlohmann::json out = {
-		{"data", m_memory.GetByte(addr, _addrSpace) | (m_memory.GetWord(addr + 1, _addrSpace) << 8) }
+		{"data", data }
 	};
 	return out;
 }
@@ -445,8 +449,10 @@ auto dev::Hardware::GetWord(const nlohmann::json _addr, const Memory::AddrSpace 
 -> nlohmann::json
 {
 	Addr addr = _addr["addr"];
+	auto data = m_memory.GetByte(addr + 1, _addrSpace) << 8 | m_memory.GetByte(addr, _addrSpace);
+
 	nlohmann::json out = {
-		{"data", m_memory.GetWord(addr, _addrSpace)}
+		{"data", data}
 	};
 	return out;
 }

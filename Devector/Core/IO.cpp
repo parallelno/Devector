@@ -217,7 +217,10 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		HW_COLOR = _value;
 		break;
 	case 0x10:
-		m_memory.SetRamDiskMode(_value);
+		m_memory.SetRamDiskMode(0, _value);
+		break;
+	case 0x11:
+		m_memory.SetRamDiskMode(1, _value);
 		break;
 	case 0x14: [[fallthrough]];
 	case 0x15:

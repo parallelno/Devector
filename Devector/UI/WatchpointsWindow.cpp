@@ -350,7 +350,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 			std::string warningS = "";
 
 			GlobalAddr globalAddr = dev::StrHexToInt(globalAddrS.c_str());
-			if (globalAddr > Memory::GLOBAL_MEMORY_LEN - 1) {
+			if (globalAddr >= Memory::GLOBAL_MEMORY_LEN) {
 				warningS = "Too large address";
 			}
 			if (lenS.size() > 4) {

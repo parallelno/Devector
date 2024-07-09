@@ -146,7 +146,7 @@ namespace dev
 		auto GetPorts() const -> const Ports* { return &m_state.ports; }
 		auto GetPortsInData() const -> const PortsData* { return &m_portsInData; }
 		auto GetPortsOutData() const -> const PortsData* { return &m_portsOutData; }
-		auto GetBeeper() const -> float { return m_state.ports.portC & 1; } // it also out to the tape
+		auto GetBeeper() const -> uint8_t { return m_state.ports.portC & 1; } // it also out to the tape
 		void TryToCommit(const uint8_t _colorIdx);
 	};
 }
