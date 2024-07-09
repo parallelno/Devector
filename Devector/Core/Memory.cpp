@@ -72,7 +72,7 @@ auto dev::Memory::GetGlobalAddr(Addr _addr, const AddrSpace _addrSpace) const
 -> GlobalAddr
 {
 	// optimization. if mapping is off, return _addr
-	if (!(m_state.mapping1.data || m_state.mapping2.data)) return _addr;
+	if (m_state.mapping1.data + m_state.mapping2.data == 0) return _addr;
 
 	// check the STACK mapping
 	if (m_state.mapping1.modeStack && _addrSpace == AddrSpace::STACK)
