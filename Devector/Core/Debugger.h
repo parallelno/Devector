@@ -37,13 +37,13 @@ namespace dev
 		void Reset();
 
 		void ReadInstr(
-			const GlobalAddr _globalAddr, const CpuI8080::State& _state);
+			const GlobalAddr _globalAddr);
 		void Read(const GlobalAddr _globalAddr, const uint8_t _val);
 		void Write(const GlobalAddr _globalAddr, const uint8_t _val);
 
 		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
 		void AddBreakpoint(const Addr _addr,
-			const uint8_t _mappingPages = Breakpoint::MAPPING_PAGES_ALL,
+			const Breakpoint::MemPages _memPages = Breakpoint::MAPPING_PAGES_ALL,
 			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE,
 			const bool _autoDel = false, 
 			const Breakpoint::Operand _op = Breakpoint::Operand::A, 
@@ -103,9 +103,9 @@ namespace dev
 		bool m_wpBreak;
 
 		Hardware::CheckBreakFunc m_checkBreakFunc;
-		CpuI8080::DebugOnReadInstrFunc m_debugOnReadInstrFunc;
-		CpuI8080::DebugOnReadFunc m_debugOnReadFunc;
-		CpuI8080::DebugOnWriteFunc m_debugOnWriteFunc;
+		Memory::DebugOnReadInstrFunc m_debugOnReadInstrFunc;
+		Memory::DebugOnReadFunc m_debugOnReadFunc;
+		Memory::DebugOnWriteFunc m_debugOnWriteFunc;
 
 		std::mutex m_lastRWMutex;
 		LastRWAddrs m_lastReadsAddrs; // a circular buffer that contains addresses

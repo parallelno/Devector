@@ -23,7 +23,7 @@ dev::Debugger::Debugger(Hardware& _hardware)
 void dev::Debugger::Init()
 {
 	m_checkBreakFunc = std::bind(&Debugger::CheckBreak, this, std::placeholders::_1, std::placeholders::_2);
-	m_debugOnReadInstrFunc = std::bind(&Debugger::ReadInstr, this, std::placeholders::_1, std::placeholders::_2);
+	m_debugOnReadInstrFunc = std::bind(&Debugger::ReadInstr, this, std::placeholders::_1);
 	m_debugOnReadFunc = std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2);
 	m_debugOnWriteFunc = std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2);
 
@@ -68,7 +68,7 @@ void dev::Debugger::Reset()
 
 // a hardware thread
 void dev::Debugger::ReadInstr(
-	const GlobalAddr _globalAddr, const  CpuI8080::State& _state)
+	const GlobalAddr _globalAddr)
 {
 	disasm.MemRunsUpdate(_globalAddr);
 }
@@ -318,7 +318,7 @@ void dev::Debugger::SetBreakpointStatus(const Addr _addr, const Breakpoint::Stat
 	AddBreakpoint(_addr);
 }
 
-void dev::Debugger::AddBreakpoint( const Addr _addr, const uint8_t _mappingPages, 
+void dev::Debugger::AddBreakpoint( const Addr _addr, const Breakpoint::MemPages _memPages,
 	const Breakpoint::Status _status, const bool _autoDel,
 	const Breakpoint::Operand _op, const dev::Condition _cond, 
 	const size_t _val, const std::string& _comment)
@@ -327,12 +327,12 @@ void dev::Debugger::AddBreakpoint( const Addr _addr, const uint8_t _mappingPages
 	auto bpI = m_breakpoints.find(_addr);
 	if (bpI != m_breakpoints.end())
 	{
-		bpI->second.Update(_addr, _mappingPages, _status, _autoDel, _op, _cond, _val, _comment);
+		bpI->second.Update(_addr, _memPages, _status, _autoDel, _op, _cond, _val, _comment);
 		return;
 	}
 
 	m_breakpoints.emplace(_addr, std::move(
-		Breakpoint(_addr, _mappingPages, _status, _autoDel, _op, _cond, _val, _comment)));
+		Breakpoint(_addr, _memPages, _status, _autoDel, _op, _cond, _val, _comment)));
 }
 
 void dev::Debugger::DelBreakpoint(const Addr _addr)

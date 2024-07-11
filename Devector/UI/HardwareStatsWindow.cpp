@@ -249,12 +249,12 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	if (ccDiff == 0) return;
 
 	// Regs
-	CpuI8080::AF regAF = { data["af"] };
-	Addr regBC = data["bc"];
-	Addr regDE = data["de"];
-	Addr regHL = data["hl"];
-	Addr regSP = data["sp"];
-	Addr regPC = data["pc"];
+	CpuI8080::AF regAF{ data["af"] };
+	Addr regBC{ data["bc"] };
+	Addr regDE{ data["de"] };
+	Addr regHL{ data["hl"] };
+	Addr regSP{ data["sp"] };
+	Addr regPC{ data["pc"] };
 
 	// Flags
 
@@ -326,8 +326,8 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	int rasterPixel = displayDataJ["rasterPixel"];
 	int rasterLine = displayDataJ["rasterLine"];
 	res = m_hardware.Request(Hardware::Req::GET_MEMORY_MAPPING);
-	Memory::Mapping memMapping1 { res->at("mapping1") };
-	Memory::Mapping memMapping2 { res->at("mapping2") };
+	Memory::Mapping memMapping1 { res->at("mapping0") };
+	Memory::Mapping memMapping2 { res->at("mapping1") };
 
 	// update ram-disk 1
 	m_mappingRamMode1S = "Off";

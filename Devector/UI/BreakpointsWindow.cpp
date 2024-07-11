@@ -131,7 +131,7 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGui::PopStyleColor();
 
 			// Condition
-			const char* cond = bp.autoDel ? "Auto delete" : "";
+			std::string cond = bp.GetConditionS();
 			DrawProperty(cond);
 			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
 
@@ -223,7 +223,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 		ImGui::OpenPopup("##BpEdit");
 	}
 
-	static uint8_t mappingPages = Breakpoint::MAPPING_PAGES_ALL;
+	static Breakpoint::MemPages memPages = Breakpoint::MAPPING_PAGES_ALL;
 	static bool isActive = true;
 	static bool isAutoDel = false;
 	static Addr addrOld = 0xFF;
@@ -249,7 +249,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 		const auto& bp = _pbs.at(_addr);
 		isActive = bp.IsActive();
 		addrOld = bp.addr;
-		mappingPages = bp.mappingPages;
+		memPages = bp.memPages;
 		isAutoDel = bp.autoDel;
 		addrS = std::format("{:04X}", bp.addr);
 		selectedOp = static_cast<int>(bp.operand);
@@ -274,21 +274,35 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 			DrawProperty2EditableS("Address", "##BPContextAddress", &addrS, "FFFF",
 				"A hexademical address in the format 0xFF or FF.");
 			// mapping
-			bool mainRam = mappingPages & Breakpoint::MAPPING_RAM;
-			bool mainRamDiskP0 = mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE0;
-			bool mainRamDiskP1 = mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE1;
-			bool mainRamDiskP2 = mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE2;
-			bool mainRamDiskP3 = mappingPages & Breakpoint::MAPPING_RAMDISK_PAGE3;
-			DrawProperty2EditableCheckBox("Ram", "##BPContextAccessRam", &mainRam, "To check the main ram");
-			DrawProperty2EditableCheckBox("Ram Disk Page 0", "##BPContextAccessRamDiskP0", &mainRamDiskP0, "To check the Ram-Disk page 0");
-			DrawProperty2EditableCheckBox("Ram Disk Page 1", "##BPContextAccessRamDiskP1", &mainRamDiskP1, "To check the Ram-Disk page 1");
-			DrawProperty2EditableCheckBox("Ram Disk Page 2", "##BPContextAccessRamDiskP2", &mainRamDiskP2, "To check the Ram-Disk page 2");
-			DrawProperty2EditableCheckBox("Ram Disk Page 3", "##BPContextAccessRamDiskP3", &mainRamDiskP3, "To check the Ram-Disk page 3");
-			mappingPages = static_cast<int>(mainRam) | 
-				(static_cast<int>(mainRamDiskP0)<< 1) |
-				(static_cast<int>(mainRamDiskP1)<< 2) |
-				(static_cast<int>(mainRamDiskP2)<< 3) |
-				(static_cast<int>(mainRamDiskP3)<< 4);
+			bool ram = memPages.ram;
+			bool rd00 = memPages.rd00;
+			bool rd01 = memPages.rd01;
+			bool rd02 = memPages.rd02;
+			bool rd03 = memPages.rd03;
+			bool rd10 = memPages.rd10;
+			bool rd11 = memPages.rd11;
+			bool rd12 = memPages.rd12;
+			bool rd13 = memPages.rd13;
+
+			DrawProperty2EditableCheckBox("Ram", "##BPContextAccessRam", &ram, "To check the main ram");
+			DrawProperty2EditableCheckBox("Ram Disk1 Page 0", "##BPContextAccessRamDisk1P0", &rd00, "To check the Ram-Disk1 page 0");
+			DrawProperty2EditableCheckBox("Ram Disk1 Page 1", "##BPContextAccessRamDisk1P1", &rd01, "To check the Ram-Disk1 page 1");
+			DrawProperty2EditableCheckBox("Ram Disk1 Page 2", "##BPContextAccessRamDisk1P2", &rd02, "To check the Ram-Disk1 page 2");
+			DrawProperty2EditableCheckBox("Ram Disk1 Page 3", "##BPContextAccessRamDisk1P3", &rd03, "To check the Ram-Disk1 page 3");
+
+			DrawProperty2EditableCheckBox("Ram Disk2 Page 0", "##BPContextAccessRamDisk2P0", &rd10, "To check the Ram-Disk2 page 0");
+			DrawProperty2EditableCheckBox("Ram Disk2 Page 1", "##BPContextAccessRamDisk2P1", &rd11, "To check the Ram-Disk2 page 1");
+			DrawProperty2EditableCheckBox("Ram Disk2 Page 2", "##BPContextAccessRamDisk2P2", &rd12, "To check the Ram-Disk2 page 2");
+			DrawProperty2EditableCheckBox("Ram Disk2 Page 3", "##BPContextAccessRamDisk2P3", &rd13, "To check the Ram-Disk2 page 3");
+			memPages = static_cast<int>(ram) |
+				(static_cast<int>(rd00) << 1) |
+				(static_cast<int>(rd01) << 2) |
+				(static_cast<int>(rd02) << 3) |
+				(static_cast<int>(rd03) << 4) |
+				(static_cast<int>(rd10) << 5) |
+				(static_cast<int>(rd11) << 6) |
+				(static_cast<int>(rd12) << 7) |
+				(static_cast<int>(rd13) << 8);
 
 			// auto delete
 			DrawProperty2EditableCheckBox("Auto Delete", "##BPContextAutoDel", &isAutoDel, "Removes the breakpoint when execution halts");
@@ -336,7 +350,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 				{
 					m_debugger.DelBreakpoint(addrOld);
 				}
-				m_debugger.AddBreakpoint(addr, mappingPages, 
+				m_debugger.AddBreakpoint(addr, memPages, 
 					isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, 
 					isAutoDel, static_cast<Breakpoint::Operand>(selectedOp),
 					static_cast<dev::Condition>(selectedCond), val, commentS);

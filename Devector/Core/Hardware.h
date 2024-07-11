@@ -92,10 +92,10 @@ namespace dev
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;
 		auto GetRam() const -> const Memory::Ram*;
 
-		void AttachCheckBreak(CheckBreakFunc* _funcP);
-		void AttachDebugOnReadInstr(CpuI8080::DebugOnReadInstrFunc* _funcP);
-		void AttachDebugOnRead(CpuI8080::DebugOnReadFunc* _funcP);
-		void AttachDebugOnWrite(CpuI8080::DebugOnWriteFunc* _funcP);
+		void AttachCheckBreak(CheckBreakFunc* _funcP) { m_checkBreak.store(_funcP); }
+		void AttachDebugOnReadInstr(Memory::DebugOnReadInstrFunc* _funcP) { m_memory.AttachDebugOnReadInstr(_funcP); }
+		void AttachDebugOnRead(Memory::DebugOnReadFunc* _funcP) { m_memory.AttachDebugOnRead(_funcP); }
+		void AttachDebugOnWrite(Memory::DebugOnWriteFunc* _funcP) { m_memory.AttachDebugOnWrite(_funcP); }
 		void AttachTraceLogUpdate(TraceLogUpdateFunc* _funcP);
 
 	private:

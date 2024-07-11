@@ -133,9 +133,6 @@ namespace dev
 		// memory + io interface
 		using InputFunc = std::function <uint8_t(const uint8_t _port)>;
 		using OutputFunc = std::function <void(const uint8_t _port, const uint8_t _value)>;
-		using DebugOnReadInstrFunc = std::function<void(const GlobalAddr _globalAddr, const State& _state)>;
-		using DebugOnReadFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
-		using DebugOnWriteFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
 
 		CpuI8080() = delete;
 		CpuI8080(
@@ -148,16 +145,9 @@ namespace dev
 		void ExecuteMachineCycle(bool _irq);
 		bool IsInstructionExecuted() const;
 
-		void AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP);
-		void AttachDebugOnRead(DebugOnReadFunc* _funcP);
-		void AttachDebugOnWrite(DebugOnWriteFunc* _funcP);
-
 		static auto GetInstrCC(const uint8_t _opcode) -> uint8_t;
 
 	private:
-		std::atomic <DebugOnReadInstrFunc*> m_debugOnReadInstr = nullptr;
-		std::atomic <DebugOnReadFunc*> m_debugOnRead = nullptr;
-		std::atomic <DebugOnWriteFunc*> m_debugOnWrite = nullptr;
 
 		Memory& m_memory;
 		InputFunc Input;
@@ -171,11 +161,10 @@ namespace dev
 		//
 		////////////////////////////////////////////////////////////////////////////
 
-		uint8_t ReadInstrMovePC();
+		uint8_t ReadInstrMovePC(uint8_t _byteNum = 0);
 		uint8_t ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 		void WriteByte(const Addr _addr, uint8_t _value,
 			Memory::AddrSpace _addrSpace, const uint8_t _byteNum);
-		uint8_t ReadByteMovePC(Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
 
 		////////////////////////////////////////////////////////////////////////////
 		//

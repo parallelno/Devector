@@ -25,10 +25,11 @@ dev::Hardware::Hardware(const std::wstring& _pathBootData)
 
 dev::Hardware::~Hardware()
 {
-	m_checkBreak.store(nullptr);
-	m_cpu.AttachDebugOnReadInstr(nullptr);
-	m_cpu.AttachDebugOnRead(nullptr);
-	m_cpu.AttachDebugOnWrite(nullptr);
+	// redundant. Debugg destructor is doing it
+	//m_checkBreak.store(nullptr);
+	//m_cpu.AttachDebugOnReadInstr(nullptr);
+	//m_cpu.AttachDebugOnRead(nullptr);
+	//m_cpu.AttachDebugOnWrite(nullptr);
 
 	Request(Hardware::Req::EXIT);
 	m_executionThread.join();
@@ -79,8 +80,11 @@ void dev::Hardware::Execution()
 				ReqHandling();
 
 				auto CheckBreak = m_checkBreak.load();
-				if (CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.GetState()))
-				{
+				if (CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.GetState()))				{
+					Stop();
+					break;
+				}
+				if (m_memory.IsRamDiskMappingCollision()) {
 					Stop();
 					break;
 				}
@@ -120,11 +124,6 @@ auto dev::Hardware::Request(const Req _req, const nlohmann::json& _dataJ)
 	m_reqs.push({ _req, _dataJ });
 	return m_reqRes.pop();
 }
-
-void dev::Hardware::AttachCheckBreak(CheckBreakFunc* _funcP) { m_checkBreak.store(_funcP); }
-void dev::Hardware::AttachDebugOnReadInstr(CpuI8080::DebugOnReadInstrFunc* _funcP) { m_cpu.AttachDebugOnReadInstr(_funcP); }
-void dev::Hardware::AttachDebugOnRead(CpuI8080::DebugOnReadFunc* _funcP) { m_cpu.AttachDebugOnRead(_funcP); }
-void dev::Hardware::AttachDebugOnWrite(CpuI8080::DebugOnWriteFunc* _funcP) { m_cpu.AttachDebugOnWrite(_funcP); }
 
 // internal thread
 void dev::Hardware::ReqHandling(const bool _waitReq)
@@ -241,13 +240,13 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
 		case Req::GET_MEMORY_MAPPING:
 			m_reqRes.emplace({
+				{"mapping0", m_memory.GetState().mapping0.data},
 				{"mapping1", m_memory.GetState().mapping1.data},
-				{"mapping2", m_memory.GetState().mapping2.data},
 				});
 			break;
 		case Req::GET_GLOBAL_ADDR_RAM:
 			m_reqRes.emplace({
-				{"data", m_memory.GetGlobalAddr(dataJ["addr"], Memory::AddrSpace::RAM)}
+				{"data", m_memory.GetGlobalAddrCheck(dataJ["addr"], Memory::AddrSpace::RAM)}
 				});
 			break;
 

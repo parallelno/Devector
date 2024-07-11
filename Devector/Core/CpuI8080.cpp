@@ -460,53 +460,25 @@ void dev::CpuI8080::Decode()
 //
 ////////////////////////////////////////////////////////////////////////////
 
-void dev::CpuI8080::AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP) { m_debugOnReadInstr.store(_funcP); }
-void dev::CpuI8080::AttachDebugOnRead(DebugOnReadFunc* _funcP) { m_debugOnRead.store(_funcP); }
-void dev::CpuI8080::AttachDebugOnWrite(DebugOnWriteFunc* _funcP) { m_debugOnWrite.store(_funcP); }
-
-uint8_t dev::CpuI8080::ReadInstrMovePC()
+// _byteNum is the instruction number of byte (0, 2)
+uint8_t dev::CpuI8080::ReadInstrMovePC(uint8_t _byteNum)
 {
-	auto globalAddr = m_memory.GetGlobalAddr(PC, Memory::AddrSpace::RAM);
+	uint8_t opcode = m_memory.CpuRead(PC, Memory::AddrSpace::RAM, true);
+	*(&state.opcode + _byteNum) = opcode;
 
-	uint8_t opcode = m_memory.GetByte(PC, Memory::AddrSpace::RAM);
-	uint8_t dataL = m_memory.GetByte(PC + 1, Memory::AddrSpace::RAM);
-	uint8_t dataH = m_memory.GetByte(PC + 2, Memory::AddrSpace::RAM);
-	state.opcode = opcode;
-	state.data.l = dataL;
-	state.data.h = dataH;
-
-	auto DebugOnReadInstr = m_debugOnReadInstr.load();
-	if (DebugOnReadInstr) (*DebugOnReadInstr)(globalAddr, state);
 	PC++;
 	return opcode;
 }
 
 uint8_t dev::CpuI8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
 {
-	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
-
-	auto val = m_memory.GetByte(_addr, _addrSpace);
-	auto DebugOnRead = m_debugOnRead.load();
-	if (DebugOnRead) (*DebugOnRead)(globalAddr, val);
-
-	return val;
+	return m_memory.CpuRead(_addr, _addrSpace, false);
 }
 
 void dev::CpuI8080::WriteByte(const Addr _addr, uint8_t _value, 
 	Memory::AddrSpace _addrSpace, const uint8_t _byteNum)
 {
-	auto globalAddr = m_memory.GetGlobalAddr(_addr, _addrSpace);
-	
-	m_memory.SetByte(_addr, _value, _addrSpace, _byteNum);
-	auto DebugOnWrite = m_debugOnWrite.load();
-	if (DebugOnWrite) (*DebugOnWrite)(globalAddr, _value);
-}
-
-uint8_t dev::CpuI8080::ReadByteMovePC(Memory::AddrSpace _addrSpace)
-{
-	auto result = ReadByte(PC, _addrSpace);
-	PC++;
-	return result;
+	m_memory.CpuWrite(_addr, _value, _addrSpace, _byteNum);
 }
 
 
@@ -663,7 +635,7 @@ void dev::CpuI8080::MVIRegData(uint8_t& _regDest)
 	case 0:
 		return;
 	case 1:
-		_regDest = ReadByteMovePC();
+		_regDest = ReadInstrMovePC(1);
 		return;
 	}
 }
@@ -674,7 +646,7 @@ void dev::CpuI8080::MVIMemData()
 	case 0:
 		return;
 	case 1:
-		TMP = ReadByteMovePC();
+		TMP = ReadInstrMovePC(1);
 		return;
 	case 2:
 		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 1);
@@ -688,10 +660,10 @@ void dev::CpuI8080::LDA()
 	case 0:
 		return;
 	case 1:
-		Z = ReadByteMovePC();
+		Z = ReadInstrMovePC(1);
 		return;
 	case 2:
-		W = ReadByteMovePC();
+		W = ReadInstrMovePC(2);
 		return;
 	case 3:
 		A = ReadByte(WZ);
@@ -705,10 +677,10 @@ void dev::CpuI8080::STA()
 	case 0:
 		return;
 	case 1:
-		Z = ReadByteMovePC();
+		Z = ReadInstrMovePC(1);
 		return;
 	case 2:
-		W = ReadByteMovePC();
+		W = ReadInstrMovePC(2);
 		return;
 	case 3:
 		WriteByte(WZ, A, Memory::AddrSpace::RAM, 1);
@@ -733,10 +705,10 @@ void dev::CpuI8080::LXI(uint8_t& _regH, uint8_t& _regL)
 	case 0:
 		return;
 	case 1:
-		_regL = ReadByteMovePC();
+		_regL = ReadInstrMovePC(1);
 		return;
 	case 2:
-		_regH = ReadByteMovePC();
+		_regH = ReadInstrMovePC(2);
 		return;
 	}
 }
@@ -747,10 +719,10 @@ void dev::CpuI8080::LHLD()
 	case 0:
 		return;
 	case 1:
-		Z = ReadByteMovePC();
+		Z = ReadInstrMovePC(1);
 		return;
 	case 2:
-		W = ReadByteMovePC();
+		W = ReadInstrMovePC(2);
 		return;
 	case 3:
 		L = ReadByte(WZ);
@@ -768,10 +740,10 @@ void dev::CpuI8080::SHLD()
 	case 0:
 		return;
 	case 1:
-		Z = ReadByteMovePC();
+		Z = ReadInstrMovePC(1);
 		return;
 	case 2:
-		W = ReadByteMovePC();
+		W = ReadInstrMovePC(2);
 		return;
 	case 3:
 		WriteByte(WZ, L, Memory::AddrSpace::RAM, 1);
@@ -892,7 +864,7 @@ void dev::CpuI8080::ADI(bool _cy)
 		ACT = A;
 		return;
 	case 1:
-		TMP = ReadByteMovePC();
+		TMP = ReadInstrMovePC(1);
 		ADD(ACT, TMP, _cy);
 		return;
 	}
@@ -926,7 +898,7 @@ void dev::CpuI8080::SBI(bool _cy)
 		ACT = A;
 		return;
 	case 1:
-		TMP = ReadByteMovePC();
+		TMP = ReadInstrMovePC(1);
 		SUB(ACT, TMP, _cy);
 		return;
 	}
@@ -1103,7 +1075,7 @@ void dev::CpuI8080::ANI()
 		ACT = A;
 		return;
 	case 1:
-		TMP = ReadByteMovePC();
+		TMP = ReadInstrMovePC(1);
 		A = (uint8_t)(ACT & TMP);
 		FC = false;
 		FAC = ((ACT | TMP) & 0x08) != 0;
@@ -1147,7 +1119,7 @@ void dev::CpuI8080::XRI()
 		ACT = A;
 		return;
 	case 1:
-		TMP = ReadByteMovePC();
+		TMP = ReadInstrMovePC(1);
 		A = (uint8_t)(ACT ^ TMP);
 		FC = false;
 		FAC = false;
@@ -1191,7 +1163,7 @@ void dev::CpuI8080::ORI()
 		ACT = A;
 		return;
 	case 1:
-		TMP = ReadByteMovePC();
+		TMP = ReadInstrMovePC(1);
 		A = (uint8_t)(ACT | TMP);
 		FC = false;
 		FAC = false;
@@ -1235,7 +1207,7 @@ void dev::CpuI8080::CPI()
 		ACT = A;
 		return;
 	case 1:
-		TMP = ReadByteMovePC();
+		TMP = ReadInstrMovePC(1);
 		auto res = ACT - TMP;
 		FC = res & 0x100;
 		FAC = (~(ACT ^ (res & 0xFF) ^ TMP) & 0x10) == 0x10;
@@ -1250,10 +1222,10 @@ void dev::CpuI8080::JMP(bool _condition)
 	case 0:
 		return;
 	case 1:
-		Z = ReadByteMovePC();
+		Z = ReadInstrMovePC(1);
 		return;
 	case 2:
-		W = ReadByteMovePC();
+		W = ReadInstrMovePC(2);
 		if (_condition)
 		{
 			PC = WZ;
@@ -1281,10 +1253,10 @@ void dev::CpuI8080::CALL(bool _condition)
 		SP -= _condition ? 1 : 0;
 		return;
 	case 1:
-		Z = ReadByteMovePC();
+		Z = ReadInstrMovePC(1);
 		return;
 	case 2:
-		W = ReadByteMovePC();
+		W = ReadInstrMovePC(2);
 		return;
 	case 3:
 		if (_condition)	{
@@ -1372,7 +1344,7 @@ void dev::CpuI8080::IN_()
 		return;
 	case 1:
 		W = 0;
-		Z = ReadByteMovePC();
+		Z = ReadInstrMovePC(1);
 		return;
 	case 2:
 		A = Input(Z);
@@ -1387,7 +1359,7 @@ void dev::CpuI8080::OUT_()
 		return;
 	case 1:
 		W = 0;
-		Z = ReadByteMovePC();
+		Z = ReadInstrMovePC(1);
 		return;
 	case 2:
 		Output(Z, A);

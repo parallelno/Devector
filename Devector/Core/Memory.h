@@ -33,6 +33,9 @@ namespace dev
 		static constexpr uint8_t MAPPING_MODE_MASK = 0b11110000;
 
 #pragma pack(push, 1)
+		// RAM-mapping is applied if the RAM-mapping is enabled, the ram accesssed via non-stack instructions, and the addr falls into the RAM-mapping range associated with that particular RAM mapping
+		// Stack-mapping is applied if the Stack-mapping is enabled, the ram accesssed via the stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
+		// special case: the RAM-mapping applies to a stack operation if the Stack-mapping is disabled, RAM-mapping is enabled, and the addr falls into the RAM-mapping range associated with that particular RAM mapping.
 		union Mapping {
 			struct {
 				uint8_t pageRam : 2;	// Ram-Disk 64k page idx accesssed via non-stack instructions (all instructions except mentioned below)
@@ -50,7 +53,7 @@ namespace dev
 #pragma pack(push, 1)
 		struct Update
 		{
-			Addr addr : 16 = 0;
+			Addr writeAddr : 16 = 0;
 			uint8_t b1 : 8 = 0;
 			uint8_t b2 : 8 = 0;
 			uint8_t len : 2 = 0;
@@ -62,11 +65,19 @@ namespace dev
 #pragma pack(push, 1)
 		struct State
 		{
-			Mapping mapping1; // mapping to the Ram-disk 1
-			Mapping mapping2; // mapping to the Ram-disk 2
+			Mapping mapping0; // mapping to the Ram-disk 1
+			Mapping mapping1; // mapping to the Ram-disk 2
 			Update update;
 		};
 #pragma pack(pop)
+
+		using DebugOnReadInstrFunc = std::function<void(const GlobalAddr _globalAddr)>;
+		using DebugOnReadFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
+		using DebugOnWriteFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
+
+		void AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP) { m_debugOnReadInstr.store(_funcP); }
+		void AttachDebugOnRead(DebugOnReadFunc* _funcP) { m_debugOnRead.store(_funcP); }
+		void AttachDebugOnWrite(DebugOnWriteFunc* _funcP) { m_debugOnWrite.store(_funcP); }
 
 		Memory(const std::wstring& _pathBootData);
 		void Init();
@@ -75,21 +86,29 @@ namespace dev
 		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
 		auto GetByte(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
-		void SetByte(const Addr _addr, uint8_t _value,
+		auto CpuRead(const Addr _addr,
+			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM, const bool _instr = false) -> uint8_t;
+		void CpuWrite(const Addr _addr, uint8_t _value,
 			const Memory::AddrSpace _addrSpace, const uint8_t _byteNum);
 		auto GetScreenBytes(Addr _screenAddrOffset) const -> uint32_t;
 		auto GetRam() const -> const Ram*;
-		auto GetGlobalAddr(Addr _addr, 
-			const AddrSpace _addrSpace) const -> GlobalAddr;
+		auto GetGlobalAddrCheck(const Addr _addr, const AddrSpace _addrSpace) -> GlobalAddr;
+		auto GetGlobalAddr(const int _ramdiskIdx, const Addr _addr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		auto GetState() const -> const State&;
 		auto IsRamMapped(const Mapping _mapping, const Addr _addr) const -> GlobalAddr;
 		bool IsRomEnabled() const;
 		void SetRamDiskMode(uint8_t _diskIdx, uint8_t _data);
 		void Restart();
+		bool IsRamDiskMappingCollision() { return (m_ramdiskMappingCollision--) > 0; }
 
 	private:
+		std::atomic <DebugOnReadInstrFunc*> m_debugOnReadInstr = nullptr;
+		std::atomic <DebugOnReadFunc*> m_debugOnRead = nullptr;
+		std::atomic <DebugOnWriteFunc*> m_debugOnWrite = nullptr;
+
 		Ram m_ram;
 		Rom m_rom;
 		State m_state;
+		int m_ramdiskMappingCollision = 0; // when reading from more than one Ram-disk
 	};
 }

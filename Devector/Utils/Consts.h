@@ -14,8 +14,8 @@ namespace dev
 	static const char* DEFAULT_FONT_ITALIC_PATH = "fonts//medium_italic.ttf";
 
 	static const char* ConditionsS[] = {
-		"ANY", "EQU", "LESS", "GREATER",
-		"LESS_EQU", "GREATER_EQU", "NOT_EQU" };
+		"=ANY", "=", "<", ">",
+		"<=", ">=", "!=" };
 
 #define GL_NEAREST			0x2600
 #define GL_LINEAR			0x2601
