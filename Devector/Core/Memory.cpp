@@ -114,7 +114,14 @@ auto dev::Memory::GetGlobalAddr(const Addr _addr, const AddrSpace _addrSpace) co
 		return _addr + (m_state.mapping.pageStack + 1 + m_state.ramdiskIdx * 4) * RAM_DISK_PAGE_LEN;
 	}
 	// the ram mapping can be applied to a stack operation as well if the addr falls into the ram-mapping range
-	return _addr + IsRamMapped(_addr) * (m_state.mapping.pageRam + 1 + m_state.ramdiskIdx * 4) * RAM_DISK_PAGE_LEN;
+	if ((m_state.mapping.modeRamA && _addr >= 0xA000 && _addr < 0xE000) ||
+		(m_state.mapping.modeRam8 && _addr >= 0x8000 && _addr < 0xA000) ||
+		(m_state.mapping.modeRamE && _addr >= 0xE000)) 
+	{
+		return _addr + (m_state.mapping.pageRam + 1 + m_state.ramdiskIdx * 4) * RAM_DISK_PAGE_LEN;
+	}
+
+	return _addr;
 }
 
 auto dev::Memory::GetState() const -> const State& { return m_state; }
@@ -140,20 +147,6 @@ void dev::Memory::SetRamDiskMode(uint8_t _diskIdx, uint8_t _data)
 			m_state.ramdiskIdx = ramdiskIdx;
 		}
 	}
-}
-
-// check if the addr is mapped to the ram-disk
-auto dev::Memory::IsRamMapped(Addr _addr) const
--> GlobalAddr
-{
-	if ((m_state.mapping.modeRamA && _addr >= 0xA000 && _addr < 0xE000) ||
-		(m_state.mapping.modeRam8 && _addr >= 0x8000 && _addr < 0xA000) ||
-		(m_state.mapping.modeRamE && _addr >= 0xE000))
-	{
-		return 1;
-	}
-
-	return 0;
 }
 
 bool dev::Memory::IsException()

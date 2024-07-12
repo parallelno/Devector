@@ -140,7 +140,7 @@ void dev::Breakpoint::Print() const
 void dev::Breakpoint::UpdateAddrMappingS()
 {
 	addrMappingS = std::format(
-		"0x{} {} 1:{}{}{}{}"
+		"0x{:04X} {} 1:{}{}{}{}"
 		" 2:{}{}{}{}"
 		" 3:{}{}{}{}"
 		" 4:{}{}{}{}"

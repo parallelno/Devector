@@ -40,7 +40,7 @@ namespace dev
 			struct {
 				uint8_t pageRam : 2;	// Ram-Disk 64k page idx accesssed via non-stack instructions (all instructions except mentioned below)
 				uint8_t pageStack : 2;	// Ram-Disk 64k page idx accesssed via the stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
-				uint8_t modeStack : 1;		// enabling stack mapping
+				bool modeStack : 1;		// enabling stack mapping
 				bool modeRamA : 1; // enabling ram [0xA000-0xDFFF] mapped into the the Ram-Disk
 				bool modeRam8 : 1; // enabling ram [0x8000-0x9FFF] mapped into the the Ram-Disk
 				bool modeRamE : 1; // enabling ram [0xE000-0xFFFF] mapped into the the Ram-Disk
@@ -101,7 +101,6 @@ namespace dev
 		void SetMemType(const MemType _memType);
 		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
 		bool IsException();
-		auto IsRamMapped(const Addr _addr) const->GlobalAddr;
 		bool IsRomEnabled() const;
 
 	private:
