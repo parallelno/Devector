@@ -219,8 +219,16 @@ void dev::DisplayWindow::DrawDisplay()
 		case dev::DisplayWindow::DisplaySize::MAX:
 		{
 			ImGuiStyle& style = ImGui::GetStyle();
-			displaySize.x = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
+			auto wMax = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
+			auto hMax = ImGui::GetWindowHeight() - style.FramePadding.y * 14;
+			
+			displaySize.x = wMax;
 			displaySize.y = displaySize.x * WINDOW_ASPECT;
+			if (displaySize.y > hMax) 
+			{
+				displaySize.y = hMax;
+				displaySize.x = displaySize.y / WINDOW_ASPECT;
+			}
 			break;
 		}
 		}

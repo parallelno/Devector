@@ -165,17 +165,12 @@ void dev::HardwareStatsWindow::DrawPeripheral() const
 		ImGui::TableSetupColumn("pfNames", ImGuiTableColumnFlags_WidthFixed, 110);
 
 		// ram-disk 1 mapping
-		DrawSeparator2("Ram-Disk 1:");
-		DrawProperty2("RAM Mode", m_mappingRamMode1S.c_str());
-		DrawProperty2("RAM Page", m_mappingPageRam1S.c_str());
-		DrawProperty2("Stack Mode", m_mappingModeStack1S.c_str());
-		DrawProperty2("Stack Page", m_mappingPageStack1S.c_str());
-		// ram-disk 2 mapping
-		DrawSeparator2("Ram-Disk 2:");
-		DrawProperty2("RAM Mode", m_mappingRamMode2S.c_str());
-		DrawProperty2("RAM Page", m_mappingPageRam2S.c_str());
-		DrawProperty2("Stack Mode", m_mappingModeStack2S.c_str());
-		DrawProperty2("Stack Page", m_mappingPageStack2S.c_str());
+		DrawSeparator2("Ram-Disk:");
+		DrawProperty2("Index", m_ramdiskIdxS.c_str());
+		DrawProperty2("RAM Mode", m_mappingRamModeS.c_str());
+		DrawProperty2("RAM Page", m_mappingPageRamS.c_str());
+		DrawProperty2("Stack Mode", m_mappingModeStackS.c_str());
+		DrawProperty2("Stack Page", m_mappingPageStackS.c_str());
 
 		// FDC
 		DrawSeparator2("FDC:");
@@ -326,34 +321,22 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	int rasterPixel = displayDataJ["rasterPixel"];
 	int rasterLine = displayDataJ["rasterLine"];
 	res = m_hardware.Request(Hardware::Req::GET_MEMORY_MAPPING);
-	Memory::Mapping memMapping1 { res->at("mapping0") };
-	Memory::Mapping memMapping2 { res->at("mapping1") };
+	Memory::Mapping mapping { res->at("mapping") };
+	int ramdiskIdx = res->at("ramdiskIdx");
 
-	// update ram-disk 1
-	m_mappingRamMode1S = "Off";
-	if (memMapping1.data & Memory::MAPPING_RAM_MODE_MASK)
+	// update Ram-disk
+	m_mappingRamModeS = "Off";
+	if (mapping.data & Memory::MAPPING_RAM_MODE_MASK)
 	{
-		auto modeA = memMapping1.modeRamA ? "AC" : "--";
-		auto mode8 = memMapping1.modeRam8 ? "8" : "-";
-		auto modeE = memMapping1.modeRamE ? "E" : "-";
-		m_mappingRamMode1S = std::format("{}{}{}", mode8, modeA, modeE);
+		auto modeA = mapping.modeRamA ? "AC" : "--";
+		auto mode8 = mapping.modeRam8 ? "8" : "-";
+		auto modeE = mapping.modeRamE ? "E" : "-";
+		m_mappingRamModeS = std::format("{}{}{}", mode8, modeA, modeE);
 	}
-	m_mappingPageRam1S = std::to_string(memMapping1.pageRam);
-	m_mappingModeStack1S = dev::BoolToStrC(memMapping1.modeStack, 2);
-	m_mappingPageStack1S = std::to_string(memMapping1.pageStack);
-	
-	// update ram-disk 2
-	m_mappingRamMode2S = "Off";
-	if (memMapping2.data & Memory::MAPPING_RAM_MODE_MASK)
-	{
-		auto modeA = memMapping2.modeRamA ? "AC" : "--";
-		auto mode8 = memMapping2.modeRam8 ? "8" : "-";
-		auto modeE = memMapping2.modeRamE ? "E" : "-";
-		m_mappingRamMode2S = std::format("{}{}{}", mode8, modeA, modeE);
-	}
-	m_mappingPageRam2S = std::to_string(memMapping2.pageRam);
-	m_mappingModeStack2S = dev::BoolToStrC(memMapping2.modeStack, 2);
-	m_mappingPageStack2S = std::to_string(memMapping2.pageStack);
+	m_mappingPageRamS = std::to_string(mapping.pageRam);
+	m_mappingModeStackS = dev::BoolToStrC(mapping.modeStack, 2);
+	m_mappingPageStackS = std::to_string(mapping.pageStack);
+	m_ramdiskIdxS = std::to_string(ramdiskIdx + 1);
 
 	// update hardware
 	m_ccS = std::to_string(cc);

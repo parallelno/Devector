@@ -151,7 +151,31 @@ static const char* separatorsS[] = {
 	"The Ram-Disk 2 Page 0",
 	"The Ram-Disk 2 Page 1",
 	"The Ram-Disk 2 Page 2",
-	"The Ram-Disk 2 Page 3"
+	"The Ram-Disk 2 Page 3",
+	"The Ram-Disk 3 Page 0",
+	"The Ram-Disk 3 Page 1",
+	"The Ram-Disk 3 Page 2",
+	"The Ram-Disk 3 Page 3",
+	"The Ram-Disk 4 Page 0",
+	"The Ram-Disk 4 Page 1",
+	"The Ram-Disk 4 Page 2",
+	"The Ram-Disk 4 Page 3",
+	"The Ram-Disk 5 Page 0",
+	"The Ram-Disk 5 Page 1",
+	"The Ram-Disk 5 Page 2",
+	"The Ram-Disk 5 Page 3",
+	"The Ram-Disk 6 Page 0",
+	"The Ram-Disk 6 Page 1",
+	"The Ram-Disk 6 Page 2",
+	"The Ram-Disk 6 Page 3",
+	"The Ram-Disk 7 Page 0",
+	"The Ram-Disk 7 Page 1",
+	"The Ram-Disk 7 Page 2",
+	"The Ram-Disk 7 Page 3",
+	"The Ram-Disk 8 Page 0",
+	"The Ram-Disk 8 Page 1",
+	"The Ram-Disk 8 Page 2",
+	"The Ram-Disk 8 Page 3"
 };
 
 dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale)

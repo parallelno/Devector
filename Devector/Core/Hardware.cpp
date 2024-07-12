@@ -84,8 +84,10 @@ void dev::Hardware::Execution()
 					Stop();
 					break;
 				}
-				if (m_memory.IsRamDiskMappingCollision()) {
+				if (m_memory.IsException())
+				{
 					Stop();
+					dev::Log("Break: more than one Ram-disk has mapping enabled");
 					break;
 				}
 
@@ -240,13 +242,13 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
 		case Req::GET_MEMORY_MAPPING:
 			m_reqRes.emplace({
-				{"mapping0", m_memory.GetState().mapping0.data},
-				{"mapping1", m_memory.GetState().mapping1.data},
+				{"mapping", m_memory.GetState().mapping.data},
+				{"ramdiskIdx", m_memory.GetState().ramdiskIdx},
 				});
 			break;
 		case Req::GET_GLOBAL_ADDR_RAM:
 			m_reqRes.emplace({
-				{"data", m_memory.GetGlobalAddrCheck(dataJ["addr"], Memory::AddrSpace::RAM)}
+				{"data", m_memory.GetGlobalAddr(dataJ["addr"], Memory::AddrSpace::RAM)}
 				});
 			break;
 

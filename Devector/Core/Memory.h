@@ -21,7 +21,7 @@ namespace dev
 		static constexpr size_t MEM_64K = 64 * 1024;
 		static constexpr size_t RAM_DISK_PAGE_LEN = MEM_64K;
 		static constexpr size_t MEMORY_RAMDISK_LEN = 4 * MEM_64K;
-		static constexpr size_t RAMDISK_MAX = 2;
+		static constexpr size_t RAMDISK_MAX = 8;
 
 		static constexpr size_t MEMORY_MAIN_LEN = MEM_64K;
 		static constexpr size_t GLOBAL_MEMORY_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAMDISK_MAX;
@@ -63,11 +63,15 @@ namespace dev
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+		Mapping m_mappings[RAMDISK_MAX];
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 		struct State
 		{
-			Mapping mapping0; // mapping to the Ram-disk 1
-			Mapping mapping1; // mapping to the Ram-disk 2
 			Update update;
+			Mapping mapping;
+			uint8_t ramdiskIdx : 3 = 0;
 		};
 #pragma pack(pop)
 
@@ -82,8 +86,7 @@ namespace dev
 		Memory(const std::wstring& _pathBootData);
 		void Init();
 		// internal thread access
-		void SetMemType(const MemType _memType);
-		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
+		void Restart();
 		auto GetByte(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
 		auto CpuRead(const Addr _addr,
@@ -92,14 +95,14 @@ namespace dev
 			const Memory::AddrSpace _addrSpace, const uint8_t _byteNum);
 		auto GetScreenBytes(Addr _screenAddrOffset) const -> uint32_t;
 		auto GetRam() const -> const Ram*;
-		auto GetGlobalAddrCheck(const Addr _addr, const AddrSpace _addrSpace) -> GlobalAddr;
-		auto GetGlobalAddr(const int _ramdiskIdx, const Addr _addr, const AddrSpace _addrSpace) const -> GlobalAddr;
+		auto GetGlobalAddr(const Addr _addr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		auto GetState() const -> const State&;
-		auto IsRamMapped(const Mapping _mapping, const Addr _addr) const -> GlobalAddr;
-		bool IsRomEnabled() const;
 		void SetRamDiskMode(uint8_t _diskIdx, uint8_t _data);
-		void Restart();
-		bool IsRamDiskMappingCollision() { return (m_ramdiskMappingCollision--) > 0; }
+		void SetMemType(const MemType _memType);
+		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
+		bool IsException();
+		auto IsRamMapped(const Addr _addr) const->GlobalAddr;
+		bool IsRomEnabled() const;
 
 	private:
 		std::atomic <DebugOnReadInstrFunc*> m_debugOnReadInstr = nullptr;
@@ -109,6 +112,6 @@ namespace dev
 		Ram m_ram;
 		Rom m_rom;
 		State m_state;
-		int m_ramdiskMappingCollision = 0; // when reading from more than one Ram-disk
+		int m_mappingsEnabled = 0;
 	};
 }

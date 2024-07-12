@@ -360,6 +360,32 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 	}
 }
 
+// draws four checkbox in a line
+void dev::DrawProperty2EditableCheckBox4(const char* _name,
+	const char* _label0, const char* _label1, const char* _label2, const char* _label3,
+	bool* _val0, bool* _val1, bool* _val2, bool* _val3, const char* _help)
+{
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name, { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
+	ImGui::TableNextColumn();
+	ImGui::Checkbox(_label0, _val0); ImGui::SameLine();
+	ImGui::Checkbox(_label1, _val1); ImGui::SameLine();
+	ImGui::Checkbox(_label2, _val2); ImGui::SameLine();
+	ImGui::Checkbox(_label3, _val3);
+
+	if (*_help != '\0') {
+		ImGui::SameLine();
+		ImGui::Dummy({ 8, 10 });
+		ImGui::SameLine();
+		dev::DrawHelpMarker(_help);
+	}
+}
+
 void dev::DrawProperty2RadioButtons(
 	const char* _name, int* _currentItem, 
 	const char* const _items[], int _itemsCount, const float _space,

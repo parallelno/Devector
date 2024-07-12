@@ -275,25 +275,49 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 				"A hexademical address in the format 0xFF or FF.");
 			// mapping
 			bool ram = memPages.ram;
-			bool rd00 = memPages.rd00;
-			bool rd01 = memPages.rd01;
-			bool rd02 = memPages.rd02;
-			bool rd03 = memPages.rd03;
-			bool rd10 = memPages.rd10;
-			bool rd11 = memPages.rd11;
-			bool rd12 = memPages.rd12;
-			bool rd13 = memPages.rd13;
+			bool rd00 = memPages.rdisk0page0;
+			bool rd01 = memPages.rdisk0page1;
+			bool rd02 = memPages.rdisk0page2;
+			bool rd03 = memPages.rdisk0page3;
+			bool rd10 = memPages.rdisk1page0;
+			bool rd11 = memPages.rdisk1page1;
+			bool rd12 = memPages.rdisk1page2;
+			bool rd13 = memPages.rdisk1page3;
+			bool rd20 = memPages.rdisk2page0;
+			bool rd21 = memPages.rdisk2page1;
+			bool rd22 = memPages.rdisk2page2;
+			bool rd23 = memPages.rdisk2page3;
+			bool rd30 = memPages.rdisk3page0;
+			bool rd31 = memPages.rdisk3page1;
+			bool rd32 = memPages.rdisk3page2;
+			bool rd33 = memPages.rdisk3page3;
+			bool rd40 = memPages.rdisk4page0;
+			bool rd41 = memPages.rdisk4page1;
+			bool rd42 = memPages.rdisk4page2;
+			bool rd43 = memPages.rdisk4page3;
+			bool rd50 = memPages.rdisk5page0;
+			bool rd51 = memPages.rdisk5page1;
+			bool rd52 = memPages.rdisk5page2;
+			bool rd53 = memPages.rdisk5page3;
+			bool rd60 = memPages.rdisk6page0;
+			bool rd61 = memPages.rdisk6page1;
+			bool rd62 = memPages.rdisk6page2;
+			bool rd63 = memPages.rdisk6page3;
+			bool rd70 = memPages.rdisk7page0;
+			bool rd71 = memPages.rdisk7page1;
+			bool rd72 = memPages.rdisk7page2;
+			bool rd73 = memPages.rdisk7page3;
 
 			DrawProperty2EditableCheckBox("Ram", "##BPContextAccessRam", &ram, "To check the main ram");
-			DrawProperty2EditableCheckBox("Ram Disk1 Page 0", "##BPContextAccessRamDisk1P0", &rd00, "To check the Ram-Disk1 page 0");
-			DrawProperty2EditableCheckBox("Ram Disk1 Page 1", "##BPContextAccessRamDisk1P1", &rd01, "To check the Ram-Disk1 page 1");
-			DrawProperty2EditableCheckBox("Ram Disk1 Page 2", "##BPContextAccessRamDisk1P2", &rd02, "To check the Ram-Disk1 page 2");
-			DrawProperty2EditableCheckBox("Ram Disk1 Page 3", "##BPContextAccessRamDisk1P3", &rd03, "To check the Ram-Disk1 page 3");
+			DrawProperty2EditableCheckBox4("Ram Disk 1", "##BPCARD0P0", "##BPCARD0P1", "##BPCARD0P2", "##BPCARD0P3", &rd00, &rd01, &rd02, &rd03, "To check the Ram-Disk1 pages 0,1,2,3");
+			DrawProperty2EditableCheckBox4("Ram Disk 2", "##BPCARD1P0", "##BPCARD1P1", "##BPCARD1P2", "##BPCARD1P3", &rd10, &rd11, &rd12, &rd13, "To check the Ram-Disk2 pages 0,1,2,3");
+			DrawProperty2EditableCheckBox4("Ram Disk 3", "##BPCARD2P0", "##BPCARD2P1", "##BPCARD2P2", "##BPCARD2P3", &rd20, &rd21, &rd22, &rd23, "To check the Ram-Disk3 pages 0,1,2,3");
+			DrawProperty2EditableCheckBox4("Ram Disk 4", "##BPCARD3P0", "##BPCARD3P1", "##BPCARD3P2", "##BPCARD3P3", &rd30, &rd31, &rd32, &rd33, "To check the Ram-Disk4 pages 0,1,2,3");
+			DrawProperty2EditableCheckBox4("Ram Disk 5", "##BPCARD4P0", "##BPCARD4P1", "##BPCARD4P2", "##BPCARD4P3", &rd40, &rd41, &rd42, &rd43, "To check the Ram-Disk5 pages 0,1,2,3");
+			DrawProperty2EditableCheckBox4("Ram Disk 6", "##BPCARD5P0", "##BPCARD5P1", "##BPCARD5P2", "##BPCARD5P3", &rd50, &rd51, &rd52, &rd53, "To check the Ram-Disk6 pages 0,1,2,3");
+			DrawProperty2EditableCheckBox4("Ram Disk 7", "##BPCARD6P0", "##BPCARD6P1", "##BPCARD6P2", "##BPCARD6P3", &rd60, &rd61, &rd62, &rd63, "To check the Ram-Disk7 pages 0,1,2,3");
+			DrawProperty2EditableCheckBox4("Ram Disk 8", "##BPCARD7P0", "##BPCARD7P1", "##BPCARD7P2", "##BPCARD7P3", &rd70, &rd71, &rd72, &rd73, "To check the Ram-Disk8 pages 0,1,2,3");
 
-			DrawProperty2EditableCheckBox("Ram Disk2 Page 0", "##BPContextAccessRamDisk2P0", &rd10, "To check the Ram-Disk2 page 0");
-			DrawProperty2EditableCheckBox("Ram Disk2 Page 1", "##BPContextAccessRamDisk2P1", &rd11, "To check the Ram-Disk2 page 1");
-			DrawProperty2EditableCheckBox("Ram Disk2 Page 2", "##BPContextAccessRamDisk2P2", &rd12, "To check the Ram-Disk2 page 2");
-			DrawProperty2EditableCheckBox("Ram Disk2 Page 3", "##BPContextAccessRamDisk2P3", &rd13, "To check the Ram-Disk2 page 3");
 			memPages = static_cast<int>(ram) |
 				(static_cast<int>(rd00) << 1) |
 				(static_cast<int>(rd01) << 2) |
@@ -302,7 +326,31 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 				(static_cast<int>(rd10) << 5) |
 				(static_cast<int>(rd11) << 6) |
 				(static_cast<int>(rd12) << 7) |
-				(static_cast<int>(rd13) << 8);
+				(static_cast<int>(rd13) << 8) |
+				(static_cast<int>(rd20) << 9) |
+				(static_cast<int>(rd21) << 10) |
+				(static_cast<int>(rd22) << 11) |
+				(static_cast<int>(rd23) << 12) |
+				(static_cast<int>(rd30) << 13) |
+				(static_cast<int>(rd31) << 14) |
+				(static_cast<int>(rd32) << 15) |
+				(static_cast<int>(rd33) << 16) |
+				(static_cast<int>(rd40) << 17) |
+				(static_cast<int>(rd41) << 18) |
+				(static_cast<int>(rd42) << 19) |
+				(static_cast<int>(rd43) << 20) |
+				(static_cast<int>(rd50) << 21) |
+				(static_cast<int>(rd51) << 22) |
+				(static_cast<int>(rd52) << 23) |
+				(static_cast<int>(rd53) << 24) |
+				(static_cast<int>(rd60) << 25) |
+				(static_cast<int>(rd61) << 26) |
+				(static_cast<int>(rd62) << 27) |
+				(static_cast<int>(rd63) << 28) |
+				(static_cast<int>(rd70) << 29) |
+				(static_cast<int>(rd71) << 30) |
+				(static_cast<int>(rd72) << 31) |
+				(static_cast<int>(rd73) << 32);
 
 			// auto delete
 			DrawProperty2EditableCheckBox("Auto Delete", "##BPContextAutoDel", &isAutoDel, "Removes the breakpoint when execution halts");

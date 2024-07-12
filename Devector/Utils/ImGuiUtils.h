@@ -134,6 +134,9 @@ namespace dev
 		const char* const _items[], int _itemsCount, const char* _help = "");
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, 
 		bool* _val, const char* _help = "");
+	void DrawProperty2EditableCheckBox4(const char* _name, 
+		const char* _label0, const char* _label1, const char* _label2, const char* _label3,
+		bool* _val0, bool* _val1, bool* _val2, bool* _val3, const char* _help);
 	void DrawProperty2RadioButtons(const char* _name, int* _currentItem, 
 		const char* const _items[], int _itemsCount, const float _space = 15.0f, 
 		const char* _help = "");

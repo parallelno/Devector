@@ -44,11 +44,24 @@ void dev::HexViewerWindow::UpdateData(const bool _isRunning)
 
 enum class Element : int { MAIN_RAM = 0, 
 	RAM_DISK1_B0, RAM_DISK1_B1, RAM_DISK1_B2, RAM_DISK1_B3,
-	RAM_DISK2_B0, RAM_DISK2_B1, RAM_DISK2_B2, RAM_DISK2_B3, 
+	RAM_DISK2_B0, RAM_DISK2_B1, RAM_DISK2_B2, RAM_DISK2_B3,
+	RAM_DISK3_B0, RAM_DISK3_B1, RAM_DISK3_B2, RAM_DISK3_B3,
+	RAM_DISK4_B0, RAM_DISK4_B1, RAM_DISK4_B2, RAM_DISK4_B3,
+	RAM_DISK5_B0, RAM_DISK5_B1, RAM_DISK5_B2, RAM_DISK5_B3,
+	RAM_DISK6_B0, RAM_DISK6_B1, RAM_DISK6_B2, RAM_DISK6_B3,
+	RAM_DISK7_B0, RAM_DISK7_B1, RAM_DISK7_B2, RAM_DISK7_B3,
+	RAM_DISK8_B0, RAM_DISK8_B1, RAM_DISK8_B2, RAM_DISK8_B3,
 	COUNT };
 static const char* elems_names[static_cast<int>(Element::COUNT)] = { "Main Ram",
 	"Ram-Disk1 Bank0", "Ram-Disk1 Bank1", "Ram-Disk1 Bank2", "Ram-Disk1 Bank3", 
-	"Ram-Disk2 Bank0", "Ram-Disk2 Bank1", "Ram-Disk2 Bank2", "Ram-Disk2 Bank3" };
+	"Ram-Disk2 Bank0", "Ram-Disk2 Bank1", "Ram-Disk2 Bank2", "Ram-Disk2 Bank3", 
+	"Ram-Disk3 Bank0", "Ram-Disk3 Bank1", "Ram-Disk3 Bank2", "Ram-Disk3 Bank3",
+	"Ram-Disk4 Bank0", "Ram-Disk4 Bank1", "Ram-Disk4 Bank2", "Ram-Disk4 Bank3",
+	"Ram-Disk5 Bank0", "Ram-Disk5 Bank1", "Ram-Disk5 Bank2", "Ram-Disk5 Bank3",
+	"Ram-Disk6 Bank0", "Ram-Disk6 Bank1", "Ram-Disk6 Bank2", "Ram-Disk6 Bank3",
+	"Ram-Disk7 Bank0", "Ram-Disk7 Bank1", "Ram-Disk7 Bank2", "Ram-Disk7 Bank3",
+	"Ram-Disk8 Bank0", "Ram-Disk8 Bank1", "Ram-Disk8 Bank2", "Ram-Disk8 Bank3",
+};
 
 void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 {

@@ -242,23 +242,23 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 	case 0x1c:
 		m_fdc.Write(Fdc1793::Port::SYSTEM, _value);
 		break;
-	case 0x20: // Ram-disk 2
-		_port = _port;
+	case 0x20:
+		m_memory.SetRamDiskMode(2, _value);
 		break;
-	case 0x21: // Ram-disk 3
-		_port = _port;
+	case 0x21:
+		m_memory.SetRamDiskMode(3, _value);
 		break;
-	case 0x40: // Ram-disk 4
-		_port = _port;
+	case 0x40:
+		m_memory.SetRamDiskMode(4, _value);
 		break;
-	case 0x41: // Ram-disk 5
-		_port = _port;
+	case 0x41:
+		m_memory.SetRamDiskMode(5, _value);
 		break;
-	case 0x80: // Ram-disk 6
-		_port = _port;
+	case 0x80:
+		m_memory.SetRamDiskMode(6, _value);
 		break;
-	case 0x81: // Ram-disk 7
-		_port = _port;
+	case 0x81:
+		m_memory.SetRamDiskMode(7, _value);
 		break;
 	case 0xED: // sends data to the emulator's console
 		_port = _port;
