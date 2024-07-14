@@ -62,7 +62,7 @@ bool dev::Hardware::ExecuteInstruction()
 		return true;
 	}
 
-	false;
+	return false;
 }
 
 void dev::Hardware::Execution()
