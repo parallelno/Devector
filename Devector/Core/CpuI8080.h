@@ -1,13 +1,13 @@
-// Intel 8080 (soviet analog KR580VM80A) microprocessor core model
+﻿// Intel 8080 (soviet analog KR580VM80A) microprocessor core model
 //
 // credints
 // https://github.com/superzazu/8080/blob/master/i8080.c
 // https://github.com/amensch/e8080/blob/master/e8080/Intel8080/i8080.cs
 // https://github.com/svofski/vector06sdl/blob/master/src/i8080.cpp
 
-// Vector06 cpu timings:
+// Vector06с timings:
 // every Vector06c instruction consists of one to six machine cycles
-// every Vector06c machine cycle consists of four active states often called t-states (T1, T2, etc)
+// every Vector06c machine cycle consists of four t-states (T1, T2, etc)
 // each t-state triggered by 3 Mhz clock
 
 #pragma once
@@ -97,7 +97,6 @@ namespace dev
 			uint64_t cc; // clock cycles, debug related data
 			Regs regs;
 			Int ints;
-			uint8_t opcode; // fetched instruction
 			RegPair data;
 		};
 #pragma pack(pop)
@@ -161,9 +160,9 @@ namespace dev
 		//
 		////////////////////////////////////////////////////////////////////////////
 
-		uint8_t ReadInstrMovePC(uint8_t _byteNum = 0);
-		uint8_t ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
-		void WriteByte(const Addr _addr, uint8_t _value,
+		inline uint8_t ReadInstrMovePC(uint8_t _byteNum);
+		inline uint8_t ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		inline void WriteByte(const Addr _addr, uint8_t _value,
 			Memory::AddrSpace _addrSpace, const uint8_t _byteNum);
 
 		////////////////////////////////////////////////////////////////////////////

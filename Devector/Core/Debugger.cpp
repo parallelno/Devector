@@ -17,20 +17,13 @@ dev::Debugger::Debugger(Hardware& _hardware)
 	m_lastReadsAddrsOld(), m_lastWritesAddrsOld(), 
 	m_lastRWAddrsOut(), disasm(_hardware)
 {
-    Init();
+	Init();
 }
 
 void dev::Debugger::Init()
 {
-	m_checkBreakFunc = std::bind(&Debugger::CheckBreak, this, std::placeholders::_1, std::placeholders::_2);
-	m_debugOnReadInstrFunc = std::bind(&Debugger::ReadInstr, this, std::placeholders::_1);
-	m_debugOnReadFunc = std::bind(&Debugger::Read, this, std::placeholders::_1, std::placeholders::_2);
-	m_debugOnWriteFunc = std::bind(&Debugger::Write, this, std::placeholders::_1, std::placeholders::_2);
-
-	m_hardware.AttachCheckBreak( &m_checkBreakFunc );
-	m_hardware.AttachDebugOnReadInstr( &m_debugOnReadInstrFunc );
-	m_hardware.AttachDebugOnRead( &m_debugOnReadFunc );
-	m_hardware.AttachDebugOnWrite( &m_debugOnWriteFunc );
+	m_debugFunc = std::bind(&Debugger::Debug, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3 );
+	m_hardware.AttachDebug(&m_debugFunc);
 
 	Reset();
 
@@ -42,10 +35,7 @@ void dev::Debugger::Init()
 
 dev::Debugger::~Debugger()
 {
-	m_hardware.AttachCheckBreak(nullptr);
-	m_hardware.AttachDebugOnReadInstr(nullptr);
-	m_hardware.AttachDebugOnRead(nullptr);
-	m_hardware.AttachDebugOnWrite(nullptr);
+	m_hardware.AttachDebug(nullptr);
 }
 
 void dev::Debugger::Reset()
@@ -66,33 +56,65 @@ void dev::Debugger::Reset()
 	m_traceLogIdxViewOffset = 0;
 }
 
-// a hardware thread
-void dev::Debugger::ReadInstr(
-	const GlobalAddr _globalAddr)
-{
-	disasm.MemRunsUpdate(_globalAddr);
-}
+//////////////////////////////////////////////////////////////
+//
+// Debug flow
+//
+//////////////////////////////////////////////////////////////
 
 // a hardware thread
-void dev::Debugger::Read(
-    const GlobalAddr _globalAddr, const uint8_t _val)
+bool dev::Debugger::Debug(
+	const CpuI8080::State& _cpuState, const Memory::State& _memState, const IO::State& _ioState)
 {
-	disasm.MemReadsUpdate(_globalAddr);
-    m_wpBreak |= CheckWatchpoint(Watchpoint::Access::R, _globalAddr, _val);
+	// instruction check
+	disasm.MemRunsUpdate(_memState.debug.instrGlobalAddr);
 
-	std::lock_guard<std::mutex> mlock(m_lastRWMutex);
-	m_lastReadsAddrs[m_lastReadsIdx++] = _globalAddr;
-	m_lastReadsIdx %= LAST_RW_MAX;
-}
-// a hardware thread
-void dev::Debugger::Write(const GlobalAddr _globalAddr, const uint8_t _val)
-{
-    disasm.MemWritesUpdate(_globalAddr);
-    m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, _globalAddr, _val);
-	
-	std::lock_guard<std::mutex> mlock(m_lastRWMutex);
-	m_lastWritesAddrs[m_lastWritesIdx++] = _globalAddr;
-	m_lastWritesIdx %= LAST_RW_MAX;
+	// reads check
+	{
+		std::lock_guard<std::mutex> mlock(m_lastRWMutex);
+
+		for (int i = 0; i < _memState.debug.readLen; i++)
+		{
+			GlobalAddr globalAddr = _memState.debug.readGlobalAddr[i];
+			uint8_t val = _memState.debug.read[i];
+
+			disasm.MemReadsUpdate(globalAddr);
+
+			m_wpBreak |= CheckWatchpoint(Watchpoint::Access::R, globalAddr, val);
+
+			m_lastReadsAddrs[m_lastReadsIdx++] = globalAddr;
+			m_lastReadsIdx %= LAST_RW_MAX;
+		}
+	}
+
+	// writes check
+	{
+		std::lock_guard<std::mutex> mlock(m_lastRWMutex);
+
+		for (int i = 0; i < _memState.debug.writeLen; i++)
+		{
+			GlobalAddr globalAddr = _memState.debug.writeGlobalAddr[i];
+			uint8_t val = _memState.debug.write[i];
+
+			disasm.MemWritesUpdate(globalAddr);
+
+			m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, globalAddr, val);
+
+			m_lastWritesAddrs[m_lastWritesIdx++] = globalAddr;
+			m_lastWritesIdx %= LAST_RW_MAX;
+		}
+	}
+
+	if (m_wpBreak)
+	{
+		m_wpBreak = false;
+		ResetWatchpoints();
+		return true;
+	}
+
+	auto break_ = CheckBreakpoints(_cpuState, _memState);
+
+	return break_;
 }
 
 //////////////////////////////////////////////////////////////
@@ -277,27 +299,6 @@ auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _
 //	m_dataL = 0;
 //	m_dataH = 0;
 //}
-
-//////////////////////////////////////////////////////////////
-//
-// Debug flow
-//
-//////////////////////////////////////////////////////////////
-
-// m_hardware thread
-bool dev::Debugger::CheckBreak(const CpuI8080::State& _cpuState, const Memory::State& _memState)
-{
-	if (m_wpBreak)
-	{
-		m_wpBreak = false;
-		ResetWatchpoints();
-		return true;
-	}
-
-	auto break_ = CheckBreakpoints(_cpuState, _memState);
-
-	return break_;
-}
 
 //////////////////////////////////////////////////////////////
 //

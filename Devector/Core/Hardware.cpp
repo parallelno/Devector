@@ -25,12 +25,6 @@ dev::Hardware::Hardware(const std::wstring& _pathBootData)
 
 dev::Hardware::~Hardware()
 {
-	// redundant. Debugg destructor is doing it
-	//m_checkBreak.store(nullptr);
-	//m_cpu.AttachDebugOnReadInstr(nullptr);
-	//m_cpu.AttachDebugOnRead(nullptr);
-	//m_cpu.AttachDebugOnWrite(nullptr);
-
 	Request(Hardware::Req::EXIT);
 	m_executionThread.join();
 }
@@ -43,8 +37,12 @@ void dev::Hardware::Init()
 	m_io.Init();
 }
 
-void dev::Hardware::ExecuteInstruction()
+// outputs true id the execution breaks
+bool dev::Hardware::ExecuteInstruction()
 {
+	// mem debug init
+	m_memory.DebugInit();
+
 	do
 	{
 		m_cpu.ExecuteMachineCycle(m_display.IsIRQ());
@@ -52,6 +50,19 @@ void dev::Hardware::ExecuteInstruction()
 		m_display.Rasterize();
 
 	} while (!m_cpu.IsInstructionExecuted());
+
+	auto Debug = m_debug.load();
+	if (Debug && (*Debug)(m_cpu.GetState(), m_memory.GetState(), m_io.GetState())) {
+		return true;
+	}
+
+	if (m_memory.IsException())
+	{
+		dev::Log("Break: more than one Ram-disk has mapping enabled");
+		return true;
+	}
+
+	false;
 }
 
 void dev::Hardware::Execution()
@@ -68,28 +79,14 @@ void dev::Hardware::Execution()
 		{   
 			auto frameNum = m_display.GetFrameNum();
 			
-			// rasterizes a frame
-			do {
-				auto TraceLogUpdate = m_traceLogUpdate.load();
-				if (TraceLogUpdate)
+			do // rasterizes a frame
+			{
+				if (ExecuteInstruction()) 
 				{
-				   // TODO: provide internal states of io, fdc, etc components into the trace log update
-					// (*TraceLogUpdate)(m_cpu.GetState(), m_memory.GetState(), m_);
-				}
-				ExecuteInstruction();
+					Stop();
+					break;
+				};
 				ReqHandling();
-
-				auto CheckBreak = m_checkBreak.load();
-				if (CheckBreak && (*CheckBreak)(m_cpu.GetState(), m_memory.GetState()))				{
-					Stop();
-					break;
-				}
-				if (m_memory.IsException())
-				{
-					Stop();
-					dev::Log("Break: more than one Ram-disk has mapping enabled");
-					break;
-				}
 
 			} while (m_status == Status::RUN && m_display.GetFrameNum() == frameNum);
 
@@ -242,8 +239,8 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
 		case Req::GET_MEMORY_MAPPING:
 			m_reqRes.emplace({
-				{"mapping", m_memory.GetState().mapping.data},
-				{"ramdiskIdx", m_memory.GetState().ramdiskIdx},
+				{"mapping", m_memory.GetState().update.mapping.data},
+				{"ramdiskIdx", m_memory.GetState().update.ramdiskIdx},
 				});
 			break;
 		case Req::GET_GLOBAL_ADDR_RAM:

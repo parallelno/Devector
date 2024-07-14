@@ -142,6 +142,7 @@ namespace dev
 		inline auto GetOutCommitTimer() const -> int { return m_state.outCommitTimer; };
 		inline auto GetPaletteCommitTimer() const -> int { return m_state.paletteCommitTimer; };
 
+		auto GetState() const -> const State& { return m_state; };
 		auto GetPalette() const -> const Palette* { return &m_state.palette; }
 		auto GetPorts() const -> const Ports* { return &m_state.ports; }
 		auto GetPortsInData() const -> const PortsData* { return &m_portsInData; }

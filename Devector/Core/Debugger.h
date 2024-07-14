@@ -36,10 +36,7 @@ namespace dev
 		void Init();
 		void Reset();
 
-		void ReadInstr(
-			const GlobalAddr _globalAddr);
-		void Read(const GlobalAddr _globalAddr, const uint8_t _val);
-		void Write(const GlobalAddr _globalAddr, const uint8_t _val);
+		bool Debug(const CpuI8080::State& _cpuState, const Memory::State& _memState, const IO::State& _ioState);
 
 		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
 		void AddBreakpoint(const Addr _addr,
@@ -64,8 +61,6 @@ namespace dev
 		bool CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value);
 		void ResetWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;
-
-		bool CheckBreak(const CpuI8080::State& _cpuState, const Memory::State& _memState);
 
 		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> const Disasm::Lines*;
 
@@ -102,10 +97,11 @@ namespace dev
 		Watchpoints m_watchpoints;
 		bool m_wpBreak;
 
-		Hardware::CheckBreakFunc m_checkBreakFunc;
+		/*Hardware::CheckBreakFunc m_checkBreakFunc;
 		Memory::DebugOnReadInstrFunc m_debugOnReadInstrFunc;
 		Memory::DebugOnReadFunc m_debugOnReadFunc;
-		Memory::DebugOnWriteFunc m_debugOnWriteFunc;
+		Memory::DebugOnWriteFunc m_debugOnWriteFunc;*/
+		Hardware::DebugFunc m_debugFunc;
 
 		std::mutex m_lastRWMutex;
 		LastRWAddrs m_lastReadsAddrs; // a circular buffer that contains addresses

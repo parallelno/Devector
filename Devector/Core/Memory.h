@@ -49,39 +49,43 @@ namespace dev
 			Mapping(const uint8_t _data = 0) : data(_data) {}
 		};
 #pragma pack(pop)
-		// contains the data stored in memory by the last executed instruction
-#pragma pack(push, 1)
-		struct Update
-		{
-			Addr writeAddr : 16 = 0;
-			uint8_t b1 : 8 = 0;
-			uint8_t b2 : 8 = 0;
-			uint8_t len : 2 = 0;
-			uint8_t stack : 1 = 0; // 0: b2 addr = addr+1, 1: b2 addr = addr-1
-			MemType memType : 1 = MemType::RAM;
-		};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 		Mapping m_mappings[RAMDISK_MAX];
 #pragma pack(pop)
 
+		// contains the data stored in memory by the last executed instruction
 #pragma pack(push, 1)
-		struct State
+		struct Update
 		{
-			Update update;
+			GlobalAddr beforeWrite[2];
 			Mapping mapping;
 			uint8_t ramdiskIdx : 3 = 0;
+			MemType memType : 1 = MemType::RAM;
 		};
 #pragma pack(pop)
 
-		using DebugOnReadInstrFunc = std::function<void(const GlobalAddr _globalAddr)>;
-		using DebugOnReadFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
-		using DebugOnWriteFunc = std::function<void(const GlobalAddr _globalAddr, const uint8_t _val)>;
+#pragma pack(push, 1)
+		struct Debug 
+		{
+			GlobalAddr instrGlobalAddr;
+			GlobalAddr readGlobalAddr[2];
+			GlobalAddr writeGlobalAddr[2];
+			uint8_t read[2];
+			uint8_t write[2];
+			uint8_t writeLen = 0;
+			uint8_t readLen = 0;
+			inline void Init() { readLen = writeLen = 0; }
+		};
+#pragma pack(pop)
 
-		void AttachDebugOnReadInstr(DebugOnReadInstrFunc* _funcP) { m_debugOnReadInstr.store(_funcP); }
-		void AttachDebugOnRead(DebugOnReadFunc* _funcP) { m_debugOnRead.store(_funcP); }
-		void AttachDebugOnWrite(DebugOnWriteFunc* _funcP) { m_debugOnWrite.store(_funcP); }
+#pragma pack(push, 1)
+		struct State
+		{
+			Debug debug;
+			Update update;
+		};
+#pragma pack(pop)
 
 		Memory(const std::wstring& _pathBootData);
 		void Init();
@@ -89,24 +93,26 @@ namespace dev
 		void Restart();
 		auto GetByte(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
+		auto CpuReadInstr(const Addr _addr,
+			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM,
+			const uint8_t _byteNum = 0) -> uint8_t;
 		auto CpuRead(const Addr _addr,
-			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM, const bool _instr = false) -> uint8_t;
+			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM,
+			const uint8_t _byteNum = 0) -> uint8_t;
 		void CpuWrite(const Addr _addr, uint8_t _value,
 			const Memory::AddrSpace _addrSpace, const uint8_t _byteNum);
 		auto GetScreenBytes(Addr _screenAddrOffset) const -> uint32_t;
 		auto GetRam() const -> const Ram*;
 		auto GetGlobalAddr(const Addr _addr, const AddrSpace _addrSpace) const -> GlobalAddr;
-		auto GetState() const -> const State&;
+		auto GetState() const -> const State& { return m_state; };
 		void SetRamDiskMode(uint8_t _diskIdx, uint8_t _data);
 		void SetMemType(const MemType _memType);
 		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
 		bool IsException();
 		bool IsRomEnabled() const;
+		inline void DebugInit() { m_state.debug.Init(); };
 
 	private:
-		std::atomic <DebugOnReadInstrFunc*> m_debugOnReadInstr = nullptr;
-		std::atomic <DebugOnReadFunc*> m_debugOnRead = nullptr;
-		std::atomic <DebugOnWriteFunc*> m_debugOnWrite = nullptr;
 
 		Ram m_ram;
 		Rom m_rom;

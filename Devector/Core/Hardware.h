@@ -44,8 +44,10 @@ namespace dev
 		};
 
 	public:
-		using CheckBreakFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState)>;
-		using TraceLogUpdateFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState)>;
+		//using CheckBreakFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState)>;
+		//using TraceLogUpdateFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState)>;
+
+		using DebugFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState, const IO::State& _ioState)>;
 
 		enum class Req: int {
 			NONE = 0,
@@ -92,15 +94,11 @@ namespace dev
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;
 		auto GetRam() const -> const Memory::Ram*;
 
-		void AttachCheckBreak(CheckBreakFunc* _funcP) { m_checkBreak.store(_funcP); }
-		void AttachDebugOnReadInstr(Memory::DebugOnReadInstrFunc* _funcP) { m_memory.AttachDebugOnReadInstr(_funcP); }
-		void AttachDebugOnRead(Memory::DebugOnReadFunc* _funcP) { m_memory.AttachDebugOnRead(_funcP); }
-		void AttachDebugOnWrite(Memory::DebugOnWriteFunc* _funcP) { m_memory.AttachDebugOnWrite(_funcP); }
-		void AttachTraceLogUpdate(TraceLogUpdateFunc* _funcP);
+		void AttachDebug(DebugFunc* _funcP) { m_debug.store(_funcP); }
 
 	private:
-		std::atomic <CheckBreakFunc*> m_checkBreak;
-		std::atomic <TraceLogUpdateFunc*> m_traceLogUpdate;
+		std::atomic <DebugFunc*> m_debug = nullptr;
+
 		std::thread m_executionThread;
 		std::thread m_reqHandlingThread;
 		std::atomic<Status> m_status;
@@ -112,7 +110,7 @@ namespace dev
 
 		void Init();
 		void Execution();
-		void ExecuteInstruction();
+		bool ExecuteInstruction();
 		void ExecuteFrameNoBreaks();
 		void ReqHandling(const bool _waitReq = false);
 		void Reset();

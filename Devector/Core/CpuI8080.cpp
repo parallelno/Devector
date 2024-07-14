@@ -100,7 +100,7 @@ void dev::CpuI8080::ExecuteMachineCycle(bool _irq)
 		else
 		{
 			EI_PENDING = false;
-			IR = ReadInstrMovePC();
+			IR = ReadInstrMovePC(0);
 		}
 	}
 
@@ -463,8 +463,7 @@ void dev::CpuI8080::Decode()
 // _byteNum is the instruction number of byte (0, 2)
 uint8_t dev::CpuI8080::ReadInstrMovePC(uint8_t _byteNum)
 {
-	uint8_t opcode = m_memory.CpuRead(PC, Memory::AddrSpace::RAM, true);
-	*(&state.opcode + _byteNum) = opcode;
+	uint8_t opcode = m_memory.CpuReadInstr(PC, Memory::AddrSpace::RAM, _byteNum);
 
 	PC++;
 	return opcode;
@@ -472,7 +471,7 @@ uint8_t dev::CpuI8080::ReadInstrMovePC(uint8_t _byteNum)
 
 uint8_t dev::CpuI8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
 {
-	return m_memory.CpuRead(_addr, _addrSpace, false);
+	return m_memory.CpuRead(_addr, _addrSpace);
 }
 
 void dev::CpuI8080::WriteByte(const Addr _addr, uint8_t _value, 
@@ -624,7 +623,7 @@ void dev::CpuI8080::MOVMemReg(uint8_t _sss)
 		TMP = _sss;
 		return;
 	case 1:
-		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 1);
+		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 0);
 		return;
 	}
 }
@@ -649,7 +648,7 @@ void dev::CpuI8080::MVIMemData()
 		TMP = ReadInstrMovePC(1);
 		return;
 	case 2:
-		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 1);
+		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 0);
 		return;
 	}
 }
@@ -683,7 +682,7 @@ void dev::CpuI8080::STA()
 		W = ReadInstrMovePC(2);
 		return;
 	case 3:
-		WriteByte(WZ, A, Memory::AddrSpace::RAM, 1);
+		WriteByte(WZ, A, Memory::AddrSpace::RAM, 0);
 		return;
 	}
 }
@@ -694,7 +693,7 @@ void dev::CpuI8080::STAX(Addr _addr)
 	case 0:
 		return;
 	case 1:
-		WriteByte(_addr, A, Memory::AddrSpace::RAM, 1);
+		WriteByte(_addr, A, Memory::AddrSpace::RAM, 0);
 		return;
 	}
 }
@@ -746,11 +745,11 @@ void dev::CpuI8080::SHLD()
 		W = ReadInstrMovePC(2);
 		return;
 	case 3:
-		WriteByte(WZ, L, Memory::AddrSpace::RAM, 1);
+		WriteByte(WZ, L, Memory::AddrSpace::RAM, 0);
 		WZ++;
 		return;
 	case 4:
-		WriteByte(WZ, H, Memory::AddrSpace::RAM, 2);
+		WriteByte(WZ, H, Memory::AddrSpace::RAM, 1);
 		return;
 	}
 }
@@ -789,10 +788,10 @@ void dev::CpuI8080::XTHL()
 		W = ReadByte(SP + 1u, Memory::AddrSpace::STACK);
 		return;
 	case 3:
-		WriteByte(SP, L, Memory::AddrSpace::STACK, 1);
+		WriteByte(SP, L, Memory::AddrSpace::STACK, 0);
 		return;
 	case 4:
-		WriteByte(SP + 1u, H, Memory::AddrSpace::STACK, 2);
+		WriteByte(SP + 1u, H, Memory::AddrSpace::STACK, 1);
 		return;
 	case 5:
 		HL = WZ;
@@ -807,13 +806,13 @@ void dev::CpuI8080::PUSH(uint8_t _hb, uint8_t _lb)
 		SP--;
 		return;
 	case 1:
-		WriteByte(SP, _hb, Memory::AddrSpace::STACK, 1);
+		WriteByte(SP, _hb, Memory::AddrSpace::STACK, 0);
 		return;
 	case 2:
 		SP--;
 		return;
 	case 3:
-		WriteByte(SP, _lb, Memory::AddrSpace::STACK, 2);
+		WriteByte(SP, _lb, Memory::AddrSpace::STACK, 1);
 		return;
 	}
 }
@@ -955,7 +954,7 @@ void dev::CpuI8080::INRMem()
 		SetZSP(TMP);
 		return;
 	case 2:
-		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 1);
+		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 0);
 		return;
 	}
 }
@@ -987,7 +986,7 @@ void dev::CpuI8080::DCRMem()
 		SetZSP(TMP);
 		return;
 	case 2:
-		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 1);
+		WriteByte(HL, TMP, Memory::AddrSpace::RAM, 0);
 		return;
 	}
 }
@@ -1260,7 +1259,7 @@ void dev::CpuI8080::CALL(bool _condition)
 		return;
 	case 3:
 		if (_condition)	{
-			WriteByte(SP, PCH, Memory::AddrSpace::STACK, 1);
+			WriteByte(SP, PCH, Memory::AddrSpace::STACK, 0);
 			SP--;
 		} else {
 			// end execution
@@ -1268,7 +1267,7 @@ void dev::CpuI8080::CALL(bool _condition)
 		}
 		return;
 	case 4:
-		WriteByte(SP, PCL, Memory::AddrSpace::STACK, 2);
+		WriteByte(SP, PCL, Memory::AddrSpace::STACK, 1);
 		return;
 	case 5:
 		PC = WZ;
@@ -1284,13 +1283,13 @@ void dev::CpuI8080::RST(uint8_t _arg)
 		SP--;
 		return;
 	case 1:
-		WriteByte(SP, PCH, Memory::AddrSpace::STACK, 1);
+		WriteByte(SP, PCH, Memory::AddrSpace::STACK, 0);
 		SP--;
 		return;
 	case 2:
 		W = 0;
 		Z = _arg << 3;
-		WriteByte(SP, PCL, Memory::AddrSpace::STACK, 2);
+		WriteByte(SP, PCL, Memory::AddrSpace::STACK, 1);
 		return;
 	case 3:
 		PC = WZ;
@@ -1374,7 +1373,7 @@ void dev::CpuI8080::HLT()
 		PC--;
 		return;
 	case 1:
-		ReadInstrMovePC();
+		ReadInstrMovePC(0);
 		// to loop into the M2 of HLT
 		if (!IFF) {
 			HLTA = true;
