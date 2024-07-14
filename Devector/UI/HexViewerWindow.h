@@ -30,6 +30,7 @@ namespace dev
 		int64_t m_ccLast = -1; // to force the first stats update
 		std::array<uint8_t, Memory::MEMORY_MAIN_LEN> m_ram;
 		int m_memPageIdx = 0;
+		char m_searchAddrS[255] = "";
 
 		void UpdateData(const bool _isRunning);
 		void DrawHex(const bool _isRunning);

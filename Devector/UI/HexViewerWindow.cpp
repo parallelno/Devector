@@ -68,21 +68,21 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 {
 	{
 		// draw an addr search
-		static int globalAddr = 0;
-		if (ImGui::InputInt("##addrSelection", &globalAddr, 1, 0,
-			ImGuiInputTextFlags_CharsHexadecimal |
-			ImGuiInputTextFlags_CharsUppercase |
-			ImGuiInputTextFlags_EnterReturnsTrue))
+		if (ImGui::InputTextWithHint("##addrSelection", "FF", m_searchAddrS, IM_ARRAYSIZE(m_searchAddrS), ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			m_reqHexViewer.type == ReqHexViewer::Type::INIT_UPDATE;
+			GlobalAddr globalAddr = (GlobalAddr)dev::StrHexToInt(m_searchAddrS);
+			m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;
+			globalAddr = dev::Max(0, globalAddr);
+			globalAddr = dev::Min(globalAddr, Memory::GLOBAL_MEMORY_LEN);
 			m_reqHexViewer.globalAddr = globalAddr;
 			m_reqHexViewer.len = 1;
 		}
-		ImGui::SameLine();
-		ImGui::Dummy({ 12,10 });
+
 		ImGui::SameLine();
 		dev::DrawHelpMarker("A hexademical value in the format FF");
 	}
+
+
 
 	// memory page selector
 	m_memPageIdx = dev::Max(0, m_memPageIdx);
