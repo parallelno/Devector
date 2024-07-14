@@ -2,6 +2,7 @@
 
 #include "Utils/ImGuiUtils.h"
 #include "imgui.h"
+#include "misc\cpp\imgui_stdlib.h"
 
 dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 		const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer)
@@ -65,7 +66,25 @@ static const char* elems_names[static_cast<int>(Element::COUNT)] = { "Main Ram",
 
 void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 {
-	// memory page selection
+	{
+		// draw an addr search
+		static int globalAddr = 0;
+		if (ImGui::InputInt("##addrSelection", &globalAddr, 1, 0,
+			ImGuiInputTextFlags_CharsHexadecimal |
+			ImGuiInputTextFlags_CharsUppercase |
+			ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			m_reqHexViewer.type == ReqHexViewer::Type::INIT_UPDATE;
+			m_reqHexViewer.globalAddr = globalAddr;
+			m_reqHexViewer.len = 1;
+		}
+		ImGui::SameLine();
+		ImGui::Dummy({ 12,10 });
+		ImGui::SameLine();
+		dev::DrawHelpMarker("A hexademical value in the format FF");
+	}
+
+	// memory page selector
 	m_memPageIdx = dev::Max(0, m_memPageIdx);
 	m_memPageIdx = dev::Min(static_cast<int>(Element::COUNT)-1, m_memPageIdx);
 	const char* elem_name = elems_names[m_memPageIdx];
