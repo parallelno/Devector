@@ -24,7 +24,6 @@ namespace dev
 		GlobalAddr globalAddr;
 		GlobalAddr len;
 		Type type;
-		bool isActive;
 	};
 	struct ReqDisasm {
 		enum class Type : int { 
