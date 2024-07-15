@@ -96,16 +96,17 @@ bool OpenFileDialog(WCHAR* filePath, int size)
 
 void dev::DevectorApp::Update()
 {
-	bool requiresDebugger = m_disasmWindowVisible || m_breakpointsWindowVisisble || m_watchpointsWindowVisible ||
-		m_memDisplayWindowVisible || m_hexViewerWindowVisible || m_traceLogWindowVisible;
-	m_debuggerP->Attach(requiresDebugger);
-
 	if (m_reqMainWindowReload) {
 		m_reqMainWindowReload = false;
 		Reload();
 		m_reqDisasm.type = ReqDisasm::Type::UPDATE; // disasm needs an update after reloading labels and consts
 	}
 	MainMenuUpdate();
+
+	bool requiresDebugger = m_disasmWindowVisible || m_breakpointsWindowVisisble || m_watchpointsWindowVisible ||
+		m_memDisplayWindowVisible || m_hexViewerWindowVisible || m_traceLogWindowVisible;
+	m_debuggerP->Attach(requiresDebugger);
+
 	ResLoadingStatusHandling();
 
 	m_hardwareStatsWindowP->Update(m_hardwareStatsWindowVisible);

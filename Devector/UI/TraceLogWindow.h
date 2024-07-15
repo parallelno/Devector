@@ -64,6 +64,7 @@ namespace dev
 		uint8_t m_disasmFilter = 0;
 		int m_selectedLineIdx = 0;
 		size_t m_disasmLinesLen = 0;
+		bool m_visible = false;
 
 		void UpdateData(const bool _isRunning);
 		void DrawLog(const bool _isRunning);

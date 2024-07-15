@@ -869,34 +869,6 @@ void dev::Disasm::AddComment(const Addr _addr)
 	m_lineIdx++;
 }
 
-auto dev::Disasm::AddDb(const Addr _addr, const uint8_t _data,
-	const Breakpoint::Status _breakpointStatus)
--> Addr
-{
-	if (m_lineIdx >= DISASM_LINES_MAX) return 0;
-
-	GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", _addr } })->at("data");
-	auto runs = m_memRuns[globalAddr];
-	auto reads = m_memReads[globalAddr];
-	auto writes = m_memWrites[globalAddr];
-
-	auto& line = m_lines.at(m_lineIdx);
-	line.Init();
-	line.type = Line::Type::CODE;
-	line.addr = _addr;
-	line.opcode = 0x10; // db 0x10 is used as a placeholder
-	line.imm = _data;
-	line.accessed = runs != UINT64_MAX && reads != UINT64_MAX && writes != UINT64_MAX;
-	line.breakpointStatus = _breakpointStatus;
-
-	auto constsP = m_debugData.GetConsts(_addr);
-	line.consts = constsP;
-
-	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", runs, reads, writes);
-	m_lineIdx++;
-	return 1;
-}
-
 auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 	const Breakpoint::Status _breakpointStatus)
 -> Addr
@@ -911,27 +883,33 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 	uint8_t opcode = _cmd & 0xFF;
 	auto immType = cmdImms[opcode];
 
-	if (immType == CMD_IB_OFF0) {
-		return AddDb(_addr, opcode, _breakpointStatus);
-	}
-
-	auto cmdLen = cmdLens[opcode];
-	uint16_t imm = cmdLen == 1 ? 0 : _cmd>>8;
-	imm &= cmdLen == 2 ? 0xFF : 0xFFFF;
-
 	auto& line = m_lines.at(m_lineIdx);
 	line.Init();
+
+	auto cmdLen = cmdLens[opcode];
+	switch (cmdLen)
+	{
+	case 1:
+		line.imm = immType == CMD_IB_OFF0 ? opcode : 0;
+		break;
+	case 2:
+		line.imm = (_cmd >> 8) & 0xFF;
+		break;
+	case 3:
+		line.imm = (_cmd >> 8) & 0xFFFF;
+		break;
+	};
+
 	line.type = Line::Type::CODE;
 	line.addr = _addr;
 	line.opcode = opcode;
-	line.imm = imm;
 	line.accessed = runs != UINT64_MAX && reads != UINT64_MAX && writes != UINT64_MAX;
 	line.breakpointStatus = _breakpointStatus;
 
 	if (immType != CMD_IM_NONE) 
 	{
-		line.labels = m_debugData.GetLabels(imm);
-		line.consts = m_debugData.GetConsts(imm);
+		line.labels = m_debugData.GetLabels(line.imm);
+		line.consts = m_debugData.GetConsts(line.imm);
 	}
 
 	snprintf(line.statsS, sizeof(line.statsS), "%zu,%zu,%zu", runs, reads, writes);

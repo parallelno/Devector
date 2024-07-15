@@ -53,48 +53,32 @@ auto dev::TraceLog::GetDisasm(const size_t _lines, const uint8_t _filter)
 
 void dev::TraceLog::AddCode(const Item& _item, Disasm::Line& _line)
 {
-	GlobalAddr globalAddr = _item.globalAddr;
-	uint8_t opcode = _item.opcode;
-	auto immType = GetImmediateType(opcode);
+	auto immType = GetImmediateType(_item.opcode);
 
 	_line.Init();
 
-	if (immType == CMD_IB_OFF0) {
-		_line.opcode = 0x10;
-	}
-	else {
-		_line.opcode = opcode;
-	}
-
-	auto cmdLen = GetCmdLen(opcode);
-	uint16_t imm = 0;
-	switch (cmdLen)
+	_line.opcode = _item.opcode;
+	switch (GetCmdLen(_item.opcode))
 	{
 	case 1:
-		imm = 0;
+		_line.imm = immType == CMD_IB_OFF0 ? _item.opcode : 0;
 		break;
 	case 2:
-		imm = _item.imm.l;
+		_line.imm = _item.imm.l;
 		break;
 	case 3:
-		imm = _item.imm.word;
+		_line.imm = _item.imm.word;
 		break;
 	};
 
-	if (immType != CMD_IM_NONE) 
+	if (immType != CMD_IM_NONE)
 	{
-		/*_line.labels = m_debugData.GetLabels(imm);
-		_line.consts = m_debugData.GetConsts(imm);*/
-	}
-	{
-		_line.labels = nullptr;
-		_line.consts = nullptr;
-		_line.comment = nullptr;
+		_line.labels = m_debugData.GetLabels(_line.imm);
+		_line.consts = m_debugData.GetConsts(_line.imm);
 	}
 
 	_line.type = Disasm::Line::Type::CODE;
-	_line.addr = (Addr)globalAddr;
-	_line.imm = imm;
+	_line.addr = (Addr)_item.globalAddr;
 }
 
 void dev::TraceLog::Reset()

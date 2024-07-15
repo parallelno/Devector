@@ -154,8 +154,9 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 			m_disasm.AddLabes(addr);
 
 			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
+			uint32_t cmd = 0x1000 | db; // opcode 0x10 is used as a placeholder
 			auto breakpointStatus = GetBreakpointStatus(addr);
-			addr += m_disasm.AddDb(addr, db, breakpointStatus);
+			addr += m_disasm.AddCode(addr, cmd, breakpointStatus);
 		}
 	}
 

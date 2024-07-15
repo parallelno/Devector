@@ -14,6 +14,13 @@ dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 
 void dev::TraceLogWindow::Update(bool& _visible)
 {
+
+	if (_visible && !m_visible) {
+		m_traceLogP = m_debugger.GetTraceLog().GetDisasm(TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
+		m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
+	}
+	m_visible = _visible;
+		
 	BaseWindow::Update();
 
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))

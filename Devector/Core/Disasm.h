@@ -105,8 +105,6 @@ namespace dev
 
 		void AddLabes(const Addr _addr);
 		void AddComment(const Addr _addr);
-		auto AddDb(const Addr _addr, const uint8_t _data,
-			const Breakpoint::Status _breakpointStatus) -> Addr;
 		auto AddCode(const Addr _addr, const uint32_t _cmd,
 			const Breakpoint::Status _breakpointStatus) -> Addr;
 
