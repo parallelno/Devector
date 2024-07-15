@@ -261,29 +261,6 @@ void dev::DisasmWindow::DrawDisasmStats(const Disasm::Line& _line)
 	ColumnClippingDisable();
 }
 
-void dev::DisasmWindow::DrawDisasmConsts(const Disasm::Line& _line)
-{
-	ImGui::TableNextColumn();
-	if (!_line.consts) return;
-
-	int i = 0;
-	for (const auto& const_ : *_line.consts)
-	{
-		if (i) {
-			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_COMMENT, ", ");
-			ImGui::SameLine();
-		}
-		ImGui::TextColored(DASM_CLR_ADDR, const_.c_str());
-
-		if (i++ == MAX_DISASM_LABELS) {
-			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_COMMENT, "...");
-			break;
-		}
-	}
-}
-
 void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 {
 	if (!m_disasmPP || !*m_disasmPP) return;
@@ -357,7 +334,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					DrawDisasmCode(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
 
 					DrawDisasmStats(line);
-					DrawDisasmConsts(line);
+					DrawDisasmConsts(line, MAX_DISASM_LABELS);
 					break;
 				}
 			}
@@ -491,9 +468,9 @@ void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOf
 {
 	m_disasmAddr = _addr;
 	m_debugger.UpdateDisasm(_addr, m_disasmLines, -_instructionsOffset);
-	m_disasmPP = m_debugger.disasm.GetLines();
-	m_immLinksP = m_debugger.disasm.GetImmLinks();
-	m_immLinksNum = m_debugger.disasm.GetImmAddrlinkNum();
+	m_disasmPP = m_debugger.GetDisasm().GetLines();
+	m_immLinksP = m_debugger.GetDisasm().GetImmLinks();
+	m_immLinksNum = m_debugger.GetDisasm().GetImmAddrlinkNum();
 
 	if (_updateSelection) m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
 }
@@ -563,7 +540,7 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 	{
 		ImGui::OpenPopup(_contextMenu.commentEditName);
 		_contextMenu.status = ContextMenu::Status::NONE;
-		auto currentComment = m_debugger.disasm.GetComment(_contextMenu.addr);
+		auto currentComment = m_debugger.GetDebugData().GetComment(_contextMenu.addr);
 		if (currentComment) {
 			snprintf(comment, sizeof(comment), currentComment->c_str());
 		}
@@ -617,10 +594,10 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 			if (ImGui::Button("Ok", buttonSize) || enterPressed)
 			{
 				if (comment[0]){ // non-empty string
-					m_debugger.disasm.SetComment(_contextMenu.addr, comment);
+					m_debugger.GetDebugData().SetComment(_contextMenu.addr, comment);
 				}
 				else {
-					m_debugger.disasm.DelComment(_contextMenu.addr);
+					m_debugger.GetDebugData().DelComment(_contextMenu.addr);
 				}
 
 				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
@@ -662,7 +639,7 @@ void dev::DisasmWindow::DrawConstEdit(ContextMenu& _contextMenu)
 	static int editedConstIdx = 0;
 	bool enterPressed = false;
 	bool selectText = false;
-	auto constsP = m_debugger.disasm.GetConsts(_contextMenu.addr);
+	auto constsP = m_debugger.GetDebugData().GetConsts(_contextMenu.addr);
 	static Disasm::AddrLabels consts;
 
 	if (_contextMenu.status == ContextMenu::Status::INIT_CONST_EDIT)
@@ -760,7 +737,7 @@ void dev::DisasmWindow::DrawConstEdit(ContextMenu& _contextMenu)
 				consts.erase(std::remove_if(consts.begin(), consts.end(),
 					[](const std::string& _const) { return _const.empty(); }), consts.end());
 				// store consts
-				m_debugger.disasm.SetConsts(_contextMenu.addr, consts);
+				m_debugger.GetDebugData().SetConsts(_contextMenu.addr, consts);
 				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
 				ImGui::CloseCurrentPopup();
 			}
@@ -788,7 +765,7 @@ void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 	static int editedLabelIdx = 0;
 	bool enterPressed = false;
 	bool selectText = false;
-	auto labelsP = m_debugger.disasm.GetLabels(_contextMenu.addr);
+	auto labelsP = m_debugger.GetDebugData().GetLabels(_contextMenu.addr);
 	static Disasm::AddrLabels labels;
 
 	if (_contextMenu.status == ContextMenu::Status::INIT_LABEL_EDIT)
@@ -888,7 +865,7 @@ void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 				labels.erase(std::remove_if(labels.begin(), labels.end(),
 					[](const std::string& label) { return label.empty(); }), labels.end()); 
 				// store labels
-				m_debugger.disasm.SetLabels(_contextMenu.addr, labels);
+				m_debugger.GetDebugData().SetLabels(_contextMenu.addr, labels);
 				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
 				ImGui::CloseCurrentPopup();
 			}

@@ -11,19 +11,19 @@ dev::Debugger::Debugger(Hardware& _hardware)
 	:
 	m_hardware(_hardware),
 	m_wpBreak(false),
-	m_traceLog(),
 	m_lastReadsAddrs(), m_lastWritesAddrs(),
 	m_memLastRW(),
 	m_lastReadsAddrsOld(), m_lastWritesAddrsOld(), 
-	m_lastRWAddrsOut(), disasm(_hardware)
+	m_debugData(_hardware), m_disasm(_hardware, m_debugData),
+	m_traceLog(m_debugData),
+	m_lastRWAddrsOut()
 {
 	Init();
 }
 
 void dev::Debugger::Init()
 {
-	m_debugFunc = std::bind(&Debugger::Debug, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3 );
-	m_hardware.AttachDebug(&m_debugFunc);
+	m_debugFunc = std::bind(&Debugger::Debug, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
 	Reset();
 
@@ -33,6 +33,11 @@ void dev::Debugger::Init()
 	m_hardware.Request(Hardware::Req::RUN);
 }
 
+void dev::Debugger::Attach(const bool _attach)
+{
+	m_hardware.AttachDebug(_attach ? &m_debugFunc : nullptr);
+}
+
 dev::Debugger::~Debugger()
 {
 	m_hardware.AttachDebug(nullptr);
@@ -40,7 +45,7 @@ dev::Debugger::~Debugger()
 
 void dev::Debugger::Reset()
 {
-	disasm.Reset();
+	m_disasm.Reset();
 
 	m_lastWritesAddrs.fill(uint32_t(LAST_RW_NO_DATA));
 	m_lastReadsAddrs.fill(uint32_t(LAST_RW_NO_DATA));
@@ -48,17 +53,12 @@ void dev::Debugger::Reset()
 	m_lastReadsIdx = 0;
 	m_memLastRW.fill(0);
 
-	for (size_t i = 0; i < TRACE_LOG_SIZE; i++)
-	{
-		//m_traceLog[i].Clear();
-	}
-	m_traceLogIdx = 0;
-	m_traceLogIdxViewOffset = 0;
+	m_traceLog.Reset();
 }
 
 //////////////////////////////////////////////////////////////
 //
-// Debug flow
+// Debug call from the Hardware thread
 //
 //////////////////////////////////////////////////////////////
 
@@ -67,7 +67,7 @@ bool dev::Debugger::Debug(
 	const CpuI8080::State& _cpuState, const Memory::State& _memState, const IO::State& _ioState)
 {
 	// instruction check
-	disasm.MemRunsUpdate(_memState.debug.instrGlobalAddr);
+	m_disasm.MemRunsUpdate(_memState.debug.instrGlobalAddr);
 
 	// reads check
 	{
@@ -78,7 +78,7 @@ bool dev::Debugger::Debug(
 			GlobalAddr globalAddr = _memState.debug.readGlobalAddr[i];
 			uint8_t val = _memState.debug.read[i];
 
-			disasm.MemReadsUpdate(globalAddr);
+			m_disasm.MemReadsUpdate(globalAddr);
 
 			m_wpBreak |= CheckWatchpoint(Watchpoint::Access::R, globalAddr, val);
 
@@ -96,7 +96,7 @@ bool dev::Debugger::Debug(
 			GlobalAddr globalAddr = _memState.debug.writeGlobalAddr[i];
 			uint8_t val = _memState.debug.write[i];
 
-			disasm.MemWritesUpdate(globalAddr);
+			m_disasm.MemWritesUpdate(globalAddr);
 
 			m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, globalAddr, val);
 
@@ -104,6 +104,8 @@ bool dev::Debugger::Debug(
 			m_lastWritesIdx %= LAST_RW_MAX;
 		}
 	}
+
+	m_traceLog.Update(_cpuState, _memState);
 
 	if (m_wpBreak)
 	{
@@ -123,17 +125,17 @@ bool dev::Debugger::Debug(
 //
 //////////////////////////////////////////////////////////////
 
-// _instructionOffset defines the start address of the disasm. 
+// _instructionOffset defines the start address of the m_disasm. 
 // _instructionOffset = 0 means the start address is the _addr, 
 // _instructionOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
 void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const int _instructionOffset)
 {
 	if (_linesNum <= 0) return;
 	size_t lines = dev::Max(_linesNum, Disasm::DISASM_LINES_MAX);
-	disasm.Init(_linesNum);
+	m_disasm.Init(_linesNum);
 
 	// calculate a new address that precedes the specified 'addr' by the instructionOffset
-	Addr addr = disasm.GetAddr(_addr, _instructionOffset);
+	Addr addr = m_disasm.GetAddr(_addr, _instructionOffset);
 
 	if (_instructionOffset < 0 && addr == _addr)
 	{
@@ -143,162 +145,32 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 		// and that means a data blob is ahead
 		addr += (Addr)_instructionOffset;
 
-		for (; disasm.GetLineIdx() < -_instructionOffset;)
+		for (; m_disasm.GetLineIdx() < -_instructionOffset;)
 		{
-			disasm.AddComment(addr);
-			disasm.AddLabes(addr);
+			m_disasm.AddComment(addr);
+			m_disasm.AddLabes(addr);
 
 			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 			auto breakpointStatus = GetBreakpointStatus(addr);
-			addr += disasm.AddDb(addr, db, breakpointStatus);
+			addr += m_disasm.AddDb(addr, db, breakpointStatus);
 		}
 	}
 
-	while (!disasm.IsDone())
+	while (!m_disasm.IsDone())
 	{
-		disasm.AddComment(addr);
-		disasm.AddLabes(addr);
+		m_disasm.AddComment(addr);
+		m_disasm.AddLabes(addr);
 
 		uint32_t cmd = m_hardware.Request(Hardware::Req::GET_THREE_BYTES_RAM, { { "addr", addr } })->at("data");
-
 		GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
+
 		auto breakpointStatus = GetBreakpointStatus(globalAddr);
 
-		addr += disasm.AddCode(addr, cmd, breakpointStatus);
+		addr += m_disasm.AddCode(addr, cmd, breakpointStatus);
 	}
 
-	disasm.SetUpdated();
+	m_disasm.SetUpdated();
 }
-
-//////////////////////////////////////////////////////////////
-//
-// Tracelog
-//
-//////////////////////////////////////////////////////////////
-
-// a hardware thread
-void dev::Debugger::TraceLogUpdate(const GlobalAddr _globalAddr, const CpuI8080::State& _state)
-{
-	// skip repeataive HLT
-	/*if (_opcode == OPCODE_HLT && m_traceLog[m_traceLogIdx].m_opcode == OPCODE_HLT) {
-		return;
-	}
-
-	m_traceLogIdx = --m_traceLogIdx % TRACE_LOG_SIZE;
-	m_traceLog[m_traceLogIdx].m_globalAddr = _globalAddr;
-	m_traceLog[m_traceLogIdx].m_opcode = _opcode;
-	m_traceLog[m_traceLogIdx].m_dataL = _opcode != OPCODE_PCHL ? _dataL : _hl & 0xff;
-	m_traceLog[m_traceLogIdx].m_dataH = _opcode != OPCODE_PCHL ? _dataH : _hl >> 8;*/
-}
-
-auto dev::Debugger::GetTraceLog(const int _offset, const size_t _lines, const size_t _filter)
--> const Disasm::Lines*
-{
-	//size_t filter = dev::Min(_filter, OPCODE_TYPE_MAX);
-	//size_t offset = dev::Max(_offset, 0);
-
-	//DisasmLines out;
-
-	//for (int i = 0; i < offset; i++)
-	//{
-	//	m_traceLogIdxViewOffset = TraceLogNextLine(m_traceLogIdxViewOffset, _offset < 0, filter);
-	//}
-
-	//size_t idx = m_traceLogIdx + m_traceLogIdxViewOffset;
-	//size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
-	//size_t line = 0;
-	//size_t first_line_idx = TraceLogNearestForwardLine(m_traceLogIdx, filter);
-
-	//for (; idx <= idx_last && line < _lines; idx++)
-	//{
-	//	auto globalAddr = m_traceLog[idx % TRACE_LOG_SIZE].m_globalAddr;
-	//	if (globalAddr < 0) break;
-
-	//	if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
-	//	{
-	//		std::string str = m_traceLog[idx % TRACE_LOG_SIZE].ToStr();
-
-	//		const Addr operand_addr = m_traceLog[idx % TRACE_LOG_SIZE].m_dataH << 8 | m_traceLog[idx % TRACE_LOG_SIZE].m_dataL;
-	//		std::string constsS = LabelsToStr(operand_addr, LABEL_TYPE_ALL);
-
-	//		DisasmLine lineDisasm(DisasmLine::Type::CODE, Addr(globalAddr), str, 0,0,0, constsS);
-	//		out.emplace_back(std::move(lineDisasm));
-
-	//		line++;
-	//	}
-	//}
-
-	//return out;
-	return nullptr;
-}
-
-auto dev::Debugger::TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const
-->int
-{
-	//size_t filter = dev::Min(_filter, OPCODE_TYPE_MAX);
-
-	//size_t idx = m_traceLogIdx + _idxOffset;
-	//size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
-
-	//int dir = _reverse ? -1 : 1;
-	//// for a forward scrolling we need to go to the second line if we were not exactly at the filtered line
-	//bool forward_second_search = false;
-	//size_t first_line_idx = idx;
-
-	//for (; idx >= m_traceLogIdx && idx <= idx_last; idx += dir)
-	//{
-	//	if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
-	//	{
-	//		if ((!_reverse && !forward_second_search) ||
-	//			(_reverse && idx == first_line_idx && !forward_second_search))
-	//		{
-	//			forward_second_search = true;
-	//			continue;
-	//		}
-	//		else
-	//		{
-	//			return (int)(idx - m_traceLogIdx);
-	//		}
-	//	}
-	//}
-
-	//return _idxOffset; // fails to reach the next line
-	return 0;
-}
-
-auto dev::Debugger::TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const
-->int
-{
-	//size_t filter = _filter > OPCODE_TYPE_MAX ? OPCODE_TYPE_MAX : _filter;
-
-	//size_t idx = _idx;
-	//size_t idx_last = m_traceLogIdx + TRACE_LOG_SIZE - 1;
-
-	//for (; idx >= m_traceLogIdx && idx <= idx_last; idx++)
-	//{
-	//	if (get_opcode_type(m_traceLog[idx % TRACE_LOG_SIZE].m_opcode) <= filter)
-	//	{
-	//		return (int)idx;
-	//	}
-	//}
-
-	//return (int)_idx; // fails to reach the nearest line
-	return 0;
-}
-
-//auto dev::Debugger::TraceLog::ToStr() const
-//->std::string
-//{
-//	return GetMnemonic1(m_opcode, m_dataL, m_dataH);
-//}
-
-//void dev::Debugger::TraceLog::Clear()
-//{
-//	m_globalAddr = -1;
-//	m_opcode = 0;
-//	m_dataL = 0;
-//	m_dataH = 0;
-//}
 
 //////////////////////////////////////////////////////////////
 //

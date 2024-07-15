@@ -41,11 +41,13 @@ auto dev::Memory::CpuReadInstr(const Addr _addr, const AddrSpace _addrSpace,
 	-> uint8_t
 {
 	auto globalAddr = GetGlobalAddr(_addr, _addrSpace);
-
-	m_state.debug.instrGlobalAddr = globalAddr;
-
-	return m_state.update.memType == MemType::ROM && globalAddr < m_rom.size() ?
+	uint8_t val = m_state.update.memType == MemType::ROM && globalAddr < m_rom.size() ?
 		m_rom[globalAddr] : m_ram[globalAddr];
+
+	m_state.debug.instrGlobalAddr = _byteNum == 0 ? globalAddr : m_state.debug.instrGlobalAddr;
+	m_state.debug.instr[_byteNum] = val;
+
+	return val;
 }
 
 auto dev::Memory::CpuRead(const Addr _addr, const AddrSpace _addrSpace,

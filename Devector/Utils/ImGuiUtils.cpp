@@ -578,3 +578,26 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 
 	return uiItemMouseAction;
 }
+
+void dev::DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels)
+{
+	ImGui::TableNextColumn();
+	if (!_line.consts) return;
+
+	int i = 0;
+	for (const auto& const_ : *_line.consts)
+	{
+		if (i) {
+			ImGui::SameLine();
+			ImGui::TextColored(DASM_CLR_COMMENT, ", ");
+			ImGui::SameLine();
+		}
+		ImGui::TextColored(DASM_CLR_ADDR, const_.c_str());
+
+		if (i++ == _maxDisasmLabels) {
+			ImGui::SameLine();
+			ImGui::TextColored(DASM_CLR_COMMENT, "...");
+			break;
+		}
+	}
+}

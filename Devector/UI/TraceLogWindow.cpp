@@ -5,13 +5,13 @@
 
 dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 		const float* const _fontSizeP, const float* const _dpiScaleP, 
-		ReqDisasm& _reqDisasm) 
+		ReqDisasm& _reqDisasm)
 	:
 	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), 
 	m_reqDisasm(_reqDisasm)
-	//m_traceLog()
 {}
+
 void dev::TraceLogWindow::Update(bool& _visible)
 {
 	BaseWindow::Update();
@@ -36,59 +36,62 @@ void dev::TraceLogWindow::UpdateData(const bool _isRunning)
 	if (ccDiff == 0) return;
 	m_ccLast = cc;
 
-	//m_traceLogP = m_debugger.GetTraceLog(0, Debugger::TRACE_LOG_SIZE, m_disasmFilter);
+	m_traceLogP = m_debugger.GetTraceLog().GetDisasm(TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
+	m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
 }
 
 void dev::TraceLogWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
-	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu)
+	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// the addr column
 	ImGui::TableNextColumn();
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 
 	auto mouseAction = DrawAddr(_isRunning, _line.GetAddrS(),
-		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF));
+		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF), _addrHighlight.IsEnabled(_line.addr));
 	switch (mouseAction)
 	{
 	case UIItemMouseAction::LEFT: // Navigate to the address
 		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
 		_reqDisasm.addr = _line.addr;
 		break;
-	case UIItemMouseAction::RIGHT: // Add the "Copy to Clipboard" option to the context menu
+	case UIItemMouseAction::RIGHT:
 		_contextMenu.Init(_line.addr, _line.GetAddrS());
 		break;
 	}
 }
 
 void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu)
+	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// draw code
 	ImGui::TableNextColumn();
-	auto mouseAction = dev::DrawCodeLine(_isRunning, _line, true);
+	auto mouseAction = dev::DrawCodeLine(_isRunning, _line, false);
 	// when a user did action to the immediate operand
 	switch (mouseAction)
 	{
+	// any case below means that the immediate addr was at least hovered
 	case UIItemMouseAction::LEFT: // Navigate to the address
 		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
 		_reqDisasm.addr = _line.imm;
 		break;
-	case UIItemMouseAction::RIGHT: // Add the "Copy to Clipboard" option to the context menu
-		_contextMenu.Init(_line.imm, _line.GetImmediateS());
+	case UIItemMouseAction::RIGHT: // init the immediate value as an addr to let the context menu copy it
+		//_contextMenu.Init(_line.imm, _line.GetImmediateS(), true);
 		break;
 	}
 
-	// set the addr highlight
-	if (mouseAction != UIItemMouseAction::NONE) {
-		//_addrHighlight.Init(_line.imm);
-	}
+	//// set the addr highlight when
+	//if (mouseAction != UIItemMouseAction::NONE) {
+	//	_addrHighlight.Init(_line.imm);
+	//}
 }
 
-const char* filterNames[] = { "call", "+ c*", "+ rst", "+ pchl", "+ jmp", "+ j*", "+ ret, r*", "all" };
+const char* filterNames[] = { "c*", "+ call", "+ j*", "+ jmp", "+ r*", "+ ret", "+ pchl", "+ rst", "all" };
 
 void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 {
-	/*
+	if (!m_traceLogP) return;
+
 	// filter mode
 	const char* filterName = filterNames[m_disasmFilter];
 	
@@ -100,7 +103,8 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 			const bool is_selected = (m_disasmFilter == n);
 			if (ImGui::Selectable(filterNames[n], is_selected)) {
 				m_disasmFilter = n;
-				m_traceLog = m_debugger.GetTraceLog(0, Debugger::TRACE_LOG_SIZE, m_disasmFilter);
+				m_traceLogP = m_debugger.GetTraceLog().GetDisasm(TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
+				m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
 			}
 
 			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -113,10 +117,12 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 
 	// disasm table
 	const int COLUMNS_COUNT = 4;
-	const char* tableName = "##TraceLogTable";
-	static int selectedLineIdx = 0;
-	bool openItemContextMenu = false;
-	static int copyToClipboardAddr = -1; // if it's -1, don't add the option, if it's >=0, add the option with the addr = copyToClipboardAddr
+	const char* tableName = "##TLTable";
+	int hoveredLineIdx = -1;
+	ImVec2 selectionMin = ImGui::GetCursorScreenPos();
+	ImVec2 selectionMax = ImVec2(selectionMin.x + ImGui::GetWindowWidth(), selectionMin.y);
+
+	if (_isRunning) ImGui::BeginDisabled();
 
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
@@ -130,96 +136,85 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
 		ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, 0);
-        ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, ADDR_W);
-        ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthFixed, CODE_W);
+		ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, ADDR_W);
+		ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthFixed, CODE_W);
 		ImGui::TableSetupColumn("consts");
 
-		// addr & data
-		int idx = 0;
-		static int addrHovered = -1;
 		ImGuiListClipper clipper;
-		clipper.Begin(int(m_traceLog.size()));
+		clipper.Begin(int(m_disasmLinesLen));
 		while (clipper.Step())
 		{
-			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
+			for (int lineIdx = clipper.DisplayStart; lineIdx < clipper.DisplayEnd; lineIdx++)
 			{
-				const auto& disasmLine = m_traceLog.at(row);
 				ImGui::TableNextRow();
-				
-				if (_isRunning) ImGui::BeginDisabled();
-
-				int addr = disasmLine.addr;
 
 				// the line selection/highlight
 				ImGui::TableNextColumn();
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
-				const bool isSelected = selectedLineIdx == row;
-				if (ImGui::Selectable(std::format("##TraceLogLineId{:04d}", row).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
+				const bool isSelected = m_selectedLineIdx == lineIdx;
+				if (ImGui::Selectable(std::format("##TLLineId{:04d}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 				{
-					selectedLineIdx = row;
+					m_selectedLineIdx = lineIdx;
+				}
+				if (!_isRunning)
+				{
+					selectionMin.y = ImGui::GetItemRectMin().y;
+					selectionMax.y = ImGui::GetItemRectMax().y;
+					hoveredLineIdx = ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ? lineIdx : hoveredLineIdx;
 				}
 
-				// the addr column
-				auto mouseAction = DrawAddr(_isRunning, disasmLine.addrS.c_str(), 0);
-				switch (mouseAction)
-				{
-				case UIItemMouseAction::LEFT: // Navigate to the address
-					m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
-					m_reqDisasm.addr = addr;
-					break;
-				case UIItemMouseAction::RIGHT: // Add the "Copy to Clipboard" option to the context menu
-					copyToClipboardAddr = addr;
-					openItemContextMenu = true;
-					break;
-				}
+				const auto& line = m_traceLogP->at(lineIdx);
+				int addr = line.addr;
 
-				// the instruction column
-				ImGui::TableNextColumn();
-				dev::DrawCodeLine(false, _isRunning, disasmLine, 
-					// _onMouseLeft. Navigate to the address
-					[&](const Addr _addr)
-					{
-						m_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
-						m_reqDisasm.addr = _addr;
-					},
-					// _onMouseRight. Add the "Copy to Clipboard" option to the context menu
-					[&](const Addr _addr)
-					{
-						copyToClipboardAddr = _addr;
-						openItemContextMenu = true;
-					}
-				);
-
-				// the constants column
-				ImGui::TableNextColumn();
-				ImGui::TextColored(DASM_CLR_LABEL_MINOR, disasmLine.consts.c_str());
+				DrawDisasmAddr(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
+				DrawDisasmCode(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
+				DrawDisasmConsts(line, MAX_DISASM_LABELS);
 				
-				if (_isRunning) ImGui::EndDisabled();
 			}
 		}
 		ImGui::EndTable();
 	}
-	DrawDisasmContextMenu(openItemContextMenu, copyToClipboardAddr);
+	Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
+	DrawContextMenu(regPC, m_contextMenu);
 
 	ImGui::PopStyleVar(2);
-	*/
+
+	if (_isRunning) ImGui::EndDisabled();
 }
 
 
-int dev::TraceLogWindow::DrawDisasmContextMenu(const bool _openContextMenu, int _copyToClipboardAddr)
+void dev::TraceLogWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu)
 {
-	if (_openContextMenu) ImGui::OpenPopup("DisasmItemMenu");
-
-	if (ImGui::BeginPopup("DisasmItemMenu"))
-	{
-		if (_copyToClipboardAddr >= 0 ){
-			if (ImGui::MenuItem("Copy To Clipboard")) {
-				dev::CopyToClipboard(std::format("0x{:04X}", _copyToClipboardAddr));
-				_copyToClipboardAddr = -1;
-			}
-		}
-		ImGui::EndPopup();
+	if (_contextMenu.status == ContextMenu::Status::INIT_CONTEXT_MENU) {
+		ImGui::OpenPopup(_contextMenu.contextMenuName);
+		_contextMenu.status = ContextMenu::Status::NONE;
 	}
 
-	return _copyToClipboardAddr;
+	if (ImGui::BeginPopup(_contextMenu.contextMenuName))
+	{
+		if (ImGui::MenuItem("Copy")) {
+			dev::CopyToClipboard(_contextMenu.str);
+		}
+		/*
+		ImGui::SeparatorText("");
+		if (ImGui::MenuItem("Run Back To"))
+		{
+			m_debugger.AddBreakpoint(_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
+			m_hardware.Request(Hardware::Req::RUN);
+		}*/
+		/*ImGui::SeparatorText("");
+		if (ImGui::MenuItem("Add/Remove Beakpoint"))
+		{
+			auto bpStatus = m_debugger.GetBreakpointStatus(m_contextMenu.addr);
+
+			if (bpStatus == Breakpoint::Status::DELETED) {
+				m_debugger.AddBreakpoint(m_contextMenu.addr);
+			}
+			else {
+				m_debugger.DelBreakpoint(m_contextMenu.addr);
+			}
+			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+		}
+		ImGui::EndPopup();*/
+	}
 }

@@ -142,6 +142,7 @@ namespace dev
 		const char* _help = "");
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 	auto DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab) -> UIItemMouseAction;
+	void DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels = 20);
 	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color, 
 		const ImVec4& _highlightColor, bool _forceHighlight = false) -> UIItemMouseAction;
 	void DrawTooltipTimer(const char* _text = nullptr, const float _timer = 0.7f);

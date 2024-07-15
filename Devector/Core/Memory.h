@@ -69,13 +69,15 @@ namespace dev
 		struct Debug 
 		{
 			GlobalAddr instrGlobalAddr;
+			uint8_t instr[3];
+			uint8_t instrLen = 0;
 			GlobalAddr readGlobalAddr[2];
-			GlobalAddr writeGlobalAddr[2];
 			uint8_t read[2];
+			uint8_t readLen = 0;
+			GlobalAddr writeGlobalAddr[2];
 			uint8_t write[2];
 			uint8_t writeLen = 0;
-			uint8_t readLen = 0;
-			inline void Init() { readLen = writeLen = 0; }
+			inline void Init() { instrLen = readLen = writeLen= 0; }
 		};
 #pragma pack(pop)
 

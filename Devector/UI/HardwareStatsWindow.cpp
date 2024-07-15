@@ -482,7 +482,7 @@ void dev::HardwareStatsWindow::UpdateUpTime()
 {
 	// update the up time
 	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
-	uint64_t sec = cc / 3000000;
+	int sec = cc / CpuI8080::CLOCK;
 	int hours = sec / 3600;
 	int minutes = (sec % 3600) / 60;
 	int seconds = sec % 60;

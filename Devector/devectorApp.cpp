@@ -96,10 +96,14 @@ bool OpenFileDialog(WCHAR* filePath, int size)
 
 void dev::DevectorApp::Update()
 {
+	bool requiresDebugger = m_disasmWindowVisible || m_breakpointsWindowVisisble || m_watchpointsWindowVisible ||
+		m_memDisplayWindowVisible || m_hexViewerWindowVisible || m_traceLogWindowVisible;
+	m_debuggerP->Attach(requiresDebugger);
+
 	if (m_reqMainWindowReload) {
 		m_reqMainWindowReload = false;
 		Reload();
-		m_reqDisasm.type = ReqDisasm::Type::UPDATE; // disasm needs an update after reloading lbels and consts
+		m_reqDisasm.type = ReqDisasm::Type::UPDATE; // disasm needs an update after reloading labels and consts
 	}
 	MainMenuUpdate();
 	ResLoadingStatusHandling();
@@ -162,7 +166,7 @@ void dev::DevectorApp::LoadRom(const std::wstring& _path)
 	m_hardwareP->Request(Hardware::Req::SET_MEM, reqData);
 
 	m_debuggerP->Reset();
-	m_debuggerP->disasm.LoadDebugData(_path);
+	m_debuggerP->GetDebugData().LoadDebugData(_path);
 	m_hardwareP->Request(Hardware::Req::RUN);
 
 	Log(L"File loaded: {}", _path);

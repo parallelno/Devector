@@ -10,16 +10,17 @@
 #include "Utils/Types.h"
 #include "Core/Hardware.h"
 #include "Core/Disasm.h"
+#include "Core/DebugData.h"
 #include "Core/Display.h"
 #include "Core/Breakpoint.h"
 #include "Core/Watchpoint.h"
+#include "Core/TraceLog.h"
 
 namespace dev
 {
 	class Debugger
 	{
 	public:
-		static const constexpr size_t TRACE_LOG_SIZE = 100000;
 		static constexpr int LAST_RW_W = 32;
 		static constexpr int LAST_RW_H = 32;
 		static constexpr int LAST_RW_MAX = LAST_RW_W * LAST_RW_H; // should be squared because it is sent to GPU
@@ -27,13 +28,13 @@ namespace dev
 		using MemLastRW = std::array<uint32_t, Memory::GLOBAL_MEMORY_LEN>;
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
-		Disasm disasm;
 		using Watchpoints = std::unordered_map<dev::Id, Watchpoint>;
 		using Breakpoints = std::unordered_map<GlobalAddr, Breakpoint>;
 
 		Debugger(Hardware& _hardware);
 		~Debugger();
 		void Init();
+		void Attach(const bool _attach);
 		void Reset();
 
 		bool Debug(const CpuI8080::State& _cpuState, const Memory::State& _memState, const IO::State& _ioState);
@@ -62,34 +63,19 @@ namespace dev
 		void ResetWatchpoints();
 		auto GetWatchpoints() -> const Watchpoints;
 
-		auto GetTraceLog(const int _offset, const size_t _lines, const size_t _filter) -> const Disasm::Lines*;
-
 		auto GetLastRW() -> const MemLastRW*;
 		void UpdateLastRW();
 		void UpdateDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset);
+		auto GetTraceLog() -> TraceLog& { return m_traceLog; };
+		auto GetDebugData() -> DebugData& { return m_debugData; };
+		auto GetDisasm() -> Disasm& { return m_disasm; };
 
 	private:
-		void TraceLogUpdate(const GlobalAddr _globalAddr, const CpuI8080::State& _state);
-		auto TraceLogNextLine(const int _idxOffset, const bool _reverse, const size_t _filter) const ->int;
-		auto TraceLogNearestForwardLine(const size_t _idx, const size_t _filter) const ->int;
-
-		struct TraceLog
-		{
-			GlobalAddr m_globalAddr;
-			uint8_t m_opcode;
-			uint8_t m_dataL;
-			uint8_t m_dataH;
-
-			//auto ToStr() const -> std::string;
-			//void Clear();
-			Addr GetOperandAddr() const { return m_dataL | (m_dataH << 8); };
-		};
-
-		std::array <TraceLog, TRACE_LOG_SIZE> m_traceLog;
-		size_t m_traceLogIdx = 0;
-		int m_traceLogIdxViewOffset = 0;
 
 		Hardware& m_hardware;
+		DebugData m_debugData;
+		Disasm m_disasm;
+		TraceLog m_traceLog;
 
 		std::mutex m_breakpointsMutex;
 		std::mutex m_watchpointsMutex;
@@ -97,11 +83,7 @@ namespace dev
 		Watchpoints m_watchpoints;
 		bool m_wpBreak;
 
-		/*Hardware::CheckBreakFunc m_checkBreakFunc;
-		Memory::DebugOnReadInstrFunc m_debugOnReadInstrFunc;
-		Memory::DebugOnReadFunc m_debugOnReadFunc;
-		Memory::DebugOnWriteFunc m_debugOnWriteFunc;*/
-		Hardware::DebugFunc m_debugFunc;
+		Hardware::DebugFunc m_debugFunc = nullptr;
 
 		std::mutex m_lastRWMutex;
 		LastRWAddrs m_lastReadsAddrs; // a circular buffer that contains addresses

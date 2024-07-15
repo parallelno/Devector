@@ -318,39 +318,39 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 			DrawProperty2EditableCheckBox4("Ram Disk 7", "##BPCARD6P0", "##BPCARD6P1", "##BPCARD6P2", "##BPCARD6P3", &rd60, &rd61, &rd62, &rd63, "To check the Ram-Disk7 pages 0,1,2,3");
 			DrawProperty2EditableCheckBox4("Ram Disk 8", "##BPCARD7P0", "##BPCARD7P1", "##BPCARD7P2", "##BPCARD7P3", &rd70, &rd71, &rd72, &rd73, "To check the Ram-Disk8 pages 0,1,2,3");
 
-			memPages = static_cast<int>(ram) |
-				(static_cast<int>(rd00) << 1) |
-				(static_cast<int>(rd01) << 2) |
-				(static_cast<int>(rd02) << 3) |
-				(static_cast<int>(rd03) << 4) |
-				(static_cast<int>(rd10) << 5) |
-				(static_cast<int>(rd11) << 6) |
-				(static_cast<int>(rd12) << 7) |
-				(static_cast<int>(rd13) << 8) |
-				(static_cast<int>(rd20) << 9) |
-				(static_cast<int>(rd21) << 10) |
-				(static_cast<int>(rd22) << 11) |
-				(static_cast<int>(rd23) << 12) |
-				(static_cast<int>(rd30) << 13) |
-				(static_cast<int>(rd31) << 14) |
-				(static_cast<int>(rd32) << 15) |
-				(static_cast<int>(rd33) << 16) |
-				(static_cast<int>(rd40) << 17) |
-				(static_cast<int>(rd41) << 18) |
-				(static_cast<int>(rd42) << 19) |
-				(static_cast<int>(rd43) << 20) |
-				(static_cast<int>(rd50) << 21) |
-				(static_cast<int>(rd51) << 22) |
-				(static_cast<int>(rd52) << 23) |
-				(static_cast<int>(rd53) << 24) |
-				(static_cast<int>(rd60) << 25) |
-				(static_cast<int>(rd61) << 26) |
-				(static_cast<int>(rd62) << 27) |
-				(static_cast<int>(rd63) << 28) |
-				(static_cast<int>(rd70) << 29) |
-				(static_cast<int>(rd71) << 30) |
-				(static_cast<int>(rd72) << 31) |
-				(static_cast<int>(rd73) << 32);
+			memPages.ram = ram;
+			memPages.rdisk0page0 = rd00;
+			memPages.rdisk0page1 = rd01;
+			memPages.rdisk0page2 = rd02;
+			memPages.rdisk0page3 = rd03;
+			memPages.rdisk1page0 = rd10;
+			memPages.rdisk1page1 = rd11;
+			memPages.rdisk1page2 = rd12;
+			memPages.rdisk1page3 = rd13;
+			memPages.rdisk2page0 = rd20;
+			memPages.rdisk2page1 = rd21;
+			memPages.rdisk2page2 = rd22;
+			memPages.rdisk2page3 = rd23;
+			memPages.rdisk3page0 = rd30;
+			memPages.rdisk3page1 = rd31;
+			memPages.rdisk3page2 = rd32;
+			memPages.rdisk3page3 = rd33;
+			memPages.rdisk4page0 = rd40;
+			memPages.rdisk4page1 = rd41;
+			memPages.rdisk4page2 = rd42;
+			memPages.rdisk4page3 = rd43;
+			memPages.rdisk5page0 = rd50;
+			memPages.rdisk5page1 = rd51;
+			memPages.rdisk5page2 = rd52;
+			memPages.rdisk5page3 = rd53;
+			memPages.rdisk6page0 = rd60;
+			memPages.rdisk6page1 = rd61;
+			memPages.rdisk6page2 = rd62;
+			memPages.rdisk6page3 = rd63;
+			memPages.rdisk7page0 = rd70;
+			memPages.rdisk7page1 = rd71;
+			memPages.rdisk7page2 = rd72;
+			memPages.rdisk7page3 = rd73;
 
 			// auto delete
 			DrawProperty2EditableCheckBox("Auto Delete", "##BPContextAutoDel", &isAutoDel, "Removes the breakpoint when execution halts");

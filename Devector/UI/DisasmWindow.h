@@ -55,8 +55,8 @@ namespace dev
 		};
 		ContextMenu m_contextMenu;
 
-		struct AddrHighlight {
-			static constexpr int TIMER = 30;
+		struct AddrHighlight 
+		{
 			int addr = -1; // -1 means disabled
 
 			void Init(const Addr _addr) { 
@@ -102,7 +102,6 @@ namespace dev
 		void DrawDisasmComment(const Disasm::Line& _line);
 		void DrawDisasmLabels(const Disasm::Line& _line);
 		void DrawDisasmStats(const Disasm::Line& _line);
-		void DrawDisasmConsts(const Disasm::Line& _line);
 		void DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu);
 		void DrawCommentEdit(ContextMenu& _contextMenu);
 		void DrawLabelEdit(ContextMenu& _contextMenu);

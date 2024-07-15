@@ -2,13 +2,13 @@
 
 #include <unordered_map>
 #include <array>
-#include <format>
 #include <limits.h>
 
 #include "Utils/Types.h"
 #include "Utils/StrUtils.h"
 #include "Core/Breakpoint.h"
 #include "Core/Hardware.h"
+#include "Core/DebugData.h"
 
 namespace dev
 {
@@ -32,7 +32,7 @@ namespace dev
 	#define OPTYPE_RET	5
 	#define OPTYPE_PCH	6
 	#define OPTYPE_RST	7
-	#define OPTYPE____	8
+	#define OPTYPE_ALL	8
 
 	#define CMD_LEN_MAX 3
 
@@ -60,7 +60,7 @@ namespace dev
 
 		struct Line
 		{
-			static constexpr size_t STATS_LEN = 256;
+			static constexpr size_t STATS_LEN = 128;
 
 			enum class Type {
 				COMMENT,
@@ -100,7 +100,7 @@ namespace dev
 		};
 		using ImmAddrLinks = std::array<Link, DISASM_LINES_MAX>;
 
-		Disasm(Hardware& _hardware);
+		Disasm(Hardware& _hardware, DebugData& _debugData);
 		void Init(LineIdx _linesNum);
 
 		void AddLabes(const Addr _addr);
@@ -117,19 +117,6 @@ namespace dev
 		bool IsDone() const { return m_lineIdx >= m_linesNum; }
 		auto GetImmAddrlinkNum() const -> size_t { return m_immAddrlinkNum; }
 
-		auto GetComment(const Addr _addr) const -> const std::string*;
-		void SetComment(const Addr _addr, const std::string& _comment);
-		void DelComment(const Addr _addr);
-
-		auto GetLabels(const Addr _addr) const -> const AddrLabels*;
-		void SetLabels(const Addr _addr, const AddrLabels& _labels);
-
-		auto GetConsts(const Addr _addr) const -> const AddrLabels*;
-		void SetConsts(const Addr _addr, const AddrLabels& _labels);
-
-		void LoadDebugData(const std::wstring& _path);
-		void SaveDebugData();
-
 		auto GetAddr(const Addr _endAddr, const int _instructionOffset) const->Addr;
 		void Reset();
 		void SetUpdated() { m_linesP = &m_lines; };
@@ -140,10 +127,6 @@ namespace dev
 
 	private:
 
-		Labels m_labels;		// labels
-		Labels m_consts;		// labels used as constants or they point to data
-		Comments m_comments;
-
 		Lines m_lines;
 		const Lines* m_linesP = nullptr; // exposed pointer. it invalidates every time labels/commets/consts are updated
 		LineIdx m_lineIdx = 0; // the next avalable line
@@ -152,12 +135,11 @@ namespace dev
 		ImmAddrLinks m_immAddrLinks;
 		size_t m_immAddrlinkNum = 0; // the total number of links between the immediate operand and the corresponding address
 		Hardware& m_hardware;
+		DebugData& m_debugData;
 		
 		using MemStats = std::array<uint64_t, Memory::GLOBAL_MEMORY_LEN>;
 		MemStats m_memRuns;
 		MemStats m_memReads;
 		MemStats m_memWrites;
-
-		std::wstring m_debugPath;
 	};
 }

@@ -126,6 +126,14 @@
     <ClCompile Include="UI\FeedbackWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Audio.cpp" />
+    <ClCompile Include="Core\PitI8253.cpp" />
+    <ClCompile Include="Core\DebugData.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\SoundAY8910.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -272,6 +280,14 @@
     </ClInclude>
     <ClInclude Include="UI\FeedbackWindow.h">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Audio.h" />
+    <ClInclude Include="Core\PitI8253.h" />
+    <ClInclude Include="Core\DebugData.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SoundAY8910.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

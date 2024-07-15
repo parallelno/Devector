@@ -44,9 +44,6 @@ namespace dev
 		};
 
 	public:
-		//using CheckBreakFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState)>;
-		//using TraceLogUpdateFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState)>;
-
 		using DebugFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState, const IO::State& _ioState)>;
 
 		enum class Req: int {

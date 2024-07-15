@@ -24,9 +24,16 @@ namespace dev
 	class CpuI8080
 	{
 	public:
+		// consts
+		static const constexpr uint8_t OPCODE_RST7 = 0xFF;
+		static const constexpr uint8_t OPCODE_HLT = 0x76;
+		static const constexpr uint8_t OPCODE_PCHL = 0xE9;
+
+		static const constexpr int CLOCK = 3000000;
+
 		////////////////////////////////////////////////////////////////////////////
 		//
-		// Get the state
+		// the State
 		//
 		////////////////////////////////////////////////////////////////////////////
 #pragma pack(push, 1)

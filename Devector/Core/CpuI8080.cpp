@@ -1,8 +1,6 @@
 #include "CpuI8080.h"
 #include "Utils/Utils.h"
 
-// consts
-static constexpr uint8_t OPCODE_RST7 = 0xff;
 // a number of clock cycles one machine cycle takes
 static constexpr uint64_t MACHINE_CC = 4; 
 // machine_cycle index indicating the instruction executon is over
