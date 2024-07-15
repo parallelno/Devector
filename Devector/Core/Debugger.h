@@ -77,6 +77,8 @@ namespace dev
 		Disasm m_disasm;
 		TraceLog m_traceLog;
 
+		bool m_attached = false;
+
 		std::mutex m_breakpointsMutex;
 		std::mutex m_watchpointsMutex;
 		Breakpoints m_breakpoints;

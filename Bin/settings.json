@@ -1,21 +1,27 @@
 {
     "bootPath": "boot//boot.bin",
-    "breakpointsWindowVisisble": false,
-    "disasmWindowVisible": false,
+    "breakpointsWindowVisisble": true,
+    "disasmWindowVisible": true,
     "displayWindowVisible": true,
     "fontItalicPath": "fonts//medium_italic.ttf",
     "fontItalicSize": 18.0,
     "fontPath": "fonts//medium.ttf",
     "fontSize": 18.0,
-    "hardwareStatsWindowVisible": false,
-    "hexViewerWindowVisible": false,
-    "mainWindowHeight": 670,
-    "mainWindowWidth": 820,
+    "hardwareStatsWindowVisible": true,
+    "hexViewerWindowVisible": true,
+    "mainWindowHeight": 1359,
+    "mainWindowWidth": 2539,
     "mainWindowX": 0,
     "mainWindowY": 32,
-    "memDisplayWindowVisible": false,
-    "recentFiles": null,
+    "memDisplayWindowVisible": true,
+    "recentFiles": [
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\DFIGHT.ROM",
+            -1,
+            false
+        ]
+    ],
     "restartOnLoadFdd": true,
-    "traceLogWindowVisible": false,
-    "watchpointsWindowVisible": false
+    "traceLogWindowVisible": true,
+    "watchpointsWindowVisible": true
 }

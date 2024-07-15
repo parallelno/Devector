@@ -25,8 +25,6 @@ void dev::Debugger::Init()
 {
 	m_debugFunc = std::bind(&Debugger::Debug, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-	Reset();
-
 	m_breakpoints.clear();
 	m_watchpoints.clear();
 
@@ -35,12 +33,17 @@ void dev::Debugger::Init()
 
 void dev::Debugger::Attach(const bool _attach)
 {
-	m_hardware.AttachDebug(_attach ? &m_debugFunc : nullptr);
+	if (m_attached != _attach) {
+		m_hardware.AttachDebug(_attach ? &m_debugFunc : nullptr);
+		m_attached = _attach;
+		
+		if (_attach) Reset();
+	}
 }
 
 dev::Debugger::~Debugger()
 {
-	m_hardware.AttachDebug(nullptr);
+	Attach(false);
 }
 
 void dev::Debugger::Reset()
