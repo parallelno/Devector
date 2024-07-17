@@ -7,7 +7,7 @@
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
 		const float* const _fontSize, const float* const _dpiScale, 
-		ReqDisasm& _reqDisasm, bool& _reset, bool& _reload)
+		ReqDisasm& _reqDisasm, bool& _reset, bool& _reload, bool& _restoreFrame)
 	:
 	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
 	m_hardware(_hardware),
@@ -15,7 +15,7 @@ dev::DisasmWindow::DisasmWindow(
 	m_fontCommentP(fontComment),
 	m_reqDisasm(_reqDisasm),
 	m_reqHardwareStatsReset(_reset), m_navigateAddrs(),
-	m_reqMainWindowReload(_reload)
+	m_reqMainWindowReload(_reload), m_reqDebugRestoreFrame(_restoreFrame)
 {
 	UpdateData(false);
 }
@@ -89,9 +89,17 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	if (ImGui::Button("Reset"))
 	{
 		m_ccLast = -1;
-		m_reqHardwareStatsReset = true;
 		m_reqMainWindowReload = true;
 		m_hardware.Request(Hardware::Req::STOP);
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("Step Back") ||
+		(ImGui::IsKeyPressed(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_R)))
+	{
+		m_ccLast = -1;
+		m_reqHardwareStatsReset = true;
+		m_reqDebugRestoreFrame = true;
 	}
 }
 

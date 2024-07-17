@@ -43,7 +43,7 @@ void dev::DevectorApp::WindowsInit()
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqHardwareStatsReset, m_ruslat);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
-		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasm, m_reqHardwareStatsReset, m_reqMainWindowReload);
+		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasm, m_reqHardwareStatsReset, m_reqMainWindowReload, m_reqDebugRestoreState);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasm);
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqHexViewer);
@@ -94,6 +94,7 @@ bool OpenFileDialog(WCHAR* filePath, int size)
 		return false; // User cancelled or an error occurred
 }
 
+// UI thread
 void dev::DevectorApp::Update()
 {
 	if (m_reqMainWindowReload) {
@@ -101,6 +102,12 @@ void dev::DevectorApp::Update()
 		Reload();
 		m_reqDisasm.type = ReqDisasm::Type::UPDATE; // disasm needs an update after reloading labels and consts
 	}
+	if (m_reqDebugRestoreState) {
+		m_reqDebugRestoreState = false;
+		m_debuggerP->GetReverse().SetStatus(Reverse::STATUS_RESTORE);
+		m_reqDisasm.type = ReqDisasm::Type::UPDATE; // disasm needs an update after reloading labels and consts
+	}
+
 	MainMenuUpdate();
 
 	bool requiresDebugger = m_disasmWindowVisible || m_breakpointsWindowVisisble || m_watchpointsWindowVisible ||
@@ -166,7 +173,7 @@ void dev::DevectorApp::LoadRom(const std::wstring& _path)
 	auto reqData = nlohmann::json({ {"data", *result}, {"addr", Memory::ROM_LOAD_ADDR} });
 	m_hardwareP->Request(Hardware::Req::SET_MEM, reqData);
 
-	m_debuggerP->Reset();
+	m_debuggerP->Reset(); // has to be called after Hardware loading Rom because it stores the last state of Hardware
 	m_debuggerP->GetDebugData().LoadDebugData(_path);
 	m_hardwareP->Request(Hardware::Req::RUN);
 
@@ -197,8 +204,8 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 
 	if (_autoBoot)
 	{
-		m_debuggerP->Reset();
 		m_hardwareP->Request(Hardware::Req::RESET);
+		m_debuggerP->Reset(); // has to be called after Hardware Reset because it stores the last state of Hardware
 		m_hardwareP->Request(Hardware::Req::RUN);
 	}
 

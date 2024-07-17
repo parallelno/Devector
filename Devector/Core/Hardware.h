@@ -44,7 +44,9 @@ namespace dev
 		};
 
 	public:
-		using DebugFunc = std::function<bool(const CpuI8080::State& _cpuState, const Memory::State& _memState, const IO::State& _ioState)>;
+		using DebugFunc = std::function<bool(
+			CpuI8080::State* _cpuState, Memory::State* _memState, 
+			IO::State* _ioState, Display::State* _displayState)>;
 
 		enum class Req: int {
 			NONE = 0,
@@ -90,8 +92,12 @@ namespace dev
 		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result <nlohmann::json>;
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;
 		auto GetRam() const -> const Memory::Ram*;
+		auto GetCpuState() -> const CpuI8080::State& { return m_cpu.GetState(); }
+		auto GetMemState() -> const Memory::State& { return m_memory.GetState(); }
+		auto GetIoState() -> const IO::State& { return m_io.GetState(); }
 
-		void AttachDebug(DebugFunc* _funcP) { m_debug.store(_funcP); }
+		void AttachDebug(DebugFunc* _debugFuncP) { m_debug.store(_debugFuncP); }
+
 
 	private:
 		std::atomic <DebugFunc*> m_debug = nullptr;

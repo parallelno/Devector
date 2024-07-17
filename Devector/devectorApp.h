@@ -117,8 +117,9 @@ namespace dev
 		// such requests are handled sequentially (no collisions) during the same or the next update
 		ReqHexViewer m_reqHexViewer; // requests to HexViewerWindow
 		ReqDisasm m_reqDisasm; // requests to DisasmWindow
-		bool m_reqMainWindowReload = false;  // requests to this
-		bool m_reqHardwareStatsReset = false; // requests to HardwareStatsWindow
+		bool m_reqMainWindowReload = false;
+		bool m_reqHardwareStatsReset = false;
+		bool m_reqDebugRestoreState = false;
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 		GLUtils m_glUtils;
 

@@ -15,6 +15,7 @@
 #include "Core/Breakpoint.h"
 #include "Core/Watchpoint.h"
 #include "Core/TraceLog.h"
+#include "Core/Reverse.h"
 
 namespace dev
 {
@@ -37,7 +38,8 @@ namespace dev
 		void Attach(const bool _attach);
 		void Reset();
 
-		bool Debug(const CpuI8080::State& _cpuState, const Memory::State& _memState, const IO::State& _ioState);
+		bool Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP, 
+			IO::State* _ioStateP, Display::State* _displayStateP);
 
 		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
 		void AddBreakpoint(const Addr _addr,
@@ -69,6 +71,7 @@ namespace dev
 		auto GetTraceLog() -> TraceLog& { return m_traceLog; };
 		auto GetDebugData() -> DebugData& { return m_debugData; };
 		auto GetDisasm() -> Disasm& { return m_disasm; };
+		auto GetReverse() -> Reverse& { return m_reverse; };
 
 	private:
 
@@ -76,6 +79,7 @@ namespace dev
 		DebugData m_debugData;
 		Disasm m_disasm;
 		TraceLog m_traceLog;
+		Reverse m_reverse;
 
 		bool m_attached = false;
 

@@ -53,23 +53,30 @@ namespace dev
 		static constexpr int RASTERIZED_PXLS_MAX = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
 		static constexpr int COLORS_POLUTED_DELAY = 4; // this timer in pixels. if the palette is set inside the active area, the fourth and the fifth pixels get corrupted colors
 
+		static constexpr int FULL_PALLETE_LEN = 256;
+
 		using FrameBuffer = std::array <ColorI, FRAME_LEN>;
 
+		struct State
+		{
+			uint64_t frameNum = 0;	// counts frames
+			ColorI fullPallete[FULL_PALLETE_LEN];
+			uint8_t scrollIdx = 0xff;	// vertical scrolling, 0xff - no scroll
+			bool irq = false;			// interruption request
+			int framebufferIdx = 0;		// currently rendered pixel idx to m_frameBuffer
+			FrameBuffer* frameBufferP = nullptr;
+		};
+
 	private:
-		bool m_irq; // interruption request
-		uint8_t m_scrollIdx; // vertical scrolling, 255 - no scroll
+		Memory& m_memory;
+		IO& m_io;
+
+		State m_state;
 
 		FrameBuffer m_frameBuffer;	// rasterizer draws here
 		FrameBuffer m_backBuffer;	// a buffer to simulate VSYNC
 		FrameBuffer m_gpuBuffer;	// temp buffer for output to GPU
 		std::mutex m_backBufferMutex;
-		int m_framebufferIdx;	// currently rendered pixel idx to m_frameBuffer
-
-		uint64_t m_frameNum; // counts frames
-		ColorI m_fullPallete[256];
-
-		Memory& m_memory;
-		IO& m_io;
 
 	public:
 		Display(Memory& _memory, IO& _io);
@@ -77,11 +84,13 @@ namespace dev
 		void Rasterize();
 		bool IsIRQ();
 		auto GetFrame(const bool _vsync) ->const FrameBuffer*;
-		inline auto GetFrameNum() const -> uint64_t { return m_frameNum; };
+		inline auto GetFrameNum() const -> uint64_t { return m_state.frameNum; };
 		inline int GetRasterLine() const;
 		inline int GetRasterPixel() const;
 		static ColorI VectorColorToArgb(const uint8_t _vColor);
-		auto GetScrollVert() const-> uint8_t { return m_scrollIdx; };
+		auto GetScrollVert() const -> uint8_t { return m_state.scrollIdx; };
+		auto GetState() const -> const State& { return m_state; };
+		auto GetStateP() -> State* { return &m_state; };
 	private:
 		uint32_t BytesToColorIdxs();
 		uint32_t GetScreenBytes();

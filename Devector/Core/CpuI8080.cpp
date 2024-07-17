@@ -485,8 +485,6 @@ void dev::CpuI8080::WriteByte(const Addr _addr, uint8_t _value,
 //
 ////////////////////////////////////////////////////////////////////////////
 
-
-auto dev::CpuI8080::GetState() const -> const State& { return state; }
 uint16_t dev::CpuI8080::GetPSW() const { return PSW; }
 uint16_t dev::CpuI8080::GetBC() const { return BC; }
 uint16_t dev::CpuI8080::GetDE() const {	return DE; }

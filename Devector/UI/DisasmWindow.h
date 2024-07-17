@@ -86,6 +86,7 @@ namespace dev
 		int m_selectedLineIdx = 0;
 		bool& m_reqHardwareStatsReset;
 		bool& m_reqMainWindowReload;
+		bool& m_reqDebugRestoreFrame;
 		static constexpr int NAVIGATE_ADDRS_LEN = 256;
 		std::array<Addr, NAVIGATE_ADDRS_LEN> m_navigateAddrs; // contains addr where the user navigated to
 		int m_navigateAddrsIdx = 0; // points to the current addr in m_navigateAddrs
@@ -117,7 +118,7 @@ namespace dev
 
 		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, 
 			const float* const _fontSizeP, const float* const _dpiScaleP, 
-			ReqDisasm& _reqDisasm, bool& _reset, bool& _reload);
+			ReqDisasm& _reqDisasm, bool& _reset, bool& _reload, bool& _restoreFrame);
 		void Update(bool& _visible);
 		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
 			const bool _updateSelection = true);

@@ -58,9 +58,8 @@ namespace dev
 #pragma pack(push, 1)
 		struct Update
 		{
-			GlobalAddr beforeWrite[2];
 			Mapping mapping;
-			uint8_t ramdiskIdx : 3 = 0;
+			uint8_t ramdiskIdx : 3 = 0; // RAMDISK_MAX = 8
 			MemType memType : 1 = MemType::RAM;
 		};
 #pragma pack(pop)
@@ -77,6 +76,7 @@ namespace dev
 			GlobalAddr writeGlobalAddr[2];
 			uint8_t write[2];
 			uint8_t writeLen = 0;
+			uint8_t beforeWrite[2];
 			inline void Init() { instrLen = readLen = writeLen= 0; }
 		};
 #pragma pack(pop)
@@ -86,12 +86,12 @@ namespace dev
 		{
 			Debug debug;
 			Update update;
+			Ram* ramP = nullptr;
 		};
 #pragma pack(pop)
 
 		Memory(const std::wstring& _pathBootData);
 		void Init();
-		// internal thread access
 		void Restart();
 		auto GetByte(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
@@ -107,6 +107,7 @@ namespace dev
 		auto GetRam() const -> const Ram*;
 		auto GetGlobalAddr(const Addr _addr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		auto GetState() const -> const State& { return m_state; };
+		auto GetStateP() -> State* { return &m_state; };
 		void SetRamDiskMode(uint8_t _diskIdx, uint8_t _data);
 		void SetMemType(const MemType _memType);
 		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);

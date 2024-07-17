@@ -8,7 +8,7 @@ dev::Keyboard::Keyboard()
 	InitMapping();
 }
 
-// HW thread
+// Hardware thread
 auto dev::Keyboard::KeyHandling(int _key, int _action)
 -> Operation
 {

@@ -104,13 +104,13 @@ namespace dev
 			uint64_t cc; // clock cycles, debug related data
 			Regs regs;
 			Int ints;
-			RegPair data;
 		};
 #pragma pack(pop)
 
 		State state;
 
-		auto GetState() const -> const State&;
+		auto GetState() const -> const State& { return state; }
+		auto GetStateP() -> State* { return &state; }
 		uint64_t GetCC() const;
 		uint16_t GetPC() const;
 		uint16_t GetSP() const;

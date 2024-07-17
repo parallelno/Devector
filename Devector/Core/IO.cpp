@@ -51,7 +51,7 @@ void dev::IO::Init()
 	OUT_COMMIT_TIMER = IO::PORT_NO_COMMIT;
 	PALLETE_COMMIT_TIMER = IO::PORT_NO_COMMIT;
 
-	m_ruslatHistory = 0;
+	m_state.ruslatHistory = 0;
 }
 
 // handling the data receiving from ports
@@ -176,7 +176,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		break;
 	case 0x01:
 		RUS_LAT = (PORT_C >> 3) & 1;
-		m_ruslatHistory = (m_ruslatHistory<<1) + RUS_LAT;
+		m_state.ruslatHistory = (m_state.ruslatHistory<<1) + RUS_LAT;
 		PORT_C = _value;
 		break;
 	case 0x02:

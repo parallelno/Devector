@@ -62,7 +62,7 @@ void dev::Audio::Init()
 }
 
 // _cycles are ticks of the 1.5 Mhz timer.
-// it's a Hardware thread
+// Hardware thread
 void dev::Audio::Clock(int _cycles, const float _beeper)
 {
 	if (!m_inited) return;

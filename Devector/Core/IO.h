@@ -68,6 +68,7 @@ namespace dev
 		{
 			Palette palette;
 			Ports ports;
+			uint32_t ruslatHistory = 0;
 			uint8_t outport		: 8;
 			uint8_t outbyte		: 8;
 
@@ -110,7 +111,7 @@ namespace dev
 
 	private:
 		State m_state;
-		uint32_t m_ruslatHistory = 0;
+		
 		PortsData m_portsInData;
 		PortsData m_portsOutData;
 
@@ -137,12 +138,13 @@ namespace dev
 		inline auto GetBorderColorIdx() const -> uint8_t { return m_state.brdColorIdx; };
 		inline auto GetScroll() const -> uint8_t { return m_state.ports.portA; };
 		inline auto GetRusLat() const -> uint32_t { return m_state.ruslat; }
-		inline auto GetRusLatHistory() const -> uint32_t { return m_ruslatHistory; }
+		inline auto GetRusLatHistory() const -> uint32_t { return m_state.ruslatHistory; }
 		inline auto GetDisplayMode() const -> bool { return m_state.displayMode; };
 		inline auto GetOutCommitTimer() const -> int { return m_state.outCommitTimer; };
 		inline auto GetPaletteCommitTimer() const -> int { return m_state.paletteCommitTimer; };
 
 		auto GetState() const -> const State& { return m_state; };
+		auto GetStateP() -> State* { return &m_state; };
 		auto GetPalette() const -> const Palette* { return &m_state.palette; }
 		auto GetPorts() const -> const Ports* { return &m_state.ports; }
 		auto GetPortsInData() const -> const PortsData* { return &m_portsInData; }

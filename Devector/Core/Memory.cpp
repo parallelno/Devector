@@ -13,6 +13,7 @@ void dev::Memory::Init()
 	*((uint64_t*) &m_mappings[0].data) = 0;
 	m_state.update.mapping.data = m_state.update.ramdiskIdx = m_mappingsEnabled = 0;
 	m_state.update.memType = MemType::ROM;
+	m_state.ramP = &m_ram;
 }
 
 void dev::Memory::Restart() { m_state.update.memType = MemType::RAM; }
@@ -74,7 +75,7 @@ void dev::Memory::CpuWrite(const Addr _addr, uint8_t _value,
 	auto globalAddr = GetGlobalAddr(_addr, _addrSpace);
 
 	// debug
-	m_state.update.beforeWrite[_byteNum] = m_ram[globalAddr];
+	m_state.debug.beforeWrite[_byteNum] = m_ram[globalAddr];
 	m_state.debug.writeGlobalAddr[_byteNum] = globalAddr;
 	m_state.debug.writeLen = _byteNum + 1;
 

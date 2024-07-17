@@ -134,6 +134,9 @@
     <ClCompile Include="Core\SoundAY8910.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Reverse.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -287,6 +290,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\SoundAY8910.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Reverse.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

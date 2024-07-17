@@ -339,7 +339,6 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_ramdiskIdxS = std::to_string(ramdiskIdx + 1);
 
 	// update hardware
-	m_ccS = std::to_string(cc);
 	m_ccLastRunS = std::to_string(m_ccLastRun);
 	m_rasterPixelS = std::to_string(rasterPixel);
 	m_rasterLineS = std::to_string(rasterLine);
@@ -482,6 +481,7 @@ void dev::HardwareStatsWindow::UpdateUpTime()
 {
 	// update the up time
 	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
+	m_ccS = std::to_string(cc);
 	int sec = cc / CpuI8080::CLOCK;
 	int hours = sec / 3600;
 	int minutes = (sec % 3600) / 60;

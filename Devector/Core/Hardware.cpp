@@ -51,8 +51,9 @@ bool dev::Hardware::ExecuteInstruction()
 
 	} while (!m_cpu.IsInstructionExecuted());
 
+	// debug per instruction
 	auto Debug = m_debug.load();
-	if (Debug && (*Debug)(m_cpu.GetState(), m_memory.GetState(), m_io.GetState())) {
+	if (Debug && (*Debug)(m_cpu.GetStateP(), m_memory.GetStateP(), m_io.GetStateP(), m_display.GetStateP())) {
 		return true;
 	}
 
@@ -81,7 +82,7 @@ void dev::Hardware::Execution()
 			
 			do // rasterizes a frame
 			{
-				if (ExecuteInstruction()) 
+				if (ExecuteInstruction())
 				{
 					Stop();
 					break;
@@ -116,7 +117,7 @@ void dev::Hardware::Execution()
 	}
 }
 
-// called from the external thread
+// Called from the external thread. It return when the request fulfilled
 auto dev::Hardware::Request(const Req _req, const nlohmann::json& _dataJ)
 -> Result<nlohmann::json>
 {
@@ -404,7 +405,7 @@ void dev::Hardware::Run()
 auto dev::Hardware::GetRegs() const
 -> nlohmann::json
 {
-	const auto cpuState = m_cpu.GetState();
+	auto& cpuState = m_cpu.GetState();
 
 	nlohmann::json out {
 		{"cc", cpuState.cc },

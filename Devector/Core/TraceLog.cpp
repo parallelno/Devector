@@ -6,7 +6,7 @@ dev::TraceLog::TraceLog(const DebugData& _debugData)
 	m_debugData(_debugData)
 {}
 
-// a hardware thread
+// Hardware thread
 void dev::TraceLog::Update(const CpuI8080::State& _cpuState, const Memory::State& _memState)
 {
 	uint8_t opcode = _memState.debug.instr[0];

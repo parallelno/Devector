@@ -23,7 +23,7 @@ dev::Debugger::Debugger(Hardware& _hardware)
 
 void dev::Debugger::Init()
 {
-	m_debugFunc = std::bind(&Debugger::Debug, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	m_debugFunc = std::bind(&Debugger::Debug, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 
 	m_breakpoints.clear();
 	m_watchpoints.clear();
@@ -31,21 +31,33 @@ void dev::Debugger::Init()
 	m_hardware.Request(Hardware::Req::RUN);
 }
 
+// UI thread
 void dev::Debugger::Attach(const bool _attach)
 {
-	if (m_attached != _attach) {
+	if (m_attached != _attach)
+	{
+		if (_attach)
+		{
+			bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+
+			if (isRunning) { m_hardware.Request(Hardware::Req::STOP); }
+			Reset();
+			if (isRunning) { m_hardware.Request(Hardware::Req::RUN); }
+		}
+
 		m_hardware.AttachDebug(_attach ? &m_debugFunc : nullptr);
 		m_attached = _attach;
-		
-		if (_attach) Reset();
 	}
 }
 
+// UI thread
 dev::Debugger::~Debugger()
 {
 	Attach(false);
 }
 
+// UI thread. Call while Hardware is stopped 
+// Has to be called after Hardware Reset and loading Rom because it stores the last state of Hardware
 void dev::Debugger::Reset()
 {
 	m_disasm.Reset();
@@ -57,6 +69,7 @@ void dev::Debugger::Reset()
 	m_memLastRW.fill(0);
 
 	m_traceLog.Reset();
+	m_reverse.SetStatus(Reverse::STATUS_RESET);
 }
 
 //////////////////////////////////////////////////////////////
@@ -65,21 +78,21 @@ void dev::Debugger::Reset()
 //
 //////////////////////////////////////////////////////////////
 
-// a hardware thread
-bool dev::Debugger::Debug(
-	const CpuI8080::State& _cpuState, const Memory::State& _memState, const IO::State& _ioState)
+// Hardware thread
+bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+	IO::State* _ioStateP, Display::State* _displayStateP)
 {
 	// instruction check
-	m_disasm.MemRunsUpdate(_memState.debug.instrGlobalAddr);
+	m_disasm.MemRunsUpdate(_memStateP->debug.instrGlobalAddr);
 
 	// reads check
 	{
 		std::lock_guard<std::mutex> mlock(m_lastRWMutex);
 
-		for (int i = 0; i < _memState.debug.readLen; i++)
+		for (int i = 0; i < _memStateP->debug.readLen; i++)
 		{
-			GlobalAddr globalAddr = _memState.debug.readGlobalAddr[i];
-			uint8_t val = _memState.debug.read[i];
+			GlobalAddr globalAddr = _memStateP->debug.readGlobalAddr[i];
+			uint8_t val = _memStateP->debug.read[i];
 
 			m_disasm.MemReadsUpdate(globalAddr);
 
@@ -94,10 +107,10 @@ bool dev::Debugger::Debug(
 	{
 		std::lock_guard<std::mutex> mlock(m_lastRWMutex);
 
-		for (int i = 0; i < _memState.debug.writeLen; i++)
+		for (int i = 0; i < _memStateP->debug.writeLen; i++)
 		{
-			GlobalAddr globalAddr = _memState.debug.writeGlobalAddr[i];
-			uint8_t val = _memState.debug.write[i];
+			GlobalAddr globalAddr = _memStateP->debug.writeGlobalAddr[i];
+			uint8_t val = _memStateP->debug.write[i];
 
 			m_disasm.MemWritesUpdate(globalAddr);
 
@@ -108,16 +121,17 @@ bool dev::Debugger::Debug(
 		}
 	}
 
-	m_traceLog.Update(_cpuState, _memState);
-
+	auto break_ = false;
 	if (m_wpBreak)
 	{
 		m_wpBreak = false;
 		ResetWatchpoints();
-		return true;
+		break_ |= true;
 	}
+	break_ |= CheckBreakpoints(*_cpuStateP, *_memStateP);
 
-	auto break_ = CheckBreakpoints(_cpuState, _memState);
+	m_traceLog.Update(*_cpuStateP, *_memStateP);	
+	m_reverse.Update(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 
 	return break_;
 }
@@ -299,7 +313,7 @@ void dev::Debugger::DelWatchpoints()
 	m_watchpoints.clear();
 }
 
-// a hardware thread
+// Hardware thread
 bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value)
 {
 	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
