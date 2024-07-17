@@ -71,10 +71,10 @@ void dev::Reverse::StoreState(const CpuI8080::State& _cpuState,
 void dev::Reverse::RestoreState(CpuI8080::State* _cpuStateP,
 	Memory::State* _memStateP, IO::State* _ioStateP, Display::State* _displayStateP)
 {
-	if (m_stateLen == 0) return;
+	if (m_stateLen < 1) return;
 
 	auto& state = m_states[m_stateIdx];
-	m_stateIdx = (m_stateIdx - 1) % STATES_LEN;
+	m_stateIdx = (m_stateIdx - 1 + STATES_LEN) % STATES_LEN;
 	m_stateLen = dev::Max(m_stateLen - 1, 0);
 
 	*_cpuStateP = state.cpuState;
