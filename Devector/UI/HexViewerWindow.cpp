@@ -200,7 +200,8 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 
 					// highlight a selected watchpoint
 					if (m_reqHexViewer.type != ReqHexViewer::Type::NONE && 
-						addr >= m_reqHexViewer.globalAddr && addr < m_reqHexViewer.len + m_reqHexViewer.globalAddr){
+						addr >= (m_reqHexViewer.globalAddr & 0xFFFF) && addr < m_reqHexViewer.len + (m_reqHexViewer.globalAddr & 0xFFFF) )
+					{
 						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 100, 100, 255));
 					}
 
