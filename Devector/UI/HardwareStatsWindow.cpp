@@ -5,11 +5,11 @@
 
 dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware, 
 		const float* const _fontSizeP, const float* const _dpiScaleP, 
-		bool& _reset, bool& _ruslat)
+		bool& _ruslat)
 	:
 	BaseWindow("Hardware Stats", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware),
-	m_reqHardwareStatsReset(_reset), m_ruslat(_ruslat)
+	m_ruslat(_ruslat)
 {
 	Init();
 	UpdateData(false);
@@ -229,11 +229,6 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 {
 	if (_isRunning) return;
 
-	if (m_reqHardwareStatsReset) {
-		m_ccLast = 0;
-		m_reqHardwareStatsReset = false;
-		Init();
-	}
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& data = *res;
 
@@ -482,7 +477,7 @@ void dev::HardwareStatsWindow::UpdateUpTime()
 	// update the up time
 	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
 	m_ccS = std::to_string(cc);
-	int sec = cc / CpuI8080::CLOCK;
+	int sec = (int)(cc / CpuI8080::CLOCK);
 	int hours = sec / 3600;
 	int minutes = (sec % 3600) / 60;
 	int seconds = sec % 60;

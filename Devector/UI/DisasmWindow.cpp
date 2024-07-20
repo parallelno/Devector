@@ -7,15 +7,13 @@
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
 		const float* const _fontSize, const float* const _dpiScale, 
-		ReqDisasm& _reqDisasm, bool& _reset, bool& _reload, bool& _restoreFrame)
+		ReqUI& _reqUI)
 	:
 	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
 	m_hardware(_hardware),
 	m_debugger(_debugger),
 	m_fontCommentP(fontComment),
-	m_reqDisasm(_reqDisasm),
-	m_reqHardwareStatsReset(_reset), m_navigateAddrs(),
-	m_reqMainWindowReload(_reload), m_reqDebugRestoreFrame(_restoreFrame)
+	m_reqUI(_reqUI)
 {
 	UpdateData(false);
 }
@@ -89,17 +87,8 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	if (ImGui::Button("Reset"))
 	{
 		m_ccLast = -1;
-		m_reqMainWindowReload = true;
+		m_reqUI.type = ReqUI::Type::RELOAD_ROM_FDD;
 		m_hardware.Request(Hardware::Req::STOP);
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("Step Back") ||
-		(ImGui::IsKeyPressed(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_R)))
-	{
-		m_ccLast = -1;
-		m_reqHardwareStatsReset = true;
-		m_reqDebugRestoreFrame = true;
 	}
 }
 
@@ -156,7 +145,7 @@ void dev::DisasmWindow::DrawDisasmIcons(const bool _isRunning, const Disasm::Lin
 			m_debugger.DelBreakpoint(_line.addr);
 		}
 		else m_debugger.SetBreakpointStatus(_line.addr, bpStatus);
-		m_reqDisasm.type = ReqDisasm::Type::UPDATE;
+		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 	}
 
 	// draw program counter icon
@@ -168,7 +157,7 @@ void dev::DisasmWindow::DrawDisasmIcons(const bool _isRunning, const Disasm::Lin
 }
 
 void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line, 
-	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// the addr column
 	ImGui::TableNextColumn();
@@ -179,8 +168,8 @@ void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line
 	switch (mouseAction)
 	{
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
-		_reqDisasm.addr = _line.addr;
+		_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
+		_reqUI.globalAddr = _line.addr;
 		break;
 	case UIItemMouseAction::RIGHT:
 		_contextMenu.Init(_line.addr, _line.GetAddrS());
@@ -189,7 +178,7 @@ void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line
 }
 
 void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// draw code
 	ImGui::TableNextColumn();
@@ -199,8 +188,8 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line
 	{
 	// any case below means that the immediate addr was at least hovered
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
-		_reqDisasm.addr = _line.imm;
+		_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
+		_reqUI.globalAddr = _line.imm;
 		break;
 	case UIItemMouseAction::RIGHT: // init the immediate value as an addr to let the context menu copy it
 		_contextMenu.Init(_line.imm, _line.GetImmediateS(), true);
@@ -338,8 +327,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				{
 					DrawAddrLinks(_isRunning, lineIdx, hoveredLineIdx == lineIdx);
 					DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
-					DrawDisasmAddr(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
-					DrawDisasmCode(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
+					DrawDisasmAddr(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
+					DrawDisasmCode(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
 
 					DrawDisasmStats(line);
 					DrawDisasmConsts(line, MAX_DISASM_LABELS);
@@ -438,21 +427,24 @@ void dev::DisasmWindow::UpdateData(const bool _isRunning)
 
 void dev::DisasmWindow::ReqHandling()
 {
-	if (m_reqDisasm.type == ReqDisasm::Type::NONE) return;
+	if (m_reqUI.type == ReqUI::Type::NONE) return;
 
-	switch (m_reqDisasm.type)
+	switch (m_reqUI.type)
 	{
-	case ReqDisasm::Type::UPDATE:
+	case ReqUI::Type::DISASM_UPDATE:
 	{
+		m_reqUI.type = ReqUI::Type::NONE;
 		UpdateDisasm(m_disasmAddr, DISASM_INSTRUCTION_OFFSET, false);
 	}
 	break;
 
-	case ReqDisasm::Type::UPDATE_ADDR:
-		UpdateDisasm(m_reqDisasm.addr);
+	case ReqUI::Type::DISASM_UPDATE_ADDR:
+		m_reqUI.type = ReqUI::Type::NONE;
+		UpdateDisasm(m_reqUI.globalAddr);
 		break;
 
-	case ReqDisasm::Type::NAVIGATE_TO_ADDR:
+	case ReqUI::Type::DISASM_NAVIGATE_TO_ADDR:
+		m_reqUI.type = ReqUI::Type::NONE;
 		if (m_navigateAddrsIdx == 0) 
 		{
 			if (!m_disasmPP || !*m_disasmPP) return;
@@ -460,16 +452,12 @@ void dev::DisasmWindow::ReqHandling()
 			m_navigateAddrsSize++;
 		}
 		if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
-			m_navigateAddrs[++m_navigateAddrsIdx] = m_reqDisasm.addr;
+			m_navigateAddrs[++m_navigateAddrsIdx] = m_reqUI.globalAddr;
 			m_navigateAddrsSize = m_navigateAddrsIdx + 1;
 		}
-		UpdateDisasm(m_reqDisasm.addr);
-		break;
-
-	default:
+		UpdateDisasm(m_reqUI.globalAddr);
 		break;
 	}
-	m_reqDisasm.type = ReqDisasm::Type::NONE;
 }
 
 void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOffset, const bool _updateSelection)
@@ -516,11 +504,11 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 			else {
 				m_debugger.DelBreakpoint(m_contextMenu.addr);
 			}
-			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		}
 		if (ImGui::MenuItem("Remove All Beakpoints")) {
 			m_debugger.DelBreakpoints();
-			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		};
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Add/Edit Comment")) {
@@ -608,7 +596,7 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 					m_debugger.GetDebugData().DelComment(_contextMenu.addr);
 				}
 
-				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+				m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 				ImGui::CloseCurrentPopup();
 			}
 			if (!warningS.empty()) ImGui::EndDisabled();
@@ -746,7 +734,7 @@ void dev::DisasmWindow::DrawConstEdit(ContextMenu& _contextMenu)
 					[](const std::string& _const) { return _const.empty(); }), consts.end());
 				// store consts
 				m_debugger.GetDebugData().SetConsts(_contextMenu.addr, consts);
-				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+				m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 				ImGui::CloseCurrentPopup();
 			}
 			if (!warningS.empty()) ImGui::EndDisabled();
@@ -874,7 +862,7 @@ void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 					[](const std::string& label) { return label.empty(); }), labels.end()); 
 				// store labels
 				m_debugger.GetDebugData().SetLabels(_contextMenu.addr, labels);
-				m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+				m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 				ImGui::CloseCurrentPopup();
 			}
 			if (!warningS.empty()) ImGui::EndDisabled();

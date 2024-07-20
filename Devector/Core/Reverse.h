@@ -43,17 +43,18 @@ namespace dev
 
 	private:
 		void StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState, 
-			const IO::State& _ioState, const Display::State& _displayState);
+			const IO::State& _ioState, const Display::State& _displayState, 
+			size_t increment = 1);
 		void StoreMemory(const Memory::State& _memState);
 		void RestoreState(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
 		void GetStatesSize();
 
-		int m_stateIdx = 0; // points to the last stored state
+		size_t m_stateIdx = 0; // points to the last stored state
 		int m_stateLen = 0; // the amount of stored states
 		States m_states;
-		int m_frameNum = 0;
+		size_t m_statesMemSize = 0; // states memory consumption
+		size_t m_frameNum = 0;
 		std::atomic_int m_status = STATUS_RESET;
-		int m_stateSize = 0;
 	};
 }

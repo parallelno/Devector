@@ -1,5 +1,6 @@
-﻿#include <format>
-#include "AboutWindow.h"
+﻿#include "AboutWindow.h"
+
+#include <format>
 #include "Utils/ImGuiUtils.h"
 #include "Utils/StrUtils.h"
 
@@ -62,5 +63,5 @@ void dev::AboutWindow::Draw()
 	ImGui::Separator();
 	ImGui::Dummy({ 1, 5 });
 	ImGui::Text("Developed by Alexander Fedotovskikh");
-	ImGui::Text("Build details. Date: %s", compilation_date.c_str());
+	ImGui::Text("Build details: %s", compilation_date.c_str());
 }

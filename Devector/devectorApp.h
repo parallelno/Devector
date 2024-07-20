@@ -19,6 +19,7 @@
 #include "UI/TraceLogWindow.h"
 #include "UI/AboutWindow.h"
 #include "UI/FeedbackWindow.h"
+#include "UI/RecorderWindow.h"
 
 #include "Core/Hardware.h"
 #include "Core/Debugger.h"
@@ -94,6 +95,7 @@ namespace dev
 		std::unique_ptr <dev::TraceLogWindow>m_traceLogWindowP;
 		std::unique_ptr <dev::AboutWindow>m_aboutWindowP;
 		std::unique_ptr <dev::FeedbackWindow>m_feedbackWindowP;
+		std::unique_ptr <dev::RecorderWindow>m_recorderWindowP;
 
 		bool m_displayWindowVisible = false;
 		bool m_disasmWindowVisible = false;
@@ -105,6 +107,7 @@ namespace dev
 		bool m_traceLogWindowVisible = false;
 		bool m_aboutWindowVisible = false;
 		bool m_feedbackWindowVisible = false;
+		bool m_recorderWindowVisible = false;
 
 		bool m_ruslat = false;
 		bool m_restartOnLoadFdd = false;
@@ -113,13 +116,8 @@ namespace dev
 		// path, driveIdx, autoBoot
 		std::list<std::tuple<std::wstring, int, bool>> m_recentFilePaths;
 
-		// TODO: combine all reqs to/from the UI into one object because all
-		// such requests are handled sequentially (no collisions) during the same or the next update
-		ReqHexViewer m_reqHexViewer; // requests to HexViewerWindow
-		ReqDisasm m_reqDisasm; // requests to DisasmWindow
-		bool m_reqMainWindowReload = false;
-		bool m_reqHardwareStatsReset = false;
-		bool m_reqDebugRestoreState = false;
+		ReqUI m_reqUI;
+
 		GLFWkeyfun ImGui_ImplGlfw_KeyCallback;
 		GLUtils m_glUtils;
 

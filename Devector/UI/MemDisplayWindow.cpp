@@ -83,11 +83,11 @@ const char* memViewShaderFrag = R"(
 
 dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger,
 		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils,
-		ReqHexViewer& _reqHexViewer)
+		ReqUI& _reqUI)
 	:
 	BaseWindow("Memory Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils),
-	m_reqHexViewer(_reqHexViewer)
+	m_reqUI(_reqUI)
 {
 	m_isGLInited = Init();
 }
@@ -180,16 +180,18 @@ static const char* separatorsS[] = {
 
 dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale)
 {
+	// (0,0) is the left-top corner
 	int imgX = int(_pos.x / _scale);
 	int imgY = int(_pos.y / _scale);
 
-	int addrOffsetH = imgY / 256; // if the cursor hovers the bottom part of the img, the addr is >= 32K
+	// img size (1024, 512)
+	int addrOffsetH = imgY / 256; // addrOffsetH = 0 means addr is <= 32K, addrOffsetH = 1 means addr is > 32K, 
 	int eigthKBankIdx = imgX / 256 + 4 * addrOffsetH;
 
 	int eigthKBankPosX = imgX % 256;
 	int eigthKBankPosY = imgY % 256;
 
-	int addr = ((eigthKBankPosX>>3) * 256 + (255 - eigthKBankPosY)) + eigthKBankIdx * 1024 * 8;
+	dev::Addr addr = ((eigthKBankPosX>>3) * 256 + (255 - eigthKBankPosY)) + eigthKBankIdx * 1024 * 8;
 
 	return addr;
 }
@@ -260,9 +262,9 @@ void dev::MemDisplayWindow::DrawDisplay()
 			if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
 			{
 				Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
-				m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;
-				m_reqHexViewer.globalAddr = addr + imageHoveredId * Memory::MEM_64K;
-				m_reqHexViewer.len = 1;
+				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+				m_reqUI.globalAddr = addr + imageHoveredId * Memory::MEM_64K;
+				m_reqUI.len = 1;
 			}
 		}
 	}
@@ -276,9 +278,9 @@ void dev::MemDisplayWindow::DrawDisplay()
 			!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
 		{
 			ImGui::BeginTooltip();
-			Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
-			GlobalAddr val = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
-			ImGui::Text("0x%04X (0x%02X), %s", addr, val, separatorsS[imageHoveredId]);
+			GlobalAddr globalAddr = PixelPosToAddr(imgPixelPos, m_scale) + imageHoveredId * Memory::MEM_64K;
+			uint8_t val = m_hardware.Request(Hardware::Req::GET_BYTE_GLOBAL, { { "globalAddr", globalAddr } })->at("data");
+			ImGui::Text("0x%06X (0x%02X), %s", globalAddr, val, separatorsS[imageHoveredId]);
 			ImGui::EndTooltip();
 		}
 

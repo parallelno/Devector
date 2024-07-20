@@ -5,11 +5,11 @@
 
 dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 		const float* const _fontSizeP, const float* const _dpiScaleP, 
-		ReqDisasm& _reqDisasm)
+		ReqUI& _reqUI)
 	:
 	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), 
-	m_reqDisasm(_reqDisasm)
+	m_reqUI(_reqUI)
 {}
 
 void dev::TraceLogWindow::Update(bool& _visible)
@@ -48,7 +48,7 @@ void dev::TraceLogWindow::UpdateData(const bool _isRunning)
 }
 
 void dev::TraceLogWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
-	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// the addr column
 	ImGui::TableNextColumn();
@@ -59,8 +59,8 @@ void dev::TraceLogWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Li
 	switch (mouseAction)
 	{
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
-		_reqDisasm.addr = _line.addr;
+		_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
+		_reqUI.globalAddr = _line.addr;
 		break;
 	case UIItemMouseAction::RIGHT:
 		_contextMenu.Init(_line.addr, _line.GetAddrS());
@@ -69,7 +69,7 @@ void dev::TraceLogWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Li
 }
 
 void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-	ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// draw code
 	ImGui::TableNextColumn();
@@ -79,8 +79,8 @@ void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Li
 	{
 	// any case below means that the immediate addr was at least hovered
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		_reqDisasm.type = ReqDisasm::Type::NAVIGATE_TO_ADDR;
-		_reqDisasm.addr = _line.imm;
+		_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
+		_reqUI.globalAddr = _line.imm;
 		break;
 	case UIItemMouseAction::RIGHT: // init the immediate value as an addr to let the context menu copy it
 		//_contextMenu.Init(_line.imm, _line.GetImmediateS(), true);
@@ -173,8 +173,8 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 				const auto& line = m_traceLogP->at(lineIdx);
 				int addr = line.addr;
 
-				DrawDisasmAddr(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
-				DrawDisasmCode(_isRunning, line, m_reqDisasm, m_contextMenu, m_addrHighlight);
+				DrawDisasmAddr(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
+				DrawDisasmCode(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
 				DrawDisasmConsts(line, MAX_DISASM_LABELS);
 				
 			}

@@ -6,11 +6,11 @@
 #include "Utils/StrUtils.h"
 
 dev::BreakpointsWindow::BreakpointsWindow(Debugger& _debugger,
-	const float* const _fontSizeP, const float* const _dpiScaleP, ReqDisasm& _reqDisasm)
+	const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
 	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_debugger(_debugger),
-	m_reqDisasm(_reqDisasm)
+	m_reqUI(_reqUI)
 {}
 
 void dev::BreakpointsWindow::Update(bool& _visible)
@@ -113,7 +113,7 @@ void dev::BreakpointsWindow::DrawTable()
 			if (isActive != (bool)bp.status)
 			{
 				m_debugger.SetBreakpointStatus(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED);
-				m_reqDisasm.type = ReqDisasm::Type::UPDATE;
+				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			// Addr
 			ImGui::TableNextColumn();
@@ -122,8 +122,8 @@ void dev::BreakpointsWindow::DrawTable()
 			if (ImGui::Selectable(bp.GetAddrMappingS(), isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				selectedAddr = addr;
-				m_reqDisasm.type = ReqDisasm::Type::UPDATE_ADDR;
-				m_reqDisasm.addr = addr;
+				m_reqUI.type = ReqUI::Type::DISASM_UPDATE_ADDR;
+				m_reqUI.globalAddr = addr;
 			}
 			ImVec2 rowMin = ImGui::GetItemRectMin();
 			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
@@ -168,11 +168,11 @@ void dev::BreakpointsWindow::DrawTable()
 				for (const auto& [addr, bp] : breakpoints) {
 					m_debugger.SetBreakpointStatus(addr, Breakpoint::Status::DISABLED);
 				}
-				m_reqDisasm.type = ReqDisasm::Type::UPDATE;
+				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			else if (ImGui::MenuItem("Delete All")) {
 				m_debugger.DelBreakpoints();
-				m_reqDisasm.type = ReqDisasm::Type::UPDATE;
+				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			ImGui::EndPopup();
 		}
@@ -188,18 +188,18 @@ void dev::BreakpointsWindow::DrawTable()
 				if (bp.IsActive()) {
 					if (ImGui::MenuItem("Disable")) {
 						m_debugger.SetBreakpointStatus(editedBreakpointAddr, Breakpoint::Status::DISABLED);
-						m_reqDisasm.type = ReqDisasm::Type::UPDATE;
+						m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 					}
 				}
 				else {
 					if (ImGui::MenuItem("Enable")) {
 						m_debugger.SetBreakpointStatus(editedBreakpointAddr, Breakpoint::Status::ACTIVE);
-						m_reqDisasm.type = ReqDisasm::Type::UPDATE;
+						m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 					}
 				}
 				if (ImGui::MenuItem("Delete")) {
 					m_debugger.DelBreakpoint(editedBreakpointAddr);
-					m_reqDisasm.type = ReqDisasm::Type::UPDATE;
+					m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				}
 				else if (ImGui::MenuItem("Edit")) {
 					reqPopup = ReqPopup::INIT_EDIT;
@@ -402,7 +402,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 					isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, 
 					isAutoDel, static_cast<Breakpoint::Operand>(selectedOp),
 					static_cast<dev::Condition>(selectedCond), val, commentS);
-				m_reqDisasm.type = ReqDisasm::Type::UPDATE;
+				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				ImGui::CloseCurrentPopup();
 				_reqPopup = ReqPopup::NONE;
 			}

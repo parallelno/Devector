@@ -14,10 +14,10 @@ void dev::Reverse::Update(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	switch (m_status)
 	{
 	case STATUS_RESET:
-		m_stateIdx = -1; // -1 because StoreState() increments them
+		m_stateIdx = 0;
 		m_stateLen = 0;
 		m_frameNum = _displayStateP->frameNum;
-		StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP);
+		StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP, 0); // 0 - because StoreState shoudn't increase m_stateIdx
 		m_status = STATUS_UPDATE;
 		break;
 
@@ -48,11 +48,11 @@ void dev::Reverse::StoreMemory(const Memory::State& _memState)
 	}
 }
 
-void dev::Reverse::StoreState(const CpuI8080::State& _cpuState,
-	const Memory::State& _memState, const IO::State& _ioState, const Display::State& _displayState)
+void dev::Reverse::StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState, 
+	const IO::State& _ioState, const Display::State& _displayState, size_t increment)
 {
 	// prepare for the next state
-	m_stateIdx = (m_stateIdx + 1) % STATES_LEN;
+	m_stateIdx = (m_stateIdx + increment) % STATES_LEN;
 	m_stateLen = dev::Min(m_stateLen + 1, STATES_LEN);
 
 	auto& nextState = m_states[m_stateIdx];
@@ -74,7 +74,7 @@ void dev::Reverse::RestoreState(CpuI8080::State* _cpuStateP,
 	if (m_stateLen < 1) return;
 
 	auto& state = m_states[m_stateIdx];
-	m_stateIdx = (m_stateIdx - 1 + STATES_LEN) % STATES_LEN;
+	m_stateIdx = (m_stateIdx - 1) % STATES_LEN;
 	m_stateLen = dev::Max(m_stateLen - 1, 0);
 
 	*_cpuStateP = state.cpuState;
@@ -83,7 +83,7 @@ void dev::Reverse::RestoreState(CpuI8080::State* _cpuStateP,
 	*_displayStateP = state.displayState;
 	auto& ram = *(_memStateP->ramP);
 
-	for (int i = state.globalAddrs.size() - 1; i >= 0; i--)
+	for (auto i = state.globalAddrs.size() - 1; i >= 0; i--)
 	{
 		GlobalAddr globalAddr = state.globalAddrs[i];
 		uint8_t val = state.memBeforeWrites[i];
@@ -93,12 +93,12 @@ void dev::Reverse::RestoreState(CpuI8080::State* _cpuStateP,
 
 void dev::Reverse::GetStatesSize()
 {
-	m_stateSize = 0;
+	m_statesMemSize = 0;
 	for (int i = 0; i < m_stateLen; i++)
 	{
-		auto& state = m_states[(m_stateIdx - i + STATES_LEN) % STATES_LEN];
-		m_stateSize += sizeof(state);
-		m_stateSize += state.memBeforeWrites.size();
-		m_stateSize += state.globalAddrs.size() * sizeof(GlobalAddr);
+		auto& state = m_states[(m_stateIdx - i) % STATES_LEN];
+		m_statesMemSize += sizeof(state);
+		m_statesMemSize += state.memBeforeWrites.size();
+		m_statesMemSize += state.globalAddrs.size() * sizeof(GlobalAddr);
 	}
 }

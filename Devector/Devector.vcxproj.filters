@@ -137,6 +137,9 @@
     <ClCompile Include="Core\Reverse.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="UI\RecorderWindow.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -294,6 +297,9 @@
     </ClInclude>
     <ClInclude Include="Core\Reverse.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\RecorderWindow.h">
+      <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

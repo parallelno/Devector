@@ -32,6 +32,7 @@ dev::DevectorApp::~DevectorApp()
 	 SettingsUpdate("memDisplayWindowVisible", m_memDisplayWindowVisible);
 	 SettingsUpdate("hexViewerWindowVisible", m_hexViewerWindowVisible);
 	 SettingsUpdate("traceLogWindowVisible", m_traceLogWindowVisible);
+	 SettingsUpdate("recorderWindowVisible", m_recorderWindowVisible);
 }
 
 void dev::DevectorApp::WindowsInit()
@@ -41,17 +42,18 @@ void dev::DevectorApp::WindowsInit()
 
 	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
-	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqHardwareStatsReset, m_ruslat);
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_ruslat);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
-		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqDisasm, m_reqHardwareStatsReset, m_reqMainWindowReload, m_reqDebugRestoreState);
+		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqUI);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
-	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasm);
-	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqHexViewer);
-	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_glUtils, m_reqHexViewer);
-	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqHexViewer);
-	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqDisasm);
+	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
+	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
+	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_glUtils, m_reqUI);
+	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
+	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
 	m_aboutWindowP = std::make_unique<dev::AboutWindow>(&m_fontSize, &m_dpiScale);
 	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(&m_fontSize, &m_dpiScale);
+	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
 
 	// Set the key callback function
 	glfwSetWindowUserPointer(m_window, this);
@@ -72,6 +74,7 @@ void dev::DevectorApp::SettingsInit()
 	m_memDisplayWindowVisible = GetSettingsBool("memDisplayWindowVisible", false);
 	m_hexViewerWindowVisible = GetSettingsBool("hexViewerWindowVisible", false);
 	m_traceLogWindowVisible = GetSettingsBool("traceLogWindowVisible", false);
+	m_recorderWindowVisible = GetSettingsBool("recorderWindowVisible", false);
 }
 
 // Function to open a file dialog
@@ -97,21 +100,22 @@ bool OpenFileDialog(WCHAR* filePath, int size)
 // UI thread
 void dev::DevectorApp::Update()
 {
-	if (m_reqMainWindowReload) {
-		m_reqMainWindowReload = false;
+	switch (m_reqUI.type)
+	{
+	case ReqUI::Type::RELOAD_ROM_FDD:
 		Reload();
-		m_reqDisasm.type = ReqDisasm::Type::UPDATE; // disasm needs an update after reloading labels and consts
-	}
-	if (m_reqDebugRestoreState) {
-		m_reqDebugRestoreState = false;
+		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+		break;
+	case ReqUI::Type::PLAYBACK_STEP_REVERSE:
 		m_debuggerP->GetReverse().SetStatus(Reverse::STATUS_RESTORE);
-		m_reqDisasm.type = ReqDisasm::Type::UPDATE; // disasm needs an update after reloading labels and consts
+		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+		break;
 	}
 
 	MainMenuUpdate();
 
 	bool requiresDebugger = m_disasmWindowVisible || m_breakpointsWindowVisisble || m_watchpointsWindowVisible ||
-		m_memDisplayWindowVisible || m_hexViewerWindowVisible || m_traceLogWindowVisible;
+		m_hexViewerWindowVisible || m_traceLogWindowVisible || m_recorderWindowVisible;
 	m_debuggerP->Attach(requiresDebugger);
 
 	ResLoadingStatusHandling();
@@ -126,6 +130,7 @@ void dev::DevectorApp::Update()
 	m_traceLogWindowP->Update(m_traceLogWindowVisible);
 	m_aboutWindowP->Update(m_aboutWindowVisible);
 	m_feedbackWindowP->Update(m_feedbackWindowVisible);
+	m_recorderWindowP->Update(m_recorderWindowVisible);
 
 	if (m_status == AppStatus::CHECK_MOUNTED_FDDS)
 	{
@@ -266,6 +271,7 @@ void dev::DevectorApp::MainMenuUpdate()
 			ImGui::MenuItem(m_memDisplayWindowP->m_name.c_str(), NULL, &m_memDisplayWindowVisible);
 			ImGui::MenuItem(m_hexViewerWindowP->m_name.c_str(), NULL, &m_hexViewerWindowVisible);
 			ImGui::MenuItem(m_traceLogWindowP->m_name.c_str(), NULL, &m_traceLogWindowVisible);
+			ImGui::MenuItem(m_recorderWindowP->m_name.c_str(), NULL, &m_recorderWindowVisible);
 			ImGui::EndMenu();
 		}
 

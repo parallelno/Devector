@@ -26,18 +26,24 @@ namespace dev
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
-		ReqHexViewer& m_reqHexViewer;
+		ReqUI& m_reqUI;
+
 		int64_t m_ccLast = -1; // to force the first stats update
 		std::array<uint8_t, Memory::MEMORY_MAIN_LEN> m_ram;
-		int m_memPageIdx = 0;
 		char m_searchAddrS[255] = "";
+
+		enum class Status { NONE = 0, HIGHLIGHT };
+		Status m_status = Status::NONE;
+		int m_memPageIdx = 0;
+		GlobalAddr m_highlightAddr = 0;
+		GlobalAddr m_highlightAddrLen = 0;
 
 		void UpdateData(const bool _isRunning);
 		void DrawHex(const bool _isRunning);
 
 	public:
 		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, 
-				const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer);
+				const float* const _dpiScaleP, ReqUI& _reqUI);
 		void Update(bool& _visible);
 	};
 };

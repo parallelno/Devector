@@ -74,7 +74,7 @@ namespace dev
 		Hardware& m_hardware;
 		Debugger& m_debugger;
 		ImFont* m_fontCommentP = nullptr;
-		ReqDisasm& m_reqDisasm;
+		ReqUI& m_reqUI;
 		char m_searchText[255] = "";
 		Addr m_disasmAddr = 0;
 		const Disasm::Lines** m_disasmPP = nullptr;
@@ -84,9 +84,6 @@ namespace dev
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		int m_selectedLineIdx = 0;
-		bool& m_reqHardwareStatsReset;
-		bool& m_reqMainWindowReload;
-		bool& m_reqDebugRestoreFrame;
 		static constexpr int NAVIGATE_ADDRS_LEN = 256;
 		std::array<Addr, NAVIGATE_ADDRS_LEN> m_navigateAddrs; // contains addr where the user navigated to
 		int m_navigateAddrsIdx = 0; // points to the current addr in m_navigateAddrs
@@ -97,9 +94,9 @@ namespace dev
 		void DrawDisasm(const bool _isRunning);
 		void DrawDisasmIcons(const bool _isRunning, const Disasm::Line& _line, const int _lineIdx, const Addr _regPC);
 		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line, 
-			ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
+			ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
 		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-			ReqDisasm& _reqDisasm, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
+			ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
 		void DrawDisasmComment(const Disasm::Line& _line);
 		void DrawDisasmLabels(const Disasm::Line& _line);
 		void DrawDisasmStats(const Disasm::Line& _line);
@@ -118,7 +115,7 @@ namespace dev
 
 		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, 
 			const float* const _fontSizeP, const float* const _dpiScaleP, 
-			ReqDisasm& _reqDisasm, bool& _reset, bool& _reload, bool& _restoreFrame);
+			ReqUI& _reqUI);
 		void Update(bool& _visible);
 		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
 			const bool _updateSelection = true);

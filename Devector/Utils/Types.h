@@ -19,23 +19,25 @@ namespace dev
 
 	using Id = int;
 
-	struct ReqHexViewer{
-		enum class Type : int { NONE = 0, INIT_UPDATE, UPDATE };
-		GlobalAddr globalAddr;
-		GlobalAddr len;
-		Type type;
-	};
-	struct ReqDisasm {
-		enum class Type : int { 
-			NONE = 0, 
-			UPDATE, // redraw disasm
-			UPDATE_ADDR,
-			NAVIGATE_TO_ADDR,
-			NAVIAGATE_NEXT,
-			NAVIAGATE_PREV
-			}; // redraw disasm at the prodived addr in m_reqDisasmUpdateData
+	// the request initiated by the user
+	struct ReqUI {
+		enum class Type : int {
+			NONE = 0,
+			DISASM_UPDATE, // redraw disasm
+			DISASM_UPDATE_ADDR,
+			DISASM_NAVIGATE_TO_ADDR,
+			DISASM_NAVIAGATE_NEXT,
+			DISASM_NAVIAGATE_PREV,
+			HEX_HIGHLIGHT_ON,
+			HEX_HIGHLIGHT_OFF,
+			RELOAD_ROM_FDD,
+			PLAYBACK_STEP_REVERSE,
+			PLAYBACK_STEP_FORWARD,
+		};
+
 		Type type = Type::NONE;
-		int addr = 0;
+		GlobalAddr globalAddr = 0;
+		GlobalAddr len = 0;
 	};
 
 	enum class UIItemMouseAction { NONE = 0, HOVERED, LEFT, RIGHT, MIDDLE };

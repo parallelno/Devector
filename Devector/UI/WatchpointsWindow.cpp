@@ -4,11 +4,11 @@
 #include "Utils/StrUtils.h"
 
 dev::WatchpointsWindow::WatchpointsWindow(Debugger& _debugger,
-	const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer)
+	const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
 	BaseWindow("Watchpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
 	m_debugger(_debugger),
-	m_reqHexViewer(_reqHexViewer)
+	m_reqUI(_reqUI)
 {}
 
 void dev::WatchpointsWindow::Update(bool& _visible)
@@ -113,9 +113,9 @@ void dev::WatchpointsWindow::DrawTable()
 				m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), globalAddr,
 					wp.GetCondition(), wp.GetValue(), wp.GetType(),
 					wp.GetLen(), isActive, wp.GetComment());
-				m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;
-				m_reqHexViewer.globalAddr = globalAddr;
-				m_reqHexViewer.len = wp.GetLen();
+				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+				m_reqUI.globalAddr = globalAddr;
+				m_reqUI.len = wp.GetLen();
 			}
 			// GlobalAddr
 			ImGui::TableNextColumn();
@@ -124,9 +124,9 @@ void dev::WatchpointsWindow::DrawTable()
 			if (ImGui::Selectable(std::format("0x{:05X}", globalAddr).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
 				selectedAddr = globalAddr;
-				m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;
-				m_reqHexViewer.globalAddr = selectedAddr;
-				m_reqHexViewer.len = wp.GetLen();
+				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+				m_reqUI.globalAddr = selectedAddr;
+				m_reqUI.len = wp.GetLen();
 			}
 			ImVec2 rowMin = ImGui::GetItemRectMin();
 			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
@@ -189,7 +189,7 @@ void dev::WatchpointsWindow::DrawTable()
 			}
 			else if (ImGui::MenuItem("Delete All")) {
 				m_debugger.DelWatchpoints();
-				m_reqHexViewer.type = ReqHexViewer::Type::NONE;
+				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_OFF;
 			};
 			ImGui::EndPopup();
 		}
@@ -209,9 +209,9 @@ void dev::WatchpointsWindow::DrawTable()
 							wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
 							false, wp.GetComment());
 
-						m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;
-						m_reqHexViewer.globalAddr = wp.GetGlobalAddr();
-						m_reqHexViewer.len = wp.GetLen();
+						m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+						m_reqUI.globalAddr = wp.GetGlobalAddr();
+						m_reqUI.len = wp.GetLen();
 					}
 				}
 				else {
@@ -219,14 +219,14 @@ void dev::WatchpointsWindow::DrawTable()
 						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
 							wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
 							true, wp.GetComment());
-						m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;
-						m_reqHexViewer.globalAddr = wp.GetGlobalAddr();
-						m_reqHexViewer.len = wp.GetLen();
+						m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+						m_reqUI.globalAddr = wp.GetGlobalAddr();
+						m_reqUI.len = wp.GetLen();
 					}
 				}
 				if (ImGui::MenuItem("Delete")) {
 					m_debugger.DelWatchpoint(editedWatchpointId);
-						m_reqHexViewer.type = ReqHexViewer::Type::NONE;
+					m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_OFF;
 				}
 				else if (ImGui::MenuItem("Edit")) {
 					reqPopup = ReqPopup::INIT_EDIT;
@@ -376,9 +376,9 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 					value, static_cast<Watchpoint::Type>(type),
 					len, isActive, commentS);
 
-				m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;
-				m_reqHexViewer.globalAddr = globalAddr;
-				m_reqHexViewer.len = len;
+				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+				m_reqUI.globalAddr = globalAddr;
+				m_reqUI.len = len;
 				ImGui::CloseCurrentPopup();
 			}
 			if (!warningS.empty()) ImGui::EndDisabled();

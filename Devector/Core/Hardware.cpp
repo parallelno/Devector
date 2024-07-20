@@ -219,6 +219,11 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 				});
 			break;
 		}
+
+		case Req::GET_BYTE_GLOBAL:
+			m_reqRes.emplace(GetByteGlobal(dataJ));
+			break;
+
 		case Req::GET_BYTE_RAM:
 			m_reqRes.emplace(GetByte(dataJ, Memory::AddrSpace::RAM));
 			break;
@@ -420,20 +425,31 @@ auto dev::Hardware::GetRegs() const
 	return out;
 }
 
-auto dev::Hardware::GetByte(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace)
+auto dev::Hardware::GetByteGlobal(const nlohmann::json _globalAddrJ)
 -> nlohmann::json
 {
-	Addr addr = _addr["addr"];
+	GlobalAddr globalAddr = _globalAddrJ["globalAddr"];
+	uint8_t val = m_memory.GetRam()->at(globalAddr);
+	nlohmann::json out = {
+		{"data", val}
+	};
+	return out;
+}
+
+auto dev::Hardware::GetByte(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace)
+-> nlohmann::json
+{
+	Addr addr = _addrJ["addr"];
 	nlohmann::json out = {
 		{"data", m_memory.GetByte(addr, _addrSpace)}
 	};
 	return out;
 }
 
-auto dev::Hardware::Get3Bytes(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace)
+auto dev::Hardware::Get3Bytes(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace)
 -> nlohmann::json
 {
-	Addr addr = _addr["addr"];
+	Addr addr = _addrJ["addr"];
 	auto data = m_memory.GetByte(addr, _addrSpace) |
 		m_memory.GetByte(addr + 1, _addrSpace) << 8 |
 		m_memory.GetByte(addr + 2, _addrSpace) << 16;
@@ -444,10 +460,10 @@ auto dev::Hardware::Get3Bytes(const nlohmann::json _addr, const Memory::AddrSpac
 	return out;
 }
 
-auto dev::Hardware::GetWord(const nlohmann::json _addr, const Memory::AddrSpace _addrSpace)
+auto dev::Hardware::GetWord(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace)
 -> nlohmann::json
 {
-	Addr addr = _addr["addr"];
+	Addr addr = _addrJ["addr"];
 	auto data = m_memory.GetByte(addr + 1, _addrSpace) << 8 | m_memory.GetByte(addr, _addrSpace);
 
 	nlohmann::json out = {

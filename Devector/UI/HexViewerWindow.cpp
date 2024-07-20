@@ -5,10 +5,10 @@
 #include "misc\cpp\imgui_stdlib.h"
 
 dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer)
+		const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
 	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqHexViewer(_reqHexViewer)
+	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqUI(_reqUI)
 {}
 
 void dev::HexViewerWindow::Update(bool& _visible)
@@ -71,11 +71,11 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 		if (ImGui::InputTextWithHint("##addrSelection", "FF", m_searchAddrS, IM_ARRAYSIZE(m_searchAddrS), ImGuiInputTextFlags_EnterReturnsTrue))
 		{
 			GlobalAddr globalAddr = (GlobalAddr)dev::StrHexToInt(m_searchAddrS);
-			m_reqHexViewer.type = ReqHexViewer::Type::INIT_UPDATE;
+			m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
 			globalAddr = dev::Max(0, globalAddr);
 			globalAddr = dev::Min(globalAddr, Memory::GLOBAL_MEMORY_LEN);
-			m_reqHexViewer.globalAddr = globalAddr;
-			m_reqHexViewer.len = 1;
+			m_reqUI.globalAddr = globalAddr;
+			m_reqUI.len = 1;
 		}
 
 		ImGui::SameLine();
@@ -148,14 +148,31 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 
 		// Set the scroll position to the selected watchpoint addr or 
 		// clicked addr in the Memory Display window
-		if (m_reqHexViewer.type == ReqHexViewer::Type::INIT_UPDATE)
+		if (m_reqUI.type == ReqUI::Type::HEX_HIGHLIGHT_ON)
 		{
-			m_reqHexViewer.type = ReqHexViewer::Type::UPDATE;
+			
+
+		}
+		switch (m_reqUI.type)
+		{
+		case ReqUI::Type::HEX_HIGHLIGHT_ON: 
+		{
+			m_reqUI.type = ReqUI::Type::NONE;
+			m_status = Status::HIGHLIGHT;
+			m_memPageIdx = m_reqUI.globalAddr >> 16;
+			m_highlightAddr = m_reqUI.globalAddr & 0xFFFF;
+			m_highlightAddrLen = m_reqUI.len;
+
 			float cellPaddingY = ImGui::GetStyle().CellPadding.y;
 			float offset = 2.0f;
-			Addr addr = m_reqHexViewer.globalAddr & 0xFFFF;
-			m_memPageIdx = m_reqHexViewer.globalAddr >> 16;
-			ImGui::SetScrollY((addr >> 4) * (*m_fontSizeP + cellPaddingY + offset) * (*m_dpiScaleP));
+
+			ImGui::SetScrollY((m_highlightAddr >> 4) * (*m_fontSizeP + cellPaddingY + offset) * (*m_dpiScaleP));
+			break;
+		}
+		case ReqUI::Type::HEX_HIGHLIGHT_OFF: 
+			m_reqUI.type = ReqUI::Type::NONE;
+			m_status = Status::NONE;
+			break;
 		}
 
 		// addr & data
@@ -199,8 +216,8 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 					ImVec2 highlightEnd = ImVec2(highlightPos.x + textSize.x + offsetX * 2 + 1, highlightPos.y + textSize.y + offsetY * 2);
 
 					// highlight a selected watchpoint
-					if (m_reqHexViewer.type != ReqHexViewer::Type::NONE && 
-						addr >= (m_reqHexViewer.globalAddr & 0xFFFF) && addr < m_reqHexViewer.len + (m_reqHexViewer.globalAddr & 0xFFFF) )
+					if (m_status == Status::HIGHLIGHT && 
+						addr >= m_highlightAddr && addr < m_highlightAddrLen + m_highlightAddr )
 					{
 						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 100, 100, 255));
 					}

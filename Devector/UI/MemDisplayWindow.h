@@ -33,6 +33,9 @@ namespace dev
 		static constexpr int RAM_TEXTURE_H = Memory::MEMORY_MAIN_LEN / 256;
 
 		Hardware& m_hardware;
+		Debugger& m_debugger;
+		ReqUI& m_reqUI;
+
 		int64_t m_ccLast = -1; // to force the first stats update
 		float m_scale = 1.0f;
 
@@ -49,8 +52,6 @@ namespace dev
 		Debugger::MemLastRW* m_lastRWIdxsP;
 		std::array<GLuint1, RAM_TEXTURES> m_lastRWTexIds;
 		bool m_isGLInited = false;
-		Debugger& m_debugger;
-		ReqHexViewer& m_reqHexViewer;
 
 		void DrawDisplay();
 		void UpdateData(const bool _isRunning);
@@ -59,7 +60,7 @@ namespace dev
 
 	public:
 		MemDisplayWindow(Hardware& _hardware, Debugger& _debugger, 
-			const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils, ReqHexViewer& _reqHexViewer);
+			const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI);
 		void Update(bool& _visible);
 	};
 

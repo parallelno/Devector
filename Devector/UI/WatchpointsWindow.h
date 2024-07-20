@@ -17,7 +17,7 @@ namespace dev
 		static constexpr ImVec4 COLOR_WARNING = dev::IM_VEC4(0xFF2020FF);
 
 		Debugger& m_debugger;
-		ReqHexViewer& m_reqHexViewer;
+		ReqUI& m_reqUI;
 
 		void DrawTable();
 		void DrawPopup(ReqPopup& _reqPopup, const Debugger::Watchpoints& _wps, int _id = -1);
@@ -26,7 +26,7 @@ namespace dev
 
 	public:
 		WatchpointsWindow(Debugger& _debugger,
-			const float* const _fontSizeP, const float* const _dpiScaleP, ReqHexViewer& _reqHexViewer);
+			const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI);
 		void Update(bool& _visible);
 		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });
 	};
