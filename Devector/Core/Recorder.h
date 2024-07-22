@@ -11,7 +11,7 @@
 
 namespace dev
 {
-	class Reverse
+	class Recorder
 	{
 	public:
 		static constexpr int FRAMES_PER_SEC = 50;
@@ -37,8 +37,11 @@ namespace dev
 
 		using States = std::array<State, STATES_LEN>;
 
-		void SetStatus(const int _status);
 		void Update(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+			IO::State* _ioStateP, Display::State* _displayStateP);
+		void Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+			IO::State* _ioStateP, Display::State* _displayStateP);
+		void PlaybackReverse(const int _frames, CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
 
 	private:
@@ -55,6 +58,5 @@ namespace dev
 		States m_states;
 		size_t m_statesMemSize = 0; // states memory consumption
 		size_t m_frameNum = 0;
-		std::atomic_int m_status = STATUS_RESET;
 	};
 }

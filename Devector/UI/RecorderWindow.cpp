@@ -64,9 +64,11 @@ void dev::RecorderWindow::Draw()
 	ImGui::SliderInt("##recTimeline", &frame, 1, framesLen, "%d", ImGuiSliderFlags_AlwaysClamp);
 
 	ImGui::SameLine();
-	if (ImGui::Button(" - "))
+	if (ImGui::Button(" - ") || 
+		(ImGui::IsKeyPressed(ImGuiKey_R) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl)))
 	{
 		frame = dev::Max(1, frame - 1);
+		m_hardware.Request(Hardware::Req::DEBUG_PLAYBACK_REVERSE, { {"frames", 10}});
 	}
 	ImGui::SameLine();
 	if (ImGui::Button(" + "))

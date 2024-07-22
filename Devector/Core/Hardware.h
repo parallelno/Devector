@@ -44,9 +44,6 @@ namespace dev
 		};
 
 	public:
-		using DebugFunc = std::function<bool(
-			CpuI8080::State* _cpuState, Memory::State* _memState, 
-			IO::State* _ioState, Display::State* _displayState)>;
 
 		enum class Req: int {
 			NONE = 0,
@@ -74,19 +71,34 @@ namespace dev
 			GET_FDD_IMAGE,
 			GET_RUSLAT_HISTORY,
 			GET_PALETTE,
+			GET_SCROLL_VERT,
 			GET_STEP_OVER_ADDR,
 			GET_IO_PORTS,
 			GET_IO_PORTS_IN_DATA,
 			GET_IO_PORTS_OUT_DATA,
 			SET_MEM,
+			SET_CPU_SPEED,
 			IS_ROM_ENABLED,
 			KEY_HANDLING,
-			SCROLL_VERT,
 			LOAD_FDD,
 			RESET_UPDATE_FDD,
-			SET_CPU_SPEED,
+			DEBUG_ATTACH,
+			DEBUG_RESET,
+			DEBUG_PLAYBACK_REVERSE,
+			DEBUG_BREAKPOINTS_DEL,
+			DEBUG_BREAKPOINT_DEL,
 		};
+
+		using DebugFunc = std::function<bool(
+			CpuI8080::State* _cpuState, Memory::State* _memState,
+			IO::State* _ioState, Display::State* _displayState)>;
+
+		using DebugReqHandlingFunc = std::function<nlohmann::json(Req _req, nlohmann::json _reqDataJ,
+			CpuI8080::State* _cpuState, Memory::State* _memState,
+			IO::State* _ioState, Display::State* _displayState)>;
+
 		enum class ExecSpeed : int { _20PERCENT = 0, HALF, NORMAL, X2, MAX };
+
 
         Hardware(const std::wstring& _pathBootData);
 		~Hardware();
@@ -97,17 +109,19 @@ namespace dev
 		auto GetMemState() -> const Memory::State& { return m_memory.GetState(); }
 		auto GetIoState() -> const IO::State& { return m_io.GetState(); }
 
-		void AttachDebug(DebugFunc* _debugFuncP) { m_debug.store(_debugFuncP); }
+		void AttachDebugFuncs(DebugFunc _debugFunc, DebugReqHandlingFunc _debugReqHandlingFunc);
 
 
 	private:
-		std::atomic <DebugFunc*> m_debug = nullptr;
+		DebugFunc Debug = nullptr;
+		DebugReqHandlingFunc DebugReqHandling = nullptr;
+		bool m_debugAttached = false;
 
 		std::thread m_executionThread;
 		std::thread m_reqHandlingThread;
 		std::atomic<Status> m_status;
-		TQueue <std::pair<Req, nlohmann::json>> m_reqs; // a request type
-		TQueue <nlohmann::json> m_reqRes;				// it's a result of a request sent back 
+		TQueue <std::pair<Req, nlohmann::json>> m_reqs; // request
+		TQueue <nlohmann::json> m_reqRes;				// request's result sent back 
 
 		ExecSpeed m_execSpeed = ExecSpeed::NORMAL;
 		std::chrono::microseconds m_execDelays[5] = { 99840us, 39936us, 19968us, 9984us, 10us };

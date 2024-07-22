@@ -113,6 +113,8 @@ namespace dev
 		bool m_restartOnLoadFdd = false;
 		int m_rustLatSwitched = 0;
 
+		bool m_debuggerAttached = false;
+
 		// path, driveIdx, autoBoot
 		std::list<std::tuple<std::wstring, int, bool>> m_recentFilePaths;
 
@@ -146,6 +148,8 @@ namespace dev
 		void OpenFile();
 		void DrawSelectDrivePopup();
 		void ResLoadingStatusHandling();
+		void ReqUIHandling();
+		void DebugAttach();
 		void RestartOnLoadFdd();
 	};
 }

@@ -9,19 +9,29 @@
     "fontSize": 18.0,
     "hardwareStatsWindowVisible": true,
     "hexViewerWindowVisible": true,
-    "mainWindowHeight": 1359,
-    "mainWindowWidth": 2527,
-    "mainWindowX": 1,
-    "mainWindowY": 36,
+    "mainWindowHeight": 1360,
+    "mainWindowWidth": 2485,
+    "mainWindowX": 3,
+    "mainWindowY": 33,
     "memDisplayWindowVisible": true,
     "recentFiles": [
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_rus.rom",
+            -1,
+            false
+        ],
+        [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\FATAXCOL.ROM",
+            -1,
+            false
+        ],
         [
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\DFIGHT.ROM",
             -1,
             false
         ],
         [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_rus.rom",
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\putup.rom",
             -1,
             false
         ],

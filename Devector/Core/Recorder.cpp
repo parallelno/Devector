@@ -1,43 +1,37 @@
-#include "Reverse.h"
+#include "Recorder.h"
 #include "Utils/Utils.h"
 
-
-// UI thread. status will be handled during Update
-void dev::Reverse::SetStatus(const int _status)
-{
-	m_status = _status;
-}
-
-void dev::Reverse::Update(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+// Hardware thread
+void dev::Recorder::Update(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {
-	switch (m_status)
+	if (_memStateP->debug.writeLen) StoreMemory(*_memStateP);
+	if (m_frameNum != _displayStateP->frameNum)
 	{
-	case STATUS_RESET:
-		m_stateIdx = 0;
-		m_stateLen = 0;
+		StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP);
 		m_frameNum = _displayStateP->frameNum;
-		StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP, 0); // 0 - because StoreState shoudn't increase m_stateIdx
-		m_status = STATUS_UPDATE;
-		break;
-
-	case STATUS_UPDATE:
-		if (_memStateP->debug.writeLen) StoreMemory(*_memStateP);
-		if (m_frameNum != _displayStateP->frameNum)
-		{
-			StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP);
-			m_frameNum = _displayStateP->frameNum;
-		}
-		break;
-
-	case STATUS_RESTORE:
-		for (int i=0; i<10; i++) RestoreState(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
-		m_status = STATUS_UPDATE;
-		break;
-	};
+	}
 }
 
-void dev::Reverse::StoreMemory(const Memory::State& _memState)
+void dev::Recorder::Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+	IO::State* _ioStateP, Display::State* _displayStateP)
+{
+	m_stateIdx = 0;
+	m_stateLen = 0;
+	m_frameNum = _displayStateP->frameNum;
+	StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP, 0); // 0 - because StoreState shoudn't increase m_stateIdx
+}
+
+void dev::Recorder::PlaybackReverse(const int _frames, CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+	IO::State* _ioStateP, Display::State* _displayStateP)
+{
+	for (int i = 0; i < _frames; i++)
+	{
+		RestoreState(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
+	}
+}
+
+void dev::Recorder::StoreMemory(const Memory::State& _memState)
 {
 	auto& state = m_states[m_stateIdx];
 	
@@ -48,7 +42,7 @@ void dev::Reverse::StoreMemory(const Memory::State& _memState)
 	}
 }
 
-void dev::Reverse::StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState, 
+void dev::Recorder::StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState, 
 	const IO::State& _ioState, const Display::State& _displayState, size_t increment)
 {
 	// prepare for the next state
@@ -68,7 +62,7 @@ void dev::Reverse::StoreState(const CpuI8080::State& _cpuState, const Memory::St
 }
 
 // has to be called when Hardware stopped
-void dev::Reverse::RestoreState(CpuI8080::State* _cpuStateP,
+void dev::Recorder::RestoreState(CpuI8080::State* _cpuStateP,
 	Memory::State* _memStateP, IO::State* _ioStateP, Display::State* _displayStateP)
 {
 	if (m_stateLen < 1) return;
@@ -83,7 +77,7 @@ void dev::Reverse::RestoreState(CpuI8080::State* _cpuStateP,
 	*_displayStateP = state.displayState;
 	auto& ram = *(_memStateP->ramP);
 
-	for (auto i = state.globalAddrs.size() - 1; i >= 0; i--)
+	for (int i = state.globalAddrs.size() - 1; i >= 0; i--)
 	{
 		GlobalAddr globalAddr = state.globalAddrs[i];
 		uint8_t val = state.memBeforeWrites[i];
@@ -91,7 +85,7 @@ void dev::Reverse::RestoreState(CpuI8080::State* _cpuStateP,
 	}
 }
 
-void dev::Reverse::GetStatesSize()
+void dev::Recorder::GetStatesSize()
 {
 	m_statesMemSize = 0;
 	for (int i = 0; i < m_stateLen; i++)

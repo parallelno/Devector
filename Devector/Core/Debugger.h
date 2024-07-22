@@ -15,7 +15,7 @@
 #include "Core/Breakpoint.h"
 #include "Core/Watchpoint.h"
 #include "Core/TraceLog.h"
-#include "Core/Reverse.h"
+#include "Core/Recorder.h"
 
 namespace dev
 {
@@ -34,23 +34,19 @@ namespace dev
 
 		Debugger(Hardware& _hardware);
 		~Debugger();
-		void Init();
-		void Attach(const bool _attach);
-		void Reset();
+
+		void Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+			IO::State* _ioStateP, Display::State* _displayStateP);
 
 		bool Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP, 
 			IO::State* _ioStateP, Display::State* _displayStateP);
+		auto DebugReqHandling(Hardware::Req _req, nlohmann::json _reqDataJ, 
+			CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+			IO::State* _ioStateP, Display::State* _displayStateP) -> nlohmann::json;
 
 		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
-		void AddBreakpoint(const Addr _addr,
-			const Breakpoint::MemPages _memPages = Breakpoint::MAPPING_PAGES_ALL,
-			const Breakpoint::Status _status = Breakpoint::Status::ACTIVE,
-			const bool _autoDel = false, 
-			const Breakpoint::Operand _op = Breakpoint::Operand::A, 
-			const dev::Condition _cond = dev::Condition::ANY, 
-			const size_t _val = 0, const std::string& _comment = "");
-		void DelBreakpoint(const Addr _addr);
-		void DelBreakpoints();
+		void AddBreakpoint(Breakpoint&& _bp);
+
 		bool CheckBreakpoints(const CpuI8080::State& _cpuState, const Memory::State& _memState);
 		auto GetBreakpoints() -> const Breakpoints;
 		auto GetBreakpointStatus(const Addr _addr) -> const Breakpoint::Status;
@@ -71,25 +67,22 @@ namespace dev
 		auto GetTraceLog() -> TraceLog& { return m_traceLog; };
 		auto GetDebugData() -> DebugData& { return m_debugData; };
 		auto GetDisasm() -> Disasm& { return m_disasm; };
-		auto GetReverse() -> Reverse& { return m_reverse; };
+		auto GetReverse() -> Recorder& { return m_recorder; };
 
 	private:
+		void DelBreakpoint(const Addr _addr);
 
 		Hardware& m_hardware;
 		DebugData m_debugData;
 		Disasm m_disasm;
 		TraceLog m_traceLog;
-		Reverse m_reverse;
-
-		bool m_attached = false;
+		Recorder m_recorder;
 
 		std::mutex m_breakpointsMutex;
 		std::mutex m_watchpointsMutex;
 		Breakpoints m_breakpoints;
 		Watchpoints m_watchpoints;
 		bool m_wpBreak;
-
-		Hardware::DebugFunc m_debugFunc = nullptr;
 
 		std::mutex m_lastRWMutex;
 		LastRWAddrs m_lastReadsAddrs; // a circular buffer that contains addresses

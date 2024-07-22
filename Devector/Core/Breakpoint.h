@@ -1,10 +1,12 @@
 #pragma once
 
+#include <string>
 #include <memory>
 #include <mutex>
 #include <map>
 #include <vector>
 #include <format>
+#include <bit>
 
 #include "Utils/Types.h"
 #include "Core/CpuI8080.h"
@@ -62,33 +64,55 @@ namespace dev
 #pragma pack(pop)
 
 		static constexpr uint32_t MAPPING_PAGES_ALL = -1;
-		enum class Status : int {
+		enum class Status : uint8_t {
 			DISABLED = 0,
 			ACTIVE,
 			DELETED,
+			COUNT,
 		};
+		static constexpr int STATUS_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Status::COUNT));
 
-		enum class Operand : uint8_t { A = 0, F, B, C, D, E, H, L, PSW, BC, DE, HL, CC, SP };
-		
-		auto GetAddr() const -> Addr { return addr; };
+		enum class Operand : uint8_t { A = 0, F, B, C, D, E, H, L, PSW, BC, DE, HL, CC, SP, COUNT };
+		static constexpr int OPERAND_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Operand::COUNT));
+
+#pragma pack(push, 1)
+		union Data {
+			struct {
+				MemPages memPages;
+				uint64_t value;
+				Addr addr : 16;
+				Operand operand : OPERAND_BIT_WIDTH;
+				Condition cond : CONDITION_BIT_WIDTH;
+				Status status : STATUS_BIT_WIDTH;
+				bool autoDel : 1;
+			};
+			struct {
+				uint64_t data0;
+				uint64_t data1;
+				uint32_t data2;
+			};
+
+			Data(
+				const Addr _addr,
+				const MemPages _memPages = MAPPING_PAGES_ALL,
+				const Status _status = Status::ACTIVE,
+				const bool _autoDel = false,
+				const Operand _operand = Operand::A,
+				const Condition _cond = Condition::ANY,
+				const size_t _value = 0
+			) :
+				memPages(_memPages), value(_value), addr(_addr), operand(_operand), cond(_cond), status(_status), autoDel(_autoDel)
+			{};
+		};
+#pragma pack(pop)
+
+		Breakpoint(Data&& _data, const std::string& _comment = "");
+
+		void Update(Breakpoint&& _bp);
+
+		auto GetAddr() const -> Addr { return data.addr; };
 		auto GetAddrMappingS() const -> const char*;
-		inline bool IsActive() const { return status == Status::ACTIVE; };
-
-		Breakpoint(const Addr _addr,
-			const MemPages _memPages = MAPPING_PAGES_ALL,
-			const Status _status = Status::ACTIVE, 
-			const bool _autoDel = false, 
-			const Operand _op = Operand::A,
-			const Condition _cond = Condition::ANY,
-			const size_t _val = 0,
-			const std::string& _comment = "");
-		void Update(const Addr _addr,
-			const MemPages _memPages = MAPPING_PAGES_ALL,
-			const Status _status = Status::ACTIVE,
-			const bool _autoDel = false, 
-			const Operand _op = Operand::A,
-			const Condition _cond = Condition::ANY,
-			const size_t _val = 0, const std::string& _comment = "");
+		inline bool IsActive() const { return data.status == Status::ACTIVE; };
 
 		bool CheckStatus(const CpuI8080::State& _cpuState, const Memory::State& _memState) const;
 		auto GetOperandS() const -> const char*;
@@ -97,14 +121,9 @@ namespace dev
 		auto IsActiveS() const -> const char*;
 		void UpdateAddrMappingS();
 
-		Addr addr;
-		MemPages memPages;
-		Status status;
-		bool autoDel;
-		Operand operand;
-		Condition cond;
-		uint64_t value;
+		Data data;
 		std::string comment;
+
 		std::string addrMappingS;
 	};
 }

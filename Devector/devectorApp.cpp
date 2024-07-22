@@ -46,7 +46,7 @@ void dev::DevectorApp::WindowsInit()
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
 		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqUI);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils);
-	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
+	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_hardwareP , *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
 	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_glUtils, m_reqUI);
 	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
@@ -58,6 +58,8 @@ void dev::DevectorApp::WindowsInit()
 	// Set the key callback function
 	glfwSetWindowUserPointer(m_window, this);
 	ImGui_ImplGlfw_KeyCallback = glfwSetKeyCallback(m_window, DevectorApp::KeyHandling);
+
+	m_hardwareP->Request(Hardware::Req::RUN);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -77,46 +79,15 @@ void dev::DevectorApp::SettingsInit()
 	m_recorderWindowVisible = GetSettingsBool("recorderWindowVisible", false);
 }
 
-// Function to open a file dialog
-bool OpenFileDialog(WCHAR* filePath, int size)
-{
-	OPENFILENAME ofn;
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrFile = filePath;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = size;
-	ofn.lpstrFilter = L"All Files (*.rom, *.fdd)\0*.rom;*.fdd\0";
-	ofn.nFilterIndex = 1;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-	// Display the open file dialog
-	if (GetOpenFileName(&ofn) == TRUE)
-		return true; // User selected a file
-	else
-		return false; // User cancelled or an error occurred
-}
 
 // UI thread
 void dev::DevectorApp::Update()
 {
-	switch (m_reqUI.type)
-	{
-	case ReqUI::Type::RELOAD_ROM_FDD:
-		Reload();
-		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
-		break;
-	case ReqUI::Type::PLAYBACK_STEP_REVERSE:
-		m_debuggerP->GetReverse().SetStatus(Reverse::STATUS_RESTORE);
-		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
-		break;
-	}
-
+	ReqUIHandling();
+	
 	MainMenuUpdate();
-
-	bool requiresDebugger = m_disasmWindowVisible || m_breakpointsWindowVisisble || m_watchpointsWindowVisible ||
-		m_hexViewerWindowVisible || m_traceLogWindowVisible || m_recorderWindowVisible;
-	m_debuggerP->Attach(requiresDebugger);
+	
+	DebugAttach();
 
 	ResLoadingStatusHandling();
 
@@ -178,7 +149,9 @@ void dev::DevectorApp::LoadRom(const std::wstring& _path)
 	auto reqData = nlohmann::json({ {"data", *result}, {"addr", Memory::ROM_LOAD_ADDR} });
 	m_hardwareP->Request(Hardware::Req::SET_MEM, reqData);
 
-	m_debuggerP->Reset(); // has to be called after Hardware loading Rom because it stores the last state of Hardware
+	m_hardwareP->Request(Hardware::Req::DEBUG_RESET); // has to be called after Hardware loading Rom because it stores the last state of Hardware
+	
+
 	m_debuggerP->GetDebugData().LoadDebugData(_path);
 	m_hardwareP->Request(Hardware::Req::RUN);
 
@@ -189,8 +162,8 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 {
 	auto fddResult = dev::LoadFile(_path);
 	if (!fddResult || fddResult->empty()) {
-		dev::Log(L"Error occurred while loading the file. Path: {}. "
-			"Please ensure the file exists and you have the correct permissions to read it.", _path);
+		dev::Log(L"Error occurred while loading the file. "
+			"Please ensure the file exists and you have the correct permissions to read it. Path: {}", _path);
 		return;
 	}
 	if (fddResult->size() > FDisk::dataLen) {
@@ -210,7 +183,7 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 	if (_autoBoot)
 	{
 		m_hardwareP->Request(Hardware::Req::RESET);
-		m_debuggerP->Reset(); // has to be called after Hardware Reset because it stores the last state of Hardware
+		m_hardwareP->Request(Hardware::Req::DEBUG_RESET); // has to be called after Hardware loading FDD image because it stores the last state of Hardware
 		m_hardwareP->Request(Hardware::Req::RUN);
 	}
 
@@ -596,6 +569,27 @@ void dev::DevectorApp::SaveUpdatedFdd()
 	m_loadingRes.state = LoadingRes::State::CHECK_MOUNTED;
 }
 
+
+// Function to open a file dialog
+bool OpenFileDialog(WCHAR* filePath, int size)
+{
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFile = filePath;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = size;
+	ofn.lpstrFilter = L"All Files (*.rom, *.fdd)\0*.rom;*.fdd\0";
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+	// Display the open file dialog
+	if (GetOpenFileName(&ofn) == TRUE)
+		return true; // User selected a file
+	else
+		return false; // User cancelled or an error occurred
+}
+
 // Open the file dialog
 void dev::DevectorApp::OpenFile()
 {
@@ -654,5 +648,32 @@ void dev::DevectorApp::DrawSelectDrivePopup()
 			ImGui::CloseCurrentPopup(); 
 		}
 		ImGui::EndPopup();
+	}
+}
+
+void dev::DevectorApp::ReqUIHandling()
+{
+	switch (m_reqUI.type)
+	{
+	case ReqUI::Type::RELOAD_ROM_FDD:
+		Reload();
+		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+		break;
+	}
+}
+
+void dev::DevectorApp::DebugAttach()
+{
+	bool requiresDebugger = m_disasmWindowVisible || m_breakpointsWindowVisisble || m_watchpointsWindowVisible ||
+		m_hexViewerWindowVisible || m_traceLogWindowVisible || m_recorderWindowVisible;
+	if (requiresDebugger != m_debuggerAttached)
+	{
+		m_debuggerAttached = requiresDebugger;
+
+		if (requiresDebugger) {
+			m_hardwareP->Request(Hardware::Req::DEBUG_RESET); // has to be called before enabling debugging, because Hardware state was changed
+		}
+
+		m_hardwareP->Request(Hardware::Req::DEBUG_ATTACH, { { "data", requiresDebugger } });
 	}
 }

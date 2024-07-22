@@ -105,7 +105,7 @@ auto dev::Memory::GetGlobalAddr(const Addr _addr, const AddrSpace _addrSpace) co
 -> GlobalAddr
 {
 	// if no mapping enabled, return _addr
-	if ((!m_state.update.mapping.data & MAPPING_MODE_MASK)) return _addr;
+	if (!(m_state.update.mapping.data & MAPPING_MODE_MASK)) return _addr;
 
 	// check the STACK mapping
 	if (m_state.update.mapping.modeStack && _addrSpace == AddrSpace::STACK)

@@ -62,7 +62,8 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	if (ImGui::Button("Step Over"))
 	{
 		Addr addr = m_hardware.Request(Hardware::Req::GET_STEP_OVER_ADDR)->at("data");
-		m_debugger.AddBreakpoint(addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
+		m_debugger.AddBreakpoint(Breakpoint::Data{
+			addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true });
 		m_hardware.Request(Hardware::Req::RUN);
 	}
 	ImGui::SameLine();
@@ -142,7 +143,7 @@ void dev::DisasmWindow::DrawDisasmIcons(const bool _isRunning, const Disasm::Lin
 	if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", _lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
 	{
 		if (bpStatus == Breakpoint::Status::DELETED) {
-			m_debugger.DelBreakpoint(_line.addr);
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", _line.addr} });
 		}
 		else m_debugger.SetBreakpointStatus(_line.addr, bpStatus);
 		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
@@ -490,7 +491,8 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Run To"))
 		{
-			m_debugger.AddBreakpoint(_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
+			m_debugger.AddBreakpoint(Breakpoint::Data{
+				_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true });
 			m_hardware.Request(Hardware::Req::RUN);
 		}
 		ImGui::SeparatorText("");
@@ -499,15 +501,15 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 			auto bpStatus = m_debugger.GetBreakpointStatus(m_contextMenu.addr);
 
 			if (bpStatus == Breakpoint::Status::DELETED) {
-				m_debugger.AddBreakpoint(m_contextMenu.addr);
+				m_debugger.AddBreakpoint({ m_contextMenu.addr });
 			}
 			else {
-				m_debugger.DelBreakpoint(m_contextMenu.addr);
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", m_contextMenu.addr} });
 			}
 			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		}
 		if (ImGui::MenuItem("Remove All Beakpoints")) {
-			m_debugger.DelBreakpoints();
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINTS_DEL);
 			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		};
 		ImGui::SeparatorText("");

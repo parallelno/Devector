@@ -31,7 +31,7 @@ auto dev::TraceLog::GetDisasm(const size_t _lines, const uint8_t _filter)
 {
 	size_t idxLast = m_logIdx + TRACE_LOG_SIZE - 1;
 	m_disasmLinesLen = 0;
-	int idx = m_logIdx;
+	auto idx = m_logIdx;
 	int line = 0;
 
 	for (; idx <= idxLast && line < _lines; idx++)

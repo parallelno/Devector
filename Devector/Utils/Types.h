@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <bit>
 #include "Utils/Types.h"
 
 namespace dev
@@ -19,7 +20,7 @@ namespace dev
 
 	using Id = int;
 
-	// the request initiated by the user
+	// inter UI requests
 	struct ReqUI {
 		enum class Type : int {
 			NONE = 0,
@@ -30,9 +31,7 @@ namespace dev
 			DISASM_NAVIAGATE_PREV,
 			HEX_HIGHLIGHT_ON,
 			HEX_HIGHLIGHT_OFF,
-			RELOAD_ROM_FDD,
-			PLAYBACK_STEP_REVERSE,
-			PLAYBACK_STEP_FORWARD,
+			RELOAD_ROM_FDD
 		};
 
 		Type type = Type::NONE;
@@ -41,5 +40,6 @@ namespace dev
 	};
 
 	enum class UIItemMouseAction { NONE = 0, HOVERED, LEFT, RIGHT, MIDDLE };
-	enum class Condition : uint8_t { ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU, INVALID };
+	enum class Condition : uint8_t { ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU, INVALID, COUNT };
+	static constexpr int CONDITION_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Condition::COUNT));
 }

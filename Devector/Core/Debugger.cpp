@@ -18,47 +18,29 @@ dev::Debugger::Debugger(Hardware& _hardware)
 	m_traceLog(m_debugData),
 	m_lastRWAddrsOut()
 {
-	Init();
-}
 
-void dev::Debugger::Init()
-{
-	m_debugFunc = std::bind(&Debugger::Debug, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+	Hardware::DebugFunc debugFunc = std::bind(&Debugger::Debug, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+
+	Hardware::DebugReqHandlingFunc debugReqHandlingFunc = std::bind(&Debugger::DebugReqHandling, this,
+		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6);
+
+	m_hardware.AttachDebugFuncs(debugFunc, debugReqHandlingFunc);
 
 	m_breakpoints.clear();
 	m_watchpoints.clear();
-
-	m_hardware.Request(Hardware::Req::RUN);
-}
-
-// UI thread
-void dev::Debugger::Attach(const bool _attach)
-{
-	if (m_attached != _attach)
-	{
-		if (_attach)
-		{
-			bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-
-			if (isRunning) { m_hardware.Request(Hardware::Req::STOP); }
-			Reset();
-			if (isRunning) { m_hardware.Request(Hardware::Req::RUN); }
-		}
-
-		m_hardware.AttachDebug(_attach ? &m_debugFunc : nullptr);
-		m_attached = _attach;
-	}
 }
 
 // UI thread
 dev::Debugger::~Debugger()
 {
-	Attach(false);
+	m_hardware.Request(Hardware::Req::DEBUG_ATTACH, { {"data", false} });
 }
 
-// UI thread. Call while Hardware is stopped 
-// Has to be called after Hardware Reset and loading Rom because it stores the last state of Hardware
-void dev::Debugger::Reset()
+// Hardware thread.
+// Has to be called after Hardware Reset, loading the rom file, fdd immage, attach/dettach debugger, 
+// and other operations that change the Hardware states because this func stores the last state of Hardware
+void dev::Debugger::Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+	IO::State* _ioStateP, Display::State* _displayStateP)
 {
 	m_disasm.Reset();
 
@@ -69,7 +51,7 @@ void dev::Debugger::Reset()
 	m_memLastRW.fill(0);
 
 	m_traceLog.Reset();
-	m_reverse.SetStatus(Reverse::STATUS_RESET);
+	m_recorder.Reset(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 }
 
 //////////////////////////////////////////////////////////////
@@ -131,9 +113,39 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	break_ |= CheckBreakpoints(*_cpuStateP, *_memStateP);
 
 	m_traceLog.Update(*_cpuStateP, *_memStateP);	
-	m_reverse.Update(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
+	m_recorder.Update(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 
 	return break_;
+}
+
+// Hardware thread
+auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqDataJ,
+	CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+	IO::State* _ioStateP, Display::State* _displayStateP)
+-> nlohmann::json
+{
+	nlohmann::json out;
+
+	switch (_req)
+	{
+	case Hardware::Req::DEBUG_RESET:
+		Reset(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
+		break;
+
+	case Hardware::Req::DEBUG_PLAYBACK_REVERSE:
+		m_recorder.PlaybackReverse(_reqDataJ["frames"], _cpuStateP, _memStateP, _ioStateP, _displayStateP);
+		break;
+
+	case Hardware::Req::DEBUG_BREAKPOINTS_DEL:
+		m_breakpoints.clear();
+		break;
+
+	case Hardware::Req::DEBUG_BREAKPOINT_DEL:
+		DelBreakpoint(_reqDataJ["addr"]);
+		break;
+	}
+
+	return out;
 }
 
 //////////////////////////////////////////////////////////////
@@ -145,6 +157,7 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 // _instructionOffset defines the start address of the m_disasm. 
 // _instructionOffset = 0 means the start address is the _addr, 
 // _instructionOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
+// UI thread
 void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const int _instructionOffset)
 {
 	if (_linesNum <= 0) return;
@@ -202,28 +215,24 @@ void dev::Debugger::SetBreakpointStatus(const Addr _addr, const Breakpoint::Stat
 		std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 		auto bpI = m_breakpoints.find(_addr);
 		if (bpI != m_breakpoints.end()) {
-			bpI->second.status = _status;
+			bpI->second.data.status = _status;
 			return;
 		}
 	}
-	AddBreakpoint(_addr);
+	AddBreakpoint(Breakpoint{ _addr });
 }
 
-void dev::Debugger::AddBreakpoint( const Addr _addr, const Breakpoint::MemPages _memPages,
-	const Breakpoint::Status _status, const bool _autoDel,
-	const Breakpoint::Operand _op, const dev::Condition _cond, 
-	const size_t _val, const std::string& _comment)
+void dev::Debugger::AddBreakpoint(Breakpoint&& _bp )
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bpI = m_breakpoints.find(_addr);
+	auto bpI = m_breakpoints.find(_bp.data.addr);
 	if (bpI != m_breakpoints.end())
 	{
-		bpI->second.Update(_addr, _memPages, _status, _autoDel, _op, _cond, _val, _comment);
+		bpI->second.Update(std::move(_bp));
 		return;
 	}
-
-	m_breakpoints.emplace(_addr, std::move(
-		Breakpoint(_addr, _memPages, _status, _autoDel, _op, _cond, _val, _comment)));
+	
+	m_breakpoints.emplace(static_cast<Addr>(_bp.data.addr), std::move(_bp));
 }
 
 void dev::Debugger::DelBreakpoint(const Addr _addr)
@@ -236,22 +245,28 @@ void dev::Debugger::DelBreakpoint(const Addr _addr)
 	}
 }
 
-void dev::Debugger::DelBreakpoints()
+// UI thread
+auto dev::Debugger::GetBreakpointStatus(const Addr _addr)
+-> const Breakpoint::Status
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	m_breakpoints.clear();
+	auto bpI = m_breakpoints.find(_addr);
+
+	return bpI == m_breakpoints.end() ? Breakpoint::Status::DELETED : bpI->second.data.status;
 }
 
+// Hardware thread
 bool dev::Debugger::CheckBreakpoints(const CpuI8080::State& _cpuState, const Memory::State& _memState)
 {
 	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
 	auto bpI = m_breakpoints.find(_cpuState.regs.pc.word);
 	if (bpI == m_breakpoints.end()) return false;
 	auto status = bpI->second.CheckStatus(_cpuState, _memState);
-	if (bpI->second.autoDel) m_breakpoints.erase(bpI);
+	if (bpI->second.data.autoDel) m_breakpoints.erase(bpI);
 	return status;
 }
 
+// UI thread
 auto dev::Debugger::GetBreakpoints() -> const Breakpoints
 {
 	Breakpoints out;
@@ -261,15 +276,6 @@ auto dev::Debugger::GetBreakpoints() -> const Breakpoints
 		out.insert({ addr, bp });
 	}
 	return out;
-}
-
-auto dev::Debugger::GetBreakpointStatus(const Addr _addr)
--> const Breakpoint::Status
-{
-	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bpI = m_breakpoints.find(_addr);
-
-	return bpI == m_breakpoints.end() ? Breakpoint::Status::DELETED : bpI->second.status;
 }
 
 //////////////////////////////////////////////////////////////

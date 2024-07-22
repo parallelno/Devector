@@ -384,7 +384,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_portsOutData = portdataOut;
 
 	// Vertical scroll
-	m_scrollVert = m_hardware.Request(Hardware::Req::SCROLL_VERT)->at("scrollVert");
+	m_scrollVert = m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert");
 }
 
 void dev::HardwareStatsWindow::UpdateDataRuntime()

@@ -15,6 +15,7 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_H = 300;
 		static constexpr ImVec4 COLOR_WARNING = dev::IM_VEC4(0xFF2020FF);
 
+		Hardware& m_hardware;
 		Debugger& m_debugger;
 		ReqUI& m_reqUI;
 
@@ -24,7 +25,7 @@ namespace dev
 			const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup);
 
 	public:
-		BreakpointsWindow(Debugger& m_debugger,
+		BreakpointsWindow(Hardware& _hardware, Debugger& m_debugger,
 			const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI);
 		void Update(bool& _visible);
 		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });

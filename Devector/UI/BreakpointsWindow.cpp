@@ -5,11 +5,11 @@
 #include "Utils/ImGuiUtils.h"
 #include "Utils/StrUtils.h"
 
-dev::BreakpointsWindow::BreakpointsWindow(Debugger& _debugger,
+dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware, Debugger& _debugger,
 	const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
 	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_debugger(_debugger),
+	m_hardware(_hardware), m_debugger(_debugger),
 	m_reqUI(_reqUI)
 {}
 
@@ -107,10 +107,10 @@ void dev::BreakpointsWindow::DrawTable()
 			// isActive
 			ImGui::TableNextColumn();
 						
-			bool isActive = (bool)bp.status;
+			bool isActive = (bool)bp.data.status;
 			ImGui::Checkbox(std::format("##0x{:04X}", addr).c_str(), &isActive);
 
-			if (isActive != (bool)bp.status)
+			if (isActive != (bool)bp.data.status)
 			{
 				m_debugger.SetBreakpointStatus(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED);
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
@@ -170,8 +170,9 @@ void dev::BreakpointsWindow::DrawTable()
 				}
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
-			else if (ImGui::MenuItem("Delete All")) {
-				m_debugger.DelBreakpoints();
+			else if (ImGui::MenuItem("Delete All")) 
+			{
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINTS_DEL);
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			ImGui::EndPopup();
@@ -198,7 +199,7 @@ void dev::BreakpointsWindow::DrawTable()
 					}
 				}
 				if (ImGui::MenuItem("Delete")) {
-					m_debugger.DelBreakpoint(editedBreakpointAddr);
+					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", editedBreakpointAddr}});
 					m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				}
 				else if (ImGui::MenuItem("Edit")) {
@@ -248,12 +249,12 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 
 		const auto& bp = _pbs.at(_addr);
 		isActive = bp.IsActive();
-		addrOld = bp.addr;
-		memPages = bp.memPages;
-		isAutoDel = bp.autoDel;
-		addrS = std::format("{:04X}", bp.addr);
-		selectedOp = static_cast<int>(bp.operand);
-		selectedCond = static_cast<int>(bp.cond);
+		addrOld = bp.data.addr;
+		memPages = bp.data.memPages;
+		isAutoDel = bp.data.autoDel;
+		addrS = std::format("{:04X}", bp.data.addr);
+		selectedOp = static_cast<int>(bp.data.operand);
+		selectedCond = static_cast<int>(bp.data.cond);
 		commentS = bp.comment;
 	}
 
@@ -394,14 +395,22 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 			// OK button
 			if (ImGui::Button("Ok", buttonSize))
 			{
-				if (_reqPopup == ReqPopup::EDIT && addrOld != addr) 
+				if (_reqPopup == ReqPopup::EDIT && addrOld != addr)
 				{
-					m_debugger.DelBreakpoint(addrOld);
+					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", addrOld} });
 				}
-				m_debugger.AddBreakpoint(addr, memPages, 
-					isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED, 
-					isAutoDel, static_cast<Breakpoint::Operand>(selectedOp),
-					static_cast<dev::Condition>(selectedCond), val, commentS);
+				m_debugger.AddBreakpoint(
+					Breakpoint{ 
+						Breakpoint::Data
+						{
+							static_cast<Addr>(addr), memPages,
+							isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED,
+							isAutoDel, static_cast<Breakpoint::Operand>(selectedOp),
+							static_cast<dev::Condition>(selectedCond), static_cast<uint64_t>(val)
+						}, 
+						commentS
+					}
+				);
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				ImGui::CloseCurrentPopup();
 				_reqPopup = ReqPopup::NONE;

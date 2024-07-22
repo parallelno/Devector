@@ -125,7 +125,7 @@
     <ClCompile Include="Core\Memory.cpp" />
     <ClCompile Include="Core\PitI8253.cpp" />
     <ClCompile Include="Core\DebugData.cpp" />
-    <ClCompile Include="Core\Reverse.cpp" />
+    <ClCompile Include="Core\Recorder.cpp" />
     <ClCompile Include="Core\SoundAY8910.cpp" />
     <ClCompile Include="Core\TimerI8253.cpp" />
     <ClCompile Include="Core\TraceLog.cpp" />
@@ -178,7 +178,7 @@
     <ClInclude Include="Core\Memory.h" />
     <ClInclude Include="Core\PitI8253.h" />
     <ClInclude Include="Core\DebugData.h" />
-    <ClInclude Include="Core\Reverse.h" />
+    <ClInclude Include="Core\Recorder.h" />
     <ClInclude Include="Core\SoundAY8910.h" />
     <ClInclude Include="Core\TimerI8253.h" />
     <ClInclude Include="Core\TraceLog.h" />
