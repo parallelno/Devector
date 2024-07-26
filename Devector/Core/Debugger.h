@@ -16,6 +16,7 @@
 #include "Core/Watchpoint.h"
 #include "Core/TraceLog.h"
 #include "Core/Recorder.h"
+#include "Core/Breakpoints.h"
 
 namespace dev
 {
@@ -30,7 +31,6 @@ namespace dev
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
 		using Watchpoints = std::unordered_map<dev::Id, Watchpoint>;
-		using Breakpoints = std::unordered_map<GlobalAddr, Breakpoint>;
 
 		Debugger(Hardware& _hardware);
 		~Debugger();
@@ -44,13 +44,7 @@ namespace dev
 			CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP) -> nlohmann::json;
 
-		void SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status);
-		void AddBreakpoint(Breakpoint&& _bp);
-
-		bool CheckBreakpoints(const CpuI8080::State& _cpuState, const Memory::State& _memState);
-		auto GetBreakpoints() -> const Breakpoints;
-		auto GetBreakpointStatus(const Addr _addr) -> const Breakpoint::Status;
-
+		
 		void AddWatchpoint(const dev::Id _id, const Watchpoint::Access _access, 
 			const GlobalAddr _globalAddr, const dev::Condition _cond, 
 			const uint16_t _value, const Watchpoint::Type _type, const int _len = 1, 
@@ -70,17 +64,15 @@ namespace dev
 		auto GetReverse() -> Recorder& { return m_recorder; };
 
 	private:
-		void DelBreakpoint(const Addr _addr);
 
 		Hardware& m_hardware;
 		DebugData m_debugData;
 		Disasm m_disasm;
 		TraceLog m_traceLog;
 		Recorder m_recorder;
-
-		std::mutex m_breakpointsMutex;
-		std::mutex m_watchpointsMutex;
 		Breakpoints m_breakpoints;
+
+		std::mutex m_watchpointsMutex;
 		Watchpoints m_watchpoints;
 		bool m_wpBreak;
 

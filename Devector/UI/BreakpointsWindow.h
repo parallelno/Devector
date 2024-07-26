@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include "imgui.h"
 
 #include "Utils/ImGuiUtils.h"
@@ -18,11 +19,14 @@ namespace dev
 		Hardware& m_hardware;
 		Debugger& m_debugger;
 		ReqUI& m_reqUI;
+		size_t m_bpUpdates = 0; // stores the updates to prevent extra Debug data fetching
+		Breakpoints::BpMap m_breakpoints;
 
 		void DrawTable();
-		void DrawPopup(ReqPopup& _reqPopup, const Debugger::Breakpoints& _pbs, int _addr);
+		void DrawPopup(ReqPopup& _reqPopup, const Breakpoints::BpMap& _pbs, int _addr);
 		void CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
 			const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup);
+		void UpdateBreakpoints();
 
 	public:
 		BreakpointsWindow(Hardware& _hardware, Debugger& m_debugger,

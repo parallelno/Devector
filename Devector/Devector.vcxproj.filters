@@ -140,6 +140,9 @@
     <ClCompile Include="Core\Recorder.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Breakpoints.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DevectorApp.h" />
@@ -299,6 +302,9 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="Core\Recorder.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Breakpoints.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

@@ -98,9 +98,9 @@ void dev::BreakpointsWindow::DrawTable()
 
 		PushStyleCompact(1.0f, 0.0f);
 
-		auto breakpoints = m_debugger.GetBreakpoints();
+		UpdateBreakpoints();
 
-		for (const auto& [addr, bp] : breakpoints)
+		for (const auto& [addr, bp] : m_breakpoints)
 		{
 			ImGui::TableNextRow(ImGuiTableRowFlags_None, 21.0f);
 
@@ -112,7 +112,9 @@ void dev::BreakpointsWindow::DrawTable()
 
 			if (isActive != (bool)bp.data.status)
 			{
-				m_debugger.SetBreakpointStatus(addr, isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED);
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_SET_STATUS, 
+					{ {"addr", addr},
+					{"status", static_cast<uint8_t>(isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED)}});
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			// Addr
@@ -165,8 +167,8 @@ void dev::BreakpointsWindow::DrawTable()
 			}
 			else if (ImGui::MenuItem("Disable All")) 
 			{
-				for (const auto& [addr, bp] : breakpoints) {
-					m_debugger.SetBreakpointStatus(addr, Breakpoint::Status::DISABLED);
+				for (const auto& [addr, bp] : m_breakpoints) {
+					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DISABLE, { {"addr", addr} });
 				}
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
@@ -184,17 +186,17 @@ void dev::BreakpointsWindow::DrawTable()
 		{
 			if (editedBreakpointAddr >= 0)
 			{
-				const auto& bp = breakpoints.at(editedBreakpointAddr);
+				const auto& bp = m_breakpoints.at(editedBreakpointAddr);
 
 				if (bp.IsActive()) {
 					if (ImGui::MenuItem("Disable")) {
-						m_debugger.SetBreakpointStatus(editedBreakpointAddr, Breakpoint::Status::DISABLED);
+						m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DISABLE, { {"addr", editedBreakpointAddr} });
 						m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 					}
 				}
 				else {
 					if (ImGui::MenuItem("Enable")) {
-						m_debugger.SetBreakpointStatus(editedBreakpointAddr, Breakpoint::Status::ACTIVE);
+						m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ACTIVE, { {"addr", editedBreakpointAddr} });
 						m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 					}
 				}
@@ -209,13 +211,13 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGui::EndPopup();
 		}
 		
-		DrawPopup(reqPopup, breakpoints, editedBreakpointAddr);
+		DrawPopup(reqPopup, m_breakpoints, editedBreakpointAddr);
 	}
 
 	ImGui::PopStyleVar(2);
 }
 
-void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Breakpoints& _pbs, int _addr)
+void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::BpMap& _pbs, int _addr)
 {
 	if (_reqPopup == ReqPopup::NONE) {
 		return;
@@ -399,18 +401,19 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 				{
 					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", addrOld} });
 				}
-				m_debugger.AddBreakpoint(
-					Breakpoint{ 
-						Breakpoint::Data
-						{
-							static_cast<Addr>(addr), memPages,
-							isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED,
-							isAutoDel, static_cast<Breakpoint::Operand>(selectedOp),
-							static_cast<dev::Condition>(selectedCond), static_cast<uint64_t>(val)
-						}, 
-						commentS
-					}
-				);
+				Breakpoint::Data bpData
+				{
+					static_cast<Addr>(addr), memPages,
+					isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED,
+					isAutoDel, static_cast<Breakpoint::Operand>(selectedOp),
+					static_cast<dev::Condition>(selectedCond), static_cast<uint64_t>(val)
+				};
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
+					{"data0", bpData.data0 },
+					{"data1", bpData.data1 },
+					{"data2", bpData.data2 },
+					{"comment", commentS}
+				});
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				ImGui::CloseCurrentPopup();
 				_reqPopup = ReqPopup::NONE;
@@ -430,4 +433,28 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Brea
 
 		ImGui::EndPopup();
 	}
+}
+
+void dev::BreakpointsWindow::UpdateBreakpoints()
+{
+	size_t bpUpdates = m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES)->at("updates");
+
+	if (bpUpdates == m_bpUpdates) return;
+
+	m_bpUpdates = bpUpdates;
+
+	m_breakpoints.clear();
+	auto breakpointsJ = m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_ALL);
+	if (breakpointsJ)
+	{
+		for (const auto& breakpointJ : *breakpointsJ)
+		{
+			Breakpoint::Data bpData{ breakpointJ["data0"], breakpointJ["data1"], breakpointJ["data2"] };
+
+			Breakpoint bp{ std::move(bpData), breakpointJ["comment"] };
+			auto addr = bp.GetAddr();
+			m_breakpoints.emplace(addr, std::move(bp));
+		}
+	}
+
 }

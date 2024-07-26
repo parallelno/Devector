@@ -26,7 +26,7 @@ dev::Debugger::Debugger(Hardware& _hardware)
 
 	m_hardware.AttachDebugFuncs(debugFunc, debugReqHandlingFunc);
 
-	m_breakpoints.clear();
+	m_breakpoints.Clear();
 	m_watchpoints.clear();
 }
 
@@ -103,6 +103,7 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 		}
 	}
 
+	// check watchpoints
 	auto break_ = false;
 	if (m_wpBreak)
 	{
@@ -110,9 +111,14 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 		ResetWatchpoints();
 		break_ |= true;
 	}
-	break_ |= CheckBreakpoints(*_cpuStateP, *_memStateP);
 
+	// check breakpoints
+	break_ |= m_breakpoints.Check(*_cpuStateP, *_memStateP);
+
+	// tracelog
 	m_traceLog.Update(*_cpuStateP, *_memStateP);	
+
+	// recorder
 	m_recorder.Update(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 
 	return break_;
@@ -137,11 +143,48 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		break;
 
 	case Hardware::Req::DEBUG_BREAKPOINTS_DEL:
-		m_breakpoints.clear();
+		m_breakpoints.Clear();
 		break;
 
 	case Hardware::Req::DEBUG_BREAKPOINT_DEL:
-		DelBreakpoint(_reqDataJ["addr"]);
+		m_breakpoints.Del(_reqDataJ["addr"]);
+		break;
+		
+	case Hardware::Req::DEBUG_BREAKPOINT_ADD: {
+		Breakpoint::Data bpData{ _reqDataJ["data0"], _reqDataJ["data1"], _reqDataJ["data2"] };
+		m_breakpoints.Add({ std::move(bpData), _reqDataJ["comment"] });
+		break;
+	}
+	case Hardware::Req::DEBUG_BREAKPOINT_SET_STATUS:
+		m_breakpoints.SetStatus( _reqDataJ["addr"], _reqDataJ["status"] );
+		break;
+
+	case Hardware::Req::DEBUG_BREAKPOINT_ACTIVE:
+		m_breakpoints.SetStatus(_reqDataJ["addr"], Breakpoint::Status::ACTIVE);
+		break;
+
+	case Hardware::Req::DEBUG_BREAKPOINT_DISABLE:
+		m_breakpoints.SetStatus(_reqDataJ["addr"], Breakpoint::Status::DISABLED);
+		break;
+
+	case Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS: {
+		out = nlohmann::json{ {"status", static_cast<uint64_t>(m_breakpoints.GetStatus(_reqDataJ["addr"])) } };
+		break;
+	}
+	case Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES: {
+		out = nlohmann::json{ {"updates", static_cast<uint64_t>(m_breakpoints.GetUpdates()) } };
+		break;
+	}
+	case Hardware::Req::DEBUG_BREAKPOINT_GET_ALL:
+		for(const auto& [addr, bp] : m_breakpoints.GetAll())
+		{
+			out.push_back( {
+					{"data0", bp.data.data0}, 
+					{"data1", bp.data.data1}, 
+					{"data2", bp.data.data2}, 
+					{"comment", bp.comment}
+			});
+		}
 		break;
 	}
 
@@ -182,7 +225,7 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 
 			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
 			uint32_t cmd = 0x1000 | db; // opcode 0x10 is used as a placeholder
-			auto breakpointStatus = GetBreakpointStatus(addr);
+			auto breakpointStatus = m_breakpoints.GetStatus(addr);
 			addr += m_disasm.AddCode(addr, cmd, breakpointStatus);
 		}
 	}
@@ -195,87 +238,12 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 		uint32_t cmd = m_hardware.Request(Hardware::Req::GET_THREE_BYTES_RAM, { { "addr", addr } })->at("data");
 		GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
 
-		auto breakpointStatus = GetBreakpointStatus(globalAddr);
+		auto breakpointStatus = m_breakpoints.GetStatus(globalAddr);
 
 		addr += m_disasm.AddCode(addr, cmd, breakpointStatus);
 	}
 
 	m_disasm.SetUpdated();
-}
-
-//////////////////////////////////////////////////////////////
-//
-// Breakpoints
-//
-//////////////////////////////////////////////////////////////
-
-void dev::Debugger::SetBreakpointStatus(const Addr _addr, const Breakpoint::Status _status)
-{
-	{
-		std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-		auto bpI = m_breakpoints.find(_addr);
-		if (bpI != m_breakpoints.end()) {
-			bpI->second.data.status = _status;
-			return;
-		}
-	}
-	AddBreakpoint(Breakpoint{ _addr });
-}
-
-void dev::Debugger::AddBreakpoint(Breakpoint&& _bp )
-{
-	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bpI = m_breakpoints.find(_bp.data.addr);
-	if (bpI != m_breakpoints.end())
-	{
-		bpI->second.Update(std::move(_bp));
-		return;
-	}
-	
-	m_breakpoints.emplace(static_cast<Addr>(_bp.data.addr), std::move(_bp));
-}
-
-void dev::Debugger::DelBreakpoint(const Addr _addr)
-{
-	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bpI = m_breakpoints.find(_addr);
-	if (bpI != m_breakpoints.end())
-	{
-		m_breakpoints.erase(bpI);
-	}
-}
-
-// UI thread
-auto dev::Debugger::GetBreakpointStatus(const Addr _addr)
--> const Breakpoint::Status
-{
-	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bpI = m_breakpoints.find(_addr);
-
-	return bpI == m_breakpoints.end() ? Breakpoint::Status::DELETED : bpI->second.data.status;
-}
-
-// Hardware thread
-bool dev::Debugger::CheckBreakpoints(const CpuI8080::State& _cpuState, const Memory::State& _memState)
-{
-	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	auto bpI = m_breakpoints.find(_cpuState.regs.pc.word);
-	if (bpI == m_breakpoints.end()) return false;
-	auto status = bpI->second.CheckStatus(_cpuState, _memState);
-	if (bpI->second.data.autoDel) m_breakpoints.erase(bpI);
-	return status;
-}
-
-// UI thread
-auto dev::Debugger::GetBreakpoints() -> const Breakpoints
-{
-	Breakpoints out;
-	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
-	for (const auto& [addr, bp] : m_breakpoints)
-	{
-		out.insert({ addr, bp });
-	}
-	return out;
 }
 
 //////////////////////////////////////////////////////////////
@@ -347,7 +315,7 @@ void dev::Debugger::ResetWatchpoints()
 auto dev::Debugger::GetWatchpoints() -> const Watchpoints
 {
 	Watchpoints out;
-	std::lock_guard<std::mutex> mlock(m_breakpointsMutex);
+	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
 	for (const auto& [id, wp] : m_watchpoints)
 	{
 		out.emplace(id, Watchpoint{ wp });

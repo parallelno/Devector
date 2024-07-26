@@ -103,6 +103,10 @@ namespace dev
 			) :
 				memPages(_memPages), value(_value), addr(_addr), operand(_operand), cond(_cond), status(_status), autoDel(_autoDel)
 			{};
+			Data(const uint64_t _data0, const uint64_t _data1, const uint32_t _data2)
+				: 
+				data0(_data0), data1(_data1), data2(_data2)
+			{}
 		};
 #pragma pack(pop)
 

@@ -62,8 +62,16 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	if (ImGui::Button("Step Over"))
 	{
 		Addr addr = m_hardware.Request(Hardware::Req::GET_STEP_OVER_ADDR)->at("data");
-		m_debugger.AddBreakpoint(Breakpoint::Data{
-			addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true });
+		Breakpoint::Data bpData
+			{addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true};
+
+		m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
+			{"data0", bpData.data0 },
+			{"data1", bpData.data1 },
+			{"data2", bpData.data2 },
+			{"comment", ""}
+		});
+
 		m_hardware.Request(Hardware::Req::RUN);
 	}
 	ImGui::SameLine();
@@ -142,10 +150,18 @@ void dev::DisasmWindow::DrawDisasmIcons(const bool _isRunning, const Disasm::Lin
 	auto bpStatus = _line.breakpointStatus;
 	if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", _lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
 	{
-		if (bpStatus == Breakpoint::Status::DELETED) {
+		switch (bpStatus)
+		{
+		case dev::Breakpoint::Status::DISABLED:
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DISABLE, { {"addr", _line.addr} });
+			break;
+		case dev::Breakpoint::Status::ACTIVE:
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ACTIVE, { {"addr", _line.addr} });
+			break;
+		case dev::Breakpoint::Status::DELETED:
 			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", _line.addr} });
+			break;
 		}
-		else m_debugger.SetBreakpointStatus(_line.addr, bpStatus);
 		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 	}
 
@@ -491,17 +507,30 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Run To"))
 		{
-			m_debugger.AddBreakpoint(Breakpoint::Data{
-				_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true });
+			Breakpoint::Data bpData{ 
+				_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true };
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
+				{"data0", bpData.data0 },
+				{"data1", bpData.data1 },
+				{"data2", bpData.data2 },
+				{"comment", ""}
+			});
+
 			m_hardware.Request(Hardware::Req::RUN);
 		}
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Add/Remove Beakpoint"))
 		{
-			auto bpStatus = m_debugger.GetBreakpointStatus(m_contextMenu.addr);
+			Breakpoint::Status bpStatus = static_cast<Breakpoint::Status>(m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS, { {"addr"} })->at("status"));
 
 			if (bpStatus == Breakpoint::Status::DELETED) {
-				m_debugger.AddBreakpoint({ m_contextMenu.addr });
+				Breakpoint::Data bpData { m_contextMenu.addr };
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
+					{"data0", bpData.data0 },
+					{"data1", bpData.data1 },
+					{"data2", bpData.data2 },
+					{"comment", ""}
+					});
 			}
 			else {
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", m_contextMenu.addr} });
