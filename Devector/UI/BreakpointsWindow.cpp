@@ -5,12 +5,11 @@
 #include "Utils/ImGuiUtils.h"
 #include "Utils/StrUtils.h"
 
-dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware, Debugger& _debugger,
+dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
 	const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
 	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger),
-	m_reqUI(_reqUI)
+	m_hardware(_hardware), m_reqUI(_reqUI)
 {}
 
 void dev::BreakpointsWindow::Update(bool& _visible)
@@ -174,7 +173,7 @@ void dev::BreakpointsWindow::DrawTable()
 			}
 			else if (ImGui::MenuItem("Delete All")) 
 			{
-				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINTS_DEL);
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL_ALL);
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			ImGui::EndPopup();
@@ -437,11 +436,11 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 
 void dev::BreakpointsWindow::UpdateBreakpoints()
 {
-	size_t bpUpdates = m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES)->at("updates");
+	size_t updates = m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES)->at("updates");
 
-	if (bpUpdates == m_bpUpdates) return;
+	if (updates == m_updates) return;
 
-	m_bpUpdates = bpUpdates;
+	m_updates = updates;
 
 	m_breakpoints.clear();
 	auto breakpointsJ = m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_ALL);
@@ -452,7 +451,7 @@ void dev::BreakpointsWindow::UpdateBreakpoints()
 			Breakpoint::Data bpData{ breakpointJ["data0"], breakpointJ["data1"], breakpointJ["data2"] };
 
 			Breakpoint bp{ std::move(bpData), breakpointJ["comment"] };
-			auto addr = bp.GetAddr();
+			auto addr = bp.data.addr;
 			m_breakpoints.emplace(addr, std::move(bp));
 		}
 	}

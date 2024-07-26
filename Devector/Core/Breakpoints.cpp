@@ -49,7 +49,6 @@ void dev::Breakpoints::Del(const Addr _addr)
 	}
 }
 
-// UI thread
 auto dev::Breakpoints::GetStatus(const Addr _addr)
 -> const Breakpoint::Status
 {
@@ -57,7 +56,6 @@ auto dev::Breakpoints::GetStatus(const Addr _addr)
 	return bpI == m_bps.end() ? Breakpoint::Status::DELETED : bpI->second.data.status;
 }
 
-// Hardware thread
 bool dev::Breakpoints::Check(const CpuI8080::State& _cpuState, const Memory::State& _memState)
 {
 	auto bpI = m_bps.find(_cpuState.regs.pc.word);
@@ -72,16 +70,10 @@ bool dev::Breakpoints::Check(const CpuI8080::State& _cpuState, const Memory::Sta
 	return status;
 }
 
-// UI thread
 auto dev::Breakpoints::GetAll()
--> const BpMap
+-> const BpMap&
 {
-	BpMap out;
-	for (const auto& [addr, bp] : m_bps)
-	{
-		out.insert({ addr, bp });
-	}
-	return out;
+	return m_bps;
 }
 
 auto dev::Breakpoints::GetUpdates()

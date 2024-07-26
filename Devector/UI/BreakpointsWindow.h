@@ -17,10 +17,9 @@ namespace dev
 		static constexpr ImVec4 COLOR_WARNING = dev::IM_VEC4(0xFF2020FF);
 
 		Hardware& m_hardware;
-		Debugger& m_debugger;
 		ReqUI& m_reqUI;
-		size_t m_bpUpdates = 0; // stores the updates to prevent extra Debug data fetching
 		Breakpoints::BpMap m_breakpoints;
+		size_t m_updates = 0; // stores the updates to prevent extra Debug data fetching
 
 		void DrawTable();
 		void DrawPopup(ReqPopup& _reqPopup, const Breakpoints::BpMap& _pbs, int _addr);
@@ -29,7 +28,7 @@ namespace dev
 		void UpdateBreakpoints();
 
 	public:
-		BreakpointsWindow(Hardware& _hardware, Debugger& m_debugger,
+		BreakpointsWindow(Hardware& _hardware,
 			const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI);
 		void Update(bool& _visible);
 		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });

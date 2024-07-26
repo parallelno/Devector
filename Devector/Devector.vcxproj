@@ -63,6 +63,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)Devector\;$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\;$(SolutionDir)SharedSource\3rdParty\glew\include\;$(SolutionDir)SharedSource\3rdParty\SDL\include\</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -87,6 +88,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)Devector\;$(SolutionDir)SharedSource\;$(SolutionDir)SharedSource\3rdParty\sqlite3\;$(SolutionDir)SharedSource\3rdParty\imgui\;$(SolutionDir)SharedSource\3rdParty\imgui\backends;$(SolutionDir)SharedSource\3rdParty\imgui\examples\libs\glfw\include\;$(SolutionDir)SharedSource\3rdParty\njson\;$(SolutionDir)SharedSource\3rdParty\glew\include\;$(SolutionDir)SharedSource\3rdParty\SDL\include\</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,6 +133,7 @@
     <ClCompile Include="Core\TimerI8253.cpp" />
     <ClCompile Include="Core\TraceLog.cpp" />
     <ClCompile Include="Core\Watchpoint.cpp" />
+    <ClCompile Include="Core\Watchpoints.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="DevectorApp.cpp" />
     <ClCompile Include="UI\AboutWindow.cpp" />
@@ -185,6 +188,7 @@
     <ClInclude Include="Core\TimerI8253.h" />
     <ClInclude Include="Core\TraceLog.h" />
     <ClInclude Include="Core\Watchpoint.h" />
+    <ClInclude Include="Core\Watchpoints.h" />
     <ClInclude Include="DevectorApp.h" />
     <ClInclude Include="UI\AboutWindow.h" />
     <ClInclude Include="UI\BaseWindow.h" />

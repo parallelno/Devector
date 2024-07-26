@@ -538,7 +538,7 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		}
 		if (ImGui::MenuItem("Remove All Beakpoints")) {
-			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINTS_DEL);
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL_ALL);
 			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		};
 		ImGui::SeparatorText("");

@@ -10,7 +10,6 @@
 dev::Debugger::Debugger(Hardware& _hardware)
 	:
 	m_hardware(_hardware),
-	m_wpBreak(false),
 	m_lastReadsAddrs(), m_lastWritesAddrs(),
 	m_memLastRW(),
 	m_lastReadsAddrsOld(), m_lastWritesAddrsOld(), 
@@ -27,7 +26,7 @@ dev::Debugger::Debugger(Hardware& _hardware)
 	m_hardware.AttachDebugFuncs(debugFunc, debugReqHandlingFunc);
 
 	m_breakpoints.Clear();
-	m_watchpoints.clear();
+	m_watchpoints.Clear();
 }
 
 // UI thread
@@ -78,7 +77,7 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 
 			m_disasm.MemReadsUpdate(globalAddr);
 
-			m_wpBreak |= CheckWatchpoint(Watchpoint::Access::R, globalAddr, val);
+			m_watchpoints.Check(Watchpoint::Access::R, globalAddr, val);
 
 			m_lastReadsAddrs[m_lastReadsIdx++] = globalAddr;
 			m_lastReadsIdx %= LAST_RW_MAX;
@@ -96,21 +95,16 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 
 			m_disasm.MemWritesUpdate(globalAddr);
 
-			m_wpBreak |= CheckWatchpoint(Watchpoint::Access::W, globalAddr, val);
+			m_watchpoints.Check(Watchpoint::Access::W, globalAddr, val);
 
 			m_lastWritesAddrs[m_lastWritesIdx++] = globalAddr;
 			m_lastWritesIdx %= LAST_RW_MAX;
 		}
 	}
 
-	// check watchpoints
 	auto break_ = false;
-	if (m_wpBreak)
-	{
-		m_wpBreak = false;
-		ResetWatchpoints();
-		break_ |= true;
-	}
+	// check watchpoint status
+	break_ |= m_watchpoints.CheckBreak();
 
 	// check breakpoints
 	break_ |= m_breakpoints.Check(*_cpuStateP, *_memStateP);
@@ -142,7 +136,14 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		m_recorder.PlaybackReverse(_reqDataJ["frames"], _cpuStateP, _memStateP, _ioStateP, _displayStateP);
 		break;
 
-	case Hardware::Req::DEBUG_BREAKPOINTS_DEL:
+
+	//////////////////
+	// 
+	// breakpoints
+	//
+	/////////////////
+
+	case Hardware::Req::DEBUG_BREAKPOINT_DEL_ALL:
 		m_breakpoints.Clear();
 		break;
 
@@ -184,6 +185,40 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 					{"data2", bp.data.data2}, 
 					{"comment", bp.comment}
 			});
+		}
+		break;
+
+	//////////////////
+	// 
+	// watchpoints
+	//
+	/////////////////
+
+	case Hardware::Req::DEBUG_WATCHPOINT_DEL_ALL:
+		m_watchpoints.Clear();
+		break;
+
+	case Hardware::Req::DEBUG_WATCHPOINT_DEL:
+		m_breakpoints.Del(_reqDataJ["id"]);
+		break;
+
+	case Hardware::Req::DEBUG_WATCHPOINT_ADD: {
+		Watchpoint::Data wpData{ _reqDataJ["data0"], _reqDataJ["data1"] };
+		m_watchpoints.Add({ std::move(wpData), _reqDataJ["comment"] });
+		break;
+	}
+	case Hardware::Req::DEBUG_WATCHPOINT_GET_UPDATES: {
+		out = nlohmann::json{ {"updates", static_cast<uint64_t>(m_watchpoints.GetUpdates()) } };
+		break;
+	}
+	case Hardware::Req::DEBUG_WATCHPOINT_GET_ALL:
+		for (const auto& [id, wp] : m_watchpoints.GetAll())
+		{
+			out.push_back({
+					{"data0", wp.data.data0},
+					{"data1", wp.data.data1},
+					{"comment", wp.comment}
+				});
 		}
 		break;
 	}
@@ -244,83 +279,6 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 	}
 
 	m_disasm.SetUpdated();
-}
-
-//////////////////////////////////////////////////////////////
-//
-// Watchpoint
-//
-//////////////////////////////////////////////////////////////
-
-void dev::Debugger::AddWatchpoint(
-	const dev::Id _id, const Watchpoint::Access _access, 
-	const GlobalAddr _globalAddr, const dev::Condition _cond,
-	const uint16_t _value, const Watchpoint::Type _type, const int _len, const bool _active, const std::string& _comment)
-{
-	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	
-	auto wpI = m_watchpoints.find(_id);
-	if (wpI != m_watchpoints.end())
-	{
-		wpI->second.Update(_access, _globalAddr, _cond, _value, _type, _len, _active, _comment);
-	}
-	else {
-		auto wp = Watchpoint(_access, _globalAddr, _cond, _value, _type, _len, _active, _comment);
-		m_watchpoints.emplace(wp.GetId(), std::move(wp));
-	}
-}
-
-void dev::Debugger::DelWatchpoint(const dev::Id _id)
-{
-	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-
-	auto bpI = m_watchpoints.find(_id);
-	if (bpI != m_watchpoints.end())
-	{
-		m_watchpoints.erase(bpI);
-	}
-}
-
-void dev::Debugger::DelWatchpoints()
-{
-	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	m_watchpoints.clear();
-}
-
-// Hardware thread
-bool dev::Debugger::CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value)
-{
-	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	
-	auto wpI = std::find_if(m_watchpoints.begin(), m_watchpoints.end(), 
-		[_access, _globalAddr, _value](Watchpoints::value_type& pair) 
-		{
-			return pair.second.Check(_access, _globalAddr, _value);
-		});
-
-	if (wpI == m_watchpoints.end()) return false;
-
-	return true;
-}
-
-void dev::Debugger::ResetWatchpoints()
-{
-	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	for (auto& [id, watchpoint] : m_watchpoints)
-	{
-		watchpoint.Reset();
-	}
-}
-
-auto dev::Debugger::GetWatchpoints() -> const Watchpoints
-{
-	Watchpoints out;
-	std::lock_guard<std::mutex> mlock(m_watchpointsMutex);
-	for (const auto& [id, wp] : m_watchpoints)
-	{
-		out.emplace(id, Watchpoint{ wp });
-	}
-	return out;
 }
 
 //////////////////////////////////////////////////////////////

@@ -1,11 +1,6 @@
 #pragma once
 
 #include <string>
-#include <mutex>
-#include <unordered_map>
-#include <vector>
-#include <format>
-#include <bit>
 
 #include "Utils/Types.h"
 #include "Core/Breakpoint.h"
@@ -21,7 +16,7 @@ public:
 		void Add(Breakpoint&& _bp);
 		void Del(const Addr _addr);
 		bool Check(const CpuI8080::State& _cpuState, const Memory::State& _memState);
-		auto GetAll() -> const BpMap;
+		auto GetAll() -> const BpMap&;
 		auto GetUpdates() -> const uint32_t;
 		auto GetStatus(const Addr _addr) -> const Breakpoint::Status;
 		void Clear();

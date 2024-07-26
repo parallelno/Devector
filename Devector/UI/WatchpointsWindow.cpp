@@ -3,11 +3,11 @@
 #include "Utils/ImGuiUtils.h"
 #include "Utils/StrUtils.h"
 
-dev::WatchpointsWindow::WatchpointsWindow(Debugger& _debugger,
+dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
 	const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
 	BaseWindow("Watchpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_debugger(_debugger),
+	m_hardware(_hardware),
 	m_reqUI(_reqUI)
 {}
 
@@ -97,25 +97,26 @@ void dev::WatchpointsWindow::DrawTable()
 
 		PushStyleCompact(1.0f, 0.0f);
 
-		auto watchpoints = m_debugger.GetWatchpoints();
+		UpdateWatchpoints();
 
-		for (const auto& [id, wp] : watchpoints)
+		for (auto& [id, wp] : m_watchpoints)
 		{
 			ImGui::TableNextRow(ImGuiTableRowFlags_None, 21.0f);
-			auto globalAddr = wp.GetGlobalAddr();
+			auto globalAddr = wp.data.globalAddr;
 			// isActive
 			ImGui::TableNextColumn();
 
-			auto isActive = wp.IsActive();
+			auto isActive = wp.data.active;
 			ImGui::Checkbox(std::format("##{:05X}", globalAddr).c_str(), &isActive);
-			if (isActive != wp.IsActive())
+			if (isActive != wp.data.active)
 			{
-				m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), globalAddr,
-					wp.GetCondition(), wp.GetValue(), wp.GetType(),
-					wp.GetLen(), isActive, wp.GetComment());
+				wp.data.active = isActive;
+				m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_ADD,
+					{ {"data0", wp.data.data0}, {"data1", wp.data.data1}, {"comment", wp.comment} });
+
 				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
 				m_reqUI.globalAddr = globalAddr;
-				m_reqUI.len = wp.GetLen();
+				m_reqUI.len = wp.data.len;
 			}
 			// GlobalAddr
 			ImGui::TableNextColumn();
@@ -126,7 +127,7 @@ void dev::WatchpointsWindow::DrawTable()
 				selectedAddr = globalAddr;
 				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
 				m_reqUI.globalAddr = selectedAddr;
-				m_reqUI.len = wp.GetLen();
+				m_reqUI.len = wp.data.len;
 			}
 			ImVec2 rowMin = ImGui::GetItemRectMin();
 			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
@@ -138,16 +139,16 @@ void dev::WatchpointsWindow::DrawTable()
 
 			// Condition
 			std::string condS = wp.GetConditionS();
-			if (wp.GetCondition() != dev::Condition::ANY) {
-				if (wp.GetType() == Watchpoint::Type::LEN) 
+			if (wp.data.cond != dev::Condition::ANY) {
+				if (wp.data.type == Watchpoint::Type::LEN) 
 				{
-					condS += std::format("{:02X}", wp.GetValue());
+					condS += std::format("{:02X}", wp.data.value);
 				}
 				else {
-					condS += std::format("{:04X}", wp.GetValue());
+					condS += std::format("{:04X}", wp.data.value);
 				}
 			}
-			condS = std::format("{} l:{}", condS, wp.GetLen());
+			condS = std::format("{} l:{}", condS, wp.data.len);
 			DrawProperty(condS);
 			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
 
@@ -181,14 +182,15 @@ void dev::WatchpointsWindow::DrawTable()
 			}
 			else if (ImGui::MenuItem("Disable All"))
 			{
-				for (const auto& [id, wp] : watchpoints) {
-					m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
-						wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
-						false, wp.GetComment());
+				for (auto& [id, wp] : m_watchpoints) 
+				{
+					wp.data.active = false;
+					m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_ADD,
+						{ {"data0", wp.data.data0}, {"data1", wp.data.data1}, {"comment", wp.comment} });
 				}
 			}
 			else if (ImGui::MenuItem("Delete All")) {
-				m_debugger.DelWatchpoints();
+				m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_DEL_ALL);
 				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_OFF;
 			};
 			ImGui::EndPopup();
@@ -200,32 +202,21 @@ void dev::WatchpointsWindow::DrawTable()
 		{
 			if (editedWatchpointId >= 0)
 			{
-				const auto& wp = watchpoints.at(editedWatchpointId);
+				auto& wp = m_watchpoints.at(editedWatchpointId);
 
-				if (wp.IsActive()) {
-					if (ImGui::MenuItem("Disable")) 
-					{
-						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
-							wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
-							false, wp.GetComment());
+				if (ImGui::MenuItem(wp.data.active ? "Disable" : "Enable"))
+				{
+					wp.data.active = !wp.data.active;
+					m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_ADD,
+						{ {"data0", wp.data.data0}, {"data1", wp.data.data1}, {"comment", wp.comment} });
 
-						m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-						m_reqUI.globalAddr = wp.GetGlobalAddr();
-						m_reqUI.len = wp.GetLen();
-					}
+					m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+					m_reqUI.globalAddr = wp.data.globalAddr;
+					m_reqUI.len = wp.data.len;
 				}
-				else {
-					if (ImGui::MenuItem("Enable")) {
-						m_debugger.AddWatchpoint(wp.GetId(), wp.GetAccess(), wp.GetGlobalAddr(),
-							wp.GetCondition(), wp.GetValue(), wp.GetType(), wp.GetLen(),
-							true, wp.GetComment());
-						m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-						m_reqUI.globalAddr = wp.GetGlobalAddr();
-						m_reqUI.len = wp.GetLen();
-					}
-				}
-				if (ImGui::MenuItem("Delete")) {
-					m_debugger.DelWatchpoint(editedWatchpointId);
+				if (ImGui::MenuItem("Delete")) 
+				{
+					m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_DEL, { {"id", editedWatchpointId} });
 					m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_OFF;
 				}
 				else if (ImGui::MenuItem("Edit")) {
@@ -236,13 +227,13 @@ void dev::WatchpointsWindow::DrawTable()
 			ImGui::EndPopup();
 		}
 
-		DrawPopup(reqPopup, watchpoints, editedWatchpointId);
+		DrawPopup(reqPopup, m_watchpoints, editedWatchpointId);
 
 	}
 	ImGui::PopStyleVar(2);
 }
 
-void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watchpoints& _wps, int _id)
+void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::WpMap& _wps, int _id)
 {
 	if (_reqPopup == ReqPopup::NONE) {
 		return;
@@ -276,19 +267,19 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 
 		const auto& wp = _wps.at(_id);
 		oldId = _id;
-		isActive = wp.IsActive();
-		globalAddrS = std::format("{:04X}", wp.GetGlobalAddr());
+		isActive = wp.data.active;
+		globalAddrS = std::format("{:04X}", wp.data.globalAddr);
 		access = wp.GetAccessI();
-		cond = static_cast<int>(wp.GetCondition());
-		type = static_cast<int>(wp.GetType());
+		cond = static_cast<int>(wp.data.cond);
+		type = static_cast<int>(wp.data.type);
 		if (type == static_cast<int>(Watchpoint::Type::WORD)) {
-			valueS = std::format("{:04X}", wp.GetValue());
+			valueS = std::format("{:04X}", wp.data.value);
 		}
 		else {
-			valueS = std::format("{:02X}", wp.GetValue());
+			valueS = std::format("{:02X}", wp.data.value);
 		}
 		
-		lenS = std::format("{:04X}", wp.GetLen());
+		lenS = std::format("{:04X}", wp.data.len);
 		commentS = wp.GetComment();
 	}
 
@@ -368,13 +359,15 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 			{
 				int id = _reqPopup == ReqPopup::ADD ? -1 : oldId;
 				GlobalAddr len = dev::StrHexToInt(lenS.c_str());
-				GlobalAddr value = dev::StrHexToInt(valueS.c_str());
+				uint16_t value = dev::StrHexToInt(valueS.c_str());
 
-				m_debugger.AddWatchpoint(
-					id, static_cast<Watchpoint::Access>(access), 
+				Watchpoint::Data wpData{ id, static_cast<Watchpoint::Access>(access),
 					globalAddr, static_cast<dev::Condition>(cond),
 					value, static_cast<Watchpoint::Type>(type),
-					len, isActive, commentS);
+					len, isActive };
+
+				m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_ADD,
+					{ {"data0", wpData.data0}, {"data1", wpData.data1}, {"comment", commentS} });
 
 				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
 				m_reqUI.globalAddr = globalAddr;
@@ -392,4 +385,28 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Debugger::Watc
 
 		ImGui::EndPopup();
 	}
+}
+
+void dev::WatchpointsWindow::UpdateWatchpoints()
+{
+	size_t updates = m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_GET_UPDATES)->at("updates");
+
+	if (updates == m_updates) return;
+
+	m_updates = updates;
+
+	m_watchpoints.clear();
+	auto watchpointsJ = m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_GET_ALL);
+	if (watchpointsJ)
+	{
+		for (const auto& watchpointJ : *watchpointsJ)
+		{
+			Watchpoint::Data bpData{ watchpointJ["data0"], watchpointJ["data1"] };
+
+			Watchpoint wp{ std::move(bpData), watchpointJ["comment"] };
+			auto id = wp.data.id;
+			m_watchpoints.emplace(id, std::move(wp));
+		}
+	}
+
 }

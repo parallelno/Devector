@@ -17,6 +17,7 @@
 #include "Core/TraceLog.h"
 #include "Core/Recorder.h"
 #include "Core/Breakpoints.h"
+#include "Core/Watchpoints.h"
 
 namespace dev
 {
@@ -30,8 +31,6 @@ namespace dev
 		using MemLastRW = std::array<uint32_t, Memory::GLOBAL_MEMORY_LEN>;
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
-		using Watchpoints = std::unordered_map<dev::Id, Watchpoint>;
-
 		Debugger(Hardware& _hardware);
 		~Debugger();
 
@@ -43,17 +42,6 @@ namespace dev
 		auto DebugReqHandling(Hardware::Req _req, nlohmann::json _reqDataJ, 
 			CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP) -> nlohmann::json;
-
-		
-		void AddWatchpoint(const dev::Id _id, const Watchpoint::Access _access, 
-			const GlobalAddr _globalAddr, const dev::Condition _cond, 
-			const uint16_t _value, const Watchpoint::Type _type, const int _len = 1, 
-			const bool _active = true, const std::string& _comment = "");
-		void DelWatchpoint(const dev::Id _id);
-		void DelWatchpoints();
-		bool CheckWatchpoint(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value);
-		void ResetWatchpoints();
-		auto GetWatchpoints() -> const Watchpoints;
 
 		auto GetLastRW() -> const MemLastRW*;
 		void UpdateLastRW();
@@ -71,10 +59,7 @@ namespace dev
 		TraceLog m_traceLog;
 		Recorder m_recorder;
 		Breakpoints m_breakpoints;
-
-		std::mutex m_watchpointsMutex;
 		Watchpoints m_watchpoints;
-		bool m_wpBreak;
 
 		std::mutex m_lastRWMutex;
 		LastRWAddrs m_lastReadsAddrs; // a circular buffer that contains addresses

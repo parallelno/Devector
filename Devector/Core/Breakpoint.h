@@ -70,10 +70,10 @@ namespace dev
 			DELETED,
 			COUNT,
 		};
-		static constexpr int STATUS_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Status::COUNT));
+		static constexpr int STATUS_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Status::COUNT) - 1);
 
 		enum class Operand : uint8_t { A = 0, F, B, C, D, E, H, L, PSW, BC, DE, HL, CC, SP, COUNT };
-		static constexpr int OPERAND_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Operand::COUNT));
+		static constexpr int OPERAND_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Operand::COUNT) -1);
 
 #pragma pack(push, 1)
 		union Data {
@@ -114,10 +114,8 @@ namespace dev
 
 		void Update(Breakpoint&& _bp);
 
-		auto GetAddr() const -> Addr { return data.addr; };
 		auto GetAddrMappingS() const -> const char*;
-		inline bool IsActive() const { return data.status == Status::ACTIVE; };
-
+		bool IsActive() const { return data.status == Status::ACTIVE; };
 		bool CheckStatus(const CpuI8080::State& _cpuState, const Memory::State& _memState) const;
 		auto GetOperandS() const -> const char*;
 		auto GetConditionS() const -> const std::string;
