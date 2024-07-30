@@ -26,6 +26,6 @@ namespace dev
 			const float* const _fontSizeP, const float* const _dpiScaleP,
 			ReqUI& _reqUI);
 		void Update(bool& _visible);
-		void Draw();
+		void Draw(const bool _isRunning);
 	};
 };

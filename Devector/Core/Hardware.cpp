@@ -75,23 +75,18 @@ bool dev::Hardware::ExecuteInstruction()
 }
 
 // TODO:
-//1. - use hardware reqs for setting up debuger
-//1. - send the hardware reqs into the hardware thread call a debugger
-//1. - replace reveers playback event with the hardware reqs
-//1. add debugger evens to reverse, forward play, get data from the playback, set the data to the playback
-//1. replace update&add breakpoints/watchpoints with the hardware reqs
-//1. load and save the playback data handles the same way as the load rom. use the auto play from the first frame
-//1. load the playback data via the Load main menu
-//1. - attach and detach debugger via the hardware request
-//1. - rename the hardware reqs to emphisize that this is the hardware thread handling. and commments
-//1. - rename the UI reqs to show that this is the UI thread handling. and commments
+//1. load the playback data via the Load main menu. auto play it from the first frame. Save the playback in the recorder window.
+
 //1. check how the playback adds data after reverse playback. make sure that it s not combining two frames ino one state
-//1. reverse playback. check if there is a memory updates to restore. if no updates, step back. then restore memory, clear mem update array, restore state
-//1. when we reverse, or play forward, we need to handle the special case - the last frame. if we at the last mem updates, reverse operation has to resore that memory, then update the state. if we at the start of the frame in the last frame even there is some memory updates, we first do a step back, then resore the memory, then restore the state
-//1. if we more forward we also has to handle the last frame with two sub states - the start of the frame and the middle frame where we stoppped recording
+// 
+//1. when we reverse, or play forward, we need to handle the special case - the last frame.
+//		if we at the last mem updates, reverse operation has to resore that memory, then update the state.
+//		if we at the start of the frame in the last frame even there is some memory updates, we first do a step back, then restore the memory, then restore the state
+// 
+//1. if we play forward we also has to handle the last frame with two sub states - the start of the frame and the middle frame where we stoppped recording
 //1. for the play forward we need to write into the memory what instructions did. for it we need to store what instructions wrote. when we play forward the steps: store the memory before write, check if this is the new frame. if so, advance to the next frame and store the state. store into a special array what an instruction wrote and the address.
-//1. when we start emulation, we clear memory updates for the current frame (exception the last frame when we are in the middle of it), we clamp the recording frame up to the currently playing.
-//1. reload and reset, update palette, etc and other non-instruction operations that change the hardware states have to reset the playback history
+
+//1. reload, reset, update the palette, and other non-hardware-initiated operations have to reset the playback history
 
 void dev::Hardware::Execution()
 {    
@@ -267,6 +262,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 			m_reqRes.emplace({
 				{"rasterLine", m_display.GetRasterLine()},
 				{"rasterPixel", m_display.GetRasterPixel()},
+				{"frameNum", m_display.GetFrameNum()},
 				});
 			break;
 

@@ -264,8 +264,8 @@ void dev::DisplayWindow::DrawContextMenu()
 		if (ImGui::BeginMenu("Help"))
 		{
 			ImGui::Text(
-				"Left Ctrl + S - set the display size,\n"
-				"Left Ctrl + B - set the border,\n"
+				"Left Ctrl + S - set the display size\n"
+				"Left Ctrl + B - set the border\n"
 			);
 			ImGui::EndMenu();
 		}

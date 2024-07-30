@@ -43,8 +43,8 @@ namespace dev
 			CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP) -> nlohmann::json;
 
-		auto GetLastRW() -> const MemLastRW*;
 		void UpdateLastRW();
+		auto GetLastRW() -> const MemLastRW* { return &m_memLastRW; }
 		void UpdateDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset);
 		auto GetTraceLog() -> TraceLog& { return m_traceLog; };
 		auto GetDebugData() -> DebugData& { return m_debugData; };

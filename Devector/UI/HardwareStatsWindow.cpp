@@ -105,8 +105,8 @@ void dev::HardwareStatsWindow::DrawHardware() const
 		DrawProperty2("Up Time", m_upTimeS.c_str());
 		DrawProperty2("CPU Cicles", m_ccS.c_str());
 		DrawProperty2("Last Run", m_ccLastRunS.c_str());
-		DrawProperty2("CRT X", m_rasterPixelS.c_str());
-		DrawProperty2("CRT Y", m_rasterLineS.c_str());
+		DrawProperty2("CRT X/Y", m_crtS.c_str());
+		DrawProperty2("Frame Num", m_frameNumS.c_str());
 		DrawProperty2("Scroll V", dev::Uint8ToStrC(m_scrollVert));
 		DrawProperty2("Rus/Lat", m_ruslatS.c_str());
 
@@ -315,6 +315,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	const auto& displayDataJ = *res;
 	int rasterPixel = displayDataJ["rasterPixel"];
 	int rasterLine = displayDataJ["rasterLine"];
+	int frameNum = displayDataJ["frameNum"];
 	res = m_hardware.Request(Hardware::Req::GET_MEMORY_MAPPING);
 	Memory::Mapping mapping { res->at("mapping") };
 	int ramdiskIdx = res->at("ramdiskIdx");
@@ -335,8 +336,8 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 
 	// update hardware
 	m_ccLastRunS = std::to_string(m_ccLastRun);
-	m_rasterPixelS = std::to_string(rasterPixel);
-	m_rasterLineS = std::to_string(rasterLine);
+	m_crtS = std::format("{}/{}", rasterPixel, rasterLine);
+	m_frameNumS = std::to_string(frameNum);
 
 	res = m_hardware.Request(Hardware::Req::GET_PALETTE);
 	const auto& paletteDataJ = *res;

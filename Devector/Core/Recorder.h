@@ -16,7 +16,7 @@ namespace dev
 	public:
 		static constexpr int FRAMES_PER_SEC = 50;
 		static constexpr int STATES_LEN = FRAMES_PER_SEC * 60;
-		using MemBeforeWrites = std::vector<uint8_t>;
+		using MemUpdates = std::vector<uint8_t>;
 		using GlobalAddrs = std::vector<GlobalAddr>;
 
 		static constexpr int STATUS_RESET = 0;	// erase the data, stores the first state
@@ -24,39 +24,47 @@ namespace dev
 		static constexpr int STATUS_RESTORE = 2; // restore the last state
 
 #pragma pack(push, 1)
-		struct State
+		struct HwState
 		{
 			CpuI8080::State cpuState;
 			Memory::Update memState;
-			MemBeforeWrites memBeforeWrites; // what was in memory before writes
+			MemUpdates memBeforeWrites; // what was in memory before writes
+			MemUpdates memWrites; // memory after writes
 			GlobalAddrs globalAddrs; // the global addresses where to restore memory
 			IO::State ioState;
 			Display::State displayState;
 		};
 #pragma pack(pop)
 
-		using States = std::array<State, STATES_LEN>;
+		using HwStates = std::array<HwState, STATES_LEN>; // one state per frame
 
 		void Update(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
 		void Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
-		void PlaybackReverse(const int _frames, CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+		void PlayForward(const int _frames, CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
+		void PlayReverse(const int _frames, CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+			IO::State* _ioStateP, Display::State* _displayStateP);
+		void CleanMemUpdates();
+		auto GetStateRecorded() const -> size_t { return m_stateRecorded; };
+		auto GetStateCurrent() const -> size_t { return m_stateCurrent; };
 
 	private:
 		void StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState, 
-			const IO::State& _ioState, const Display::State& _displayState, 
-			size_t increment = 1);
-		void StoreMemory(const Memory::State& _memState);
+			const IO::State& _ioState, const Display::State& _displayState);
+		void StoreMemoryDiff(const Memory::State& _memState);
 		void RestoreState(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
 		void GetStatesSize();
 
-		size_t m_stateIdx = 0; // points to the last stored state
-		int m_stateLen = 0; // the amount of stored states
-		States m_states;
-		size_t m_statesMemSize = 0; // states memory consumption
+		size_t m_stateIdx = 0; // idx to the last stored state
+		size_t m_stateRecorded = 0; // the amount of stored states
+		size_t m_stateCurrent = 0; // state played
+		bool m_lastRecord = true; // false means we at the end of recorded state + memory writes
+		HwStates m_states;
+		size_t m_statesMemSize = 0; // m_states memory consumption
 		size_t m_frameNum = 0;
+
 	};
 }

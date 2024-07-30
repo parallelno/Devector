@@ -132,14 +132,35 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		Reset(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 		break;
 
-	case Hardware::Req::DEBUG_PLAYBACK_REVERSE:
-		m_recorder.PlaybackReverse(_reqDataJ["frames"], _cpuStateP, _memStateP, _ioStateP, _displayStateP);
+	//////////////////
+	// 
+	// Recorder
+	//
+	/////////////////
+	
+	case Hardware::Req::DEBUG_RECORDER_RESET:
+		m_recorder.Reset(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 		break;
 
+	case Hardware::Req::DEBUG_RECORDER_PLAY_FORWARD:
+		m_recorder.PlayForward(_reqDataJ["frames"], _cpuStateP, _memStateP, _ioStateP, _displayStateP);
+		break;
+
+	case Hardware::Req::DEBUG_RECORDER_PLAY_REVERSE:
+		m_recorder.PlayReverse(_reqDataJ["frames"], _cpuStateP, _memStateP, _ioStateP, _displayStateP);
+		break;
+
+	case Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED:
+		out = nlohmann::json{ {"states", m_recorder.GetStateRecorded() } };
+		break;
+
+	case Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT:
+		out = nlohmann::json{ {"states", m_recorder.GetStateCurrent() } };
+		break;
 
 	//////////////////
 	// 
-	// breakpoints
+	// Breakpoints
 	//
 	/////////////////
 
@@ -168,14 +189,14 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		m_breakpoints.SetStatus(_reqDataJ["addr"], Breakpoint::Status::DISABLED);
 		break;
 
-	case Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS: {
+	case Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS:
 		out = nlohmann::json{ {"status", static_cast<uint64_t>(m_breakpoints.GetStatus(_reqDataJ["addr"])) } };
 		break;
-	}
-	case Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES: {
+
+	case Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES:
 		out = nlohmann::json{ {"updates", static_cast<uint64_t>(m_breakpoints.GetUpdates()) } };
 		break;
-	}
+
 	case Hardware::Req::DEBUG_BREAKPOINT_GET_ALL:
 		for(const auto& [addr, bp] : m_breakpoints.GetAll())
 		{
@@ -190,7 +211,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 
 	//////////////////
 	// 
-	// watchpoints
+	// Watchpoints
 	//
 	/////////////////
 
@@ -207,10 +228,10 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		m_watchpoints.Add({ std::move(wpData), _reqDataJ["comment"] });
 		break;
 	}
-	case Hardware::Req::DEBUG_WATCHPOINT_GET_UPDATES: {
+	case Hardware::Req::DEBUG_WATCHPOINT_GET_UPDATES:
 		out = nlohmann::json{ {"updates", static_cast<uint64_t>(m_watchpoints.GetUpdates()) } };
 		break;
-	}
+
 	case Hardware::Req::DEBUG_WATCHPOINT_GET_ALL:
 		for (const auto& [id, wp] : m_watchpoints.GetAll())
 		{
@@ -281,16 +302,11 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 	m_disasm.SetUpdated();
 }
 
-//////////////////////////////////////////////////////////////
-//
-// Requests
-//
-//////////////////////////////////////////////////////////////
-
+// UI thread
 void dev::Debugger::UpdateLastRW()
 {
 	// remove old stats
-	for (int i = 0; i < m_lastReadsAddrsOld.size(); i++) 
+	for (int i = 0; i < m_lastReadsAddrsOld.size(); i++)
 	{
 		auto globalAddrLastRead = m_lastReadsAddrsOld[i];
 		if (globalAddrLastRead != LAST_RW_NO_DATA) {
@@ -328,5 +344,3 @@ void dev::Debugger::UpdateLastRW()
 	m_lastReadsAddrsOld = m_lastReadsAddrs;
 	m_lastWritesAddrsOld = m_lastWritesAddrs;
 }
-
-auto dev::Debugger::GetLastRW() -> const MemLastRW* { return &m_memLastRW; }

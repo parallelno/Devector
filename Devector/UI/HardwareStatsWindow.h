@@ -34,8 +34,8 @@ namespace dev
 
 		std::string m_ccS;
 		std::string m_ccLastRunS;
-		std::string m_rasterPixelS;
-		std::string m_rasterLineS;
+		std::string m_crtS;
+		std::string m_frameNumS;
 		std::string m_mappingRamModeS;
 		std::string m_mappingPageRamS;
 		std::string m_mappingModeStackS;
