@@ -17,7 +17,8 @@ namespace dev
 		ReqUI& m_reqUI;
 
 		int64_t m_ccLast = -1; // to force the first stats update
-
+		int m_stateRecorded = 0;
+		int m_stateCurrent = 0;
 
 		void UpdateData(const bool _isRunning);
 

@@ -65,11 +65,11 @@ const char* fragShaderS = R"#(
 	}
 )#";
 
-dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
-		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils)
+dev::DisplayWindow::DisplayWindow(Hardware& _hardware, const float* const _fontSizeP, 
+	const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI)
 	:
 	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
-	m_hardware(_hardware), m_glUtils(_glUtils)
+	m_hardware(_hardware), m_glUtils(_glUtils), m_reqUI(_reqUI)
 {
 	m_isGLInited = Init();
 }
@@ -137,6 +137,8 @@ bool dev::DisplayWindow::IsFocused() const
 
 void dev::DisplayWindow::UpdateData(const bool _isRunning)
 {
+	//ReqHandling();
+
 	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
 	auto ccDiff = cc - m_ccLast;
 	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
@@ -270,5 +272,18 @@ void dev::DisplayWindow::DrawContextMenu()
 			ImGui::EndMenu();
 		}
 		ImGui::EndPopup();
+	}
+}
+
+void dev::DisplayWindow::ReqHandling()
+{
+	if (m_reqUI.type == ReqUI::Type::NONE) return;
+
+	switch (m_reqUI.type)
+	{
+	case ReqUI::Type::DISPLAY_FRAME_BUFF_UPDATE: {
+		m_reqUI.type = ReqUI::Type::NONE;
+		//
+	}
 	}
 }

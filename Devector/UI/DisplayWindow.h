@@ -52,15 +52,18 @@ namespace dev
 		bool m_isGLInited = false;
 		bool m_displayIsHovered = false;
 		const char* m_contextMenuName = "##displayCMenu";
+		ReqUI& m_reqUI;
 
 		void DrawDisplay();
 		void DrawContextMenu();
 		void CreateTexture(const bool _vsync);
 		void UpdateData(const bool _isRunning);
 		bool Init();
+		void ReqHandling();
 
 	public:
-		DisplayWindow(Hardware& _hardware, const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils);
+		DisplayWindow(Hardware& _hardware, const float* const _fontSizeP, 
+			const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI);
 		void Update(bool& _visible);
 		bool IsFocused() const;
 	};

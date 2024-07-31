@@ -57,14 +57,25 @@ namespace dev
 
 		using FrameBuffer = std::array <ColorI, FRAME_LEN>;
 
-		struct State
+		using FrameBuffUpdateFunc = std::function<void()>;
+
+		// contains the state after the last instruction executed
+#pragma pack(push, 1)
+		struct Update
 		{
 			uint64_t frameNum = 0;	// counts frames
 			ColorI fullPallete[FULL_PALLETE_LEN];
 			uint8_t scrollIdx = 0xff;	// vertical scrolling, 0xff - no scroll
 			bool irq = false;			// interruption request
 			int framebufferIdx = 0;		// currently rendered pixel idx to m_frameBuffer
+		};
+#pragma pack(pop)
+
+		struct State
+		{
+			Update update;
 			FrameBuffer* frameBufferP = nullptr;
+			FrameBuffUpdateFunc FrameBuffUpdate = nullptr;
 		};
 
 	private:
@@ -84,11 +95,11 @@ namespace dev
 		void Rasterize();
 		bool IsIRQ();
 		auto GetFrame(const bool _vsync) ->const FrameBuffer*;
-		inline auto GetFrameNum() const -> uint64_t { return m_state.frameNum; };
+		inline auto GetFrameNum() const -> uint64_t { return m_state.update.frameNum; };
 		inline int GetRasterLine() const;
 		inline int GetRasterPixel() const;
 		static ColorI VectorColorToArgb(const uint8_t _vColor);
-		auto GetScrollVert() const -> uint8_t { return m_state.scrollIdx; };
+		auto GetScrollVert() const -> uint8_t { return m_state.update.scrollIdx; };
 		auto GetState() const -> const State& { return m_state; };
 		auto GetStateP() -> State* { return &m_state; };
 	private:
@@ -104,5 +115,6 @@ namespace dev
 		void RasterizeBorder(const int _rasterizedPixels);
 		void FillBorder(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 		void FillBorderPortHandling(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
+		void FrameBuffUpdate();
 	};
 }

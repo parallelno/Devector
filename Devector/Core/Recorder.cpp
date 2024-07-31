@@ -6,7 +6,7 @@ void dev::Recorder::Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 {
 	m_stateIdx = m_stateRecorded = m_stateCurrent = static_cast<size_t>(-1);  // -1 because StoreState increments them
 	m_lastRecord = true;
-	m_frameNum = _displayStateP->frameNum; 
+	m_frameNum = _displayStateP->update.frameNum; 
 	StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP);
 }
 
@@ -28,10 +28,10 @@ void dev::Recorder::Update(CpuI8080::State* _cpuStateP, Memory::State* _memState
 	if (!m_lastRecord) CleanMemUpdates();
 
 	if (_memStateP->debug.writeLen) StoreMemoryDiff(*_memStateP);
-	if (m_frameNum != _displayStateP->frameNum)
+	if (m_frameNum != _displayStateP->update.frameNum)
 	{
 		StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP);
-		m_frameNum = _displayStateP->frameNum;
+		m_frameNum = _displayStateP->update.frameNum;
 	}
 }
 
@@ -60,7 +60,7 @@ void dev::Recorder::StoreState(const CpuI8080::State& _cpuState, const Memory::S
 	nextState.cpuState = _cpuState;
 	nextState.memState = _memState.update;
 	nextState.ioState = _ioState;
-	nextState.displayState = _displayState;
+	nextState.displayState = _displayState.update;
 	nextState.memBeforeWrites.clear();
 	nextState.memWrites.clear();
 	nextState.globalAddrs.clear();
@@ -71,6 +71,13 @@ void dev::Recorder::PlayForward(const int _frames, CpuI8080::State* _cpuStateP, 
 {
 	for (int i = 0; i < _frames; i++)
 	{
+		
+		if (m_stateCurrent == m_stateRecorded) 
+		{
+			m_lastRecord = false; // we play forward only to the start of the frame
+			break;
+		}
+
 		// restore the memory of the current state
 		auto& state = m_states[m_stateIdx];
 		auto& ram = *(_memStateP->ramP);
@@ -82,10 +89,6 @@ void dev::Recorder::PlayForward(const int _frames, CpuI8080::State* _cpuStateP, 
 			ram[globalAddr] = val;
 		}
 
-		m_lastRecord = m_stateCurrent == m_stateRecorded;
-		
-		if (m_lastRecord) break;
-
 		m_stateIdx = (m_stateIdx + 1) % STATES_LEN;
 		m_stateCurrent++;
 
@@ -94,10 +97,10 @@ void dev::Recorder::PlayForward(const int _frames, CpuI8080::State* _cpuStateP, 
 		*_cpuStateP = stateNext.cpuState;
 		_memStateP->update = stateNext.memState;
 		*_ioStateP = stateNext.ioState;
-		*_displayStateP = stateNext.displayState;
+		_displayStateP->update = stateNext.displayState;
 	}
 
-	//UpdateDisplay();
+	_displayStateP->FrameBuffUpdate();
 }
 
 void dev::Recorder::PlayReverse(const int _frames, CpuI8080::State* _cpuStateP,
@@ -121,7 +124,7 @@ void dev::Recorder::PlayReverse(const int _frames, CpuI8080::State* _cpuStateP,
 		*_cpuStateP = state.cpuState;
 		_memStateP->update = state.memState;
 		*_ioStateP = state.ioState;
-		*_displayStateP = state.displayState;
+		_displayStateP->update = state.displayState;
 		auto& ram = *(_memStateP->ramP);
 
 		for (int i = state.globalAddrs.size() - 1; i >= 0; i--)
@@ -132,7 +135,7 @@ void dev::Recorder::PlayReverse(const int _frames, CpuI8080::State* _cpuStateP,
 		}
 	}
 
-	//UpdateDisplay();
+	_displayStateP->FrameBuffUpdate();
 }
 
 void dev::Recorder::GetStatesSize()

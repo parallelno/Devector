@@ -29,10 +29,8 @@ void dev::RecorderWindow::Update(bool& _visible)
 
 void dev::RecorderWindow::Draw(const bool _isRunning)
 {
-	int stateRecorded = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED)->at("states");
-	int stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
 
-	ImGui::Text("State current / recorded: %d / %d", stateCurrent, stateRecorded);
+	ImGui::Text("State current / recorded: %d / %d", m_stateCurrent, m_stateRecorded);
 
 	ImGui::Separator();
 
@@ -42,11 +40,11 @@ void dev::RecorderWindow::Draw(const bool _isRunning)
 	}
 
 	if (_isRunning) ImGui::BeginDisabled();
-	ImGui::SameLine();
-	if (ImGui::Button("Load"))
-	{
-		m_ccLast = -1;
-	}
+	//ImGui::SameLine();
+	//if (ImGui::Button("Load"))
+	//{
+	//	m_ccLast = -1;
+	//}
 	ImGui::SameLine();
 	if (ImGui::Button("Save"))
 	{
@@ -67,43 +65,49 @@ void dev::RecorderWindow::Draw(const bool _isRunning)
 
 	// Frame slider
 	dev::PushStyleCompact(0.5f);
-	int stateCurrentOld = stateCurrent;
-	if (ImGui::SliderInt("##recTimeline", &stateCurrent, 1, stateRecorded, "%d", ImGuiSliderFlags_AlwaysClamp))
+	int stateCurrentOld = m_stateCurrent;
+	if (ImGui::SliderInt("##recTimeline", &m_stateCurrent, 1, m_stateRecorded, "%d", ImGuiSliderFlags_AlwaysClamp))
 	{
-		int diff = stateCurrent - stateCurrentOld;
+		int diff = m_stateCurrent - stateCurrentOld;
 		if (diff < 0) {
 			m_hardware.Request(Hardware::Req::DEBUG_RECORDER_PLAY_REVERSE, { {"frames", abs(diff)} });
 		}
 		else {
 			m_hardware.Request(Hardware::Req::DEBUG_RECORDER_PLAY_FORWARD, { {"frames", abs(diff)} });
 		}
+
+		m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
+		//m_reqUI.type = ReqUI::Type::DISPLAY_FRAME_BUFF_UPDATE;
 	}
 
 	ImGui::SameLine();
 	if (ImGui::Button(" - ") ||
 		(ImGui::IsKeyPressed(ImGuiKey_R) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl)))
 	{
-		m_hardware.Request(Hardware::Req::DEBUG_RECORDER_PLAY_REVERSE, { {"frames", 10}});
+		m_hardware.Request(Hardware::Req::DEBUG_RECORDER_PLAY_REVERSE, { {"frames", 1}});
+		m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
+		//m_reqUI.type = ReqUI::Type::DISPLAY_FRAME_BUFF_UPDATE;
 	}
 
 	ImGui::SameLine();
 	if (ImGui::Button(" + "))
 	{
-		m_hardware.Request(Hardware::Req::DEBUG_RECORDER_PLAY_FORWARD, { {"frames", 10} });
+		m_hardware.Request(Hardware::Req::DEBUG_RECORDER_PLAY_FORWARD, { {"frames", 1} });
+		m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
+		//m_reqUI.type = ReqUI::Type::DISPLAY_FRAME_BUFF_UPDATE;
 	}
 	dev::PopStyleCompact();
 }
 
 void dev::RecorderWindow::UpdateData(const bool _isRunning)
 {
-	/*
 	// check if the hardware updated its state
 	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
 	auto ccDiff = cc - m_ccLast;
-	//if (ccDiff == 0) return;
+	if (ccDiff == 0) return;
 	m_ccLast = cc;
 
-	*/
 	// update
-	
+	m_stateRecorded = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED)->at("states");
+	m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
 }

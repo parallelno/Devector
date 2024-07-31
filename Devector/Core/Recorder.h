@@ -32,7 +32,7 @@ namespace dev
 			MemUpdates memWrites; // memory after writes
 			GlobalAddrs globalAddrs; // the global addresses where to restore memory
 			IO::State ioState;
-			Display::State displayState;
+			Display::Update displayState;
 		};
 #pragma pack(pop)
 
