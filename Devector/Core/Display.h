@@ -65,9 +65,9 @@ namespace dev
 		{
 			uint64_t frameNum = 0;	// counts frames
 			ColorI fullPallete[FULL_PALLETE_LEN];
-			uint8_t scrollIdx = 0xff;	// vertical scrolling, 0xff - no scroll
 			bool irq = false;			// interruption request
 			int framebufferIdx = 0;		// currently rendered pixel idx to m_frameBuffer
+			uint8_t scrollIdx = 0xff;	// vertical scrolling, 0xff - no scroll
 		};
 #pragma pack(pop)
 

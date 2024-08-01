@@ -124,7 +124,7 @@ void dev::DevectorApp::RestartOnLoadFdd()
 		if (m_rustLatSwitched++ > 2)
 		{
 			m_rustLatSwitched = 0;
-			auto romEnabledJ = *m_hardwareP->Request(Hardware::Req::IS_ROM_ENABLED);
+			auto romEnabledJ = *m_hardwareP->Request(Hardware::Req::IS_MEMROM_ENABLED);
 			if (romEnabledJ["data"]) {
 				m_hardwareP->Request(Hardware::Req::RESTART);
 			}
@@ -133,71 +133,25 @@ void dev::DevectorApp::RestartOnLoadFdd()
 	m_ruslat = (m_ruslatHistory & 0b1000) != 0;
 }
 
-void dev::DevectorApp::LoadRom(const std::wstring& _path)
-{
-	auto result = dev::LoadFile(_path);
-	if (!result || result->empty()) {
-		dev::Log(L"Error occurred while loading the file. Path: {}. "
-			"Please ensure the file exists and you have the correct permissions to read it.", _path);
-		return;
-	}
-
-	m_hardwareP->Request(Hardware::Req::STOP);
-	m_hardwareP->Request(Hardware::Req::RESET);
-	m_hardwareP->Request(Hardware::Req::RESTART);
-
-	auto reqData = nlohmann::json({ {"data", *result}, {"addr", Memory::ROM_LOAD_ADDR} });
-	m_hardwareP->Request(Hardware::Req::SET_MEM, reqData);
-
-	m_hardwareP->Request(Hardware::Req::DEBUG_RESET); // has to be called after Hardware loading Rom because it stores the last state of Hardware
-	
-
-	m_debuggerP->GetDebugData().LoadDebugData(_path);
-	m_hardwareP->Request(Hardware::Req::RUN);
-
-	Log(L"File loaded: {}", _path);
-}
-
-void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, const bool _autoBoot)
-{
-	auto fddResult = dev::LoadFile(_path);
-	if (!fddResult || fddResult->empty()) {
-		dev::Log(L"Error occurred while loading the file. "
-			"Please ensure the file exists and you have the correct permissions to read it. Path: {}", _path);
-		return;
-	}
-	if (fddResult->size() > FDisk::dataLen) {
-		dev::Log(L"Fdc1793: disk image is too big. size: {} bytes, path: {}", fddResult->size(), _path);
-		return;
-	}
-
-	if (_autoBoot) m_hardwareP->Request(Hardware::Req::STOP);
-
-	// loading the fdd data
-	m_hardwareP->Request(Hardware::Req::LOAD_FDD, {
-		{"data", *fddResult },
-		{"driveIdx", _driveIdx},
-		{"path", dev::StrWToStr(_path)}
-	});
-
-	if (_autoBoot)
-	{
-		m_hardwareP->Request(Hardware::Req::RESET);
-		m_hardwareP->Request(Hardware::Req::DEBUG_RESET); // has to be called after Hardware loading FDD image because it stores the last state of Hardware
-		m_hardwareP->Request(Hardware::Req::RUN);
-	}
-
-	Log(L"File loaded: {}", _path);
-}
-
 void dev::DevectorApp::Reload()
 {
 	if (m_recentFilePaths.empty()) return;
 	// get latest recent path
-	const auto& [path, _driveIdx, _autoBoot] = m_recentFilePaths.front();
+	const auto& [path, _fileType, _driveIdx, _autoBoot] = m_recentFilePaths.front();
+	
+	switch (_fileType) {
+	case FileType::ROM:
+		LoadRom(path);
+		break;
 
-	if (_driveIdx < 0) LoadRom(path);
-	else LoadFdd(path, _driveIdx, _autoBoot);
+	case FileType::FDD:
+		LoadFdd(path, _driveIdx, _autoBoot);
+		break;
+
+	case FileType::REC:
+		LoadRecording(path);
+		break;
+	}
 }
 
 void dev::DevectorApp::MainMenuUpdate()
@@ -212,10 +166,10 @@ void dev::DevectorApp::MainMenuUpdate()
 			}
 			if (ImGui::BeginMenu("Recent Files"))
 			{
-				for (const auto& [path, driveIdx, autoBoot] : m_recentFilePaths)
+				for (const auto& [path, _fileType, driveIdx, autoBoot] : m_recentFilePaths)
 				{
 					std::string itemS = dev::StrWToStr(path);
-					if (driveIdx >= 0)
+					if (_fileType == FileType::FDD)
 					{
 						itemS += std::format(":{}", driveIdx);
 						itemS += autoBoot ? "A" : "";
@@ -340,19 +294,24 @@ void dev::DevectorApp::ResLoadingStatusHandling()
 
 	case LoadingRes::State::LOAD:
 	{
-		auto ext = StrToUpper(dev::GetExt(m_loadingRes.path));
-
-		if (ext == EXT_ROM) {
+		switch (m_loadingRes.fileType)
+		{
+		case FileType::ROM:
 			LoadRom(m_loadingRes.path);
-		}
-		else if (ext == EXT_FDD) {
+			break;
+		case FileType::FDD:
 			LoadFdd(m_loadingRes.path, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
+			break;
+		case FileType::REC:
+			LoadRecording(m_loadingRes.path);
+			break;
 		}
+
 		m_loadingRes.state = LoadingRes::State::UPDATE_RECENT;
 		break;
 	}
 	case LoadingRes::State::UPDATE_RECENT:
-		RecentFilesUpdate(m_loadingRes.path, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
+		RecentFilesUpdate(m_loadingRes.path, m_loadingRes.fileType, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
 		RecentFilesStore();
 		m_loadingRes.state = LoadingRes::State::NONE;
 		break;
@@ -368,19 +327,20 @@ void dev::DevectorApp::RecentFilesInit()
 	for (const auto& path_driveIdx_autoBoot : recentFiles)
 	{
 		auto path = dev::StrToStrW(path_driveIdx_autoBoot[0]);
-		int driveIdx = path_driveIdx_autoBoot[1];
-		bool autoBoot = path_driveIdx_autoBoot[2];
+		FileType fileType = static_cast<FileType>(path_driveIdx_autoBoot[1]);
+		int driveIdx = path_driveIdx_autoBoot[2];
+		bool autoBoot = path_driveIdx_autoBoot[3];
 
-		m_recentFilePaths.push_back({ path, driveIdx, autoBoot });
+		m_recentFilePaths.push_back({ path, fileType, driveIdx, autoBoot });
 	}
 }
 
 void dev::DevectorApp::RecentFilesStore()
 {
 	nlohmann::json recentFiles;
-	for (const auto& [path, driveIdx, autoBoot] : m_recentFilePaths)
+	for (const auto& [path, fileType, driveIdx, autoBoot] : m_recentFilePaths)
 	{
-		nlohmann::json item = { dev::StrWToStr(path), driveIdx, autoBoot };
+		nlohmann::json item = { dev::StrWToStr(path), fileType, driveIdx, autoBoot };
 
 		recentFiles.push_back(item);
 	}
@@ -388,7 +348,7 @@ void dev::DevectorApp::RecentFilesStore()
 	SettingsSave(m_stringPath);
 }
 
-void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path, const int _driveIdx, const bool _autoBoot)
+void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path, const FileType _fileType, const int _driveIdx, const bool _autoBoot)
 {
 	// remove if it contains
 	m_recentFilePaths.remove_if(
@@ -398,7 +358,7 @@ void dev::DevectorApp::RecentFilesUpdate(const std::wstring& _path, const int _d
 	);
 
 	// add a new one
-	m_recentFilePaths.push_front({_path, _driveIdx, _autoBoot });
+	m_recentFilePaths.push_front({_path, _fileType, _driveIdx, _autoBoot });
 	// check the amount
 	if (m_recentFilePaths.size() > RECENT_FILES_MAX)
 	{
@@ -569,48 +529,35 @@ void dev::DevectorApp::SaveUpdatedFdd()
 	m_loadingRes.state = LoadingRes::State::CHECK_MOUNTED;
 }
 
-
-// Function to open a file dialog
-bool OpenFileDialog(WCHAR* filePath, int size)
-{
-	OPENFILENAME ofn;
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrFile = filePath;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = size;
-	ofn.lpstrFilter = L"All Files (*.rom, *.fdd)\0*.rom;*.fdd\0";
-	ofn.nFilterIndex = 1;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-	// Display the open file dialog
-	if (GetOpenFileName(&ofn) == TRUE)
-		return true; // User selected a file
-	else
-		return false; // User cancelled or an error occurred
-}
-
 // Open the file dialog
 void dev::DevectorApp::OpenFile()
 {
-	WCHAR path[MAX_PATH];
+	wchar_t path[MAX_PATH];
 
-	if (OpenFileDialog(path, MAX_PATH))
+	if (dev::OpenFileDialog(path, MAX_PATH, L"All Files (*.rom, *.fdd)\0*.rom;*.fdd\0"))
 	{
 		auto ext = StrToUpper(dev::GetExt(path));
 
 		if (ext == EXT_ROM) 
 		{
 			LoadRom(path);
+			m_loadingRes.fileType = FileType::ROM;
 			m_loadingRes.path = path;
-			m_loadingRes.driveIdx = -1;
 			m_loadingRes.autoBoot = false;
 			m_loadingRes.state = LoadingRes::State::UPDATE_RECENT;
 		}
 		else if (ext == EXT_FDD)
 		{
+			m_loadingRes.fileType = FileType::FDD;
 			m_loadingRes.path = path;
 			m_loadingRes.state = LoadingRes::State::OPEN_POPUP_SELECT_DRIVE;
+		}
+		else if (ext == EXT_REC)
+		{
+			m_loadingRes.fileType = FileType::REC;
+			m_loadingRes.path = path;
+			m_loadingRes.autoBoot = false;
+			m_loadingRes.state = LoadingRes::State::UPDATE_RECENT;
 		}
 		else {
 			dev::Log(L"Not supported file type: {}", path);
@@ -655,12 +602,92 @@ void dev::DevectorApp::ReqUIHandling()
 {
 	switch (m_reqUI.type)
 	{
-	case ReqUI::Type::RELOAD_ROM_FDD:
+	case ReqUI::Type::RELOAD_ROM_FDD_REC:
 		Reload();
 		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		break;
 	}
 }
+
+
+void dev::DevectorApp::LoadRom(const std::wstring& _path)
+{
+	auto result = dev::LoadFile(_path);
+	if (!result || result->empty()) {
+		dev::Log(L"Error occurred while loading the file. Path: {}. "
+			"Please ensure the file exists and you have the correct permissions to read it.", _path);
+		return;
+	}
+
+	m_hardwareP->Request(Hardware::Req::STOP);
+	m_hardwareP->Request(Hardware::Req::RESET);
+	m_hardwareP->Request(Hardware::Req::RESTART);
+
+	auto reqData = nlohmann::json({ {"data", *result}, {"addr", Memory::ROM_LOAD_ADDR} });
+	m_hardwareP->Request(Hardware::Req::SET_MEM, reqData);
+
+	m_hardwareP->Request(Hardware::Req::DEBUG_RESET); // has to be called after Hardware loading Rom because it stores the last state of Hardware
+	m_debuggerP->GetDebugData().LoadDebugData(_path);
+	m_hardwareP->Request(Hardware::Req::RUN);
+
+	Log(L"File loaded: {}", _path);
+}
+
+void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, const bool _autoBoot)
+{
+	auto fddResult = dev::LoadFile(_path);
+	if (!fddResult || fddResult->empty()) {
+		dev::Log(L"Error occurred while loading the file. "
+			"Please ensure the file exists and you have the correct permissions to read it. Path: {}", _path);
+		return;
+	}
+	if (fddResult->size() > FDisk::dataLen) {
+		dev::Log(L"Fdc1793: disk image is too big. size: {} bytes, path: {}", fddResult->size(), _path);
+		return;
+	}
+
+	if (_autoBoot) m_hardwareP->Request(Hardware::Req::STOP);
+
+	// loading the fdd data
+	m_hardwareP->Request(Hardware::Req::LOAD_FDD, {
+		{"data", *fddResult },
+		{"driveIdx", _driveIdx},
+		{"path", dev::StrWToStr(_path)}
+		});
+
+	if (_autoBoot)
+	{
+		m_hardwareP->Request(Hardware::Req::RESET);
+		m_hardwareP->Request(Hardware::Req::DEBUG_RESET); // has to be called after Hardware loading FDD image because it stores the last state of Hardware
+		m_hardwareP->Request(Hardware::Req::RUN);
+	}
+
+	Log(L"File loaded: {}", _path);
+}
+
+void dev::DevectorApp::LoadRecording(const std::wstring& _path)
+{
+	auto result = dev::LoadFile(_path);
+	if (!result || result->empty()) {
+		dev::Log(L"Error occurred while loading the file. Path: {}. "
+			"Please ensure the file exists and you have the correct permissions to read it.", _path);
+		return;
+	}
+
+	m_hardwareP->Request(Hardware::Req::STOP);
+	m_hardwareP->Request(Hardware::Req::RESET);
+	m_hardwareP->Request(Hardware::Req::RESTART);
+
+	m_debuggerP->GetRecorder().Deserialize(*result);
+
+
+	m_hardwareP->Request(Hardware::Req::DEBUG_RESET); // has to be called after Hardware loading Rom because it stores the last state of Hardware
+	m_debuggerP->GetDebugData().LoadDebugData(_path);
+	m_hardwareP->Request(Hardware::Req::RUN);
+
+	Log(L"File loaded: {}", _path);
+}
+
 
 void dev::DevectorApp::DebugAttach()
 {

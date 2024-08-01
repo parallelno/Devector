@@ -33,6 +33,9 @@ namespace dev
 		static constexpr int RECENT_FILES_MAX = 10;
 		const std::wstring EXT_ROM = L".ROM";
 		const std::wstring EXT_FDD = L".FDD";
+		const std::wstring EXT_REC = L".REC";
+
+		enum class FileType : int {ROM = 0, FDD, REC};
 		
 		struct LoadingRes
 		{
@@ -69,6 +72,7 @@ namespace dev
 			Type type = Type::OPEN_FILE_DIALOG;
 			std::wstring pathFddUpdated;
 			int driveIdxUpdated = 0;
+			FileType fileType = FileType::ROM;
 
 			void Init(const State& _state, const Type _type = Type::OPEN_FILE_DIALOG, const std::wstring& _path = L"",
 				const int _driveIdx = -1, bool _autoBoot = false) 
@@ -115,8 +119,8 @@ namespace dev
 
 		bool m_debuggerAttached = false;
 
-		// path, driveIdx, autoBoot
-		std::list<std::tuple<std::wstring, int, bool>> m_recentFilePaths;
+		// path, file type, driveIdx, autoBoot
+		std::list<std::tuple<std::wstring, FileType, int, bool>> m_recentFilePaths;
 
 		ReqUI m_reqUI;
 
@@ -134,11 +138,12 @@ namespace dev
 		void SettingsInit();
 		void RecentFilesInit();
 		void RecentFilesStore();
-		void RecentFilesUpdate(const std::wstring& _path, const int _driveIdx = -1, const bool _autoBoot = false);
+		void RecentFilesUpdate(const std::wstring& _path, const FileType _fileType, const int _driveIdx = -1, const bool _autoBoot = false);
 		void AppStyleInit();
 		void MainMenuUpdate();
 		void LoadRom(const std::wstring& _path);
 		void LoadFdd(const std::wstring& _path, const int _driveIdx, const bool _autoBoot);
+		void LoadRecording(const std::wstring& _path);
 		void Reload();
 		static void KeyHandling(GLFWwindow* _window, int _key, int _scancode, int _action, int _modes);
 		void DrawSaveDiscardFddPopup();

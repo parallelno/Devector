@@ -362,7 +362,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 			m_reqRes.emplace({});
 			break;
 		}
-		case Req::IS_ROM_ENABLED:
+		case Req::IS_MEMROM_ENABLED:
 			m_reqRes.emplace({
 				{"data", m_memory.IsRomEnabled() },
 				});

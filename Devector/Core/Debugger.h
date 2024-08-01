@@ -49,7 +49,7 @@ namespace dev
 		auto GetTraceLog() -> TraceLog& { return m_traceLog; };
 		auto GetDebugData() -> DebugData& { return m_debugData; };
 		auto GetDisasm() -> Disasm& { return m_disasm; };
-		auto GetReverse() -> Recorder& { return m_recorder; };
+		auto GetRecorder() -> Recorder& { return m_recorder; };
 
 	private:
 

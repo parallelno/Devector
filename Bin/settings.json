@@ -9,44 +9,21 @@
     "fontSize": 18.0,
     "hardwareStatsWindowVisible": true,
     "hexViewerWindowVisible": true,
-    "mainWindowHeight": 1360,
-    "mainWindowWidth": 2485,
-    "mainWindowX": 3,
-    "mainWindowY": 33,
+    "mainWindowHeight": 1356,
+    "mainWindowWidth": 2448,
+    "mainWindowX": 0,
+    "mainWindowY": 32,
     "memDisplayWindowVisible": true,
     "recentFiles": [
         [
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\badaps.fdd",
+            1,
+            0,
+            true
+        ],
+        [
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\DFIGHT.ROM",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_rus.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\FATAXCOL.ROM",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\putup.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_eng.rom",
-            -1,
-            false
-        ],
-        [
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\ramdisk_test.ROM",
+            0,
             -1,
             false
         ]

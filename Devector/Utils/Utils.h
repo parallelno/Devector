@@ -217,4 +217,6 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	auto GetDirStemExt(const std::wstring& _path)
 		->std::tuple<std::wstring, std::wstring, std::wstring>;
 
+	bool OpenFileDialog(wchar_t* filePath, int size, const wchar_t* _filter);
+	bool SaveFileDialog(wchar_t* filePath, int size, const wchar_t* _filter);
 }

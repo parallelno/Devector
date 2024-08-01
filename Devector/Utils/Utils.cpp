@@ -151,3 +151,53 @@ auto dev::GetDirStemExt(const std::wstring& _path)
 	std::filesystem::path p{ _path };
 	return std::make_tuple(p.parent_path().wstring(), p.stem().wstring(), p.extension().wstring());
 }
+
+// return true if the user selected a file
+// return false if the user canceled the dialog or an error occurred
+bool dev::OpenFileDialog(wchar_t* filePath, int size, const wchar_t* _filter)
+{
+#if defined(_WIN32)
+
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFile = filePath;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = size;
+	ofn.lpstrFilter = _filter;
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+	// Display the open file dialog
+	return GetOpenFileName(&ofn) == TRUE;
+
+#elif defined(__APPLE__)
+#else
+#endif
+}
+
+// return true if the user selected a file
+// return false if the user canceled the dialog or an error occurred
+bool dev::SaveFileDialog(wchar_t* filePath, int size, const wchar_t* _filter)
+{
+#if defined(_WIN32)
+
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFile = filePath;
+	ofn.nMaxFile = size;
+	ofn.lpstrFilter = _filter;
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR | OFN_OVERWRITEPROMPT;
+	ofn.lpstrInitialDir = 0;
+	ofn.lpstrDefExt = dev::GetExt(filePath).c_str();
+	ofn.lpstrFileTitle = filePath;
+
+	// Display the open file dialog
+	return GetSaveFileName(&ofn) == TRUE;
+
+#elif defined(__APPLE__)
+#else
+#endif
+}

@@ -274,7 +274,7 @@ void dev::DisplayWindow::DrawContextMenu()
 		ImGui::EndPopup();
 	}
 }
-
+/*
 void dev::DisplayWindow::ReqHandling()
 {
 	if (m_reqUI.type == ReqUI::Type::NONE) return;
@@ -287,3 +287,4 @@ void dev::DisplayWindow::ReqHandling()
 	}
 	}
 }
+*/

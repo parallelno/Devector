@@ -48,12 +48,19 @@ void dev::RecorderWindow::Draw(const bool _isRunning)
 	ImGui::SameLine();
 	if (ImGui::Button("Save"))
 	{
-		m_ccLast = -1;
+		wchar_t path[MAX_PATH] = { L"file_name.devrec" };
+
+		if (SaveFileDialog(path, MAX_PATH, L"All Files (*.devrec)\0*.devrec\0"))
+		{
+			auto ext = StrToUpper(dev::GetExt(path));
+		};
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Clear"))
 	{
 		m_hardware.Request(Hardware::Req::DEBUG_RECORDER_RESET);
+		m_stateRecorded = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED)->at("states");
+		m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
 	}
 	if (_isRunning) ImGui::EndDisabled();
 	
@@ -77,7 +84,6 @@ void dev::RecorderWindow::Draw(const bool _isRunning)
 		}
 
 		m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
-		//m_reqUI.type = ReqUI::Type::DISPLAY_FRAME_BUFF_UPDATE;
 	}
 
 	ImGui::SameLine();
@@ -86,7 +92,6 @@ void dev::RecorderWindow::Draw(const bool _isRunning)
 	{
 		m_hardware.Request(Hardware::Req::DEBUG_RECORDER_PLAY_REVERSE, { {"frames", 1}});
 		m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
-		//m_reqUI.type = ReqUI::Type::DISPLAY_FRAME_BUFF_UPDATE;
 	}
 
 	ImGui::SameLine();
@@ -94,7 +99,6 @@ void dev::RecorderWindow::Draw(const bool _isRunning)
 	{
 		m_hardware.Request(Hardware::Req::DEBUG_RECORDER_PLAY_FORWARD, { {"frames", 1} });
 		m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
-		//m_reqUI.type = ReqUI::Type::DISPLAY_FRAME_BUFF_UPDATE;
 	}
 	dev::PopStyleCompact();
 }

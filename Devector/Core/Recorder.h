@@ -22,6 +22,7 @@ namespace dev
 		static constexpr int STATUS_RESET = 0;	// erase the data, stores the first state
 		static constexpr int STATUS_UPDATE = 1;	// enables updating
 		static constexpr int STATUS_RESTORE = 2; // restore the last state
+		static constexpr uint8_t VERSION = 1; // version of the file format
 
 #pragma pack(push, 1)
 		struct HwState
@@ -49,6 +50,8 @@ namespace dev
 		void CleanMemUpdates();
 		auto GetStateRecorded() const -> size_t { return m_stateRecorded; };
 		auto GetStateCurrent() const -> size_t { return m_stateCurrent; };
+		void Deserialize(const std::vector<uint8_t>& _data); // on loads
+		auto Serialize() const -> const std::vector<uint8_t>; // on save
 
 	private:
 		void StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState, 
@@ -58,13 +61,13 @@ namespace dev
 			IO::State* _ioStateP, Display::State* _displayStateP);
 		void GetStatesSize();
 
-		size_t m_stateIdx = 0; // idx to the last stored state
-		size_t m_stateRecorded = 0; // the amount of stored states
-		size_t m_stateCurrent = 0; // state played
+		size_t m_stateIdx = 0; // idx of the last stored state in a circular buffer
+		size_t m_stateRecorded = 0; // the amount of recorded states from 1 to STATES_LEN
+		size_t m_stateCurrent = 0; // the number of current state from 1 to m_stateRecorded included
 		bool m_lastRecord = true; // false means we at the end of recorded state + memory writes
 		HwStates m_states;
 		size_t m_statesMemSize = 0; // m_states memory consumption
 		size_t m_frameNum = 0;
-
+		Memory::Ram m_ram;
 	};
 }

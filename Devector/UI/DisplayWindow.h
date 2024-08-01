@@ -59,7 +59,7 @@ namespace dev
 		void CreateTexture(const bool _vsync);
 		void UpdateData(const bool _isRunning);
 		bool Init();
-		void ReqHandling();
+		//void ReqHandling();
 
 	public:
 		DisplayWindow(Hardware& _hardware, const float* const _fontSizeP, 
