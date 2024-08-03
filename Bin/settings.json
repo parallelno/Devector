@@ -1,20 +1,26 @@
 {
     "bootPath": "boot//boot.bin",
     "breakpointsWindowVisisble": false,
-    "disasmWindowVisible": true,
+    "disasmWindowVisible": false,
     "displayWindowVisible": true,
     "fontItalicPath": "fonts//medium_italic.ttf",
     "fontItalicSize": 18.0,
     "fontPath": "fonts//medium.ttf",
     "fontSize": 18.0,
-    "hardwareStatsWindowVisible": true,
+    "hardwareStatsWindowVisible": false,
     "hexViewerWindowVisible": false,
-    "mainWindowHeight": 1351,
-    "mainWindowWidth": 1635,
+    "mainWindowHeight": 1097,
+    "mainWindowWidth": 1985,
     "mainWindowX": 0,
     "mainWindowY": 32,
-    "memDisplayWindowVisible": true,
+    "memDisplayWindowVisible": false,
     "recentFiles": [
+        [
+            2,
+            "C:\\Work\\Programming\\devector\\Devector\\Rom\\file_name2.rec",
+            -1,
+            false
+        ],
         [
             2,
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\file_name.rec",
@@ -23,30 +29,12 @@
         ],
         [
             0,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\putup.rom",
-            -1,
-            false
-        ],
-        [
-            0,
             "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
             -1,
             false
-        ],
-        [
-            0,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\river_raid.rom",
-            -1,
-            false
-        ],
-        [
-            1,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\badaps.fdd",
-            0,
-            true
         ]
     ],
-    "recorderWindowVisible": true,
+    "recorderWindowVisible": false,
     "restartOnLoadFdd": true,
     "traceLogWindowVisible": false,
     "watchpointsWindowVisible": false
