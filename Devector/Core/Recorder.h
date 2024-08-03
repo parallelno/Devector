@@ -22,7 +22,10 @@ namespace dev
 		static constexpr int STATUS_RESET = 0;	// erase the data, stores the first state
 		static constexpr int STATUS_UPDATE = 1;	// enables updating
 		static constexpr int STATUS_RESTORE = 2; // restore the last state
-		static constexpr uint8_t VERSION = 1; // version of the file format
+		// file format version 
+		static constexpr uint32_t VERSION = 1;
+		// it checks only first 8 bits of a version
+		static constexpr uint32_t VERSION_MASK = 0xff;
 
 #pragma pack(push, 1)
 		struct HwState
@@ -47,11 +50,13 @@ namespace dev
 			IO::State* _ioStateP, Display::State* _displayStateP);
 		void PlayReverse(const int _frames, CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
-		void CleanMemUpdates();
+		void CleanMemUpdates(Display::State* _displayStateP);
 		auto GetStateRecorded() const -> size_t { return m_stateRecorded; };
 		auto GetStateCurrent() const -> size_t { return m_stateCurrent; };
-		void Deserialize(const std::vector<uint8_t>& _data); // on loads
-		auto Serialize() const -> const std::vector<uint8_t>; // on save
+		void Deserialize(const std::vector<uint8_t>& _data, 
+			CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+			IO::State* _ioStateP, Display::State* _displayStateP);
+		auto Serialize() const -> const std::vector<uint8_t>;
 
 	private:
 		void StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState, 
@@ -69,5 +74,6 @@ namespace dev
 		size_t m_statesMemSize = 0; // m_states memory consumption
 		size_t m_frameNum = 0;
 		Memory::Ram m_ram;
+		uint32_t m_version = VERSION;
 	};
 }

@@ -11,7 +11,7 @@ dev::Display::Display(Memory& _memory, IO& _io)
 	}
 	m_state.frameBufferP = &m_frameBuffer;
 
-	m_state.FrameBuffUpdate = std::bind(&Display::FrameBuffUpdate, this);
+	m_state.BuffUpdate = std::bind(&Display::BuffUpdate, this, std::placeholders::_1);
 
 	Init();
 }
@@ -307,6 +307,27 @@ uint32_t dev::Display::BytesToColorIdx512(uint32_t _screenBytes, uint8_t _bitIdx
 }
 
 // rasterizes the memory into the frame buff
+void dev::Display::BuffUpdate(Buffer _buffer)
+{
+	switch (_buffer)
+	{
+	case dev::Display::Buffer::FRAME_BUFFER:
+		FrameBuffUpdate();
+		break;
+
+	case dev::Display::Buffer::BACK_BUFFER:
+		m_backBuffer = m_frameBuffer;
+		break;
+
+	case dev::Display::Buffer::GPU_BUFFER:
+		m_gpuBuffer = m_frameBuffer;
+		break;
+
+	default:
+		break;
+	}
+}
+
 void dev::Display::FrameBuffUpdate()
 {
 	int framebufferIdxTemp = m_state.update.framebufferIdx;

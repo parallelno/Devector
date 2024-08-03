@@ -38,7 +38,8 @@ dev::Debugger::~Debugger()
 // Hardware thread.
 // Has to be called after Hardware Reset, loading the rom file, fdd immage, attach/dettach debugger, 
 // and other operations that change the Hardware states because this func stores the last state of Hardware
-void dev::Debugger::Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+void dev::Debugger::Reset(bool _resetRecorder, 
+	CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {
 	m_disasm.Reset();
@@ -50,7 +51,7 @@ void dev::Debugger::Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	m_memLastRW.fill(0);
 
 	m_traceLog.Reset();
-	m_recorder.Reset(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
+	if (_resetRecorder) m_recorder.Reset(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 }
 
 //////////////////////////////////////////////////////////////
@@ -129,9 +130,8 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	switch (_req)
 	{
 	case Hardware::Req::DEBUG_RESET:
-		Reset(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
+		Reset(_reqDataJ["resetRecorder"], _cpuStateP, _memStateP, _ioStateP, _displayStateP);
 		break;
-
 	//////////////////
 	// 
 	// Recorder
@@ -158,6 +158,19 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		out = nlohmann::json{ {"states", m_recorder.GetStateCurrent() } };
 		break;
 
+	case Hardware::Req::DEBUG_RECORDER_SERIALIZE: {
+
+		out = nlohmann::json{ {"data", nlohmann::json::binary(m_recorder.Serialize()) } };
+		break;
+	}
+	case Hardware::Req::DEBUG_RECORDER_DESERIALIZE: {
+
+		nlohmann::json::binary_t binaryData = _reqDataJ["data"].get<nlohmann::json::binary_t>();
+		std::vector<uint8_t> data(binaryData.begin(), binaryData.end());
+
+		m_recorder.Deserialize(data, _cpuStateP, _memStateP, _ioStateP, _displayStateP);
+		break;
+	}
 	//////////////////
 	// 
 	// Breakpoints

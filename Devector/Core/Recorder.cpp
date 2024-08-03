@@ -8,14 +8,10 @@ void dev::Recorder::Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	m_lastRecord = true;
 	m_frameNum = _displayStateP->update.frameNum; 
 	StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP);
-	
-	// store initial ram
-	const auto& ram = *(_memStateP->ramP);
-	m_ram = ram;
 }
 
 // continue HW execution
-void dev::Recorder::CleanMemUpdates()
+void dev::Recorder::CleanMemUpdates(Display::State* _displayStateP)
 {
 	m_lastRecord = true;
 	m_stateRecorded = m_stateCurrent;
@@ -24,12 +20,14 @@ void dev::Recorder::CleanMemUpdates()
 	state.memBeforeWrites.clear();
 	state.memWrites.clear();
 	state.globalAddrs.clear();
+
+	_displayStateP->BuffUpdate(Display::Buffer::BACK_BUFFER);
 }
 
 void dev::Recorder::Update(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {	
-	if (!m_lastRecord) CleanMemUpdates();
+	if (!m_lastRecord) CleanMemUpdates(_displayStateP);
 
 	if (_memStateP->debug.writeLen) StoreMemoryDiff(*_memStateP);
 	if (m_frameNum != _displayStateP->update.frameNum)
@@ -68,6 +66,23 @@ void dev::Recorder::StoreState(const CpuI8080::State& _cpuState, const Memory::S
 	nextState.memBeforeWrites.clear();
 	nextState.memWrites.clear();
 	nextState.globalAddrs.clear();
+
+	// store the ram
+	m_ram = *_memState.ramP;
+}
+
+void dev::Recorder::RestoreState(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+	IO::State* _ioStateP, Display::State* _displayStateP)
+{
+	auto& state = m_states[m_stateIdx];
+
+	*_cpuStateP = state.cpuState;
+	_memStateP->update = state.memState;
+	*_ioStateP = state.ioState;
+	_displayStateP->update = state.displayState;
+
+	// store the ram
+	m_ram = *_memStateP->ramP;
 }
 
 void dev::Recorder::PlayForward(const int _frames, CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
@@ -104,7 +119,7 @@ void dev::Recorder::PlayForward(const int _frames, CpuI8080::State* _cpuStateP, 
 		_displayStateP->update = stateNext.displayState;
 	}
 
-	_displayStateP->FrameBuffUpdate();
+	_displayStateP->BuffUpdate(Display::Buffer::FRAME_BUFFER);
 }
 
 void dev::Recorder::PlayReverse(const int _frames, CpuI8080::State* _cpuStateP,
@@ -141,7 +156,7 @@ void dev::Recorder::PlayReverse(const int _frames, CpuI8080::State* _cpuStateP,
 		}
 	}
 
-	_displayStateP->FrameBuffUpdate();
+	_displayStateP->BuffUpdate(Display::Buffer::FRAME_BUFFER);
 }
 
 void dev::Recorder::GetStatesSize()
@@ -158,27 +173,38 @@ void dev::Recorder::GetStatesSize()
 
 // on loads
 // requires Reset() after calling it
-void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data)
+void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data, 
+	CpuI8080::State* _cpuStateP, Memory::State* _memStateP, 
+	IO::State* _ioStateP, Display::State* _displayStateP)
 {
 	size_t dataOffset = 0;
 	// format version
-	uint8_t version = _data[0];
-	dataOffset++;
-	if (version & VERSION) return;
+	m_version = *(size_t*)(&_data[dataOffset]);
+	dataOffset += sizeof(m_version);
+	if ((m_version & VERSION_MASK) != VERSION) return;
 
-	// global memory
+	// ram
 	std::copy(_data.begin() + dataOffset, _data.begin() + Memory::GLOBAL_MEMORY_LEN, m_ram.begin());
 	dataOffset += Memory::GLOBAL_MEMORY_LEN;
+	*_memStateP->ramP = m_ram;
 
-	m_stateRecorded = *(size_t*)(&_data[1]);
+	// m_stateRecorded
+	m_stateRecorded = *(size_t*)(&_data[dataOffset]);
 	dataOffset += sizeof(m_stateRecorded);
-	m_stateIdx = 0;
-	m_stateCurrent = 1;
+	
+	// m_stateIdx
+	m_stateIdx = m_stateRecorded - 1;
+	
+	// m_stateCurrent
+	m_stateCurrent = *(size_t*)(&_data[dataOffset]);
+	dataOffset += sizeof(m_stateCurrent);
+
+	// m_lastRecord
+	m_lastRecord = *(size_t*)(&_data[dataOffset]);
+	dataOffset += sizeof(m_lastRecord);
 
 	// states
-	int firstStateIdx = 0;
-
-	for (int stateIdx = firstStateIdx; stateIdx < firstStateIdx + m_stateRecorded; stateIdx++)
+	for (int stateIdx = 0; stateIdx < m_stateRecorded; stateIdx++)
 	{
 		auto& state = m_states[stateIdx % STATES_LEN];
 
@@ -194,28 +220,29 @@ void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data)
 		state.displayState = *(Display::Update*)(&_data[dataOffset]);
 		dataOffset += sizeof(Display::Update);
 
-		state.memWrites = *(std::vector<uint8_t>*)(&_data[dataOffset]);
-		dataOffset += state.memBeforeWrites.size();
-
 		// amount of mem updates
 		int memUpdates = *(int*)(&_data[dataOffset]);
 		dataOffset += sizeof(memUpdates);
+		if (memUpdates == 0) continue;
 
 		// mem updates
-		state.memWrites.clear();
-		state.memBeforeWrites.clear();
-		state.globalAddrs.clear();
 		
-		state.memWrites.insert(state.memWrites.end(), _data.begin() + dataOffset, _data.begin() + dataOffset + memUpdates);
+		state.memWrites.assign(_data.begin() + dataOffset, _data.begin() + dataOffset + memUpdates);
 		dataOffset += memUpdates;
 
-		state.memWrites.insert(state.memWrites.end(), _data.begin() + dataOffset, _data.begin() + dataOffset + memUpdates);
+		state.memBeforeWrites.assign(_data.begin() + dataOffset, _data.begin() + dataOffset + memUpdates);
 		dataOffset += memUpdates;
 
-		state.memWrites.insert(state.memWrites.end(), _data.begin() + dataOffset, _data.begin() + dataOffset + memUpdates);
-		dataOffset += memUpdates;
+		state.globalAddrs.assign(
+			reinterpret_cast<const GlobalAddr*>(_data.data() + dataOffset),
+			reinterpret_cast<const GlobalAddr*>(_data.data() + dataOffset + memUpdates * sizeof(GlobalAddr)));
+		dataOffset += memUpdates * sizeof(GlobalAddr);
 	}
 
+	RestoreState(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
+
+	_displayStateP->BuffUpdate(Display::Buffer::FRAME_BUFFER);
+	//_displayStateP->BuffUpdate(Display::Buffer::BACK_BUFFER);
 }
 
 // on save
@@ -227,14 +254,23 @@ auto dev::Recorder::Serialize() const
 	std::vector<uint8_t> result;
 
 	// format version
-	result.push_back(VERSION);
+	result.insert(result.end(), reinterpret_cast<const uint8_t*>(&m_version),
+		reinterpret_cast<const uint8_t*>(&m_version + 1));
 
-	// global memory
+	// ram
 	result.insert(result.end(), m_ram.begin(), m_ram.end());
 
-	// state recorded
+	// m_stateRecorded
 	result.insert(result.end(), reinterpret_cast<const uint8_t*>(&m_stateRecorded),
 		reinterpret_cast<const uint8_t*>(&m_stateRecorded + 1));
+
+	// m_stateCurrent
+	result.insert(result.end(), reinterpret_cast<const uint8_t*>(&m_stateCurrent),
+		reinterpret_cast<const uint8_t*>(&m_stateCurrent + 1));
+
+	// m_lastRecord
+	result.insert(result.end(), reinterpret_cast<const uint8_t*>(&m_lastRecord),
+		reinterpret_cast<const uint8_t*>(&m_lastRecord + 1));
 
 	// states
 	int firstStateIdx = (m_stateIdx - m_stateRecorded + 1) % STATES_LEN;
@@ -263,7 +299,10 @@ auto dev::Recorder::Serialize() const
 		// mem updates
 		result.insert(result.end(), state.memWrites.begin(), state.memWrites.end());
 		result.insert(result.end(), state.memBeforeWrites.begin(), state.memBeforeWrites.end());
-		result.insert(result.end(), state.globalAddrs.begin(), state.globalAddrs.end());
+		result.insert(result.end(),
+			reinterpret_cast<const uint8_t*>(state.globalAddrs.data()),
+			reinterpret_cast<const uint8_t*>(state.globalAddrs.data() + state.globalAddrs.size())
+		);
 	}
 
 	return result;

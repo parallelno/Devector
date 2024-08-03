@@ -40,21 +40,7 @@ void dev::RecorderWindow::Draw(const bool _isRunning)
 	}
 
 	if (_isRunning) ImGui::BeginDisabled();
-	//ImGui::SameLine();
-	//if (ImGui::Button("Load"))
-	//{
-	//	m_ccLast = -1;
-	//}
-	ImGui::SameLine();
-	if (ImGui::Button("Save"))
-	{
-		wchar_t path[MAX_PATH] = { L"file_name.devrec" };
 
-		if (SaveFileDialog(path, MAX_PATH, L"All Files (*.devrec)\0*.devrec\0"))
-		{
-			auto ext = StrToUpper(dev::GetExt(path));
-		};
-	}
 	ImGui::SameLine();
 	if (ImGui::Button("Clear"))
 	{

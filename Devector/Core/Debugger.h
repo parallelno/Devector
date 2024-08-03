@@ -34,7 +34,8 @@ namespace dev
 		Debugger(Hardware& _hardware);
 		~Debugger();
 
-		void Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
+		void Reset(bool _resetRecorder, 
+			CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
 
 		bool Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP, 

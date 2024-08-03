@@ -35,7 +35,7 @@ namespace dev
 		const std::wstring EXT_FDD = L".FDD";
 		const std::wstring EXT_REC = L".REC";
 
-		enum class FileType : int {ROM = 0, FDD, REC};
+		enum class FileType : int {ROM = 0, FDD, REC, UNDEFINED};
 		
 		struct LoadingRes
 		{
@@ -60,6 +60,7 @@ namespace dev
 				OPEN_FILE_DIALOG,
 				RECENT,
 				SAVE_THEN_EXIT,
+				SAVE_REC_FILE_DIALOG,
 			};
 
 			const char* POPUP_SELECT_DRIVE = "Fdd Setup";
@@ -74,10 +75,11 @@ namespace dev
 			int driveIdxUpdated = 0;
 			FileType fileType = FileType::ROM;
 
-			void Init(const State& _state, const Type _type = Type::OPEN_FILE_DIALOG, const std::wstring& _path = L"",
+			void Init(const State& _state, const Type _type = Type::OPEN_FILE_DIALOG, FileType _fileType = FileType::UNDEFINED, const std::wstring& _path = L"",
 				const int _driveIdx = -1, bool _autoBoot = false) 
 			{
 				if (state == LoadingRes::State::EXIT) return;
+				fileType = _fileType;
 				state = _state;
 				type = _type;
 				path = _path;
@@ -120,7 +122,7 @@ namespace dev
 		bool m_debuggerAttached = false;
 
 		// path, file type, driveIdx, autoBoot
-		std::list<std::tuple<std::wstring, FileType, int, bool>> m_recentFilePaths;
+		std::list<std::tuple<FileType, std::wstring, int, bool>> m_recentFilePaths;
 
 		ReqUI m_reqUI;
 
@@ -138,7 +140,7 @@ namespace dev
 		void SettingsInit();
 		void RecentFilesInit();
 		void RecentFilesStore();
-		void RecentFilesUpdate(const std::wstring& _path, const FileType _fileType, const int _driveIdx = -1, const bool _autoBoot = false);
+		void RecentFilesUpdate(const FileType _fileType, const std::wstring& _path, const int _driveIdx = -1, const bool _autoBoot = false);
 		void AppStyleInit();
 		void MainMenuUpdate();
 		void LoadRom(const std::wstring& _path);
@@ -151,6 +153,7 @@ namespace dev
 		void SaveDiscardFdd();
 		void SaveUpdatedFdd();
 		void OpenFile();
+		void SaveFile();
 		void DrawSelectDrivePopup();
 		void ResLoadingStatusHandling();
 		void ReqUIHandling();

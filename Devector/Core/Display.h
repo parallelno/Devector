@@ -56,8 +56,9 @@ namespace dev
 		static constexpr int FULL_PALLETE_LEN = 256;
 
 		using FrameBuffer = std::array <ColorI, FRAME_LEN>;
-
-		using FrameBuffUpdateFunc = std::function<void()>;
+		
+		enum class Buffer { FRAME_BUFFER, BACK_BUFFER, GPU_BUFFER};
+		using BuffUpdateFunc = std::function<void(const Buffer _buffer)>;
 
 		// contains the state after the last instruction executed
 #pragma pack(push, 1)
@@ -75,7 +76,7 @@ namespace dev
 		{
 			Update update;
 			FrameBuffer* frameBufferP = nullptr;
-			FrameBuffUpdateFunc FrameBuffUpdate = nullptr;
+			BuffUpdateFunc BuffUpdate = nullptr;
 		};
 
 	private:
@@ -115,6 +116,7 @@ namespace dev
 		void RasterizeBorder(const int _rasterizedPixels);
 		void FillBorder(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
 		void FillBorderPortHandling(const int _rasterizedPixels = RASTERIZED_PXLS_MAX);
+		void BuffUpdate(Buffer _buffer);
 		void FrameBuffUpdate();
 	};
 }
