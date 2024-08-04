@@ -155,7 +155,7 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 			m_rasterPixel = displayData["rasterPixel"];
 			m_rasterLine = displayData["rasterLine"];
 		}
-		if (m_displayIsHovered)
+		if (!m_displayIsHovered)
 		{
 			m_scrollV_crtXY_highlightMul.y = (float)m_rasterPixel * FRAME_PXL_SIZE_W;
 			m_scrollV_crtXY_highlightMul.z = (float)m_rasterLine * FRAME_PXL_SIZE_H;
