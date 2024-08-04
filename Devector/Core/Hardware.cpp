@@ -526,7 +526,19 @@ auto dev::Hardware::GetStepOverAddr()
 -> const Addr
 {
 	auto pc = m_cpu.GetPC();
+	auto sp = m_cpu.GetSP();
 	auto opcode = m_memory.GetByte(pc);
-	auto cmdLen = dev::GetCmdLen(opcode);
-	return pc + cmdLen;
+
+	switch (dev::GetOpcodeType(opcode)) 
+	{
+	case OPTYPE_JMP:
+		return m_memory.GetByte(pc + 2) << 8 | m_memory.GetByte(pc + 1);
+	case OPTYPE_RET:
+		return m_memory.GetByte(sp + 1, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(sp, Memory::AddrSpace::STACK);
+	case OPTYPE_PCH:
+		return m_cpu.GetHL();
+	case OPTYPE_RST:
+		return opcode - CpuI8080::OPCODE_RST0;
+	}
+	return pc + dev::GetCmdLen(opcode);
 }

@@ -25,6 +25,7 @@ namespace dev
 	{
 	public:
 		// consts
+		static const constexpr uint8_t OPCODE_RST0 = 0xC7;
 		static const constexpr uint8_t OPCODE_RST7 = 0xFF;
 		static const constexpr uint8_t OPCODE_HLT = 0x76;
 		static const constexpr uint8_t OPCODE_PCHL = 0xE9;
