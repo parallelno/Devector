@@ -52,9 +52,9 @@ bool dev::Hardware::ExecuteInstruction()
 
 	do
 	{
+		m_display.Rasterize();
 		m_cpu.ExecuteMachineCycle(m_display.IsIRQ());
 		m_audio.Clock(2, m_io.GetBeeper());
-		m_display.Rasterize();
 
 	} while (!m_cpu.IsInstructionExecuted());
 
@@ -241,6 +241,60 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 				});
 			break;
 		}
+
+		case Req::GET_IO_PALETTE_COMMIT_TIME:
+		{
+			auto data = m_io.GetPaletteCommitTime();
+			m_reqRes.emplace({
+				{"paletteCommitTime", data},
+				});
+			break;
+		}
+
+		case Req::SET_IO_PALETTE_COMMIT_TIME:
+		{
+			m_io.SetPaletteCommitTime(dataJ["paletteCommitTime"]);
+			m_reqRes.emplace({});
+			break;
+		}
+
+		case Req::GET_DISPLAY_BORDER_LEFT:
+		{
+			auto data = m_display.GetBorderLeft();
+			m_reqRes.emplace({
+				{"borderLeft", data},
+				});
+			break;
+		}
+
+		case Req::SET_DISPLAY_BORDER_LEFT:
+		{
+			m_display.SetBorderLeft(dataJ["borderLeft"]);
+			m_reqRes.emplace({});
+			break;
+		}
+
+		case Req::GET_DISPLAY_IRQ_COMMIT_PXL:
+		{
+			auto data = m_display.GetIrqCommitPxl();
+			m_reqRes.emplace({
+				{"irqCommitPxl", data},
+				});
+			break;
+		}
+
+		case Req::SET_DISPLAY_IRQ_COMMIT_PXL:
+		{
+			m_display.SetIrqCommitPxl(dataJ["irqCommitPxl"]);
+			m_reqRes.emplace({});
+			break;
+		}
+
+		case Req::GET_IO_DISPLAY_MODE:
+			m_reqRes.emplace({
+				{"data", m_io.GetDisplayMode()},
+				});
+			break;
 
 		case Req::GET_BYTE_GLOBAL:
 			m_reqRes.emplace(GetByteGlobal(dataJ));

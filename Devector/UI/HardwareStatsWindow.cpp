@@ -106,7 +106,9 @@ void dev::HardwareStatsWindow::DrawHardware() const
 		DrawProperty2("CPU Cicles", m_ccS.c_str());
 		DrawProperty2("Last Run", m_ccLastRunS.c_str());
 		DrawProperty2("CRT X/Y", m_crtS.c_str());
+		DrawProperty2("Frame CC", m_frameCCS.c_str());
 		DrawProperty2("Frame Num", m_frameNumS.c_str());
+		DrawProperty2("Display Mode", m_displayModeS.c_str());
 		DrawProperty2("Scroll V", dev::Uint8ToStrC(m_scrollVert));
 		DrawProperty2("Rus/Lat", m_ruslatS.c_str());
 
@@ -337,6 +339,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	// update hardware
 	m_ccLastRunS = std::to_string(m_ccLastRun);
 	m_crtS = std::format("{}/{}", rasterPixel, rasterLine);
+	m_frameCCS = std::to_string((rasterPixel + rasterLine * Display::FRAME_W) / 4);
 	m_frameNumS = std::to_string(frameNum);
 
 	res = m_hardware.Request(Hardware::Req::GET_PALETTE);
@@ -386,6 +389,9 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 
 	// Vertical scroll
 	m_scrollVert = m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert");
+
+	// IO
+	m_displayModeS = m_hardware.Request(Hardware::Req::GET_IO_DISPLAY_MODE)->at("data") ? "512" : "256";
 }
 
 void dev::HardwareStatsWindow::UpdateDataRuntime()

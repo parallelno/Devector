@@ -1,83 +1,22 @@
 {
     "bootPath": "boot//boot.bin",
-    "breakpointsWindowVisisble": true,
-    "disasmWindowVisible": true,
+    "breakpointsWindowVisisble": false,
+    "disasmWindowVisible": false,
     "displayWindowVisible": true,
     "fontItalicPath": "fonts//medium_italic.ttf",
     "fontItalicSize": 18.0,
     "fontPath": "fonts//medium.ttf",
     "fontSize": 18.0,
-    "hardwareStatsWindowVisible": true,
-    "hexViewerWindowVisible": true,
-    "mainWindowHeight": 1363,
-    "mainWindowWidth": 2683,
+    "hardwareStatsWindowVisible": false,
+    "hexViewerWindowVisible": false,
+    "mainWindowHeight": 670,
+    "mainWindowWidth": 820,
     "mainWindowX": 0,
     "mainWindowY": 32,
-    "memDisplayWindowVisible": true,
-    "recentFiles": [
-        [
-            0,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\timing_tests\\sunsetb.rom",
-            -1,
-            false
-        ],
-        [
-            0,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\timing_tests\\mineswep.rom",
-            -1,
-            false
-        ],
-        [
-            0,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\timing_tests\\kittham1.rom",
-            -1,
-            false
-        ],
-        [
-            0,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\timing_tests\\hwdit512.rom",
-            -1,
-            false
-        ],
-        [
-            0,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\maric.rom",
-            -1,
-            false
-        ],
-        [
-            1,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\mfi.fdd",
-            0,
-            true
-        ],
-        [
-            1,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\vandamme.fdd",
-            0,
-            true
-        ],
-        [
-            0,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\GameNoname_eng.rom",
-            -1,
-            false
-        ],
-        [
-            2,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\file_name.rec",
-            -1,
-            false
-        ],
-        [
-            2,
-            "C:\\Work\\Programming\\devector\\Devector\\Rom\\file_name2.rec",
-            -1,
-            false
-        ]
-    ],
-    "recorderWindowVisible": true,
+    "memDisplayWindowVisible": false,
+    "recentFiles": null,
+    "recorderWindowVisible": false,
     "restartOnLoadFdd": true,
-    "traceLogWindowVisible": true,
-    "watchpointsWindowVisible": true
+    "traceLogWindowVisible": false,
+    "watchpointsWindowVisible": false
 }

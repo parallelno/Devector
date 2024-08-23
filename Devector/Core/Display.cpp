@@ -1,6 +1,8 @@
 #include "Display.h"
 #include "Utils/Utils.h"
 
+#define BORDER_RIGHT	( m_borderLeft + ACTIVE_AREA_W )
+
 dev::Display::Display(Memory& _memory, IO& _io)
 	:
 	m_memory(_memory), m_io(_io)
@@ -26,9 +28,9 @@ void dev::Display::RasterizeActiveArea(const int _rasterizedPixels)
 {
 	int rasterLine = GetRasterLine();
 	int rasterPixel = GetRasterPixel();
-	auto commitTime = m_io.GetOutCommitTimer() >= 0 || m_io.GetPaletteCommitTimer() >= 0;
+	auto commitTime = m_io.GetOutCommitTimer() > 0 || m_io.GetPaletteCommitTimer() > 0;
 
-	bool scrollTime = rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel < BORDER_LEFT + RASTERIZED_PXLS_MAX;
+	bool scrollTime = rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel < m_borderLeft + RASTERIZED_PXLS_MAX;
 	if (commitTime || scrollTime)
 	{
 		if (m_io.GetDisplayMode() == IO::MODE_256) FillActiveArea256PortHandling(_rasterizedPixels);
@@ -65,7 +67,7 @@ void dev::Display::Rasterize()
 	
 	bool isActiveScan = rasterLine >= SCAN_ACTIVE_AREA_TOP && rasterLine < SCAN_ACTIVE_AREA_TOP + ACTIVE_AREA_H;
 	bool isActiveArea = isActiveScan &&
-					rasterPixel >= BORDER_LEFT && rasterPixel < BORDER_RIGHT;
+					rasterPixel >= m_borderLeft && rasterPixel < BORDER_RIGHT;
 
 	// Rasterize the Active Area
 	if (isActiveArea)
@@ -82,7 +84,7 @@ void dev::Display::Rasterize()
 	// Rasterize the Border
 	else {
 		int rasterizedPixels = !isActiveScan || rasterPixel >= BORDER_RIGHT ? RASTERIZED_PXLS_MAX :
-						dev::Min(BORDER_LEFT - rasterPixel, RASTERIZED_PXLS_MAX);
+						dev::Min(m_borderLeft - rasterPixel, RASTERIZED_PXLS_MAX);
 
 		RasterizeBorder(rasterizedPixels);
 
@@ -117,7 +119,7 @@ void dev::Display::FillBorderPortHandling(const int _rasterizedPixels)
 
 		int rasterLine = GetRasterLine();
 		int rasterPixel = GetRasterPixel();
-		m_state.update.irq |= rasterLine == 0 && rasterPixel == dev::IRQ_COMMIT_PXL;
+		m_state.update.irq |= m_state.update.framebufferIdx == m_irqCommitPxl;
 
 		if (isNewFrame)
 		{
@@ -130,36 +132,46 @@ void dev::Display::FillBorderPortHandling(const int _rasterizedPixels)
 
 void dev::Display::FillActiveArea256(const int _rasterizedPixels)
 {
-	auto screenBytes = GetScreenBytes();
-	int bitIdx = 7 - (((m_state.update.framebufferIdx - BORDER_LEFT) % RASTERIZED_PXLS_MAX) >> 1);
+	// scrolling
+	int rasterLine = GetRasterLine();
+	int rasterPixel = GetRasterPixel();
+	int rasterLineScrolled = (rasterLine - SCAN_ACTIVE_AREA_TOP + (255 - m_state.update.scrollIdx) + ACTIVE_AREA_H) % ACTIVE_AREA_H + SCAN_ACTIVE_AREA_TOP;
 
-	for (int i = 0; i < _rasterizedPixels; i += 2)
+	// rasterization
+	auto screenBytes = GetScreenBytes(rasterLineScrolled, rasterPixel);
+	int bitIdx = 7 - (((m_state.update.framebufferIdx - m_borderLeft) % RASTERIZED_PXLS_MAX) >> 1);
+
+	for (int i = 0; i < _rasterizedPixels; i++)
 	{
 		auto colorIdx = BytesToColorIdx256(screenBytes, bitIdx);
-		auto color = m_state.update.fullPallete[m_io.GetColor(colorIdx)];
-
-		m_frameBuffer[m_state.update.framebufferIdx++] = color;
-		if (i+1 < _rasterizedPixels) m_frameBuffer[m_state.update.framebufferIdx++] = color;
+		auto color = m_state.update.fullPallete[m_io.GetColor(colorIdx)];		
 		
-		bitIdx--;
-		if (bitIdx < 0){
+		m_frameBuffer[m_state.update.framebufferIdx++] = color;
+
+		bitIdx -= i % 2;
+		if (bitIdx < 0) {
 			bitIdx = 7;
-			screenBytes = GetScreenBytes();
+			screenBytes = GetScreenBytes(rasterLineScrolled, GetRasterPixel());
 		}
 	}
 }
 
 void dev::Display::FillActiveArea256PortHandling(const int _rasterizedPixels)
 {
-	auto screenBytes = GetScreenBytes();
-	int bitIdx = 7 - (((m_state.update.framebufferIdx - BORDER_LEFT) % RASTERIZED_PXLS_MAX) >> 1);
+	// scrolling
+	int rasterLine = GetRasterLine();
+	int rasterPixel = GetRasterPixel();
+	int rasterLineScrolled = (rasterLine - SCAN_ACTIVE_AREA_TOP + (255 - m_state.update.scrollIdx) + ACTIVE_AREA_H) % ACTIVE_AREA_H + SCAN_ACTIVE_AREA_TOP;
+
+	// rasterization
+	auto screenBytes = GetScreenBytes(rasterLineScrolled, rasterPixel);
+	int bitIdx = 7 - (((m_state.update.framebufferIdx - m_borderLeft) % RASTERIZED_PXLS_MAX) >> 1);
 
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
-		int rasterLine = GetRasterLine();
-		int rasterPixel = GetRasterPixel();
-		if (rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel == BORDER_LEFT)
-		{
+		rasterPixel = GetRasterPixel();
+
+		if (rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel == SCROLL_COMMIT_PXL) {
 			m_state.update.scrollIdx = m_io.GetScroll();
 		}
 
@@ -172,22 +184,27 @@ void dev::Display::FillActiveArea256PortHandling(const int _rasterizedPixels)
 		bitIdx -= i % 2;
 		if (bitIdx < 0){
 			bitIdx = 7;
-			screenBytes = GetScreenBytes();
-		}		
+			screenBytes = GetScreenBytes(rasterLineScrolled, rasterPixel);
+		}
 	}
 }
 
 void dev::Display::FillActiveArea512PortHandling(const int _rasterizedPixels)
-{
-	auto screenBytes = GetScreenBytes(); // 4 bytes. One byte per screen buffer
-	int pxlIdx = 15 - ((m_state.update.framebufferIdx - BORDER_LEFT) % RASTERIZED_PXLS_MAX); // 0-15
+{	
+	// scrolling
+	int rasterLine = GetRasterLine();
+	int rasterPixel = GetRasterPixel();
+	int rasterLineScrolled = (rasterLine - SCAN_ACTIVE_AREA_TOP + (255 - m_state.update.scrollIdx) + ACTIVE_AREA_H) % ACTIVE_AREA_H + SCAN_ACTIVE_AREA_TOP;
+
+	// rasterization
+	auto screenBytes = GetScreenBytes(rasterLineScrolled, rasterPixel); // 4 bytes. One byte per screen buffer
+	int pxlIdx = 15 - ((m_state.update.framebufferIdx - m_borderLeft) % RASTERIZED_PXLS_MAX); // 0-15
 
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
-		int rasterLine = GetRasterLine();
-		int rasterPixel = GetRasterPixel();
-		if (rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel == BORDER_LEFT)
-		{
+		rasterPixel = GetRasterPixel();
+
+		if (rasterLine == SCAN_ACTIVE_AREA_TOP && rasterPixel == SCROLL_COMMIT_PXL) {
 			m_state.update.scrollIdx = m_io.GetScroll();
 		}
 
@@ -200,29 +217,33 @@ void dev::Display::FillActiveArea512PortHandling(const int _rasterizedPixels)
 		pxlIdx--;
 		if (pxlIdx < 0){
 			pxlIdx = 15;
-			screenBytes = GetScreenBytes();
+			screenBytes = GetScreenBytes(rasterLineScrolled, rasterPixel);
 		}		
 	}
 }
 
 void dev::Display::FillActiveArea512(const int _rasterizedPixels)
 {
-	auto screenBytes = GetScreenBytes(); // 4 bytes. One byte per screen buffer
-	int pxlIdx = 15 - ((m_state.update.framebufferIdx - BORDER_LEFT) % RASTERIZED_PXLS_MAX); // 0-15
+	// scrolling
+	int rasterLine = GetRasterLine();
+	int rasterPixel = GetRasterPixel();
+	int rasterLineScrolled = (rasterLine - SCAN_ACTIVE_AREA_TOP + (255 - m_state.update.scrollIdx) + ACTIVE_AREA_H) % ACTIVE_AREA_H + SCAN_ACTIVE_AREA_TOP;
+	
+	// rasterization
+	auto screenBytes = GetScreenBytes(rasterLineScrolled, rasterPixel); // 4 bytes. One byte per screen buffer
+	int pxlIdx = 15 - ((m_state.update.framebufferIdx - m_borderLeft) % RASTERIZED_PXLS_MAX); // 0-15
 
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
-		int rasterLine = GetRasterLine();
-		int rasterPixel = GetRasterPixel();
-
 		auto colorIdx = BytesToColorIdx512(screenBytes, pxlIdx);
 		auto color = m_state.update.fullPallete[m_io.GetColor(colorIdx)];
+		
 		m_frameBuffer[m_state.update.framebufferIdx++] = color;
 		
 		pxlIdx--;
 		if (pxlIdx < 0){
 			pxlIdx = 15;
-			screenBytes = GetScreenBytes();
+			screenBytes = GetScreenBytes(rasterLineScrolled, GetRasterPixel());
 		}
 	}
 }
@@ -237,9 +258,6 @@ auto dev::Display::GetFrame(const bool _vsync)
 
 	return &m_gpuBuffer;
 }
-
-int dev::Display::GetRasterLine() const { return m_state.update.framebufferIdx / FRAME_W; };
-int dev::Display::GetRasterPixel() const { return m_state.update.framebufferIdx % FRAME_W; };
 
 // Vector color format: uint8_t BBGGGRRR
 // Output Color: ABGR (Imgui Image)
@@ -262,13 +280,10 @@ auto dev::Display::VectorColorToArgb(const uint8_t _vColor)
  * Retrieves four screen bytes at the current raster line and pixel.
  * Each byte for each graphic buffer.
  */
-uint32_t dev::Display::GetScreenBytes()
+uint32_t dev::Display::GetScreenBytes(int _rasterLine, int _rasterPixel)
 {
-	int rasterLine = GetRasterLine();
-	int rasterPixel = GetRasterPixel();
-
-	auto addrHigh = (rasterPixel - BORDER_LEFT) / RASTERIZED_PXLS_MAX;
-	auto addrLow = ACTIVE_AREA_H - 1 - (rasterLine - SCAN_ACTIVE_AREA_TOP);
+	auto addrHigh = (_rasterPixel - m_borderLeft) / RASTERIZED_PXLS_MAX;
+	auto addrLow = ACTIVE_AREA_H - 1 - (_rasterLine - SCAN_ACTIVE_AREA_TOP);
 	Addr screenAddrOffset = static_cast<Addr>(addrHigh << 8 | addrLow);
 
 	return m_memory.GetScreenBytes(screenAddrOffset);
@@ -286,7 +301,7 @@ uint32_t dev::Display::BytesToColorIdx256(uint32_t _screenBytes, uint8_t _bitIdx
 }
 
 // 512 screen mode
-// extract a 2-bit color index from the four screen bytes.
+// extract a 3-bit color index from the four screen bytes.
 // _bitIdx is in the range [0..15]
 // In the 512x256 mode, the even pixel colors are stored in screen buffers 3 and 2,
 // and the odd ones - in screen buffers 0 and 1
@@ -294,16 +309,16 @@ uint32_t dev::Display::BytesToColorIdx512(uint32_t _screenBytes, uint8_t _bitIdx
 {
 	bool even = _bitIdx & 1;
 	_bitIdx >>= 1;
-
-	auto colorIdx0 = 
+	
+	if (even) {
+		return 
 			(_screenBytes >> (_bitIdx - 0 + 0)) & 1 |
 			(_screenBytes >> (_bitIdx - 1 + 8)) & 2;
+	}
 
-	auto colorIdx1 = 
-			(_screenBytes >> (_bitIdx - 1 + 16)) & 2 |
-			(_screenBytes >> (_bitIdx - 0 + 24)) & 1;
-
-	return even ? colorIdx0 : colorIdx1;
+	return
+		((_screenBytes >> (_bitIdx - 0 + 16)) & 1 |
+		(_screenBytes >> (_bitIdx - 1 + 24)) & 2) * 4;
 }
 
 // rasterizes the memory into the frame buff
@@ -340,7 +355,7 @@ void dev::Display::FrameBuffUpdate()
 
 		bool isActiveScan = rasterLine >= SCAN_ACTIVE_AREA_TOP && rasterLine < SCAN_ACTIVE_AREA_TOP + ACTIVE_AREA_H;
 		bool isActiveArea = isActiveScan &&
-			rasterPixel >= BORDER_LEFT && rasterPixel < BORDER_RIGHT;
+			rasterPixel >= m_borderLeft && rasterPixel < BORDER_RIGHT;
 
 		// Rasterize the Active Area
 		if (isActiveArea)
@@ -360,7 +375,7 @@ void dev::Display::FrameBuffUpdate()
 		// Rasterize the Border
 		else {
 			int rasterizedPixels = !isActiveScan || rasterPixel >= BORDER_RIGHT ? RASTERIZED_PXLS_MAX :
-				dev::Min(BORDER_LEFT - rasterPixel, RASTERIZED_PXLS_MAX);
+				dev::Min(m_borderLeft - rasterPixel, RASTERIZED_PXLS_MAX);
 
 			FillBorder(rasterizedPixels);
 

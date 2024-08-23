@@ -35,6 +35,7 @@ namespace dev
 		std::string m_ccS;
 		std::string m_ccLastRunS;
 		std::string m_crtS;
+		std::string m_frameCCS;
 		std::string m_frameNumS;
 		std::string m_mappingRamModeS;
 		std::string m_mappingPageRamS;
@@ -50,6 +51,7 @@ namespace dev
 		std::string m_fddStats[Fdc1793::DRIVES_MAX];
 		std::string m_fddPaths[Fdc1793::DRIVES_MAX];
 		std::string m_ruslatS;
+		std::string m_displayModeS;
 
 		CpuI8080::State m_cpuState;
 		const ImVec4* m_regAFColor = &DASM_CLR_NUMBER;

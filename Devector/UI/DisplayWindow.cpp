@@ -40,25 +40,45 @@ const char* fragShaderS = R"#(
 	void main()
 	{
 		vec2 uv = uv0;
+		float bordL = m_bordsLRTB.x;
+		float bordR = m_bordsLRTB.y;
+		float bordT = m_bordsLRTB.z;
+		float bordB = m_bordsLRTB.w;
+		float highlightMul = m_scrollV_crtXY_highlightMul.w;
+		vec2 crt = m_scrollV_crtXY_highlightMul.yz;
+		vec2 pxlSize = m_activeArea_pxlSize.zw;
 
 		// vertical scrolling
-		if (uv.x >= m_bordsLRTB.x &&
-			uv.x < m_bordsLRTB.y &&
-			uv.y >= m_bordsLRTB.z &&
-			uv.y < m_bordsLRTB.w)
+		if (uv.x >= bordL &&
+			uv.x < bordR &&
+			uv.y >= bordT &&
+			uv.y < bordB)
 		{
 			uv.y -= m_scrollV_crtXY_highlightMul.x;
 			// wrap V
-			uv.y += uv.y < m_bordsLRTB.z ? m_activeArea_pxlSize.y * m_activeArea_pxlSize.w : 0.0f;
+			uv.y += uv.y < bordT ? m_activeArea_pxlSize.y * pxlSize.y : 0.0f;
 		}
 
 		vec3 color = texture(texture0, uv).rgb;
 
 		// crt scanline highlight
-		if (uv.y > m_scrollV_crtXY_highlightMul.z ||
-			(uv.y >= m_scrollV_crtXY_highlightMul.z && uv.x > m_scrollV_crtXY_highlightMul.y))
+		if (highlightMul < 1.0f)
 		{
-			color.xyz *= m_scrollV_crtXY_highlightMul.w;
+			if (uv.y >= crt.y &&
+				uv.y < crt.y + pxlSize.y &&
+				uv.x < crt.x + pxlSize.x )
+			{
+				// highlight the rasterized pixels of the current crt line
+				color.xyz = vec3(0.3f, 0.3f, 0.3f) + color.xyz * 2.0f;
+			}
+			else 
+			if ((uv.y >= crt.y && 
+				uv.y < crt.y + pxlSize.y &&
+				uv.x >= crt.x + pxlSize.x ) || uv.y > crt.y + pxlSize.y)
+			{
+				// renders not rasterized pixels yet
+				color.xyz *= m_scrollV_crtXY_highlightMul.w;
+			}
 		}
 
 		out0 = vec4(color, 1.0f);
@@ -76,6 +96,10 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware, const float* const _fontS
 
 bool dev::DisplayWindow::Init()
 {
+	int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
+	m_bordsLRTB.x = borderLeft * FRAME_PXL_SIZE_W;
+	m_bordsLRTB.y = (borderLeft + Display::ACTIVE_AREA_W) * FRAME_PXL_SIZE_W;
+
 	auto vramShaderRes = m_glUtils.InitShader(vtxShaderS, fragShaderS);
 	if (!vramShaderRes) return false;
 	m_vramShaderId = *vramShaderRes;
@@ -102,11 +126,30 @@ void dev::DisplayWindow::Update(bool& _visible)
 
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
 	{
-		static int dev_IRQ_COMMIT_PXL = 72;
+/*
+		// TODO: DEBUG test
+		int paletteCommitTime = m_hardware.Request(Hardware::Req::GET_IO_PALETTE_COMMIT_TIME)->at("paletteCommitTime");
+		if (ImGui::InputInt("paletteCommitTime", &paletteCommitTime, 1, 2000) )
+		{
+			m_hardware.Request(Hardware::Req::SET_IO_PALETTE_COMMIT_TIME, { {"paletteCommitTime", paletteCommitTime}});
+		};
+		
+		int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
+		if (ImGui::InputInt("Border Left", &borderLeft, 1, 2000))
+		{
+			m_hardware.Request(Hardware::Req::SET_DISPLAY_BORDER_LEFT, { {"borderLeft", borderLeft} });
 
-		//TODO: why dev::IRQ_COMMIT_PXL is not changing???
-		dev::IRQ_COMMIT_PXL = dev_IRQ_COMMIT_PXL;
+			m_bordsLRTB.x = borderLeft * FRAME_PXL_SIZE_W;
+			m_bordsLRTB.y = (borderLeft + Display::ACTIVE_AREA_W) * FRAME_PXL_SIZE_W;
+		};
 
+		int irqCommitPxl = m_hardware.Request(Hardware::Req::GET_DISPLAY_IRQ_COMMIT_PXL)->at("irqCommitPxl");
+		if (ImGui::InputInt("irqCommitPxl", &irqCommitPxl, 1, 2000))
+		{
+			m_hardware.Request(Hardware::Req::SET_DISPLAY_IRQ_COMMIT_PXL, { {"irqCommitPxl", irqCommitPxl} });
+		};
+		// TODO: DEBUG test end
+*/
 		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 		m_windowFocused = ImGui::IsWindowFocused();
 		
@@ -167,7 +210,7 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 	if (m_isGLInited)
 	{
 		uint8_t scrollVert = m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert") + 1; // adding +1 offset because the default is 255
-		m_scrollV_crtXY_highlightMul.x = FRAME_PXL_SIZE_H * scrollVert;
+		m_scrollV_crtXY_highlightMul.x = 0;//FRAME_PXL_SIZE_H* scrollVert;
 
 		auto frameP = m_hardware.GetFrame(_isRunning);
 		m_glUtils.UpdateTexture(m_vramTexId, (uint8_t*)frameP->data());
@@ -193,14 +236,18 @@ void dev::DisplayWindow::DrawDisplay()
 			border = Display::BORDER_VISIBLE;
 			[[fallthrough]];
 
-		case dev::DisplayWindow::BorderType::NONE:
+		case dev::DisplayWindow::BorderType::NONE: 
+		{
+			int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
+
 			borderMin = {
-				(Display::BORDER_LEFT - border * 2) * FRAME_PXL_SIZE_W,
+				(borderLeft - border * 2) * FRAME_PXL_SIZE_W,
 				(Display::SCAN_ACTIVE_AREA_TOP - border) * FRAME_PXL_SIZE_H };
 			borderMax = {
 				borderMin.x + (Display::ACTIVE_AREA_W + border * 4) * FRAME_PXL_SIZE_W,
 				borderMin.y + (Display::ACTIVE_AREA_H + border * 2) * FRAME_PXL_SIZE_H };
 			break;
+		}
 		}
 
 		ImVec2 displaySize;

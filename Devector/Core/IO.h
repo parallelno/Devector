@@ -13,24 +13,24 @@
 
 namespace dev
 {
+	class IO
+	{
 		// determines when the OUT command sends data into the port
 		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
 		// it's calculated from the start of the third machine cycle (4 cpu cycles each)
-		static int OUT_COMMIT_TIME = 3;
+		static constexpr int OUT_COMMIT_TIME = 1;
 		// determines when the color sent from the port is stored in the palette memory
 		// this timing is based on the 12 MHz clock (equivalent to the number of pixels in 512 mode)
 		// it's calculated from the start of the third machine cycle (4 cpu cycles each)
-		static int PALETTE_COMMIT_TIME = 15 * 4;
-		static int IRQ_COMMIT_PXL = 56; // interrupt request. time's counted by 12 MHz clock (equals amount of pixels in 512 mode)
+		static constexpr int PALETTE_COMMIT_TIME = 5;
+		static constexpr int DISPLAY_MODE_COMMIT_TIME = 2 * 4;
 
-	class IO
-	{
 	public:
 		static constexpr uint8_t PORT_OUT_BORDER_COLOR0 = 0x0C;
 		static constexpr uint8_t PORT_OUT_BORDER_COLOR1 = 0x0D;
 		static constexpr uint8_t PORT_OUT_BORDER_COLOR2 = 0x0E;
 		static constexpr uint8_t PORT_OUT_BORDER_COLOR3 = 0x0F;
-		static constexpr int8_t PORT_NO_COMMIT = -1; // no-data to process
+		static constexpr uint8_t PORT_OUT_DISPLAY_MODE = 0x02;
 		static constexpr int PALETTE_LEN = 16;
 		static constexpr bool MODE_256 = false;
 		static constexpr bool MODE_512 = true;
@@ -75,16 +75,19 @@ namespace dev
 
 			int8_t outCommitTimer		: 8; // in pixels (12Mhz clock)
 			int8_t paletteCommitTimer	: 8; // in pixels (12Mhz clock)
+			int8_t displayModeTimer		: 8; // in pixels (12Mhz clock)
 
 			uint8_t joy0 : 8;
 			uint8_t joy1 : 8;
 
-			uint8_t hwColor		: 8; // Vector06C color format : uint8_t BBGGGRRR
+			uint8_t hwColor		: 8; // a tmp store for a output color before it commited to the HW. Vector06C color format : uint8_t BBGGGRRR
+			uint8_t reqDisplayMode : 2; // a tmp store for a display mode before it commited to HW
 			uint8_t brdColorIdx : 4; // border color idx
-			bool displayMode	: 1; // 256 or 512 modes
+			bool displayMode	: 1; // false - 256 mode, true - 512 mode
 			uint8_t ruslat		: 1;
 		};
 #pragma pack(pop)
+
 		// debug only info
 		union PortsData {
 			struct {
@@ -115,12 +118,15 @@ namespace dev
 		PortsData m_portsInData;
 		PortsData m_portsOutData;
 
-
 		Keyboard& m_keyboard;
 		Memory& m_memory;
 		TimerI8253& m_timer;
 		SoundAY8910& m_ay;
 		Fdc1793& m_fdc;
+
+		int m_outCommitTime = OUT_COMMIT_TIME;
+		int m_paletteCommitTime = PALETTE_COMMIT_TIME;
+		int m_displayModeTime = DISPLAY_MODE_COMMIT_TIME;
 
 		void PortOutHandling(uint8_t _port, uint8_t _value);
 		auto PortInHandling(uint8_t _port) -> uint8_t;
@@ -142,6 +148,8 @@ namespace dev
 		inline auto GetDisplayMode() const -> bool { return m_state.displayMode; };
 		inline auto GetOutCommitTimer() const -> int { return m_state.outCommitTimer; };
 		inline auto GetPaletteCommitTimer() const -> int { return m_state.paletteCommitTimer; };
+		inline auto GetPaletteCommitTime() const -> int { return m_paletteCommitTime; };
+		inline void SetPaletteCommitTime(const int _paletteCommitTime) { m_paletteCommitTime = _paletteCommitTime; };
 
 		auto GetState() const -> const State& { return m_state; };
 		auto GetStateP() -> State* { return &m_state; };

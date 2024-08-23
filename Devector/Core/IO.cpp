@@ -4,18 +4,19 @@
 
 #include "IO.h"
 
-#define CW		m_state.ports.CW
-#define PORT_A	m_state.ports.portA
-#define PORT_B	m_state.ports.portB
-#define PORT_C	m_state.ports.portC
-#define CW2		m_state.ports.CW2
-#define PORT_A2	m_state.ports.portA2
-#define PORT_B2	m_state.ports.portB2
-#define PORT_C2	m_state.ports.portC2
+#define CW			m_state.ports.CW
+#define PORT_A		m_state.ports.portA
+#define PORT_B		m_state.ports.portB
+#define PORT_C		m_state.ports.portC
+#define CW2			m_state.ports.CW2
+#define PORT_A2		m_state.ports.portA2
+#define PORT_B2		m_state.ports.portB2
+#define PORT_C2		m_state.ports.portC2
 
 #define OUT_PORT	m_state.outport
 #define OUT_BYTE	m_state.outbyte
 #define HW_COLOR	m_state.hwColor
+#define REQ_DISPLAY_MODE	m_state.reqDisplayMode
 #define JOY_0		m_state.joy0
 #define JOY_1		m_state.joy1
 #define RUS_LAT		m_state.ruslat
@@ -23,8 +24,9 @@
 #define BRD_COLOR_IDX	m_state.brdColorIdx
 #define DISPLAY_MODE	m_state.displayMode
 
-#define OUT_COMMIT_TIMER		m_state.outCommitTimer
-#define PALLETE_COMMIT_TIMER	m_state.paletteCommitTimer
+#define OUT_COMMIT_TIMER			m_state.outCommitTimer
+#define PALLETE_COMMIT_TIMER		m_state.paletteCommitTimer
+#define DISPLAY_MODE_COMMIT_TIMER	m_state.displayModeTimer
 
 #define PALLETE_BYTES	m_state.palette.bytes
 #define PALLETE_LOW		m_state.palette.low
@@ -48,9 +50,7 @@ void dev::IO::Init()
 
 	DISPLAY_MODE = MODE_256;
 
-	OUT_COMMIT_TIMER = IO::PORT_NO_COMMIT;
-	PALLETE_COMMIT_TIMER = IO::PORT_NO_COMMIT;
-
+	OUT_COMMIT_TIMER = PALLETE_COMMIT_TIMER = DISPLAY_MODE_COMMIT_TIMER = 0;
 	m_state.ruslatHistory = 0;
 }
 
@@ -182,7 +182,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 	case 0x02:
 		PORT_B = _value;
 		BRD_COLOR_IDX = PORT_B & 0x0f;
-		DISPLAY_MODE = (PORT_B & 0x10) != 0;
+		REQ_DISPLAY_MODE = (PORT_B & 0x10) != 0;
 		break;
 		// vertical scroll
 	case 0x03:
@@ -289,7 +289,7 @@ void dev::IO::PortOut(uint8_t _port, uint8_t _value)
 	OUT_BYTE = _value;
 
 	// set the commit time for port output
-	OUT_COMMIT_TIMER = OUT_COMMIT_TIME;
+	OUT_COMMIT_TIMER = m_outCommitTime;
 
 	// set the palette commit time
 	switch (_port) {
@@ -297,23 +297,34 @@ void dev::IO::PortOut(uint8_t _port, uint8_t _value)
 	case PORT_OUT_BORDER_COLOR1: [[fallthrough]];
 	case PORT_OUT_BORDER_COLOR2: [[fallthrough]];
 	case PORT_OUT_BORDER_COLOR3:
-		PALLETE_COMMIT_TIMER = PALETTE_COMMIT_TIME;
+		PALLETE_COMMIT_TIMER = m_paletteCommitTime;
+		break;
+	case PORT_OUT_DISPLAY_MODE:
+		DISPLAY_MODE_COMMIT_TIMER = m_displayModeTime;
+		break;
 	}
 }
 
 void dev::IO::TryToCommit(const uint8_t _colorIdx)
 {
-	if (OUT_COMMIT_TIMER >= 0){
+	if (OUT_COMMIT_TIMER > 0){
 		if (--OUT_COMMIT_TIMER == 0)
 		{
 			PortOutCommit();
 		}
 	}
 
-	if (PALLETE_COMMIT_TIMER >= 0) {
+	if (PALLETE_COMMIT_TIMER > 0) {
 		if (--PALLETE_COMMIT_TIMER == 0)
 		{
 			SetColor(_colorIdx);
+		}
+	}
+
+	if (DISPLAY_MODE_COMMIT_TIMER > 0) {
+		if (--DISPLAY_MODE_COMMIT_TIMER == 0)
+		{
+			DISPLAY_MODE = REQ_DISPLAY_MODE;
 		}
 	}
 }

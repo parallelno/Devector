@@ -42,8 +42,8 @@ namespace dev
 		GLUtils::Vec4 m_activeArea_pxlSize = { Display::ACTIVE_AREA_W, Display::ACTIVE_AREA_H, FRAME_PXL_SIZE_W, FRAME_PXL_SIZE_H};
 		GLUtils::Vec4 m_scrollV_crtXY_highlightMul = { 255.0f * FRAME_PXL_SIZE_H, 0.0f, 0.0f, 1.0f};
 		GLUtils::Vec4 m_bordsLRTB = {
-						static_cast<float>(Display::BORDER_LEFT * FRAME_PXL_SIZE_W),
-						static_cast<float>((Display::BORDER_LEFT + Display::ACTIVE_AREA_W) * FRAME_PXL_SIZE_W),
+						static_cast<float>(0), // inited in the constructor
+						static_cast<float>(0), // inited in the constructor
 						static_cast<float>(Display::SCAN_ACTIVE_AREA_TOP * FRAME_PXL_SIZE_H),
 						static_cast<float>(Display::SCAN_ACTIVE_AREA_TOP + Display::ACTIVE_AREA_H) * FRAME_PXL_SIZE_H };
 		GLuint1 m_vramShaderId = -1;
