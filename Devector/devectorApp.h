@@ -118,13 +118,16 @@ namespace dev
 		bool m_ruslat = false;
 		bool m_restartOnLoadFdd = false;
 		bool m_ramDiskClearAfterRestart = true;
+		bool m_mountRecentFddImg = true;
 		std::wstring m_ramDiskDataPath = L"";
 		int m_rustLatSwitched = 0;
 
 		bool m_debuggerAttached = false;
 
 		// path, file type, driveIdx, autoBoot
-		std::list<std::tuple<FileType, std::wstring, int, bool>> m_recentFilePaths;
+		using RecentFile = std::tuple<FileType, std::wstring, int, bool>;
+		using RecentFiles = std::list<RecentFile>;
+		RecentFiles m_recentFilePaths;
 
 		ReqUI m_reqUI;
 
@@ -161,5 +164,6 @@ namespace dev
 		void ReqUIHandling();
 		void DebugAttach();
 		void RestartOnLoadFdd();
+		void MountRecentFddImg();
 	};
 }

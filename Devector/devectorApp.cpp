@@ -69,7 +69,6 @@ void dev::DevectorApp::SettingsInit()
 {
 	Request(REQ::LOAD_FONT);
 	AppStyleInit();
-	RecentFilesInit();
 
 	m_breakpointsWindowVisisble = GetSettingsBool("breakpointsWindowVisisble", false);
 	m_hardwareStatsWindowVisible = GetSettingsBool("hardwareStatsWindowVisible", false);
@@ -80,6 +79,11 @@ void dev::DevectorApp::SettingsInit()
 	m_hexViewerWindowVisible = GetSettingsBool("hexViewerWindowVisible", false);
 	m_traceLogWindowVisible = GetSettingsBool("traceLogWindowVisible", false);
 	m_recorderWindowVisible = GetSettingsBool("recorderWindowVisible", false);
+
+	RecentFilesInit();
+	
+	m_mountRecentFddImg = GetSettingsBool("m_mountRecentFddImg", true);
+	if (m_mountRecentFddImg) m_reqUI.type = ReqUI::Type::LOAD_RECENT_FDD_IMG;
 }
 
 
@@ -140,15 +144,15 @@ void dev::DevectorApp::Reload()
 {
 	if (m_recentFilePaths.empty()) return;
 	// get latest recent path
-	const auto& [_fileType, path, _driveIdx, _autoBoot] = m_recentFilePaths.front();
+	const auto& [fileType, path, driveIdx, autoBoot] = m_recentFilePaths.front();
 	
-	switch (_fileType) {
+	switch (fileType) {
 	case FileType::ROM:
 		LoadRom(path);
 		break;
 
 	case FileType::FDD:
-		LoadFdd(path, _driveIdx, _autoBoot);
+		LoadFdd(path, driveIdx, autoBoot);
 		break;
 
 	case FileType::REC:
@@ -169,10 +173,10 @@ void dev::DevectorApp::MainMenuUpdate()
 			}
 			if (ImGui::BeginMenu("Recent Files"))
 			{
-				for (const auto& [_fileType, path, driveIdx, autoBoot] : m_recentFilePaths)
+				for (const auto& [fileType, path, driveIdx, autoBoot] : m_recentFilePaths)
 				{
 					std::string itemS = dev::StrWToStr(path);
-					if (_fileType == FileType::FDD)
+					if (fileType == FileType::FDD)
 					{
 						itemS += std::format(":{}", driveIdx);
 						itemS += autoBoot ? "A" : "";
@@ -180,7 +184,7 @@ void dev::DevectorApp::MainMenuUpdate()
 
 					if (ImGui::MenuItem(itemS.c_str()))
 					{
-						m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::RECENT, _fileType, path, driveIdx, autoBoot);
+						m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::RECENT, fileType, path, driveIdx, autoBoot);
 					}
 				}
 				ImGui::EndMenu();
@@ -292,7 +296,7 @@ void dev::DevectorApp::ResLoadingStatusHandling()
 			SaveFile();
 			break;
 
-		case LoadingRes::Type::OPEN_FILE_DIALOG: [[fallthrough]];
+		case LoadingRes::Type::OPEN_FILE_DIALOG:
 			OpenFile();
 			break;
 		}
@@ -660,6 +664,12 @@ void dev::DevectorApp::ReqUIHandling()
 		Reload();
 		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		break;
+
+	case ReqUI::Type::LOAD_RECENT_FDD_IMG:
+		MountRecentFddImg();
+		m_reqUI.type = ReqUI::Type::NONE;
+		int a;
+		break;
 	}
 }
 
@@ -759,5 +769,16 @@ void dev::DevectorApp::DebugAttach()
 		}
 
 		m_hardwareP->Request(Hardware::Req::DEBUG_ATTACH, { { "data", requiresDebugger } });
+	}
+}
+
+void dev::DevectorApp::MountRecentFddImg()
+{
+	for (const auto& [fileType, path, driveIdx, autoBoot] : m_recentFilePaths)
+	{
+		if (fileType == FileType::FDD) {
+			LoadFdd(path, driveIdx, autoBoot);
+			break;
+		}
 	}
 }
