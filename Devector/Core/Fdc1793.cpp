@@ -269,8 +269,9 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 		case 0x90: // READ-SECTORS
 			// Seek to the requested sector
 			m_ptr = Seek(m_side, m_track,
-				_val & C_SIDECOMP ? !!(_val & C_SIDE) : m_side, m_regs[1], m_regs[2]
-			);
+				_val & C_SIDECOMP ? !!(_val & C_SIDE) : m_side, 
+				m_regs[1], m_regs[2]);
+
 			// If seek successful, set up reading operation
 			if (!m_ptr)
 			{

@@ -129,7 +129,8 @@ namespace dev
 		enum class ExecSpeed : int { _20PERCENT = 0, HALF, NORMAL, X2, MAX };
 
 
-        Hardware(const std::wstring& _pathBootData);
+        Hardware(const std::wstring& _pathBootData, const std::wstring& _pathRamDiskData, 
+			const bool _ramDiskClearAfterRestart);
 		~Hardware();
 		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result <nlohmann::json>;
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;

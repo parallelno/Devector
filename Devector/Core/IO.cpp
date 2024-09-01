@@ -54,6 +54,7 @@ void dev::IO::Init()
 	m_state.ruslatHistory = 0;
 }
 
+// I8080 IN NN
 // handling the data receiving from ports
 auto dev::IO::PortInHandling(uint8_t _port)
 -> uint8_t
@@ -95,6 +96,7 @@ auto dev::IO::PortInHandling(uint8_t _port)
 		}
 		break;
 
+		// Parallel Port
 	case 0x04:
 		result = CW2;
 		break;
@@ -121,11 +123,13 @@ auto dev::IO::PortInHandling(uint8_t _port)
 	case 0x0f:
 		return JOY_1;
 
+		// AY
 	case 0x14: [[fallthrough]];
 	case 0x15:
 		result = m_ay.Read(_port & 1);
 		break;
 
+		// FFD
 	case 0x18:
 		result = m_fdc.Read(Fdc1793::Port::DATA);
 		break;
@@ -148,6 +152,7 @@ auto dev::IO::PortInHandling(uint8_t _port)
 	return result;
 }
 
+// I8080 OUT NN
 // called at the commit time. it's data sent by the cpu instruction OUT
 void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 {
@@ -184,11 +189,11 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		BRD_COLOR_IDX = PORT_B & 0x0f;
 		REQ_DISPLAY_MODE = (PORT_B & 0x10) != 0;
 		break;
-		// vertical scroll
+		// Vertical Scrolling
 	case 0x03:
 		PORT_A = _value;
 		break;
-		// PPI2
+		// Parallel Port
 	case 0x04:
 		CW2 = _value;
 		break;
@@ -210,23 +215,28 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		m_timer.Write(~_port & 3, _value);
 		break;
 
+		// Color pallete
 	case PORT_OUT_BORDER_COLOR0: [[fallthrough]];
 	case PORT_OUT_BORDER_COLOR1: [[fallthrough]];
 	case PORT_OUT_BORDER_COLOR2: [[fallthrough]];
 	case PORT_OUT_BORDER_COLOR3:
 		HW_COLOR = _value;
 		break;
+
+		// Ram Disk 0
 	case 0x10:
 		m_memory.SetRamDiskMode(0, _value);
 		break;
 	case 0x11:
 		m_memory.SetRamDiskMode(1, _value);
 		break;
+		// AY
 	case 0x14: [[fallthrough]];
 	case 0x15:
 		m_ay.Write(_port & 1, _value);
 		break;
 
+		// FDD
 	case 0x18:
 		m_fdc.Write(Fdc1793::Port::DATA, _value);
 		break;
@@ -243,6 +253,8 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		m_fdc.Write(Fdc1793::Port::SYSTEM, _value);
 		break;
 	case 0x20:
+
+		// Ram Disk
 		m_memory.SetRamDiskMode(2, _value);
 		break;
 	case 0x21:
@@ -260,8 +272,9 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 	case 0x81:
 		m_memory.SetRamDiskMode(7, _value);
 		break;
-	case 0xED: // sends data to the emulator's console
-		_port = _port;
+		// Sends data to the emulator
+	case 0xED:
+		_port = _port; // TODO: do something meaningful
 		break;
 	default:
 		break;

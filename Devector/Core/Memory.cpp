@@ -1,15 +1,40 @@
 #include "Memory.h"
 #include "Utils/Utils.h"
 
-dev::Memory::Memory(const std::wstring& _pathBootData)
-	: m_rom(), m_ram()
+dev::Memory::Memory(const std::wstring& _pathBootData, const std::wstring& _pathRamDiskData, 
+	const bool _ramDiskClearAfterRestart)
+	: 
+	m_rom(), m_ram(),
+	m_pathRamDiskData(_pathRamDiskData),
+	m_ramDiskClearAfterRestart(_ramDiskClearAfterRestart)
 {
 	auto res = dev::LoadFile(_pathBootData);
 	if (res) m_rom = *res;
+
+	res = dev::LoadFile(_pathRamDiskData);
+	if (res) {
+		RamDiskData ramDiskData = *res;
+		ramDiskData.resize(MEMORY_RAMDISK_LEN * RAMDISK_MAX);
+		std::copy(ramDiskData.begin(), ramDiskData.end(), m_ram.data() + MEMORY_MAIN_LEN);
+	}
+}
+
+dev::Memory::~Memory()
+{
+	// store RamDisk
+	RamDiskData ramDiskData(m_ram.begin() + MEMORY_MAIN_LEN, m_ram.end());
+	dev::SaveFile(m_pathRamDiskData, ramDiskData, true);
 }
 void dev::Memory::Init()
 {
-	m_ram.fill(0);
+	if (m_ramDiskClearAfterRestart){
+		m_ram.fill(0);
+	}
+	else {
+		std::fill(m_ram.data(), m_ram.data() + MEMORY_MAIN_LEN, 0);
+	}
+
+
 	*((uint64_t*) &m_mappings[0].data) = 0;
 	m_state.update.mapping.data = m_state.update.ramdiskIdx = m_mappingsEnabled = 0;
 	m_state.update.memType = MemType::ROM;

@@ -117,6 +117,8 @@ namespace dev
 
 		bool m_ruslat = false;
 		bool m_restartOnLoadFdd = false;
+		bool m_ramDiskClearAfterRestart = true;
+		std::wstring m_ramDiskDataPath = L"";
 		int m_rustLatSwitched = 0;
 
 		bool m_debuggerAttached = false;

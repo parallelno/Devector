@@ -5,6 +5,7 @@
 #include <array>
 #include <functional>
 #include <mutex>
+#include <string>
 
 #include "Utils/Types.h"
 
@@ -28,6 +29,7 @@ namespace dev
 
 		using Rom = std::vector<uint8_t>;
 		using Ram = std::array<uint8_t, GLOBAL_MEMORY_LEN>;
+		using RamDiskData = std::vector<uint8_t>;
 
 		static constexpr uint8_t MAPPING_RAM_MODE_MASK = 0b11100000;
 		static constexpr uint8_t MAPPING_MODE_MASK = 0b11110000;
@@ -90,7 +92,8 @@ namespace dev
 		};
 #pragma pack(pop)
 
-		Memory(const std::wstring& _pathBootData);
+		Memory(const std::wstring& _pathBootData, const std::wstring& _pathRamDiskData, const bool _ramDiskClearAfterRestart);
+		~Memory();
 		void Init();
 		void Restart();
 		auto GetByte(const Addr _addr,
@@ -113,7 +116,7 @@ namespace dev
 		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
 		bool IsException();
 		bool IsRomEnabled() const;
-		inline void DebugInit() { m_state.debug.Init(); };
+		inline void DebugInit() { m_state.debug.Init(); }; 
 
 	private:
 
@@ -121,5 +124,7 @@ namespace dev
 		Rom m_rom;
 		State m_state;
 		int m_mappingsEnabled = 0;
+		std::wstring m_pathRamDiskData;
+		bool m_ramDiskClearAfterRestart = true;
 	};
 }

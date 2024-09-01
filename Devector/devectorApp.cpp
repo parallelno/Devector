@@ -39,9 +39,12 @@ void dev::DevectorApp::WindowsInit()
 {
 	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", "boot//boot.bin"));
 	m_restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", true);
+	m_ramDiskClearAfterRestart = GetSettingsBool("ramDiskClearAfterRestart", false);
+	m_ramDiskDataPath = dev::StrToStrW(GetSettingsString("ramDiskDataPath", "ramDisks.bin"));
 
-	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData);
+	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData, m_ramDiskDataPath, m_ramDiskClearAfterRestart);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
+
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_ruslat);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
 		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqUI);
@@ -688,20 +691,25 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 {
 	auto fddResult = dev::LoadFile(_path);
 	if (!fddResult || fddResult->empty()) {
-		dev::Log(L"Error occurred while loading the file. "
-			"Please ensure the file exists and you have the correct permissions to read it. Path: {}", _path);
+		dev::Log(L"Fdc1793 Error: loading error. "
+			"Ensure the file exists and its permissions are correct. Path: {}", _path);
 		return;
 	}
-	if (fddResult->size() > FDisk::dataLen) {
-		dev::Log(L"Fdc1793: disk image is too big. size: {} bytes, path: {}", fddResult->size(), _path);
-		return;
+
+	auto origSize = fddResult->size();
+	auto fddimg = *fddResult;
+
+	if (fddimg.size() > FDisk::dataLen) {
+		dev::Log(L"Fdc1793 Warning: disk image is too big. "
+			"It size will be concatenated to {}. Original size: {} bytes, path: {}", FDisk::dataLen, origSize, _path);
+		fddimg.resize(FDisk::dataLen);
 	}
 
 	if (_autoBoot) m_hardwareP->Request(Hardware::Req::STOP);
 
 	// loading the fdd data
 	m_hardwareP->Request(Hardware::Req::LOAD_FDD, {
-		{"data", *fddResult },
+		{"data", fddimg },
 		{"driveIdx", _driveIdx},
 		{"path", dev::StrWToStr(_path)}
 		});

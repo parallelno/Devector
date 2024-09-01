@@ -2,10 +2,11 @@
 #include "Utils/StrUtils.h"
 #include "Core/Disasm.h"
 
-dev::Hardware::Hardware(const std::wstring& _pathBootData)
+dev::Hardware::Hardware(const std::wstring& _pathBootData, 
+		const std::wstring& _pathRamDiskData, const bool _ramDiskClearAfterRestart)
 	:
 	m_status(Status::STOP),
-	m_memory(_pathBootData),
+	m_memory(_pathBootData, _pathRamDiskData, _ramDiskClearAfterRestart),
 	m_keyboard(),
 	m_timer(),
 	m_ay(),

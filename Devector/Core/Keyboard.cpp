@@ -22,7 +22,7 @@ auto dev::Keyboard::KeyHandling(int _key, int _action)
 			return Operation::RESET;
 		}
 		break;
-	case GLFW_KEY_F10: // TODO: F12 causes debug interruption. It is ImGui feature. Fix it.
+	case GLFW_KEY_F10: // TODO: F12 causes debug interruption. It is an ImGui feature perhaps. Fix it.
 		if (_action == GLFW_RELEASE) {
 			// BLK + SBR functionality
 			return Operation::RESTART;
@@ -91,8 +91,10 @@ void dev::Keyboard::InitMapping()
 	// o 4 │ G   F   E   D   C   B   A   @
 	// w 3 │ /   .   =   ,   ;   :   9   8
 	// s 2 │ 7   6   5   4   3   2   1   0
-	//   1 │F5  F4  F3  F2  F1  AR2 STR LDA, // LDA - is a left diagonal arrow
+	//   1 │F5  F4  F3  F2  F1  AR2 STR LDA,
 	//   0 │DN  RT  UP  LFT ZAB VK  PS  TAB
+	//
+	// LDA - left diagonal arrow
 
 	m_keymap = {
 		// KeyCode				RowColumnCode = row<<8 | 1<<column
