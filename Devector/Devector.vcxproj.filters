@@ -33,30 +33,6 @@
     <ClCompile Include="..\SharedSource\3rdParty\imgui\misc\cpp\imgui_stdlib.cpp">
       <Filter>SharedSource\3rdParty\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Debugger.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Display.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Hardware.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\IO.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Keyboard.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Memory.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Watchpoint.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Breakpoint.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="UI\BreakpointsWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -81,44 +57,8 @@
     <ClCompile Include="UI\BaseWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="Utils\GLUtils.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\ImGuiApp.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\ImGuiUtils.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\JsonUtils.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\StrUtils.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\Utils.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\ArgsParser.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
     <ClCompile Include="UI\TraceLogWindow.cpp">
       <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\CpuI8080.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\TimerI8253.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Fdc1793.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Disasm.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\TraceLog.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="UI\AboutWindow.cpp">
       <Filter>UI</Filter>
@@ -126,25 +66,89 @@
     <ClCompile Include="UI\FeedbackWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Audio.cpp" />
-    <ClCompile Include="Core\PitI8253.cpp" />
-    <ClCompile Include="Core\DebugData.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\SoundAY8910.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="UI\RecorderWindow.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Recorder.cpp">
-      <Filter>Core</Filter>
+    <ClCompile Include="..\SharedSource\Core\DebugData.cpp">
+      <Filter>SharedSource\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Breakpoints.cpp">
-      <Filter>Core</Filter>
+    <ClCompile Include="..\SharedSource\Core\Debugger.cpp">
+      <Filter>SharedSource\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Watchpoints.cpp">
-      <Filter>Core</Filter>
+    <ClCompile Include="..\SharedSource\Core\Disasm.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Display.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Fdc1793.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Hardware.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\IO.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Keyboard.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Memory.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\PitI8253.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Recorder.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\SoundAY8910.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\TimerI8253.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\TraceLog.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Watchpoint.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Watchpoints.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Audio.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Breakpoint.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\Breakpoints.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Core\CpuI8080.cpp">
+      <Filter>SharedSource\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\GLUtils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\ImGuiApp.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\ImGuiUtils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\JsonUtils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\StrUtils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\Utils.cpp">
+      <Filter>SharedSource\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedSource\Utils\ArgsParser.cpp">
+      <Filter>SharedSource\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -185,30 +189,6 @@
     <ClInclude Include="..\SharedSource\3rdParty\glew\include\GL\glew.h">
       <Filter>SharedSource\3rdParty\glew</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Breakpoint.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Debugger.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Display.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Hardware.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\IO.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Keyboard.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Memory.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Watchpoint.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="UI\BaseWindow.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -233,59 +213,8 @@
     <ClInclude Include="UI\WatchpointsWindow.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="Utils\GLUtils.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\ImGuiApp.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\ImGuiUtils.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\JsonUtils.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\Result.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\Status.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\StrUtils.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\TQueue.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\Types.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\Utils.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\ArgsParser.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\Consts.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="UI\TraceLogWindow.h">
       <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\CpuI8080.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\TimerI8253.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Fdc1793.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Disasm.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\TraceLog.h">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="UI\AboutWindow.h">
       <Filter>UI</Filter>
@@ -293,25 +222,107 @@
     <ClInclude Include="UI\FeedbackWindow.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Audio.h" />
-    <ClInclude Include="Core\PitI8253.h" />
-    <ClInclude Include="Core\DebugData.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\SoundAY8910.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="UI\RecorderWindow.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Recorder.h">
-      <Filter>Core</Filter>
+    <ClInclude Include="..\SharedSource\Core\DebugData.h">
+      <Filter>SharedSource\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Breakpoints.h">
-      <Filter>Core</Filter>
+    <ClInclude Include="..\SharedSource\Core\Debugger.h">
+      <Filter>SharedSource\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Watchpoints.h">
-      <Filter>Core</Filter>
+    <ClInclude Include="..\SharedSource\Core\Disasm.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Display.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\FDC1793.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Fdd.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Hardware.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\IO.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Keyboard.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Memory.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\PitI8253.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Recorder.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\SoundAY8910.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\TimerI8253.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\TraceLog.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Watchpoint.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Watchpoints.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Audio.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Breakpoint.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\Breakpoints.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Core\CpuI8080.h">
+      <Filter>SharedSource\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Consts.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\GLUtils.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\ImGuiApp.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\ImGuiUtils.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\JsonUtils.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Result.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Status.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\StrUtils.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\TQueue.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Types.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\Utils.h">
+      <Filter>SharedSource\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedSource\Utils\ArgsParser.h">
+      <Filter>SharedSource\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -339,14 +350,14 @@
     <Filter Include="SharedSource\3rdParty\glfw">
       <UniqueIdentifier>{5970f580-d2e7-4c37-864f-e63c6a6233bc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Core">
-      <UniqueIdentifier>{ab70a57d-c639-46b8-a2a8-e9f22e0d30f2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="UI">
       <UniqueIdentifier>{a41a3537-054d-4f68-8e87-925e780e6d66}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Utils">
-      <UniqueIdentifier>{00d017b3-b3f0-4ba0-a9d5-148576dcfe60}</UniqueIdentifier>
+    <Filter Include="SharedSource\Core">
+      <UniqueIdentifier>{60b5c64d-7d8f-468d-a242-f741f7c06de2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SharedSource\Utils">
+      <UniqueIdentifier>{e6e59753-edda-4a8f-8e4e-449d3d7e38ab}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

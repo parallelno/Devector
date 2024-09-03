@@ -3,8 +3,8 @@
 #include <format>
 #include <iostream>
 
-#include "Utils/ArgsParser.h"
-#include "Utils/Utils.h"
+#include "ArgsParser.h"
+#include "Utils.h"
 
 dev::ArgsParser::ArgsParser(int& _argc, char** _argv,
 	const std::string& _description)

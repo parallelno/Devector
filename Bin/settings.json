@@ -26,21 +26,27 @@
         ],
         [
             1,
-            "C:\\Users\\parallelno\\Downloads\\Vector06C disk images\\unsort\\stmpro.fdd",
-            0,
-            true
-        ],
-        [
-            1,
             "C:\\Work\\Programming\\guimos_jdundel\\bin\\rds308.fdd",
             0,
-            true
+            false
         ],
         [
             0,
             "C:\\Work\\Programming\\guimos_jdundel\\bin\\guimos_jdundel_eng.rom",
             -1,
             false
+        ],
+        [
+            1,
+            "C:\\Work\\Programming\\guimos_jdundel\\bin\\guimos.fdd",
+            0,
+            false
+        ],
+        [
+            1,
+            "C:\\Users\\parallelno\\Downloads\\Vector06C disk images\\unsort\\stmpro.fdd",
+            0,
+            true
         ],
         [
             1,
@@ -69,12 +75,6 @@
         [
             1,
             "C:\\Users\\parallelno\\Downloads\\Vector06C disk images\\unsort\\add1200.fdd",
-            0,
-            true
-        ],
-        [
-            1,
-            "C:\\Users\\parallelno\\Downloads\\Vector06C disk images\\unsort\\11jur2.fdd",
             0,
             true
         ]

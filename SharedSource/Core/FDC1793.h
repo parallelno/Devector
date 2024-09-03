@@ -8,20 +8,13 @@
 
 #include <string>
 #include <vector>
+#include "Core/Fdd.h"
 
 namespace dev
 {
 	struct FDisk
 	{
-	public:
-		static constexpr int sidesPerDisk = 2;
-		static constexpr int tracksPerSide = 82;
-		static constexpr int sectorsPerTrack = 5;
-		static constexpr int sectorLen = 1024;
-		static constexpr int dataLen = sidesPerDisk * tracksPerSide * sectorsPerTrack * sectorLen;
-	
-	private:
-		uint8_t data[dataLen];
+		uint8_t data[FDD_SIZE];
 	public:
 
 		uint8_t header[6];		// current header, result of Seek()

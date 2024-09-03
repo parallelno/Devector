@@ -8,7 +8,7 @@ dev::FDisk::FDisk()
 	header[0] = 0;
 	header[1] = 0;
 	header[2] = 0;
-	header[3] = 0x3;	// a code associated with a sectorLen=1024
+	header[3] = 0x3;	// a code associated with a FDD_SECTOR_LEN=1024
 	header[4] = 0;		// CRC1 is not supported
 	header[5] = 0;		// CRC2 is not supported
 }
@@ -96,9 +96,9 @@ uint8_t* dev::Fdc1793::Seek(int _side, int _track, int _sideID, int _trackID, in
 {
 	if (!m_disk) return nullptr;
 
-	int sectors = FDisk::sectorsPerTrack * (_trackID * FDisk::sidesPerDisk + _sideID);
+	int sectors = FDD_SECTORS_PER_TRACK * (_trackID * FDD_SIDES + _sideID);
 	int sectorAdjusted = dev::Max(0, _sectorID - 1); // In CHS addressing the sector numbers always start at 1
-	int m_position = (sectors + sectorAdjusted) * FDisk::sectorLen;
+	int m_position = (sectors + sectorAdjusted) * FDD_SECTOR_LEN;
 
 	// store a header for each sector
 	m_disk->header[0] = _trackID;
@@ -160,7 +160,7 @@ uint8_t dev::Fdc1793::Read(Port _reg)
 			if (--m_rwLen)
 			{
 				m_wait = 255; // Reset timeout watchdog
-				if (!(m_rwLen & (m_disk->sectorLen - 1))) ++m_regs[2]; // Advance to the next sector if needed
+				if (!(m_rwLen & (FDD_SECTOR_LEN - 1))) ++m_regs[2]; // Advance to the next sector if needed
 			}
 			else
 			{
@@ -280,8 +280,8 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			}
 			else
 			{
-				m_rwLen = m_disk->sectorLen
-					* (_val & 0x10 ? (m_disk->sectorsPerTrack - m_regs[2] + 1) : 1);
+				m_rwLen = FDD_SECTOR_LEN
+					* (_val & 0x10 ? (FDD_SECTORS_PER_TRACK - m_regs[2] + 1) : 1);
 				m_regs[0] |= F_BUSY | F_DRQ;
 				m_irq = WD1793_DRQ;
 				m_wait = 255;
@@ -302,8 +302,8 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			}
 			else
 			{
-				m_rwLen = m_disk->sectorLen
-					* (_val & 0x10 ? (m_disk->sectorsPerTrack - m_regs[2] + 1) : 1);
+				m_rwLen = FDD_SECTOR_LEN
+					* (_val & 0x10 ? (FDD_SECTORS_PER_TRACK - m_regs[2] + 1) : 1);
 				m_regs[0] |= F_BUSY | F_DRQ;
 				m_irq = WD1793_DRQ;
 				m_wait = 255;
@@ -347,12 +347,12 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			// it only sets the track data to 0xE5
 			if (m_ptr = Seek(0, m_track, 0, m_regs[1], 1))
 			{
-				memset(m_ptr, 0xE5, m_disk->sectorLen * m_disk->sectorsPerTrack);
+				memset(m_ptr, 0xE5, FDD_SECTOR_LEN * FDD_SECTORS_PER_TRACK);
 				m_disk->updated = true;
 			}
-			if (m_disk->sidesPerDisk > 1 && (m_ptr = Seek(1, m_track, 1, m_regs[1], 1)))
+			if (FDD_SIDES > 1 && (m_ptr = Seek(1, m_track, 1, m_regs[1], 1)))
 			{
-				memset(m_ptr, 0xE5, m_disk->sectorLen * m_disk->sectorsPerTrack);
+				memset(m_ptr, 0xE5, FDD_SECTOR_LEN * FDD_SECTORS_PER_TRACK);
 				m_disk->updated = true;
 			}
 			break;
@@ -380,7 +380,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 			{
 				m_wait = 255; // Reset timeout watchdog
 				// Advance to the next sector as needed
-				if (!(m_rwLen & (m_disk->sectorLen - 1))) ++m_regs[2];
+				if (!(m_rwLen & (FDD_SECTOR_LEN - 1))) ++m_regs[2];
 			}
 			else {
 				// Write completed
@@ -455,7 +455,7 @@ auto dev::Fdc1793::GetFddImage(const int _driveIdx)
 -> const std::vector<uint8_t>
 {
 	auto data = m_disks[_driveIdx].GetData();
-	return { data, data + FDisk::dataLen };
+	return { data, data + FDD_SIZE };
 }
 
 void dev::Fdc1793::ResetUpdate(const int _driveIdx) { m_disks[_driveIdx].updated = false; }

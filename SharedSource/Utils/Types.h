@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <bit>
-#include "Utils/Types.h"
 
 namespace dev
 {

@@ -11,6 +11,7 @@
 #include "Utils/Utils.h"
 #include "Utils/JsonUtils.h"
 #include "Utils/StrUtils.h"
+#include "Core/Fdd.h"
 
 dev::DevectorApp::DevectorApp(
 	const std::string& _stringPath, nlohmann::json _settingsJ)
@@ -709,10 +710,10 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 	auto origSize = fddResult->size();
 	auto fddimg = *fddResult;
 
-	if (fddimg.size() > FDisk::dataLen) {
+	if (fddimg.size() > FDD_SIZE) {
 		dev::Log(L"Fdc1793 Warning: disk image is too big. "
-			"It size will be concatenated to {}. Original size: {} bytes, path: {}", FDisk::dataLen, origSize, _path);
-		fddimg.resize(FDisk::dataLen);
+			"It size will be concatenated to {}. Original size: {} bytes, path: {}", FDD_SIZE, origSize, _path);
+		fddimg.resize(FDD_SIZE);
 	}
 
 	if (_autoBoot) m_hardwareP->Request(Hardware::Req::STOP);
