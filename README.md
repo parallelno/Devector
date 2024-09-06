@@ -6,18 +6,18 @@ Devector_cpp is an emulator of a Soviet personal computer Vector06c. It is desig
 
 ## Features
 
-The main features of Devector_cpp are:
-
 - Emulator of a Soviet personal computer Vector06c
 - Debugger functionality
 - FDD support
-- Ram-Disk support up to 1 currently
+- Up to 8 Ram-Disk support
+- AY & bipper & 3-channel timer support
+- Recording a playback with options to store, load, and play it
 
 ## Usage
 
-To use Devector_cpp, follow these steps:
+To use Devector, follow these steps:
 
-1. Run the emulator: `./Devector.bat`
+1. Run the emulator: `./Devector.exe`
 
 ## Contributing
 
@@ -25,7 +25,7 @@ Contributions are welcome! If you find a bug or have an idea for a feature, plea
 
 ## License
 
-Devector_cpp is licensed under the MIT License. See the LICENSE file for more information.
+Devector is licensed under the MIT License. See the LICENSE file for more information.
 
 ## Acknowledgements
 
@@ -34,5 +34,3 @@ Special thanks to the following people for their contributions:
 - [Svofski](https://github.com/svofski)
 - [Viktor Pykhonin](https://github.com/vpyk/)
 - [zx-pk.ru comunity](https://zx-pk.ru/)
-
-
