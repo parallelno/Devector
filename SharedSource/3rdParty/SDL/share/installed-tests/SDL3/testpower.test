@@ -1,3 +1,0 @@
-[Test]
-Type=session
-Exec=D:/a/SDL/SDL/prefix/libexec/installed-tests/SDL3/testpower 
