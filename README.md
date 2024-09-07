@@ -1,12 +1,12 @@
-# Devector_cpp
+# Devector
 
 ## Overview
 
-Devector_cpp is an emulator of a Soviet personal computer Vector06c. It is designed to simplify the development process and speed up the work. Currently, it is in the early stages of development, so please use it on your own risk.
+Devector is a cross-platform emulator of a Soviet personal computer Vector06c. It is designed to simplify the development process and speed up the work. Currently, it is in the early stages of development, so please use it on your own risk.
 
 ## Features
 
-- Emulator of a Soviet personal computer Vector06c
+- A cross-platform precise emulator of a Soviet personal computer Vector06c
 - Debugger functionality
 - FDD support
 - Up to 8 Ram-Disk support
