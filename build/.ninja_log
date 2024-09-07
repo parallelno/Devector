@@ -1,0 +1,6 @@
+# ninja log v5
+1	29	1725689137406916429	CMakeFiles/my_lib.dir/projects/devector/src/my_lib.cpp.o	4c1fd1355fb86cd7
+29	68	1725689137445917694	libmy_lib.so	35847dd29da698fd
+0	4	0	clean	a31eedcededa8236
+2	603	1725689137980935055	CMakeFiles/devector.dir/projects/devector/src/main.cpp.o	e44c02b4aee4529c
+603	745	1725689138121939626	devector	2626b4fb167b06b7

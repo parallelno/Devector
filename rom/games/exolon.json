@@ -1,0 +1,11 @@
+{
+    "comments": {
+        "0x0100": "comment 123"
+    },
+    "consts": null,
+    "labels": {
+        "TimerRead": "0x0147",
+        "WriteTimer1": "0x16A2",
+        "WriteTimer2": "0x16B2"
+    }
+}
