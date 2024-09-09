@@ -7,17 +7,18 @@
 #include <mutex>
 #include <Windows.h>
 
+#include "utils/glu_utils.h"
 #include "imgui.h"
-//#include "GLFW/glfw3.h" // Will drag system OpenGL headers
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_opengl3.h"
+#include <SDL3/SDL.h>
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+    #include <SDL3/SDL_opengles2.h>
+#else
+    #include <SDL3/SDL_opengl.h>
+#endif
 
 #include "utils/json_utils.h"
-
-// [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
-// To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
-// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Stu
-#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
-#pragma comment(lib, "legacy_stdio_definitions")
-#endif
 
 namespace dev {
 
@@ -57,7 +58,8 @@ namespace dev {
         AppStatus m_status = AppStatus::NOT_INITED;
 
         static void glfw_error_callback(int _error, const char* _description);
-        GLFWwindow* m_window = nullptr;
+        SDL_Window* m_window = nullptr;
+        SDL_GLContext m_gl_context = nullptr;
         ImGuiIO* m_io = nullptr;
 
         static constexpr float WINDOW_DPI_DEFAULT = 96.0f;

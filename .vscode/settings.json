@@ -84,6 +84,7 @@
         "xutility": "cpp",
         "*.rh": "cpp",
         "sdl_keyboard.h": "c",
-        "sdl_scancode.h": "c"
+        "sdl_scancode.h": "c",
+        "coroutine": "cpp"
     }
 }

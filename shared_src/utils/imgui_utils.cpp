@@ -3,7 +3,7 @@
 #include "utils/utils.h"
 #include "utils/str_utils.h"
 #include "core/disasm.h"
-#include "misc/cpp/imgui_stdlib.h"
+#include "imgui_stdlib.h"
 
 #include "imgui_internal.h"
 

@@ -1,7 +1,13 @@
 #include <cstdarg>
 #include <fstream>
-#include <Windows.h>
 #include <iostream>
+
+#if defined(_WIN32)
+	#include <Windows.h>
+	#include <commdlg.h>
+#elif defined(__linux__)
+	#include <gtk/gtk.h>
+#endif
 
 #include "utils/utils.h"
 #include "utils/consts.h"
@@ -153,50 +159,93 @@ auto dev::GetDirStemExt(const std::wstring& _path)
 
 // return true if the user selected a file
 // return false if the user canceled the dialog or an error occurred
-bool dev::OpenFileDialog(wchar_t* filePath, int size, const wchar_t* _filter)
+bool dev::FileDialog(wchar_t* _filePath, int _size, const wchar_t* _filter, bool isSaveDialog)
 {
 #if defined(_WIN32)
+    OPENFILENAMEW ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = _filePath;
+    ofn.lpstrFile[0] = L'\0';
+    ofn.nMaxFile = _size;
+    ofn.lpstrFilter = _filter;
+    ofn.nFilterIndex = 1;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+    ofn.lpstrTitle = isSaveDialog ? L"Save File" : L"Open File";
+    ofn.lpstrInitialDir = NULL;
 
-	OPENFILENAME ofn;
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrFile = filePath;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = size;
-	ofn.lpstrFilter = _filter;
-	ofn.nFilterIndex = 1;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+    if (isSaveDialog) {
+        ofn.Flags |= OFN_OVERWRITEPROMPT;
+        return GetSaveFileNameW(&ofn) == TRUE;
+    } else {
+        return GetOpenFileNameW(&ofn) == TRUE;
+    }
 
-	// Display the open file dialog
-	return GetOpenFileName(&ofn) == TRUE;
+#elif defined(__linux__)
+    static bool gtk_initialized = false;
+    if (!gtk_initialized) {
+        gtk_init(NULL, NULL);
+        gtk_initialized = true;
+    }
 
-#elif defined(__APPLE__)
+    GtkWidget *dialog;
+    GtkFileChooserAction action = isSaveDialog ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN;
+    gint res;
+
+    dialog = gtk_file_chooser_dialog_new(isSaveDialog ? "Save File" : "Open File",
+                                         NULL,
+                                         action,
+                                         "_Cancel",
+                                         GTK_RESPONSE_CANCEL,
+                                         isSaveDialog ? "_Save" : "_Open",
+                                         GTK_RESPONSE_ACCEPT,
+                                         NULL);
+
+    // Set up file filters
+    if (_filter != NULL) {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::string filter = conv.to_bytes(_filter);
+        std::vector<std::string> filter_parts;
+        size_t pos = 0;
+        while ((pos = filter.find('|')) != std::string::npos) {
+            filter_parts.push_back(filter.substr(0, pos));
+            filter.erase(0, pos + 1);
+        }
+        filter_parts.push_back(filter);
+
+        for (size_t i = 0; i < filter_parts.size(); i += 2) {
+            GtkFileFilter *gtk_filter = gtk_file_filter_new();
+            gtk_file_filter_set_name(gtk_filter, filter_parts[i].c_str());
+            gtk_file_filter_add_pattern(gtk_filter, filter_parts[i + 1].c_str());
+            gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), gtk_filter);
+        }
+    }
+
+    if (isSaveDialog) {
+        gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+    }
+
+    res = gtk_dialog_run(GTK_DIALOG(dialog));
+    if (res == GTK_RESPONSE_ACCEPT) {
+        char *filename;
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
+        filename = gtk_file_chooser_get_filename(chooser);
+        
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        std::wstring wfilename = conv.from_bytes(filename);
+        wcsncpy(_filePath, wfilename.c_str(), _size - 1);
+        _filePath[_size - 1] = L'\0';
+        
+        g_free(filename);
+        gtk_widget_destroy(dialog);
+        return true;
+    }
+
+    gtk_widget_destroy(dialog);
+    return false;
+
 #else
-#endif
-}
-
-// return true if the user selected a file
-// return false if the user canceled the dialog or an error occurred
-bool dev::SaveFileDialog(wchar_t* filePath, int size, const wchar_t* _filter)
-{
-#if defined(_WIN32)
-
-	OPENFILENAME ofn;
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrFile = filePath;
-	ofn.nMaxFile = size;
-	ofn.lpstrFilter = _filter;
-	ofn.nFilterIndex = 1;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR | OFN_OVERWRITEPROMPT;
-	ofn.lpstrInitialDir = 0;
-	ofn.lpstrDefExt = dev::GetExt(filePath).c_str();
-	ofn.lpstrFileTitle = filePath;
-
-	// Display the open file dialog
-	return GetSaveFileName(&ofn) == TRUE;
-
-#elif defined(__APPLE__)
-#else
+    // Other platforms implementation (if needed)
+    return false;
 #endif
 }

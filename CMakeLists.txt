@@ -12,7 +12,7 @@ set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/projects/devector/src)
 set(3RD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared_src/3rd_party)
 set(SDL3_DIR ${3RD_PARTY_DIR}/SDL)
 set(IMGUI_DIR ${3RD_PARTY_DIR}/imgui)
-set(GLEW_DIR ${3RD_PARTY_DIR}/glew)
+set(GLAD_DIR ${3RD_PARTY_DIR}/glad)
 set(SHARED_SRC ${CMAKE_CURRENT_SOURCE_DIR}/shared_src)
 set(CORE_DIR ${SHARED_SRC}/core)
 set(UTILS_DIR ${SHARED_SRC}/utils)
@@ -20,6 +20,8 @@ set(BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 # Create 3rd_party folder
 file(MAKE_DIRECTORY ${3RD_PARTY_DIR})
+
+find_package(PkgConfig REQUIRED)
 
 include(FetchContent)
 # Fetch SDL3 if not already in 3rd_party
@@ -47,19 +49,9 @@ if(NOT EXISTS ${IMGUI_DIR})
     FetchContent_MakeAvailable(ImGui)
 endif()
 
-# Fetch GLEW if not already in 3rd_party
-if(NOT EXISTS ${GLEW_DIR})
-    message(STATUS "Cloning GLEW into ${GLEW_DIR}")
-    FetchContent_Declare(
-        glew
-        GIT_REPOSITORY https://github.com/nigels-com/glew
-        GIT_TAG master
-        SOURCE_DIR ${GLEW_DIR}  # Specify the destination directory
-    )
-    FetchContent_MakeAvailable(glew)
-endif()
-# Build GLEW using its internal CMakeLists
-add_subdirectory(${GLEW_DIR}/build/cmake)
+# Add GLAD
+add_library(glad ${GLAD_DIR}/src/glad.c)
+target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 
 # Optionally, build GLEW utilities (glewinfo, visualinfo)
 set(BUILD_UTILS OFF CACHE BOOL "Build GLEW utilities")
@@ -73,6 +65,7 @@ set(IMGUI_SRC
     ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+    ${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
 )
 
 # devector source
@@ -89,16 +82,26 @@ set(SOURCES
 # Executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC})
 
+# Add Unicode definitions for Windows
+target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE)
+
 # Set C++20 as the standard
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_EXTENSIONS OFF)  # Ensures no compiler-specific extensions are used
 
+# Installing and linking GTK3 for open/save dialogs
+if(UNIX AND NOT APPLE)
+    pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+    include_directories(${GTK3_INCLUDE_DIRS})
+    link_directories(${GTK3_LIBRARY_DIRS})
+    add_definitions(${GTK3_CFLAGS_OTHER})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARIES})
+endif()
+
 # Linking
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
-# Specify which GLEW target needs to link to your project (glew for shared, glew_s for static)
-target_link_libraries(${PROJECT_NAME} PRIVATE glew_s)  # For static library
-# target_link_libraries(${PROJECT_NAME} PRIVATE glew)  # For shared library
+target_link_libraries(${PROJECT_NAME} PRIVATE glad)
 
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
@@ -113,7 +116,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${SRC_DIR}
     ${SHARED_SRC}
     ${3RD_PARTY_DIR}
-    ${GLEW_DIR}/include
+    ${GLAD_DIR}/include
+    ${GLAD_DIR}/src
+    ${IMGUI_DIR}/misc/cpp/
 )
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # 
@@ -140,8 +145,8 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "--------- SDL3 library copied to: ${BIN_DIR}/$<TARGET_FILE_NAME:SDL3::SDL3>"
 )
 
-# Copy contents of data folder directly into bin folder
-set(DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data)
+# Copy contents of resources folder directly into bin folder
+set(DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${DATA_DIR} ${BIN_DIR}
     COMMAND ${CMAKE_COMMAND} -E echo "--------- Data files copied to: ${BIN_DIR}"

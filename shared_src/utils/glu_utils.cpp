@@ -1,14 +1,12 @@
 #include <format>
 
-#include <GL/glew.h>
-#include <SDL3/SDL_opengl.h>
-
 #include "utils/glu_utils.h"
 #include "utils/result.h"
 #include "utils/str_utils.h"
 
 
 // vertices of a quad with UV coordinates
+/*
 GLfloat vertices[] = {
 	// Positions          // UV Coords
 	 -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,
@@ -16,26 +14,44 @@ GLfloat vertices[] = {
 	  1.0f,  1.0f, 0.0f,  1.0f, 0.0f,
 	  1.0f, -1.0f, 0.0f,  1.0f, 1.0f,
 };
+*/
+GLfloat vertices[] = {
+    // First triangle
+    -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,  // bottom-left
+    1.0f, -1.0f, 0.0f,   1.0f, 1.0f,  // bottom-right
+    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  // top-left
+
+    // Second triangle
+    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  // top-left
+    1.0f, -1.0f, 0.0f,   1.0f, 1.0f,  // bottom-right
+    1.0f,  1.0f, 0.0f,   1.0f, 0.0f   // top-right
+};
 
 // it is not initializing the Window and OpenGL 3.3 context
 // assumming ImGui and did it already
  dev::GLUtils::GLUtils()
  {
-	 m_glewInitCode = glewInit();
-	 if (m_glewInitCode != GLEW_OK) {
-		 dev::Log("Failed to initialize GLEW");
-	 }
+	// Initialize GLAD (replaces GLEW initialization)
+	m_gladInited = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
+	if (!m_gladInited) {
+		dev::Log("Failed to initialize GLAD");
+		return;  // Exit if GLAD failed to initialize
+	}
 
 	// Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
 	glGenVertexArrays(1, &vtxArrayObj);
 	glGenBuffers(1, &vtxBufferObj);
 	glBindVertexArray(vtxArrayObj);
 	glBindBuffer(GL_ARRAY_BUFFER, vtxBufferObj);
+	// Upload vertex data to the buffer
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	// Specify layout of vertex data (position)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
+	// Specify layout of texture coordinates
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
+	// Unbind the buffer and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
@@ -45,7 +61,7 @@ auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const
 		const int _framebufferTextureFilter)
 -> dev::Result<MaterialId>
 {
-	if (m_glewInitCode != GLEW_OK) return {};
+	if (!m_gladInited) return {};
 	
 	MaterialId materialId = m_materialId++;
 	auto& material = m_materials.emplace(materialId, Material{_shaderId, _framebufferW, _framebufferH, _paramParams}).first->second;
@@ -107,8 +123,7 @@ dev::GLUtils::~GLUtils()
 
 int dev::GLUtils::Draw(const MaterialId _materialId) const
 {
-	if (m_glewInitCode != GLEW_OK ||
-		!IsMaterialReady(_materialId)) return -1;
+	if (!m_gladInited || !IsMaterialReady(_materialId)) return -1;
 
 	auto& material = m_materials.at(_materialId);
 
@@ -119,26 +134,27 @@ int dev::GLUtils::Draw(const MaterialId _materialId) const
 
 	glUseProgram(material.shaderId);
 
-	// send the params to the shader
+	// Pass uniform parameters to the shader
 	for (const auto& [paramId, paramValue] : material.params)
 	{
 		glUniform4f(paramId, paramValue->x, paramValue->y, paramValue->z, paramValue->w);
 	}
 
-	// bind texture
+	// Bind textures
 	for (const auto& [activateId, id] : material.textureParams)
 	{
 		glActiveTexture(activateId);
 		glBindTexture(GL_TEXTURE_2D, id);
 	}
-	// draw the quad
+	// Bind the VAO and draw the quad
 	glBindVertexArray(vtxArrayObj);
-	glDrawArrays(GL_QUADS, 0, 4);
+	//glDrawArrays(GL_QUADS, 0, 4);
+	glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
 	glBindVertexArray(0);
-
+	// Unbind the framebuffer to return to default framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	return GLEW_OK;
+	return NO_ERRORS;
 }
 
 void dev::GLUtils::UpdateTexture(const int _texureId, const uint8_t* _memP)
@@ -167,7 +183,7 @@ auto dev::GLUtils::GetFramebufferTexture(const int _materialId) const
 	return m_materials.at(_materialId).framebufferTexture;
 }
 
-auto dev::GLUtils::GLCheckError(GLuint1 _obj, const std::string& _txt)
+auto dev::GLUtils::GLCheckError(GLuint _obj, const std::string& _txt)
 -> Result<GLuint>
 {
 	// Check for compilation errors
@@ -276,7 +292,7 @@ auto dev::GLUtils::InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format,
 	return id;
 }
 
-dev::GLUtils::Material::Material(GLuint1 _shaderId, 
+dev::GLUtils::Material::Material(GLuint _shaderId, 
 		const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams,
 		const Vec4& _backColor) 
 	:
