@@ -2,14 +2,20 @@ cmake_minimum_required(VERSION 3.22)
 
 project(devector)
 
+# Check if we are in a three build
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     message(FATAL_ERROR "Prevented in-three build. Please, create a build folder outside of the source code.")
 endif()
 
+# Defining vars
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/projects/devector/src)
 set(3RD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared_src/3rd_party)
-set(IMGUI_DIR ${3RD_PARTY_DIR}/imgui)
 set(SDL3_DIR ${3RD_PARTY_DIR}/SDL)
+set(IMGUI_DIR ${3RD_PARTY_DIR}/imgui)
+set(GLEW_DIR ${3RD_PARTY_DIR}/glew)
+set(SHARED_SRC ${CMAKE_CURRENT_SOURCE_DIR}/shared_src)
+set(CORE_DIR ${SHARED_SRC}/core)
+set(UTILS_DIR ${SHARED_SRC}/utils)
 set(BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 # Create 3rd_party folder
@@ -27,6 +33,7 @@ if(NOT EXISTS ${SDL3_DIR})
     )
     FetchContent_MakeAvailable(SDL3)
 endif()
+add_subdirectory(${SDL3_DIR} EXCLUDE_FROM_ALL)
 
 # Fetch ImGui if not already in 3rd_party
 if(NOT EXISTS ${IMGUI_DIR})
@@ -40,7 +47,22 @@ if(NOT EXISTS ${IMGUI_DIR})
     FetchContent_MakeAvailable(ImGui)
 endif()
 
-add_subdirectory(${SDL3_DIR} EXCLUDE_FROM_ALL)
+# Fetch GLEW if not already in 3rd_party
+if(NOT EXISTS ${GLEW_DIR})
+    message(STATUS "Cloning GLEW into ${GLEW_DIR}")
+    FetchContent_Declare(
+        glew
+        GIT_REPOSITORY https://github.com/nigels-com/glew
+        GIT_TAG master
+        SOURCE_DIR ${GLEW_DIR}  # Specify the destination directory
+    )
+    FetchContent_MakeAvailable(glew)
+endif()
+# Build GLEW using its internal CMakeLists
+add_subdirectory(${GLEW_DIR}/build/cmake)
+
+# Optionally, build GLEW utilities (glewinfo, visualinfo)
+set(BUILD_UTILS OFF CACHE BOOL "Build GLEW utilities")
 
 # ImGui source
 set(IMGUI_SRC
@@ -54,25 +76,45 @@ set(IMGUI_SRC
 )
 
 # devector source
+file(GLOB_RECURSE CORE_SRC ${CORE_DIR}/*.cpp ${CORE_DIR}/*.h)
+file(GLOB_RECURSE UTILS_SRC ${UTILS_DIR}/*.cpp ${UTILS_DIR}/*.h)
+
 set(SOURCES
     ${SRC_DIR}/main.cpp
+    ${CORE_SRC}
+    ${UTILS_SRC}
+    ${3RD_PARTY_DIR}/njson/json.hpp
 )
 
+# Executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC})
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${IMGUI_DIR}
-    ${IMGUI_DIR}/backends
-    ${SRC_DIR}/ui
-)
+# Set C++20 as the standard
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_EXTENSIONS OFF)  # Ensures no compiler-specific extensions are used
 
+# Linking
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
+# Specify which GLEW target needs to link to your project (glew for shared, glew_s for static)
+target_link_libraries(${PROJECT_NAME} PRIVATE glew_s)  # For static library
+# target_link_libraries(${PROJECT_NAME} PRIVATE glew)  # For shared library
+
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 else()
     target_link_libraries(${PROJECT_NAME} PRIVATE GL dl)
 endif()
 
+# Include dirs
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+    ${SRC_DIR}
+    ${SHARED_SRC}
+    ${3RD_PARTY_DIR}
+    ${GLEW_DIR}/include
+)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # 
 # Post build commands
