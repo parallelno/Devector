@@ -67,8 +67,17 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
-target_link_libraries(${PROJECT_NAME} PRIVATE GL dl)
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE GL dl)
+endif()
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# 
+# Post build commands
+# 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 # Create bin directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
