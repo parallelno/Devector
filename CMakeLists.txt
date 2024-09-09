@@ -7,11 +7,43 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 endif()
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/projects/devector/src)
-set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared_src/3rd_party/imgui)
+set(3RD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared_src/3rd_party)
+set(IMGUI_DIR ${3RD_PARTY_DIR}/imgui)
+set(SDL3_DIR ${3RD_PARTY_DIR}/SDL)
 set(BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
-set(SOURCES
-    # imgui
+# Create 3rd_party folder
+file(MAKE_DIRECTORY ${3RD_PARTY_DIR})
+
+include(FetchContent)
+# Fetch SDL3 if not already in 3rd_party
+if(NOT EXISTS ${SDL3_DIR})
+    message(STATUS "Cloning SDL3 into ${SDL3_DIR}")
+    FetchContent_Declare(
+        SDL3
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG main
+        SOURCE_DIR ${SDL3_DIR}  # Specify the destination directory
+    )
+    FetchContent_MakeAvailable(SDL3)
+endif()
+
+# Fetch ImGui if not already in 3rd_party
+if(NOT EXISTS ${IMGUI_DIR})
+    message(STATUS "Cloning ImGui into ${IMGUI_DIR}")
+    FetchContent_Declare(
+        ImGui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG docking  # Switch to the 'docking' branch
+        SOURCE_DIR ${IMGUI_DIR}  # Specify the destination directory
+    )
+    FetchContent_MakeAvailable(ImGui)
+endif()
+
+add_subdirectory(${SDL3_DIR} EXCLUDE_FROM_ALL)
+
+# ImGui source
+set(IMGUI_SRC
     ${IMGUI_DIR}/imgui.cpp
     ${IMGUI_DIR}/imgui_demo.cpp
     ${IMGUI_DIR}/imgui_draw.cpp
@@ -19,13 +51,14 @@ set(SOURCES
     ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
-    # devector
+)
+
+# devector source
+set(SOURCES
     ${SRC_DIR}/main.cpp
 )
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/shared_src/3rd_party/SDL EXCLUDE_FROM_ALL)
-
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${IMGUI_DIR}
