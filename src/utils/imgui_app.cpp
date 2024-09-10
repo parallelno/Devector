@@ -68,39 +68,36 @@ dev::ImGuiApp::ImGuiApp(
 		return;
 	}
 
-	{
-		int displayIndex = SDL_GetDisplayForWindow(m_window);
-		// Variables to store the display bounds (including screen width and height)
-		SDL_Rect displayBounds;
-		
-		// Get the bounds of the display that corresponds to the displayIndex
-		if (SDL_GetDisplayBounds(displayIndex, &displayBounds) != 0) {
-			// Error handling in case the display bounds couldn't be retrieved
-			dev::Log("SDL_GetDisplayBounds failed: {}", SDL_GetError());
-			return;
-		}
+	//{
+	//	int displayIndex = SDL_GetDisplayForWindow(m_window);
+	//	// Variables to store the display bounds (including screen width and height)
+	//	SDL_Rect displayBounds;
+	//	
+	//	// Get the bounds of the display that corresponds to the displayIndex
+	//	if (SDL_GetDisplayBounds(displayIndex, &displayBounds) != 0) {
+	//		// Error handling in case the display bounds couldn't be retrieved
+	//		dev::Log("SDL_GetDisplayBounds failed: {}", SDL_GetError());
+	//		return;
+	//	}
 
-		// Store the screen width and height from the display bounds
-		int screenWidth = displayBounds.w;
-		int screenHeight = displayBounds.h;
+	//	// Store the screen width and height from the display bounds
+	//	int screenWidth = displayBounds.w;
+	//	int screenHeight = displayBounds.h;
 
-		// Center the window if position is negative
-		m_posX = (m_posX < 0) ? (screenWidth - m_width) / 2 : m_posX;
-		m_posY = (m_posY < 0) ? (screenHeight - m_height) / 2 : m_posY;
-	}
+	//	// Center the window if position is negative
+	//	m_posX = (m_posX < 0) ? (screenWidth - m_width) / 2 : m_posX;
+	//	m_posY = (m_posY < 0) ? (screenHeight - m_height) / 2 : m_posY;
+	//}
 	SDL_SetWindowPosition(m_window, m_posX, m_posY);
 
 	// Initialize GLAD
-	if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
-	{
-		dev::Log("Failed to initialize GLAD\n");
-		m_status = AppStatus::FAILED_INIT;
-		return;
-	}
+	//if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
+	//{
+	//	dev::Log("Failed to initialize GLAD\n");
+	//	m_status = AppStatus::FAILED_INIT;
+	//	return;
+	//}
 
-	// Set up event handling
-	//SDL_SetEventFilter(DevectorApp::EventFilter, this);
-	
 	SDL_SetWindowPosition(m_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 	m_gl_context = SDL_GL_CreateContext(m_window);
 	SDL_GL_MakeCurrent(m_window, m_gl_context);
@@ -269,13 +266,13 @@ void dev::ImGuiApp::Run()
 		// (Platform functions may change the current OpenGL context, 
 		//so we save/restore it to make it easier to paste this code elsewhere.
 		//  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
-		// if (m_io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		// {
+		if (m_io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
 		// 	GLFWwindow* backup_current_context = glfwGetCurrentContext();
-		// 	ImGui::UpdatePlatformWindows();
-		// 	ImGui::RenderPlatformWindowsDefault();
+		 	ImGui::UpdatePlatformWindows();
+		 	ImGui::RenderPlatformWindowsDefault();
 		// 	glfwMakeContextCurrent(backup_current_context);
-		// }
+		}
 
 		SDL_GL_SwapWindow(m_window);
 

@@ -8,12 +8,12 @@ dev::Keyboard::Keyboard()
 }
 
 // Hardware thread
-auto dev::Keyboard::KeyHandling(int _key, int _action)
+auto dev::Keyboard::KeyHandling(int _scancode, int _action)
 -> Operation
 {
 	int row, column;
 
-	switch (_key)
+	switch (_scancode)
 	{
 	case SDL_SCANCODE_F11:
 		if (_action == SDL_EVENT_KEY_UP) {
@@ -43,7 +43,7 @@ auto dev::Keyboard::KeyHandling(int _key, int _action)
 		// matrix keys
 	default:
 
-		auto it = m_keymap.find(_key);
+		auto it = m_keymap.find(_scancode);
 		if (it != m_keymap.end()) 
 		{
 			auto rowColumn = it->second;

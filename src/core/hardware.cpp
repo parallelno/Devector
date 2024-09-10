@@ -425,7 +425,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 
 		case Req::KEY_HANDLING:
 		{
-			auto op = m_io.GetKeyboard().KeyHandling(dataJ["key"], dataJ["action"]);
+			auto op = m_io.GetKeyboard().KeyHandling(dataJ["scancode"], dataJ["action"]);
 			if (op == Keyboard::Operation::RESET) {
 				Reset();
 			}

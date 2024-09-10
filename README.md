@@ -33,4 +33,5 @@ Special thanks to the following people for their contributions:
 
 - [Svofski](https://github.com/svofski)
 - [Viktor Pykhonin](https://github.com/vpyk/)
+- [Yuri Larin](https://github.com/ImproverX)
 - [zx-pk.ru comunity](https://zx-pk.ru/)

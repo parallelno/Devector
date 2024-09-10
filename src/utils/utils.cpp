@@ -159,8 +159,10 @@ auto dev::GetDirStemExt(const std::wstring& _path)
 
 // return true if the user selected a file
 // return false if the user canceled the dialog or an error occurred
-bool dev::FileDialog(wchar_t* _filePath, int _size, const wchar_t* _filter, bool isSaveDialog)
+bool dev::FileDialog(wchar_t* _filePath, int _size, const wchar_t* _filter, FILE_DIALOG _dialog)
 {
+	bool isSaveDialog = _dialog == FILE_DIALOG::SAVE;
+
 #if defined(_WIN32)
     OPENFILENAMEW ofn;
     ZeroMemory(&ofn, sizeof(ofn));

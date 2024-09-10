@@ -80,6 +80,8 @@ set(SOURCES
 	${3RD_PARTY_DIR}/njson/json.hpp
 	# devector
 	${DEVECTOR_DIR}/main.cpp
+	${DEVECTOR_DIR}/devector_app.h
+	${DEVECTOR_DIR}/devector_app.cpp
 	${DEVECTOR_DIR}/ui/about_window.cpp
 	${DEVECTOR_DIR}/ui/about_window.h
 	${DEVECTOR_DIR}/ui/base_window.cpp
