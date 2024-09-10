@@ -7,7 +7,7 @@ Devector is a cross-platform emulator of a Soviet personal computer Vector06c. I
 ## Features
 
 - A cross-platform precise emulator of a Soviet personal computer Vector06c
-- Debugger functionality
+- Debugging functionality
 - FDD support
 - Up to 8 Ram-Disk support
 - AY & bipper & 3-channel timer support
