@@ -16,7 +16,7 @@ set(DEVECTOR_DIR ${SRC_DIR}/devector)
 set(3RD_PARTY_DIR ${SRC_DIR}/3rd_party)
 set(SDL3_DIR ${3RD_PARTY_DIR}/SDL)
 set(IMGUI_DIR ${3RD_PARTY_DIR}/imgui)
-set(GLAD_DIR ${3RD_PARTY_DIR}/glad)
+set(GLAD_DIR ${SRC_DIR}/glad)
 set(CORE_DIR ${SRC_DIR}/core)
 set(UTILS_DIR ${SRC_DIR}/utils)
 set(BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
@@ -77,7 +77,7 @@ file(GLOB_RECURSE UTILS_SRC ${UTILS_DIR}/*.cpp ${UTILS_DIR}/*.h)
 set(SOURCES
 	${CORE_SRC}
 	${UTILS_SRC}
-	${3RD_PARTY_DIR}/njson/json.hpp
+	${SRC_DIR}/njson/json.hpp
 	# devector
 	${DEVECTOR_DIR}/main.cpp
 	${DEVECTOR_DIR}/devector_app.h
