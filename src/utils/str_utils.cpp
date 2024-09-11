@@ -1,8 +1,12 @@
 #include <sstream>
-
-#include "utils/str_utils.h"
 #include <locale>
 #include <codecvt>
+#include <cstdint>
+#include <algorithm>
+#include <fstream>
+#include <string>
+
+#include "utils/str_utils.h"
 
 double dev::fast_atof(const char* _s)
 {
@@ -57,8 +61,10 @@ auto dev::StrToStrW(const std::string& _s)
 auto dev::StrWToStr(const std::wstring& _ws)
 -> const std::string
 {
-	const std::string s(_ws.begin(), _ws.end());
-	return s;
+	//const std::string s(_ws.begin(), _ws.end());
+	//return s;
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    return converter.to_bytes(_ws);
 }
 /*
 auto dev::Utf8ToStrW(const std::string& _s)
@@ -147,7 +153,11 @@ void InitAddrsS()
 	char addrS[5]; // "FFFF"
 	for (int i = 0, addr = 0; i < sizeof(addrsS); addr++)
 	{
+#if defined(_WIN32)
 		sprintf_s(addrS, 5, "%04X", addr);
+#else
+		sprintf(addrS, "%04X", addr);
+#endif
 		addrsS[i++] = '0';
 		addrsS[i++] = 'x';
 		addrsS[i++] = addrS[0];
@@ -160,7 +170,11 @@ void InitAddrsS()
 	char smallAddrS[3]; // "FF"
 	for (int i = 0, addr = 0; i < sizeof(smallAddrsS); addr++)
 	{
+#if defined(_WIN32)
 		sprintf_s(smallAddrS, 3, "%02X", addr);
+#else
+		sprintf(smallAddrS, "%02X", addr);
+#endif		
 		smallAddrsS[i++] = '0';
 		smallAddrsS[i++] = 'x';
 		smallAddrsS[i++] = smallAddrS[0];

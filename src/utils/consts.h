@@ -32,4 +32,8 @@ namespace dev
 	static constexpr ErrCode ERROR_NO_FILES = 2;
 
 	static constexpr int DELAYED_SELECTION_TIME = 6;
+
+#if defined(__linux__)
+		#define MAX_PATH 4096
+#endif
 }

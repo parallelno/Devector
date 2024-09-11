@@ -2,6 +2,7 @@
 
 #include "utils/json_utils.h"
 #include "utils/utils.h"
+#include "utils/str_utils.h"
 
 auto dev::LoadJson(const std::string& _path) -> nlohmann::json
 {
@@ -14,7 +15,12 @@ auto dev::LoadJson(const std::string& _path) -> nlohmann::json
 
 auto dev::LoadJson(const std::wstring& _path) -> nlohmann::json
 {
-	std::ifstream file(_path);
+#if defined(_WIN32)
+		std::ifstream file(_path);
+#else
+		std::ifstream file(dev::StrWToStr(_path));
+#endif
+
 	nlohmann::json json;
 	file >> json;
 
@@ -29,7 +35,12 @@ void dev::SaveJson(const std::string& _path, const nlohmann::json& _json)
 
 void dev::SaveJson(const std::wstring& _path, const nlohmann::json& _json)
 {
-	std::ofstream file(_path);
+#if defined(_WIN32)
+		std::ofstream file(_path);
+#else
+		std::ofstream file(dev::StrWToStr(_path));
+#endif
+
 	file << std::setw(4) << _json << std::endl;
 }
 

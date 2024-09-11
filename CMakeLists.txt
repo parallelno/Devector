@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
+message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
+message(STATUS "C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
+
+
 project(devector)
 
 # Check if we are in a three build
@@ -9,6 +13,7 @@ endif()
 
 find_package(PkgConfig REQUIRED)
 include(FetchContent)
+find_package(X11 REQUIRED)
 
 # Defining vars
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -32,7 +37,7 @@ if(NOT EXISTS ${SDL3_DIR})
 		SDL3
 		GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
 		GIT_TAG main
-		SOURCE_DIR ${SDL3_DIR}  # Specify the destination directory
+		SOURCE_DIR ${SDL3_DIR}  # the destination directory
 	)
 	FetchContent_MakeAvailable(SDL3)
 endif()
@@ -45,9 +50,21 @@ if(NOT EXISTS ${IMGUI_DIR})
 		ImGui
 		GIT_REPOSITORY https://github.com/ocornut/imgui.git
 		GIT_TAG docking  # Switch to the 'docking' branch
-		SOURCE_DIR ${IMGUI_DIR}  # Specify the destination directory
+		SOURCE_DIR ${IMGUI_DIR}  # the destination directory
 	)
 	FetchContent_MakeAvailable(ImGui)
+endif()
+
+# Check for GTK3
+if(UNIX AND NOT APPLE)
+    pkg_check_modules(GTK3 gtk+-3.0)
+    
+    if(NOT GTK3_FOUND)
+        message(FATAL_ERROR "Please install GTK3 development libraries manually:\n"
+            "For Debian/Ubuntu: sudo apt install libgtk-3-dev\n"
+            "For Fedora: sudo dnf install gtk3-devel\n"
+            "For Arch Linux: sudo pacman -S gtk3\n")		
+    endif()
 endif()
 
 # Add GLAD
@@ -72,7 +89,6 @@ set(IMGUI_SRC
 # devector source
 file(GLOB_RECURSE CORE_SRC ${CORE_DIR}/*.cpp ${CORE_DIR}/*.h)
 file(GLOB_RECURSE UTILS_SRC ${UTILS_DIR}/*.cpp ${UTILS_DIR}/*.h)
-#file(GLOB_RECURSE UI_SRC ${UI_DIR}/*.cpp ${UI_DIR}/*.h)
 
 set(SOURCES
 	${CORE_SRC}
@@ -113,19 +129,17 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC})
 
 # Add Unicode definitions for Windows
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE)
+target_compile_definitions(${PROJECT_NAME} PRIVATE USE_GTK)
 
 # Set C++20 as the standard
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_EXTENSIONS OFF)  # Ensures no compiler-specific extensions are used
 
-# Installing and linking GTK3 for open/save dialogs
+# setup GTK3
 if(UNIX AND NOT APPLE)
-	pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
-	include_directories(${GTK3_INCLUDE_DIRS})
-	link_directories(${GTK3_LIBRARY_DIRS})
-	add_definitions(${GTK3_CFLAGS_OTHER})
-	target_link_libraries(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARIES})
+	target_include_directories(${PROJECT_NAME} PRIVATE ${GTK3_INCLUDE_DIRS})
+    target_link_directories(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARY_DIRS})
 endif()
 
 # Linking
@@ -136,6 +150,8 @@ if (WIN32)
 	target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 else()
 	target_link_libraries(${PROJECT_NAME} PRIVATE GL dl)
+	target_link_libraries(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME} PRIVATE X11::X11)
 endif()
 
 # Include dirs
@@ -150,6 +166,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	${DEVECTOR_DIR}
 	${DEVECTOR_DIR}/ui
 )
+if(UNIX AND NOT APPLE)
+	# Include GTK and GLib headers
+	target_include_directories(${PROJECT_NAME} PRIVATE 
+    	${GTK_DIR}/include
+    	${GLIB_DIR}/include
+	)
+endif()
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # 
 # Post build commands

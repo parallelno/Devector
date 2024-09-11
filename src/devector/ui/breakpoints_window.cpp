@@ -106,14 +106,15 @@ void dev::BreakpointsWindow::DrawTable()
 			// isActive
 			ImGui::TableNextColumn();
 						
-			bool isActive = (bool)bp.data.status;
+			bool isActive = bp.data.structured.status == Breakpoint::Status::ACTIVE;
 			ImGui::Checkbox(std::format("##0x{:04X}", addr).c_str(), &isActive);
+			Breakpoint::Status newStatus = isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED;
 
-			if (isActive != (bool)bp.data.status)
+			if (newStatus != bp.data.structured.status)
 			{
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_SET_STATUS, 
 					{ {"addr", addr},
-					{"status", static_cast<uint8_t>(isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED)}});
+					{"status", static_cast<uint8_t>(newStatus)}});
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			// Addr
@@ -250,12 +251,12 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 
 		const auto& bp = _pbs.at(_addr);
 		isActive = bp.IsActive();
-		addrOld = bp.data.addr;
-		memPages = bp.data.memPages;
-		isAutoDel = bp.data.autoDel;
-		addrS = std::format("{:04X}", bp.data.addr);
-		selectedOp = static_cast<int>(bp.data.operand);
-		selectedCond = static_cast<int>(bp.data.cond);
+		addrOld = bp.data.structured.addr;
+		memPages = bp.data.structured.memPages;
+		isAutoDel = bp.data.structured.autoDel;
+		addrS = std::format("{:04X}", bp.data.structured.addr);
+		selectedOp = static_cast<int>(bp.data.structured.operand);
+		selectedCond = static_cast<int>(bp.data.structured.cond);
 		commentS = bp.comment;
 	}
 
@@ -451,7 +452,7 @@ void dev::BreakpointsWindow::UpdateBreakpoints()
 			Breakpoint::Data bpData{ breakpointJ["data0"], breakpointJ["data1"], breakpointJ["data2"] };
 
 			Breakpoint bp{ std::move(bpData), breakpointJ["comment"] };
-			auto addr = bp.data.addr;
+			auto addr = bp.data.structured.addr;
 			m_breakpoints.emplace(addr, std::move(bp));
 		}
 	}

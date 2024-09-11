@@ -5,7 +5,11 @@
 #include <atomic>
 #include <thread>
 #include <mutex>
-#include <Windows.h>
+#if defined(_WIN32)
+	#include <Windows.h>
+#elif defined(__linux__)
+	#include <gtk/gtk.h>
+#endif
 
 #include "utils/glu_utils.h"
 #include "imgui.h"
@@ -47,8 +51,6 @@ namespace dev {
 
     protected:
         const std::string m_stringPath;
-
-        HWND m_hWndMain;
         int m_width;
         int m_height;
         int m_posX;
@@ -62,7 +64,6 @@ namespace dev {
         SDL_GLContext m_gl_context = nullptr;
         ImGuiIO* m_io = nullptr;
 
-        static constexpr float WINDOW_DPI_DEFAULT = 96.0f;
         static constexpr double AUTO_UPDATE_COOLDOWN = 1.0;
 
         ImFont* m_font = nullptr;
@@ -91,6 +92,7 @@ namespace dev {
         auto GetSettingsObject(const std::string& _fieldName ) -> nlohmann::json;
         int GetSettingsInt(const std::string& _fieldName, int _defaultValue);
         bool GetSettingsBool(const std::string& _fieldName, bool _defaultValue);
+        float GetDpiScale();
 
     private:
         std::mutex m_settingsMutex;

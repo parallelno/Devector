@@ -1,4 +1,5 @@
 ﻿#include <cstdint>
+#include <cstring>
 
 #include "core/fdc_wd1793.h"
 #include "utils/utils.h"

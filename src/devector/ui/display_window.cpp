@@ -207,7 +207,7 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 	// update
 	if (m_isGLInited)
 	{
-		uint8_t scrollVert = m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert") + 1; // adding +1 offset because the default is 255
+		//uint8_t scrollVert = (m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert") + 1; // adding +1 offset because the default is 255
 		m_scrollV_crtXY_highlightMul.x = 0;//FRAME_PXL_SIZE_H* scrollVert;
 
 		auto frameP = m_hardware.GetFrame(_isRunning);

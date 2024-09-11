@@ -466,7 +466,11 @@ void dev::DrawTooltipTimer(const char* _text, const float _timer)
 	
 	if (_text && _timer > 0.0f) {
 		timer = _timer;
+#if defined(_WIN32)
 		strcpy_s(tooltip, 256, _text);
+#else
+		strcpy(tooltip, _text);
+#endif		
 		return;
 	}
 

@@ -1,4 +1,4 @@
-#include "core/Hardware.h"
+#include "core/hardware.h"
 #include "utils/str_utils.h"
 #include "core/disasm.h"
 

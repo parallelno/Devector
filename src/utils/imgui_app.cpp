@@ -3,8 +3,10 @@
 
 #include "utils/imgui_app.h"
 
-// #include "imgui_impl_glfw.h"
-// #include "imgui_impl_opengl3.h"
+#if defined(__linux__)
+	#include <X11/Xlib.h>
+	#include <X11/Xresource.h>
+#endif
 
 #include "utils/consts.h"
 #include "utils/utils.h"
@@ -152,8 +154,6 @@ dev::ImGuiApp::ImGuiApp(
 	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
 	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
 	//IM_ASSERT(font != nullptr);
-
-	m_hWndMain = GetActiveWindow();
 }
 
 dev::ImGuiApp::~ImGuiApp()
@@ -286,17 +286,14 @@ void dev::ImGuiApp::AutoUpdate()
 {
 	for (; m_status != AppStatus::EXIT; dev::ThreadSleep(AUTO_UPDATE_COOLDOWN))
 	{
-		if (m_hWndMain) {
-			auto currendDpiScale = GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT;
-			bool isDpiUpdated = m_dpiScale != currendDpiScale;
-			if (m_req == static_cast<int32_t>(REQ::NONE) && isDpiUpdated)
-			{
-				Request(REQ::LOAD_FONT);
-			}
-			
-			Request(REQ::CHECK_WINDOW_SIZE_POS);
+		auto currendDpiScale = GetDpiScale();
+		bool isDpiUpdated = m_dpiScale != currendDpiScale;
+		if (m_req == static_cast<int32_t>(REQ::NONE) && isDpiUpdated)
+		{
+			Request(REQ::LOAD_FONT);
 		}
-
+			
+		Request(REQ::CHECK_WINDOW_SIZE_POS);
 	}
 }
 
@@ -354,7 +351,7 @@ void dev::ImGuiApp::LoadFonts()
 
 	//io.Fonts->AddFontDefault(); // adds a default ImGui font.
 
-	m_dpiScale = GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT;
+	m_dpiScale = GetDpiScale();
 
 	auto fontCodePath = dev::GetJsonString(m_settingsJ, "fontPath", false, DEFAULT_FONT_PATH);
 	m_fontSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false, DEFAULT_FONT_SIZE) * m_dpiScale;
@@ -411,4 +408,44 @@ bool dev::ImGuiApp::GetSettingsBool(const std::string& _fieldName, bool _default
 {
 	std::lock_guard<std::mutex> mlock(m_settingsMutex);
 	return dev::GetJsonBool(m_settingsJ, _fieldName, false, _defaultValue);
+}
+
+float dev::ImGuiApp::GetDpiScale()
+{
+	static constexpr float WINDOW_DPI_DEFAULT = 96.0f;
+#if defined(_WIN32)
+    HWND m_hWndMain = GetActiveWindow();
+	if (m_hWndMain) 
+	{
+		return GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT
+	}
+	else {
+		return 1.0f;
+	}
+#elif defined(__linux__)
+	   ::Display* dpy = XOpenDisplay(NULL);
+    if (!dpy) {
+        std::cerr << "Unable to open X display." << std::endl;
+        return 1.0f; // Default scaling factor
+    }
+
+    // Get the screen DPI
+    char* rms = XResourceManagerString(dpy);
+    XrmDatabase db;
+    XrmValue value;
+    char* type = NULL;
+
+    XrmInitialize(); // Initialize X resource manager
+    db = XrmGetStringDatabase(rms);
+
+    // Query the DPI from Xft resource (Xft.dpi)
+    if (XrmGetResource(db, "Xft.dpi", "Xft.Dpi", &type, &value)) {
+        float dpi = atof(value.addr);
+        XCloseDisplay(dpy);
+        return dpi / 96.0f; // 96 DPI is the default scale factor
+    }
+
+    XCloseDisplay(dpy);
+    return 1.0f; // Default scaling factor
+#endif
 }

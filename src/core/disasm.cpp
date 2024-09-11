@@ -913,7 +913,7 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 		line.consts = m_debugData.GetConsts(line.imm);
 	}
 
-	snprintf(line.statsS, sizeof(line.statsS), "%llu,%llu,%llu", runs, reads, writes);
+	snprintf(line.statsS, sizeof(line.statsS), "%lu,%lu,%lu", runs, reads, writes);
 
 	m_lineIdx++;
 	return cmdLen;

@@ -1,6 +1,7 @@
 #include <cstdarg>
 #include <fstream>
 #include <iostream>
+#include <thread>
 
 #if defined(_WIN32)
 	#include <Windows.h>
@@ -70,7 +71,13 @@ auto dev::LoadTextFile(const std::wstring& _path)
 	if (!IsFileExist(_path)) {
 		return {};
 	}
+
+#if defined(_WIN32)
 	std::ifstream ifs(_path);
+#elif defined(__linux__)
+	std::ifstream ifs(dev::StrWToStr(_path));
+#endif	
+
 	std::string data = std::string(std::istreambuf_iterator<char>(ifs),
 		std::istreambuf_iterator<char>());
 
@@ -85,7 +92,11 @@ auto dev::LoadFile(const std::wstring& _path)
 	}
 
 	// Open the file in binary mode
+#if defined(_WIN32)
 	std::ifstream file(_path, std::ios::binary);
+#elif defined(__linux__)
+	std::ifstream file(dev::StrWToStr(_path), std::ios::binary);
+#endif
 
 	// Check if the file is opened successfully
 	if (!file.is_open()) {
@@ -100,7 +111,11 @@ auto dev::LoadFile(const std::wstring& _path)
 
 bool dev::SaveFile(const std::wstring& _path, const std::vector<uint8_t>& _data, const bool _override)
 {
+#if defined(_WIN32)
 	std::ofstream file{_path, std::ios::binary | std::ios::ate};
+#elif defined(__linux__)
+	std::ofstream file{dev::StrWToStr(_path), std::ios::binary | std::ios::ate};
+#endif
 
 	if (!file)
 	{

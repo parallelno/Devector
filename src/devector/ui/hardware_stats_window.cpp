@@ -402,7 +402,7 @@ void dev::HardwareStatsWindow::UpdateDataRuntime()
 	// FDC
 	static const std::string diskNames[] = { "Drive A", "Drive B", "Drive C", "Drive D" };
 	auto fdcInfo = *m_hardware.Request(Hardware::Req::GET_FDC_INFO);
-	m_fdcDrive = diskNames[fdcInfo["drive"]];
+	m_fdcDrive = diskNames[fdcInfo["drive"].get<int>()];
 	m_fdcSide = std::to_string(fdcInfo["side"].get<int>());
 	m_fdcTrack = std::to_string(fdcInfo["track"].get<int>());
 	m_fdcPosition = std::to_string(fdcInfo["position"].get<int>());

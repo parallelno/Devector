@@ -85,6 +85,7 @@
         "*.rh": "cpp",
         "sdl_keyboard.h": "c",
         "sdl_scancode.h": "c",
-        "coroutine": "cpp"
+        "coroutine": "cpp",
+        "variant": "cpp"
     }
 }

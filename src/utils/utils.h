@@ -8,7 +8,6 @@
 #include <vector>
 #include <functional>
 #include <filesystem>
-#include <Windows.h>
 
 #include "utils/consts.h"
 #include "utils/result.h"
@@ -148,10 +147,6 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	inline int sign(int _val) 
 	{
 		return (0 < _val) - (_val < 0);
-	}
-	inline double RoundToCents(double _price)
-	{
-		return round(_price * 100.0) / 100.0;
 	}
 	inline double rnd(const double _min, const double _max)
 	{

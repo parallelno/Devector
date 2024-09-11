@@ -20,7 +20,7 @@ void dev::Breakpoints::SetStatus(const Addr _addr, const Breakpoint::Status _sta
 	m_updates++;
 	auto bpI = m_bps.find(_addr);
 	if (bpI != m_bps.end()) {
-		bpI->second.data.status = _status;
+		bpI->second.data.structured.status = _status;
 		return;
 	}
 	Add(Breakpoint{ _addr });
@@ -29,14 +29,14 @@ void dev::Breakpoints::SetStatus(const Addr _addr, const Breakpoint::Status _sta
 void dev::Breakpoints::Add(Breakpoint&& _bp )
 {
 	m_updates++;
-	auto bpI = m_bps.find(_bp.data.addr);
+	auto bpI = m_bps.find(_bp.data.structured.addr);
 	if (bpI != m_bps.end())
 	{
 		bpI->second.Update(std::move(_bp));
 		return;
 	}
 
-	m_bps.emplace(static_cast<Addr>(_bp.data.addr), std::move(_bp));
+	m_bps.emplace(static_cast<Addr>(_bp.data.structured.addr), std::move(_bp));
 }
 
 void dev::Breakpoints::Del(const Addr _addr)
@@ -53,7 +53,7 @@ auto dev::Breakpoints::GetStatus(const Addr _addr)
 -> const Breakpoint::Status
 {
 	auto bpI = m_bps.find(_addr);
-	return bpI == m_bps.end() ? Breakpoint::Status::DELETED : bpI->second.data.status;
+	return bpI == m_bps.end() ? Breakpoint::Status::DELETED : bpI->second.data.structured.status;
 }
 
 bool dev::Breakpoints::Check(const CpuI8080::State& _cpuState, const Memory::State& _memState)
@@ -62,7 +62,7 @@ bool dev::Breakpoints::Check(const CpuI8080::State& _cpuState, const Memory::Sta
 	if (bpI == m_bps.end()) return false;
 
 	auto status = bpI->second.CheckStatus(_cpuState, _memState);
-	if (bpI->second.data.autoDel)
+	if (bpI->second.data.structured.autoDel)
 	{
 		m_bps.erase(bpI);
 		m_updates++;

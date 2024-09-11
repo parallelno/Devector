@@ -76,16 +76,30 @@ namespace dev
 		static constexpr int OPERAND_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Operand::COUNT) -1);
 
 #pragma pack(push, 1)
+		struct DataStruct {
+			MemPages memPages;
+			uint64_t value;
+			Addr addr : 16;
+			Operand operand : OPERAND_BIT_WIDTH;
+			Condition cond : CONDITION_BIT_WIDTH;
+			Status status : STATUS_BIT_WIDTH;
+			bool autoDel : 1;
+
+			DataStruct(
+				const Addr _addr,
+				const MemPages _memPages = MAPPING_PAGES_ALL,
+				const Status _status = Status::ACTIVE,
+				const bool _autoDel = false,
+				const Operand _operand = Operand::A,
+				const Condition _cond = Condition::ANY,
+				const size_t _value = 0
+			) :
+				memPages(_memPages), value(_value), addr(_addr), operand(_operand), cond(_cond), status(_status), autoDel(_autoDel)
+			{};
+		};
+
 		union Data {
-			struct {
-				MemPages memPages;
-				uint64_t value;
-				Addr addr : 16;
-				Operand operand : OPERAND_BIT_WIDTH;
-				Condition cond : CONDITION_BIT_WIDTH;
-				Status status : STATUS_BIT_WIDTH;
-				bool autoDel : 1;
-			};
+			DataStruct structured;
 			struct {
 				uint64_t data0;
 				uint64_t data1;
@@ -101,7 +115,7 @@ namespace dev
 				const Condition _cond = Condition::ANY,
 				const size_t _value = 0
 			) :
-				memPages(_memPages), value(_value), addr(_addr), operand(_operand), cond(_cond), status(_status), autoDel(_autoDel)
+				structured(_addr, _memPages, _status, _autoDel, _operand, _cond, _value)
 			{};
 			Data(const uint64_t _data0, const uint64_t _data1, const uint32_t _data2)
 				: 
@@ -115,7 +129,7 @@ namespace dev
 		void Update(Breakpoint&& _bp);
 
 		auto GetAddrMappingS() const -> const char*;
-		bool IsActive() const { return data.status == Status::ACTIVE; };
+		bool IsActive() const { return data.structured.status == Status::ACTIVE; };
 		bool CheckStatus(const CpuI8080::State& _cpuState, const Memory::State& _memState) const;
 		auto GetOperandS() const -> const char*;
 		auto GetConditionS() const -> const std::string;

@@ -6,7 +6,6 @@
 #include <iostream>
 #include <iterator>
 #include <cstdint>
-
 #include "devector_app.h"
 
 #include "utils/utils.h"

@@ -19,6 +19,19 @@ To use Devector, follow these steps:
 
 1. Run the emulator: `./Devector.exe`
 
+## Build
+
+On Linux
+1. sudo apt update
+2. sudo apt-get install build-essential git gcc-13 g++-13 make cmake libgl1-mesa-dev xorg-dev ninja-build libgtk-3-dev
+3. mkdir build
+3. cd build
+4. cmake -G Ninja ..
+5. ninja
+or 
+4. cmake ..
+5. cmake --build .
+
 ## Contributing
 
 Contributions are welcome! If you find a bug or have an idea for a feature, please create an issue or submit a pull request.

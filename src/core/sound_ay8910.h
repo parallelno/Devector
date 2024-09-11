@@ -6,7 +6,7 @@
 #pragma once
 
 #include <string.h>
-#include <algorithm>
+#include <cstdint>
 
 class SoundAY8910
 {
