@@ -231,10 +231,11 @@ bool dev::FileDialog(wchar_t* _filePath, int _size, const wchar_t* _filter, FILE
         filter_parts.push_back(filter);
 
         for (size_t i = 0; i < filter_parts.size(); i += 2) {
-            GtkFileFilter *gtk_filter = gtk_file_filter_new();
-            gtk_file_filter_set_name(gtk_filter, filter_parts[i].c_str());
-            gtk_file_filter_add_pattern(gtk_filter, filter_parts[i + 1].c_str());
-            gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), gtk_filter);
+			// TODO: fix line below
+            //GtkFileFilter *gtk_filter = gtk_file_filter_new();
+            //gtk_file_filter_set_name(gtk_filter, filter_parts[i].c_str());
+            //gtk_file_filter_add_pattern(gtk_filter, filter_parts[i + 1].c_str());
+            //gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), gtk_filter);
         }
     }
 
