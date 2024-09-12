@@ -21,6 +21,7 @@ set(DEVECTOR_DIR ${SRC_DIR}/devector)
 set(3RD_PARTY_DIR ${SRC_DIR}/3rd_party)
 set(SDL3_DIR ${3RD_PARTY_DIR}/SDL)
 set(IMGUI_DIR ${3RD_PARTY_DIR}/imgui)
+set(TINY_DIALOGS_DIR ${3RD_PARTY_DIR}/libtinyfiledialogs)
 set(GLAD_DIR ${SRC_DIR}/glad)
 set(CORE_DIR ${SRC_DIR}/core)
 set(UTILS_DIR ${SRC_DIR}/utils)
@@ -55,16 +56,16 @@ if(NOT EXISTS ${IMGUI_DIR})
 	FetchContent_MakeAvailable(ImGui)
 endif()
 
-# Check for GTK3
-if(UNIX AND NOT APPLE)
-    pkg_check_modules(GTK3 gtk+-3.0)
-    
-    if(NOT GTK3_FOUND)
-        message(FATAL_ERROR "Please install GTK3 development libraries manually:\n"
-            "For Debian/Ubuntu: sudo apt install libgtk-3-dev\n"
-            "For Fedora: sudo dnf install gtk3-devel\n"
-            "For Arch Linux: sudo pacman -S gtk3\n")		
-    endif()
+# Fetch libtinyfiledialogs if not already in 3rd_party
+if(NOT EXISTS ${TINY_DIALOGS_DIR})
+	message(STATUS "Cloning libtinyfiledialogs into ${TINY_DIALOGS_DIR}")
+	FetchContent_Declare(
+		libtinyfiledialogs
+		GIT_REPOSITORY https://github.com/native-toolkit/libtinyfiledialogs.git
+		GIT_TAG master
+		SOURCE_DIR ${TINY_DIALOGS_DIR}  # the destination directory
+	)
+	FetchContent_MakeAvailable(libtinyfiledialogs)
 endif()
 
 # Add GLAD
@@ -84,6 +85,11 @@ set(IMGUI_SRC
 	${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
 	${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 	${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
+)
+
+# libtinyfiledialogs source
+set(TINY_DIALOGS_SRC
+	${TINY_DIALOGS_DIR}/tinyfiledialogs.c
 )
 
 # devector source
@@ -125,7 +131,7 @@ set(SOURCES
 )
 
 # Executable
-add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC})
+add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC} ${TINY_DIALOGS_SRC})
 
 # Add Unicode definitions for Windows
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE)
@@ -136,12 +142,6 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_EXTENSIONS OFF)  # Ensures no compiler-specific extensions are used
 
-# setup GTK3
-if(UNIX AND NOT APPLE)
-	target_include_directories(${PROJECT_NAME} PRIVATE ${GTK3_INCLUDE_DIRS})
-    target_link_directories(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARY_DIRS})
-endif()
-
 # Linking
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PRIVATE glad)
@@ -150,7 +150,6 @@ if (WIN32)
 	target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 else()
 	target_link_libraries(${PROJECT_NAME} PRIVATE GL dl)
-	target_link_libraries(${PROJECT_NAME} PRIVATE ${GTK3_LIBRARIES})
 	target_link_libraries(${PROJECT_NAME} PRIVATE X11::X11)
 endif()
 

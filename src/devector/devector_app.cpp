@@ -6,6 +6,9 @@
 #include <iostream>
 #include <iterator>
 #include <cstdint>
+#include <codecvt>
+#include "libtinyfiledialogs/tinyfiledialogs.h"
+
 #include "devector_app.h"
 
 #include "utils/utils.h"
@@ -397,7 +400,7 @@ bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 	if (app)
 	{
 		auto displayFocused = app->m_displayWindowP->IsFocused();
-
+/*
 		if (displayFocused)
 		{
 			app->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "scancode", scancode }, { "action", action} });
@@ -407,7 +410,9 @@ bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 		if (!displayFocused || scancode != SDL_SCANCODE_LALT) {
 			return SDL_TRUE; // pass the event to SDL
 		}
+*/
 	}
+
 	return SDL_TRUE; // pass the event to SDL
 }
 
@@ -561,10 +566,15 @@ void dev::DevectorApp::OpenFile()
 	bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 	if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
 
-	wchar_t path[MAX_PATH];
-
-	if (dev::FileDialog(path, MAX_PATH, L"All Files (*.rom, *.fdd, *.rec)\0*.rom;*.fdd;*.rec\0", FILE_DIALOG::OPEN))
+	const char* filters[] = {"*.rom", "*.fdd", "*.rec"};
+	const char* filename = tinyfd_openFileDialog(
+		"Open File", "", sizeof(filters)/sizeof(const char*), filters, nullptr, 0);
+	
+	if (filename)
 	{
+		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+		std::wstring path = conv.from_bytes(filename);
+
 		auto ext = StrToUpper(dev::GetExt(path));
 
 		if (ext == EXT_ROM)
@@ -614,14 +624,20 @@ void dev::DevectorApp::SaveFile()
 	{
 	case FileType::REC: 
 	{
-		wchar_t path[MAX_PATH] = { L"file_name.rec" };
-		if (dev::FileDialog(path, MAX_PATH, L"All Files (*.rec)\0*.rec\0", FILE_DIALOG::SAVE))
+		const char* filters[] = {"*.rom", "*.fdd", "*.rec"};
+		const char* filename = tinyfd_saveFileDialog(
+			"Save File", "file_name.rec", sizeof(filters)/sizeof(const char*), filters, nullptr);
+	
+		if (!filename)
 		{
 			auto result = m_hardwareP->Request(Hardware::Req::DEBUG_RECORDER_SERIALIZE);
 			if (result)
 			{
 				nlohmann::json::binary_t binaryData = result->at("data").get<nlohmann::json::binary_t>();
 				std::vector<uint8_t> data(binaryData.begin(), binaryData.end());
+
+				std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+				std::wstring path = conv.from_bytes(filename);
 
 				if (!data.empty()) dev::SaveFile(path, data, true);
 			}

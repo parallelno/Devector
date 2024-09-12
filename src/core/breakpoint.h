@@ -81,7 +81,7 @@ namespace dev
 			uint64_t value;
 			Addr addr : 16;
 			Operand operand : OPERAND_BIT_WIDTH;
-			Condition cond : CONDITION_BIT_WIDTH;
+			Condition cond : CONDITION_BIT_WIDTH + 1; // +1 to avoid warnings about bits not enough (it's enough, COUNT used only for counting elements)
 			Status status : STATUS_BIT_WIDTH;
 			bool autoDel : 1;
 

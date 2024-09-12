@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <atomic>
+#include <thread>
 
 #include "utils/types.h"
 #include "utils/consts.h"
@@ -24,7 +26,7 @@ namespace dev
 		Hardware& m_hardware;
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
-		bool m_windowFocused = false;
+		std::atomic_bool m_windowFocused = false;
 		int m_rasterPixel = 0;
 		int m_rasterLine = 0;
 		enum class BorderType : int { NONE = 0, NORMAL, FULL, LEN};

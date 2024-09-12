@@ -86,6 +86,14 @@
         "sdl_keyboard.h": "c",
         "sdl_scancode.h": "c",
         "coroutine": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "*.tcc": "cpp",
+        "cwctype": "cpp",
+        "memory_resource": "cpp",
+        "random": "cpp",
+        "string_view": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "cinttypes": "cpp"
     }
 }

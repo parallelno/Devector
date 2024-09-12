@@ -5,11 +5,6 @@
 #include <atomic>
 #include <thread>
 #include <mutex>
-#if defined(_WIN32)
-	#include <Windows.h>
-#elif defined(__linux__)
-	#include <gtk/gtk.h>
-#endif
 
 #include "utils/glu_utils.h"
 #include "imgui.h"
