@@ -3,6 +3,10 @@
 #include <iostream>
 #include <thread>
 
+#ifdef _WIN32
+	#include <windows.h>
+#endif
+
 #include "utils/utils.h"
 #include "utils/consts.h"
 #include "utils/str_utils.h"

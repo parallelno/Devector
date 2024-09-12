@@ -3,10 +3,12 @@
 
 #include "utils/imgui_app.h"
 
-#if defined(__linux__)
+#if defined(_WIN32)
+	#include <windows.h>
+#elif defined(__linux__)
 	#include <X11/Xlib.h>
 	#include <X11/Xresource.h>
-#endif
+#endif	
 
 #include "utils/consts.h"
 #include "utils/utils.h"
@@ -417,7 +419,7 @@ float dev::ImGuiApp::GetDpiScale()
     HWND m_hWndMain = GetActiveWindow();
 	if (m_hWndMain) 
 	{
-		return GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT
+		return GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT;
 	}
 	else {
 		return 1.0f;
