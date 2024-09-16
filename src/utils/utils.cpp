@@ -98,7 +98,7 @@ auto dev::LoadFile(const std::wstring& _path)
 	// Check if the file is opened successfully
 	if (!file.is_open()) {
 		std::wcerr << L"Failed to open file: " << _path << std::endl;
-		return false;
+		return {};
 	}
 
 	std::vector<uint8_t> data(std::istreambuf_iterator<char>(file), {});

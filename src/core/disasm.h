@@ -83,7 +83,7 @@ namespace dev
 			auto GetStr() const->std::string;
 
 			inline auto GetAddrS() const -> const char* { return Uint16ToStrC0x(addr); };
-			inline auto GetImmediateS() const -> const char*;
+			auto GetImmediateS() const -> const char*;
 			inline auto GetFirstLabel() const -> const char* { return labels ? labels->at(0).c_str() : nullptr; };
 			inline auto GetLabelConst() const -> const char* { return labels ? labels->at(0).c_str() : consts ? consts->at(0).c_str() : nullptr; };
 			inline auto GetFirstConst() const -> const char* { return consts ? consts->at(0).c_str() : nullptr; };

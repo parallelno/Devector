@@ -34,8 +34,8 @@ namespace dev
 				uint16_t value;
 
 				Access access	: ACCESS_BIT_WIDTH;
-				Condition cond	: CONDITION_BIT_WIDTH;
-				Type type		: TYPE_BIT_WIDTH;
+				Condition cond	: CONDITION_BIT_WIDTH + 1;
+				Type type		: TYPE_BIT_WIDTH + 1;
 
 				bool active		: 1;
 				bool breakL		: 1;

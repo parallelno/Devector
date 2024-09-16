@@ -11,25 +11,25 @@ namespace dev
 	class Result
 	{
 		std::optional<T> m_result;
-		dev::ErrCode m_error = dev::NO_ERRORS;
+		dev::ErrCode m_error = dev::ErrCode::NO_ERRORS;
 
 	public:
 		Result()
-			: m_error(dev::ERROR_UNSPECIFIED)
+			: m_error(dev::ErrCode::UNSPECIFIED)
 		{}
 		Result(const ErrCode _error)
 			:
 			m_error(_error)
 		{}
 		Result(T&& _res,
-			const dev::ErrCode _error = dev::NO_ERRORS)
+			const dev::ErrCode _error = dev::ErrCode::NO_ERRORS)
 			:
 			m_result(std::move(_res)),
 			m_error(_error)
 		{}
 		Result(Result<T>&& _other)
 			: 
-			m_error(std::move(_other.m_error)),
+			m_error(_other.m_error),
 			m_result(std::move(_other.m_result))
 		{}
 		/*
@@ -93,7 +93,7 @@ namespace dev
 		{
 			if (this == &_other) return *this;
 
-			m_error = std::move(_other.m_error);
+			m_error = _other.m_error;
 			m_result = std::move(_other.m_result);
 
 			return *this;

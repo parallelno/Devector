@@ -443,7 +443,7 @@ void dev::CpuI8080::Decode()
 
 	default:
 		dev::Log("Handling undocumented instruction. Opcode: {}", IR);
-		dev::Exit("Exit", IR);
+		dev::Exit("Exit", ErrCode::UNRECOGNIZED_CPU_INSTR);
 		break;
 	}
 	

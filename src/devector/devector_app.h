@@ -5,7 +5,7 @@
 #include "utils/types.h"
 #include "utils/json_utils.h"
 #include "utils/glu_utils.h"
-#include "utils/imgui_app.h"
+#include "imgui_app.h"
 
 #include "ui/breakpoints_window.h"
 #include "ui/watchpoints_window.h"

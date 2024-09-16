@@ -47,7 +47,7 @@ void dev::SaveJson(const std::wstring& _path, const nlohmann::json& _json)
 void dev::JsonParsingExit(const std::string& _key)
 {
 	auto msg = std::format("json doesn't have \"{}\" field.", _key);
-	dev::Exit(msg, dev::ERROR_UNSPECIFIED);
+	dev::Exit(msg, dev::ErrCode::UNSPECIFIED);
 }
 
 void dev::JsonParsingTypeMissmatchExit(
@@ -57,7 +57,7 @@ void dev::JsonParsingTypeMissmatchExit(
 {
 	auto msg = std::format("json field \"{}\" values type are missmatching. Expected \"{}\", got {}",
 		_key, _expectedType, _json[_key].type_name());
-	dev::Exit(msg, dev::ERROR_UNSPECIFIED);
+	dev::Exit(msg, dev::ErrCode::UNSPECIFIED);
 }
 
 // if no exit, returns the default and adds [key, default value] pair to the json

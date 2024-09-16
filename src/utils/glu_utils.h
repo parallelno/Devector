@@ -72,7 +72,7 @@ namespace dev
 		auto GLCheckError(GLuint _obj, const std::string& _txt) -> Result<GLuint>;
 
 	public:
-		GLUtils();
+		GLUtils(bool _init);
 		~GLUtils();
 
 		auto InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource) -> Result<GLuint>;

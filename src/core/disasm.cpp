@@ -833,7 +833,7 @@ void dev::Disasm::Line::Init()
 auto dev::Disasm::Line::GetImmediateS() const
 -> const char*
 { 
-	return cmdImms[opcode] == CMD_IW_OFF1 ? Uint16ToStrC0x(imm) : Uint8ToStrC0x(static_cast<uint8_t>(imm));
+	
 };
 
 void dev::Disasm::AddLabes(const Addr _addr)
@@ -913,7 +913,7 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 		line.consts = m_debugData.GetConsts(line.imm);
 	}
 
-	snprintf(line.statsS, sizeof(line.statsS), "%llu,%llu,%llu", runs, reads, writes);
+	snprintf(line.statsS, sizeof(line.statsS), "%lu,%lu,%lu", runs, reads, writes);
 
 	m_lineIdx++;
 	return cmdLen;

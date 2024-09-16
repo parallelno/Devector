@@ -29,8 +29,10 @@ GLfloat vertices[] = {
 
 // it is not initializing the Window and OpenGL 3.3 context
 // assumming ImGui and did it already
- dev::GLUtils::GLUtils()
+ dev::GLUtils::GLUtils(bool _init)
  {
+	if (!_init) return;
+	
 	// Initialize GLAD (replaces GLEW initialization)
 	m_gladInited = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 	if (!m_gladInited) {
@@ -103,6 +105,8 @@ auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const
 
 dev::GLUtils::~GLUtils()
 {
+	if (!m_gladInited) return;
+	
 	for (const auto& [id, material] : m_materials)
 	{
 		glDeleteFramebuffers(1, &material.framebuffer);
@@ -154,7 +158,7 @@ int dev::GLUtils::Draw(const MaterialId _materialId) const
 	// Unbind the framebuffer to return to default framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	return NO_ERRORS;
+	return (int)dev::ErrCode::NO_ERRORS;
 }
 
 void dev::GLUtils::UpdateTexture(const int _texureId, const uint8_t* _memP)

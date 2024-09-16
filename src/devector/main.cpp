@@ -31,8 +31,8 @@ int main(int argc, char** argv)
     }
 
     auto app = dev::DevectorApp(settingsPath, settingsJ);
-    if (!app.IsInited()) return dev::ERROR_UNSPECIFIED;
+    if (!app.IsInited()) return (int)app.GetError();
     app.Run();
 
-	return dev::NO_ERRORS;
+	return (int)dev::ErrCode::NO_ERRORS;
 }

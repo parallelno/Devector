@@ -5,8 +5,6 @@
 
 namespace dev
 {
-	using ErrCode = int;
-
 	using GlobalAddr = uint32_t;
 	using Addr = uint16_t;
 	using ColorI = uint32_t;

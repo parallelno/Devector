@@ -20,23 +20,25 @@ dev::DevectorApp::DevectorApp(
 	const std::string& _stringPath, nlohmann::json _settingsJ)
 	:
 	ImGuiApp(_settingsJ, _stringPath, "Devector"),
-	m_glUtils()
+	m_glUtils(m_status == AppStatus::INITED)
 {
-	SettingsInit();
-	WindowsInit();
+	if (m_status == AppStatus::INITED) {
+		SettingsInit();
+		WindowsInit();
+	}
 }
 
 dev::DevectorApp::~DevectorApp()
 {
-	 SettingsUpdate("breakpointsWindowVisisble", m_breakpointsWindowVisisble);
-	 SettingsUpdate("hardwareStatsWindowVisible", m_hardwareStatsWindowVisible);
-	 SettingsUpdate("disasmWindowVisible", m_disasmWindowVisible);
-	 SettingsUpdate("watchpointsWindowVisible", m_watchpointsWindowVisible);
-	 SettingsUpdate("displayWindowVisible", m_displayWindowVisible);
-	 SettingsUpdate("memDisplayWindowVisible", m_memDisplayWindowVisible);
-	 SettingsUpdate("hexViewerWindowVisible", m_hexViewerWindowVisible);
-	 SettingsUpdate("traceLogWindowVisible", m_traceLogWindowVisible);
-	 SettingsUpdate("recorderWindowVisible", m_recorderWindowVisible);
+	SettingsUpdate("breakpointsWindowVisisble", m_breakpointsWindowVisisble);
+	SettingsUpdate("hardwareStatsWindowVisible", m_hardwareStatsWindowVisible);
+	SettingsUpdate("disasmWindowVisible", m_disasmWindowVisible);
+	SettingsUpdate("watchpointsWindowVisible", m_watchpointsWindowVisible);
+	SettingsUpdate("displayWindowVisible", m_displayWindowVisible);
+	SettingsUpdate("memDisplayWindowVisible", m_memDisplayWindowVisible);
+	SettingsUpdate("hexViewerWindowVisible", m_hexViewerWindowVisible);
+	SettingsUpdate("traceLogWindowVisible", m_traceLogWindowVisible);
+	SettingsUpdate("recorderWindowVisible", m_recorderWindowVisible);
 }
 
 void dev::DevectorApp::WindowsInit()
@@ -113,10 +115,10 @@ void dev::DevectorApp::Update()
 	m_feedbackWindowP->Update(m_feedbackWindowVisible);
 	m_recorderWindowP->Update(m_recorderWindowVisible);
 
-	if (m_status == AppStatus::CHECK_MOUNTED_FDDS)
+	if (m_status == AppStatus::REQ_PREPARE_FOR_EXIT)
 	{
 		m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::SAVE_THEN_EXIT);
-		m_status = AppStatus::WAIT_FOR_SAVING;
+		m_status = AppStatus::PREPARE_FOR_EXIT;
 	}
 
 	if (m_restartOnLoadFdd) RestartOnLoadFdd();
@@ -199,7 +201,7 @@ void dev::DevectorApp::MainMenuUpdate()
 
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Quit", "Alt+F4")) { m_status = AppStatus::EXIT; }
+			if (ImGui::MenuItem("Quit", "Alt+F4")) { m_status = AppStatus::REQ_PREPARE_FOR_EXIT; }
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Tools"))
@@ -324,6 +326,7 @@ void dev::DevectorApp::ResLoadingStatusHandling()
 			break;
 		case FileType::FDD:
 			LoadFdd(m_loadingRes.path, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
+			m_prepare_for_exit = true;
 			break;
 		case FileType::REC:
 			LoadRecording(m_loadingRes.path);
@@ -392,14 +395,14 @@ void dev::DevectorApp::RecentFilesUpdate(const FileType _fileType, const std::ws
 bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 {
 	// Retrieve the user pointer to access the class instance
-	DevectorApp* app = static_cast<DevectorApp*>(_userdata);
+	DevectorApp* appP = static_cast<DevectorApp*>(_userdata);
 	
 	auto scancode = _event->key.scancode;
 	auto action = _event->type;
 	
-	if (app)
+	if (appP && appP->GetStatus() != AppStatus::EXIT)
 	{
-		auto displayFocused = app->m_displayWindowP->IsFocused();
+		auto displayFocused = appP->m_displayWindowP->IsFocused();
 /*
 		if (displayFocused)
 		{

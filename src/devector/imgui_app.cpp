@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string>
 
-#include "utils/imgui_app.h"
+#include "imgui_app.h"
 
 #if defined(_WIN32)
 	#include <windows.h>
@@ -31,7 +31,8 @@ dev::ImGuiApp::ImGuiApp(
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMEPAD))
 	{
 		dev::Log("Error: SDL_Init(): %s\n", SDL_GetError());
-		m_status = AppStatus::FAILED_INIT;
+		m_error = dev::ErrCode::FAILED_SDL_INIT;
+		m_status = AppStatus::EXIT;
 		return;
 	}
 
@@ -68,71 +69,36 @@ dev::ImGuiApp::ImGuiApp(
 	if (m_window == nullptr)
 	{
 		dev::Log("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-		m_status = AppStatus::FAILED_CREATE_WINDOW;
+		m_error = dev::ErrCode::FAILED_CREATION_WINDOW;
+		m_status = AppStatus::EXIT;
 		return;
 	}
 
-	//{
-	//	int displayIndex = SDL_GetDisplayForWindow(m_window);
-	//	// Variables to store the display bounds (including screen width and height)
-	//	SDL_Rect displayBounds;
-	//	
-	//	// Get the bounds of the display that corresponds to the displayIndex
-	//	if (SDL_GetDisplayBounds(displayIndex, &displayBounds) != 0) {
-	//		// Error handling in case the display bounds couldn't be retrieved
-	//		dev::Log("SDL_GetDisplayBounds failed: {}", SDL_GetError());
-	//		return;
-	//	}
-
-	//	// Store the screen width and height from the display bounds
-	//	int screenWidth = displayBounds.w;
-	//	int screenHeight = displayBounds.h;
-
-	//	// Center the window if position is negative
-	//	m_posX = (m_posX < 0) ? (screenWidth - m_width) / 2 : m_posX;
-	//	m_posY = (m_posY < 0) ? (screenHeight - m_height) / 2 : m_posY;
-	//}
 	SDL_SetWindowPosition(m_window, m_posX, m_posY);
-
-	// Initialize GLAD
-	//if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
-	//{
-	//	dev::Log("Failed to initialize GLAD\n");
-	//	m_status = AppStatus::FAILED_INIT;
-	//	return;
-	//}
-
-	SDL_SetWindowPosition(m_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 	m_gl_context = SDL_GL_CreateContext(m_window);
 	SDL_GL_MakeCurrent(m_window, m_gl_context);
 	SDL_GL_SetSwapInterval(1); // Enable vsync
 	SDL_ShowWindow(m_window);
 
-	m_status = AppStatus::INITED;
-
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	//ImPlot::CreateContext();
-	m_io = &(ImGui::GetIO());
-	//(void)m_io;
-	m_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	m_io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	m_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-	m_io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-	//io.ConfigViewportsNoAutoMerge = true;
-	//io.ConfigViewportsNoTaskBarIcon = true;
+	m_ioP = &(ImGui::GetIO());
+	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	m_ioP->ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+	m_ioP->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsClassic();
-	//ImGui::StyleColorsLight();
 
-	// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+	// When viewports are enabled we tweak WindowRounding/WindowBg 
+	// so platform windows can look identical to regular ones.
 	ImGuiStyle& style = ImGui::GetStyle();
-	if (m_io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	if (m_ioP->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
-		style.WindowRounding = 0.0f;
+		// TODO: tune it to make look similar to old Win32 Devector
+		style.WindowRounding = 3.0f;
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
 
@@ -140,50 +106,13 @@ dev::ImGuiApp::ImGuiApp(
 	ImGui_ImplSDL3_InitForOpenGL(m_window, m_gl_context);  
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
-	// Load Fonts
-	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-	// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-	// - If the file cannot be loaded, the function will return a nullptr. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-	// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-	// - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-	// - Read 'docs/FONTS.md' for more instructions and details.
-	// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-	// - Our Emscripten build process allows embedding fonts to be accessible at runtime from the "fonts/" folder. See Makefile.emscripten for details.
-	//io.Fonts->AddFontDefault();
-	//io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-	//IM_ASSERT(font != nullptr);
-}
-
-dev::ImGuiApp::~ImGuiApp()
-{
-	SettingsSave(m_stringPath);
-
-	m_autoUpdateThread.join();
-
-	// Cleanup
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplSDL3_Shutdown();
-	ImGui::DestroyContext();
-
-	SDL_GL_DestroyContext(m_gl_context);
-	SDL_DestroyWindow(m_window);
-	SDL_Quit();
-}
-
-void dev::ImGuiApp::glfw_error_callback(int _error, const char* _description)
-{
-	fprintf(stderr, "Glfw Error %d: %s\n", _error, _description);
+	m_status = AppStatus::INITED;
 }
 
 // Main loop
 void dev::ImGuiApp::Run()
 {
 	m_status = AppStatus::RUN;
-	bool window_should_close = false;
 
 	while (m_status != AppStatus::EXIT)
 	{
@@ -197,12 +126,12 @@ void dev::ImGuiApp::Run()
 		while (SDL_PollEvent(&event))
 		{
 			ImGui_ImplSDL3_ProcessEvent(&event);
-			if (event.type == SDL_EVENT_QUIT)
-				window_should_close = true;
-			if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && 
-				event.window.windowID == SDL_GetWindowID(m_window)
-				)
-				window_should_close = true;
+			if (event.type == SDL_EVENT_QUIT ||
+				(event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && 
+				event.window.windowID == SDL_GetWindowID(m_window)))
+
+				m_status = m_prepare_for_exit ? 
+							AppStatus::REQ_PREPARE_FOR_EXIT : AppStatus::EXIT;
 		}
 		if (SDL_GetWindowFlags(m_window) & SDL_WINDOW_MINIMIZED)
 		{
@@ -218,10 +147,10 @@ void dev::ImGuiApp::Run()
 
 		ImGui::NewFrame();
 	   
-		
-		//ImGui::DockSpaceOverViewport();
+	   	// Setup docking
+		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+	
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-		//if (true)
 		{
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
 			ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -232,34 +161,34 @@ void dev::ImGuiApp::Run()
 			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 		}
-		static bool open = true;
+		// No padding
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+		static bool open = true;
 		ImGui::Begin("MainWindow", &open, window_flags);
+
+		// Submit the DockSpace
+		ImGuiID dockspace_id = ImGui::GetID("MainWindowDockSpace");
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
+
+		// No padding
+		ImGui::PopStyleVar(3);
 
 		m_width = (int)(ImGui::GetWindowWidth());
 		m_height = (int)(ImGui::GetWindowHeight());
-		auto size = ImGui::GetWindowPos();
-		m_posX = int(size.x);
-		m_posY = int(size.y);
-
-		ImGui::PopStyleVar();
-
-		// Create a DockSpace node where any window can be docked
-		ImGuiID dockspace_id = ImGui::GetID("MainWindowDockSpace");
-		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
+		auto pos = ImGui::GetWindowPos();
+		m_posX = int(pos.x);
+		m_posY = int(pos.y);
 
 		Update();
 		
 		ImGui::End();
-		ImGui::PopStyleVar(2);
 
 		// Rendering
 		ImGui::Render();
-		glViewport(0, 0, (int)m_io->DisplaySize.x, (int)m_io->DisplaySize.y);
-		glClearColor(m_backColor.x * m_backColor.w, 
-					m_backColor.y * m_backColor.w, 
-					m_backColor.z * m_backColor.w, 
-					m_backColor.w);
+		glViewport(0, 0, (int)m_ioP->DisplaySize.x, (int)m_ioP->DisplaySize.y);
+		glClearColor(m_backColor.x, m_backColor.y, m_backColor.z, m_backColor.w);
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -268,25 +197,41 @@ void dev::ImGuiApp::Run()
 		// (Platform functions may change the current OpenGL context, 
 		//so we save/restore it to make it easier to paste this code elsewhere.
 		//  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
-		if (m_io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		if (m_ioP->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-		// 	GLFWwindow* backup_current_context = glfwGetCurrentContext();
-		 	ImGui::UpdatePlatformWindows();
-		 	ImGui::RenderPlatformWindowsDefault();
-		// 	glfwMakeContextCurrent(backup_current_context);
+            SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
+            SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
 		}
 
 		SDL_GL_SwapWindow(m_window);
+	}
+}
 
-		m_status = m_status != AppStatus::WAIT_FOR_SAVING && 
-			m_status != AppStatus::EXIT &&
-			window_should_close ? AppStatus::CHECK_MOUNTED_FDDS : m_status;
+dev::ImGuiApp::~ImGuiApp()
+{
+	SettingsSave(m_stringPath);
+
+	m_autoUpdateThread.join();
+
+	if (m_status != AppStatus::NOT_INITED){
+		// Cleanup
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplSDL3_Shutdown();
+		ImGui::DestroyContext();
+
+		SDL_GL_DestroyContext(m_gl_context);
+		SDL_DestroyWindow(m_window);
+		SDL_Quit();
 	}
 }
 
 void dev::ImGuiApp::AutoUpdate()
 {
-	for (; m_status != AppStatus::EXIT; dev::ThreadSleep(AUTO_UPDATE_COOLDOWN))
+	for (; m_status != AppStatus::EXIT;
+			dev::ThreadSleep(AUTO_UPDATE_COOLDOWN))
 	{
 		auto currendDpiScale = GetDpiScale();
 		bool isDpiUpdated = m_dpiScale != currendDpiScale;

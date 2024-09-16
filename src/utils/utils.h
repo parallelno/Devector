@@ -124,12 +124,12 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		SendEmergencyMsgT _sendEmergencyMsg = nullptr)
 	{
 		dev::Log("EXIT. err code: {}, msg: {}",
-				_err, _errStr);
+				(int)_err, _errStr);
 
 		if (_sendEmergencyMsg) _sendEmergencyMsg(_errStr);
 		
 		dev::ThreadSleep(30.0);
-		exit(_err);
+		exit((int)_err);
 	}
 
 	void CopyToClipboard(const std::string& _str);
