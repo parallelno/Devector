@@ -28,7 +28,7 @@ namespace dev
 
 	public:
 		BreakpointsWindow(Hardware& _hardware,
-			const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI);
+			const float* const _dpiScaleP, ReqUI& _reqUI);
 		void Update(bool& _visible);
 		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });
 	};

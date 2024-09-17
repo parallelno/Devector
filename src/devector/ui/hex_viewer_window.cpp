@@ -3,9 +3,9 @@
 #include "imgui_stdlib.h"
 
 dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI)
+		const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
-	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqUI(_reqUI)
 {}
 
@@ -164,7 +164,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 			float cellPaddingY = ImGui::GetStyle().CellPadding.y;
 			float offset = 2.0f;
 
-			ImGui::SetScrollY((m_highlightAddr >> 4) * (*m_fontSizeP + cellPaddingY + offset) * (*m_dpiScaleP));
+			ImGui::SetScrollY((m_highlightAddr >> 4) * (ImGui::GetFontSize() + cellPaddingY + offset) * (*m_dpiScaleP));
 			break;
 		}
 		case ReqUI::Type::HEX_HIGHLIGHT_OFF: 

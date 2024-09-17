@@ -2,9 +2,9 @@
 #include "ui/about_window.h"
 #include "utils/str_utils.h"
 
-dev::AboutWindow::AboutWindow(const float* const _fontSizeP, const float* const _dpiScaleP)
+dev::AboutWindow::AboutWindow(const float* const _dpiScaleP)
 	:
-	BaseWindow("About Devector", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP)
+	BaseWindow("About Devector", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP)
 {}
 
 void dev::AboutWindow::Update(bool& _visible)

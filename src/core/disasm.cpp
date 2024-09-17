@@ -833,7 +833,8 @@ void dev::Disasm::Line::Init()
 auto dev::Disasm::Line::GetImmediateS() const
 -> const char*
 { 
-	
+	return cmdImms[opcode] == CMD_IW_OFF1 ? 
+		Uint16ToStrC0x(imm) : Uint8ToStrC0x(static_cast<uint8_t>(imm));	
 };
 
 void dev::Disasm::AddLabes(const Addr _addr)

@@ -30,7 +30,7 @@ dev::ImGuiApp::ImGuiApp(
 	// Setup SDL
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMEPAD))
 	{
-		dev::Log("Error: SDL_Init(): %s\n", SDL_GetError());
+		dev::Log("Error: SDL_Init(): {}\n", SDL_GetError());
 		m_error = dev::ErrCode::FAILED_SDL_INIT;
 		m_status = AppStatus::EXIT;
 		return;
@@ -68,7 +68,7 @@ dev::ImGuiApp::ImGuiApp(
 	m_window = SDL_CreateWindow(_title.c_str(), m_width, m_height, window_flags);
 	if (m_window == nullptr)
 	{
-		dev::Log("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
+		dev::Log("Error: SDL_CreateWindow(): {}\n", SDL_GetError());
 		m_error = dev::ErrCode::FAILED_CREATION_WINDOW;
 		m_status = AppStatus::EXIT;
 		return;
@@ -143,7 +143,7 @@ void dev::ImGuiApp::Run()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL3_NewFrame();
 
-		RequestHandler();
+		ReqHandling();
 
 		ImGui::NewFrame();
 	   
@@ -235,30 +235,34 @@ void dev::ImGuiApp::AutoUpdate()
 	{
 		auto currendDpiScale = GetDpiScale();
 		bool isDpiUpdated = m_dpiScale != currendDpiScale;
-		if (m_req == static_cast<int32_t>(REQ::NONE) && isDpiUpdated)
+		if (isDpiUpdated)
 		{
-			Request(REQ::LOAD_FONT);
+			Request(Req::LOAD_FONT);
 		}
 			
-		Request(REQ::CHECK_WINDOW_SIZE_POS);
+		Request(Req::CHECK_WINDOW_SIZE_POS);
 	}
 }
 
-void dev::ImGuiApp::Request(const REQ _req)
+void dev::ImGuiApp::Request(const Req _req, const int64_t _val)
 {
-	m_req = static_cast<int32_t>(_req);
+	m_reqs.push({ _req, _val});
 }
 
-void dev::ImGuiApp::RequestHandler()
+void dev::ImGuiApp::ReqHandling()
 {
-	auto req = static_cast<REQ>(static_cast<int32_t>(m_req));
+	if (m_reqs.empty()) return;
+
+	auto result = m_reqs.pop();
+	auto req = result->first;
+	auto val = result->second;
 
 	switch (req)
 	{
-	case REQ::LOAD_FONT:
+	case Req::LOAD_FONT:
 		LoadFonts();
-		break;
-	case REQ::CHECK_WINDOW_SIZE_POS:
+		return;
+	case Req::CHECK_WINDOW_SIZE_POS:
 	{
 		auto width = GetSettingsInt("mainWindowWidth", dev::MAIN_WINDOW_W);
 		auto height = GetSettingsInt("mainWindowHeight", dev::MAIN_WINDOW_H);
@@ -281,13 +285,9 @@ void dev::ImGuiApp::RequestHandler()
 
 			SettingsSave(m_stringPath);
 		}
-		break;
+		return;
 	}
-	default:
-		return; 
 	};
-
-	m_req = static_cast<int32_t>(REQ::NONE);
 }
 
 void dev::ImGuiApp::LoadFonts()
@@ -301,11 +301,11 @@ void dev::ImGuiApp::LoadFonts()
 	m_dpiScale = GetDpiScale();
 
 	auto fontCodePath = dev::GetJsonString(m_settingsJ, "fontPath", false, DEFAULT_FONT_PATH);
-	m_fontSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false, DEFAULT_FONT_SIZE) * m_dpiScale;
+	auto fontSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false, DEFAULT_FONT_SIZE) * m_dpiScale;
 
 	if (!fontCodePath.empty() && dev::IsFileExist(fontCodePath))
 	{
-		m_font = io.Fonts->AddFontFromFileTTF(fontCodePath.c_str(), m_fontSize);
+		m_font = io.Fonts->AddFontFromFileTTF(fontCodePath.c_str(), fontSize);
 	}
 
 	auto fontCommentPath = dev::GetJsonString(m_settingsJ, "fontItalicPath", false, DEFAULT_FONT_ITALIC_PATH);
@@ -370,14 +370,14 @@ float dev::ImGuiApp::GetDpiScale()
 		return 1.0f;
 	}
 #elif defined(__linux__)
-	   ::Display* dpy = XOpenDisplay(NULL);
-    if (!dpy) {
+	   ::Display* dysplayP = XOpenDisplay(NULL);
+    if (!dysplayP) {
         std::cerr << "Unable to open X display." << std::endl;
         return 1.0f; // Default scaling factor
     }
 
     // Get the screen DPI
-    char* rms = XResourceManagerString(dpy);
+    char* rms = XResourceManagerString(dysplayP);
     XrmDatabase db;
     XrmValue value;
     char* type = NULL;
@@ -388,11 +388,11 @@ float dev::ImGuiApp::GetDpiScale()
     // Query the DPI from Xft resource (Xft.dpi)
     if (XrmGetResource(db, "Xft.dpi", "Xft.Dpi", &type, &value)) {
         float dpi = atof(value.addr);
-        XCloseDisplay(dpy);
+        XCloseDisplay(dysplayP);
         return dpi / 96.0f; // 96 DPI is the default scale factor
     }
 
-    XCloseDisplay(dpy);
+    XCloseDisplay(dysplayP);
     return 1.0f; // Default scaling factor
 #endif
 }

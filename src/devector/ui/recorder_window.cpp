@@ -4,10 +4,10 @@
 #include "utils/str_utils.h"
 
 dev::RecorderWindow::RecorderWindow(Hardware& _hardware, Debugger& _debugger,
-	const float* const _fontSizeP, const float* const _dpiScaleP,
+	const float* const _dpiScaleP,
 	ReqUI& _reqUI)
 	:
-	BaseWindow("Recorder", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Recorder", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), 
 	m_reqUI(_reqUI)
 {}

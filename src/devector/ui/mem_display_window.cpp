@@ -80,10 +80,10 @@ const char* memViewShaderFrag = R"(
 )";
 
 dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils,
+		const float* const _dpiScaleP, GLUtils& _glUtils,
 		ReqUI& _reqUI)
 	:
-	BaseWindow("Memory Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Memory Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils),
 	m_reqUI(_reqUI)
 {

@@ -59,28 +59,22 @@ namespace dev {
 		SDL_GLContext m_gl_context = nullptr;
 		ImGuiIO* m_ioP = nullptr;
 
-		static constexpr double AUTO_UPDATE_COOLDOWN = 1.0;
+		static constexpr double AUTO_UPDATE_COOLDOWN = 2.0;
 
 		ImFont* m_font = nullptr;
 		ImFont* m_fontItalic = nullptr;
-		float m_fontSize = 10.0f;
 		float m_dpiScale = 1.0f;
 
-		enum class REQ : int32_t
-		{
-			NONE,
-			LOAD_FONT,
-			CHECK_WINDOW_SIZE_POS,
-		};
-		std::atomic_char32_t m_req;
+		enum class Req { LOAD_FONT, CHECK_WINDOW_SIZE_POS, };
+		TQueue <std::pair<Req, int64_t>> m_reqs; // request
 		std::thread m_autoUpdateThread;
 
 		bool m_prepare_for_exit = false;
 
 		// reqs
 		void AutoUpdate();
-		void Request(const REQ _req);
-		void RequestHandler();
+		void Request(const Req _req, const int64_t _val = 0);
+		void ReqHandling();
 		void LoadFonts();
 		void SettingsUpdate(const std::string& _fieldName, nlohmann::json _json);
 		void SettingsSave(const std::string& _path);

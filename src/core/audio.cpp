@@ -49,12 +49,12 @@ void dev::Audio::Init()
 
 	m_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, Callback, this);
 	if (m_stream == NULL) {
-		dev::Log("SDL_OpenAudioDeviceStream: the stream failed to create: %s\n", SDL_GetError());
+		dev::Log("SDL_OpenAudioDeviceStream: the stream failed to create: {}\n", SDL_GetError());
 	}
 
 	m_audioDevice = SDL_GetAudioStreamDevice(m_stream);
 	if (!m_audioDevice) {
-		dev::Log("SDL_GetAudioStreamDevice: the device failed to create: %s\n", SDL_GetError());
+		dev::Log("SDL_GetAudioStreamDevice: the device failed to create: {}\n", SDL_GetError());
 	}
 	SDL_ResumeAudioDevice(m_audioDevice);
 

@@ -2,9 +2,9 @@
 #include "ui/feedback_window.h"
 #include "utils/str_utils.h"
 
-dev::FeedbackWindow::FeedbackWindow(const float* const _fontSizeP, const float* const _dpiScaleP)
+dev::FeedbackWindow::FeedbackWindow(const float* const _dpiScaleP)
 	:
-	BaseWindow("Send Feedback", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP)
+	BaseWindow("Send Feedback", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP)
 {
 	m_userFeedback = m_defaultFeedback;
 }

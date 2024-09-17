@@ -6,9 +6,9 @@
 #include "utils/str_utils.h"
 
 dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
-	const float* const _fontSizeP, const float* const _dpiScaleP, ReqUI& _reqUI)
+	const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
-	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
 	m_hardware(_hardware), m_reqUI(_reqUI)
 {}
 

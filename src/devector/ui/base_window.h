@@ -10,7 +10,6 @@ namespace dev
 		int m_defaultH;
 
 	protected:
-		const float* const m_fontSizeP = nullptr;
 		const float* const m_dpiScaleP = nullptr;
 
 	public:
@@ -18,10 +17,10 @@ namespace dev
 
 		BaseWindow(const std::string& _name, 
 			const int _defaultW, const int _defaultH, 
-			const float* const _fontSizeP, const  float* const _dpiScaleP)
+			const  float* const _dpiScaleP)
 			:
 			m_name(_name), m_defaultW(_defaultW), m_defaultH(_defaultH), 
-			m_fontSizeP(_fontSizeP), m_dpiScaleP(_dpiScaleP)
+			m_dpiScaleP(_dpiScaleP)
 		{};
 
 		void Update();

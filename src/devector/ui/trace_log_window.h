@@ -75,7 +75,7 @@ namespace dev
 			ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
 
 	public:
-		TraceLogWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, 
+		TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 				const float* const _dpiScaleP, ReqUI& _reqUI);
 		void Update(bool& _visible);
 	};

@@ -51,18 +51,18 @@ void dev::DevectorApp::WindowsInit()
 	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData, m_ramDiskDataPath, m_ramDiskClearAfterRestart);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
 
-	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_ruslat);
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_dpiScale, m_ruslat);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
-		m_fontItalic, &m_fontSize, &m_dpiScale, m_reqUI);
-	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_glUtils, m_reqUI);
-	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqUI);
-	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_hardwareP, &m_fontSize, &m_dpiScale, m_reqUI);
-	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_glUtils, m_reqUI);
-	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
-	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
-	m_aboutWindowP = std::make_unique<dev::AboutWindow>(&m_fontSize, &m_dpiScale);
-	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(&m_fontSize, &m_dpiScale);
-	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(*m_hardwareP, *m_debuggerP, &m_fontSize, &m_dpiScale, m_reqUI);
+		m_fontItalic, &m_dpiScale, m_reqUI);
+	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI);
+	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_hardwareP, &m_dpiScale, m_reqUI);
+	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_hardwareP, &m_dpiScale, m_reqUI);
+	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_glUtils, m_reqUI);
+	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
+	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
+	m_aboutWindowP = std::make_unique<dev::AboutWindow>(&m_dpiScale);
+	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(&m_dpiScale);
+	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
 
 	// Set up the event callback function
 	SDL_SetEventFilter(DevectorApp::EventFilter, this);
@@ -72,7 +72,7 @@ void dev::DevectorApp::WindowsInit()
 
 void dev::DevectorApp::SettingsInit()
 {
-	Request(REQ::LOAD_FONT);
+	Request(Req::LOAD_FONT);
 	AppStyleInit();
 
 	m_breakpointsWindowVisisble = GetSettingsBool("breakpointsWindowVisisble", false);

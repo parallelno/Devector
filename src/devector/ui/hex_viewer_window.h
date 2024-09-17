@@ -42,7 +42,7 @@ namespace dev
 		void DrawHex(const bool _isRunning);
 
 	public:
-		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, const float* const _fontSizeP, 
+		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, 
 				const float* const _dpiScaleP, ReqUI& _reqUI);
 		void Update(bool& _visible);
 	};

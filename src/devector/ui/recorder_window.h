@@ -23,7 +23,7 @@ namespace dev
 
 	public:
 		RecorderWindow(Hardware& _hardware, Debugger& _debugger, 
-			const float* const _fontSizeP, const float* const _dpiScaleP,
+			const float* const _dpiScaleP,
 			ReqUI& _reqUI);
 		void Update(bool& _visible);
 		void Draw(const bool _isRunning);

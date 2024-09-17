@@ -27,7 +27,7 @@ namespace dev
 		//TelegramBot m_telegramBot;
 
 	public:
-		FeedbackWindow(const float* const _fontSizeP, const float* const _dpiScaleP);
+		FeedbackWindow(const float* const _dpiScaleP);
 		void Update(bool& _visible);
 		void Draw();
 		void DrawConfirmation();

@@ -56,7 +56,7 @@ namespace dev
 
 	public:
 		MemDisplayWindow(Hardware& _hardware, Debugger& _debugger, 
-			const float* const _fontSizeP, const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI);
+			const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI);
 		void Update(bool& _visible);
 	};
 

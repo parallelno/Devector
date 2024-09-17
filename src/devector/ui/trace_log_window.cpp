@@ -1,10 +1,10 @@
 #include "ui/trace_log_window.h"
 
 dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _fontSizeP, const float* const _dpiScaleP, 
+		const float* const _dpiScaleP, 
 		ReqUI& _reqUI)
 	:
-	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSizeP, _dpiScaleP),
+	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), 
 	m_reqUI(_reqUI)
 {}

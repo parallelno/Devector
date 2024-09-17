@@ -6,10 +6,10 @@
 
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
-		const float* const _fontSize, const float* const _dpiScale, 
+		const float* const _dpiScale, 
 		ReqUI& _reqUI)
 	:
-	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _fontSize, _dpiScale),
+	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScale),
 	m_hardware(_hardware),
 	m_debugger(_debugger),
 	m_fontCommentP(fontComment),
@@ -131,14 +131,14 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 bool dev::DisasmWindow::IsDisasmTableOutOfWindow() const
 {
 	ImVec2 cursorPos = ImGui::GetCursorPos();
-	float remainingSpace = ImGui::GetWindowSize().y - cursorPos.y - *m_fontSizeP;
+	float remainingSpace = ImGui::GetWindowSize().y - cursorPos.y - ImGui::GetFontSize();
 
 	return remainingSpace < 0;
 }
 
 int dev::DisasmWindow::GetVisibleLines() const
 {
-	auto lines = (ImGui::GetWindowSize().y - ImGui::GetCursorPosY()) / (*m_fontSizeP);
+	auto lines = (ImGui::GetWindowSize().y - ImGui::GetCursorPosY()) / ImGui::GetFontSize();
 	return static_cast<int>(lines);
 }
 
@@ -922,12 +922,11 @@ void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 
 	float linkWidth = _selected ? 1.5f : 1.0f;
 	
-	float fontSize = *m_fontSizeP;
 	float linkHorizLen = IMM_ADDR_LINK_AREA_W * link.linkIdx / m_immLinksNum;
 	
 	auto pos0 = ImGui::GetCursorScreenPos();
 	pos0.x += IMM_ADDR_LINK_POS_X;
-	pos0.y -= fontSize * 0.5f;
+	pos0.y -= ImGui::GetFontSize() * 0.5f;
 	auto pos1 = ImVec2(pos0.x - linkHorizLen - 5.0f, pos0.y);
 
 	bool minorLink = (link.lineIdx == Disasm::IMM_LINK_UP || link.lineIdx == Disasm::IMM_LINK_DOWN || link.lineIdx == Disasm::IMM_NO_LINK);
@@ -951,7 +950,7 @@ void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 		// horizontal line from the command
 		ImGui::GetForegroundDrawList()->AddLine(pos0, pos1, linkColor, linkWidth);
 		// vertical line
-		auto pos2 = ImVec2(pos1.x, pos1.y + (link.lineIdx - _lineIdx) * fontSize);
+		auto pos2 = ImVec2(pos1.x, pos1.y + (link.lineIdx - _lineIdx) * ImGui::GetFontSize());
 		ImGui::GetForegroundDrawList()->AddLine(pos1, pos2, linkColor, linkWidth);
 		// horizontal line to the addr
 		pos0.y = pos2.y;

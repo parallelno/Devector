@@ -64,7 +64,7 @@ namespace dev
 		//void ReqHandling();
 
 	public:
-		DisplayWindow(Hardware& _hardware, const float* const _fontSizeP, 
+		DisplayWindow(Hardware& _hardware,
 			const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI);
 		void Update(bool& _visible);
 		bool IsFocused() const;

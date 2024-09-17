@@ -13,7 +13,7 @@ namespace dev
 		const std::string compilation_date = __DATE__;
 
 	public:
-		AboutWindow(const float* const _fontSizeP, const float* const _dpiScaleP);
+		AboutWindow(const float* const _dpiScaleP);
 		void Update(bool& _visible);
 		void Draw();
 	};
