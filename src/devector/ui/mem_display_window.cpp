@@ -205,7 +205,8 @@ void dev::MemDisplayWindow::DrawDisplay()
 		"Blue highlights represent reads.\n"
 		"Red highlights represent writes.\n"
 		"The brighter the color, the more recent the change.\n"
-		"Left Alt + Mouse Wheel - zoom."
+		"Left Alt + Mouse Wheel - zoom.\n"
+		"The Left Mouse Button to navigate the address in the Hex Window."
 		);
 
 	switch (highlightMode)

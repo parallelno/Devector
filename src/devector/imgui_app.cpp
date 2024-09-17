@@ -87,18 +87,21 @@ dev::ImGuiApp::ImGuiApp(
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+	
+	// it works unstable on Linux
+#if defined(_WIN32)
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-
+#endif
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.WindowRounding = 3.0f;
+
 	// When viewports are enabled we tweak WindowRounding/WindowBg 
 	// so platform windows can look identical to regular ones.
-	ImGuiStyle& style = ImGui::GetStyle();
 	if (m_ioP->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
-		// TODO: tune it to make look similar to old Win32 Devector
-		style.WindowRounding = 3.0f;
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
 

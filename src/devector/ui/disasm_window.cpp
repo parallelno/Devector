@@ -99,6 +99,16 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 		m_reqUI.type = ReqUI::Type::RELOAD_ROM_FDD_REC;
 		m_hardware.Request(Hardware::Req::STOP);
 	}
+
+	ImGui::SameLine();
+	dev::DrawHelpMarker(
+		"Break/Run stops and continues the execution.\n"
+		"Step executes one command.\n"
+		"Step Over executes the next command without entering it. For example, stepping over a Call, stops the progamm at the next instruction after Call.\n"
+		"Step 0x100 executes 256 instructions.\n"
+		"Step Frame executes until RST7 (the next frame start).\n"
+		"Reset relaods the ROM/FDD file and reset the hardware keeping all brealpoints intact."
+		);	
 }
 
 void dev::DisasmWindow::DrawSearch(const bool _isRunning)
