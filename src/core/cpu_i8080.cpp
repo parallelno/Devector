@@ -6,7 +6,7 @@ static constexpr uint64_t MACHINE_CC = 4;
 // machine_cycle index indicating the instruction executon is over
 static constexpr uint8_t FIRST_MACHINE_CICLE_IDX = 0; 
 static constexpr uint16_t PSW_INIT = 0b00000010;
-static constexpr uint16_t PSW_NUL_FLAGS = !0b00101000;
+static constexpr uint16_t PSW_NUL_FLAGS = ~0b00101000;
 
 
 #define CC			state.cc
@@ -253,7 +253,7 @@ void dev::CpuI8080::Decode()
 		case 0xC1: POP(B, C); break; // POP B
 		case 0xD1: POP(D, E); break; // POP D
 		case 0xE1: POP(H, L); break; // POP H
-		case 0xF1: POP(A, F); break; // POP PSW
+		case 0xF1: POP(A, F); F&=PSW_NUL_FLAGS; F|=PSW_INIT; break; // POP PSW
 
 		case 0x87: ADD(A, A, false); break; // ADD A
 		case 0x80: ADD(A, B, false); break; // ADD B
