@@ -15,7 +15,15 @@ int main(int argc, char** argv)
     
     auto settingsPath = argsParser.GetString("settingsPath",
         "The path to the settings.", false, "settings.json");
-    
+
+    auto path = argsParser.GetString("path",
+        "The path to the rom/fdd/rec file.", false, "");
+
+    if (!path.empty() && !dev::IsFileExist(path)){
+        dev::Log("A path is invalid: {}", path);
+        path = "";
+    }
+
     if (!argsParser.IsRequirementSatisfied())
     {
         dev::Log("---Settings parameters are missing");
@@ -30,7 +38,7 @@ int main(int argc, char** argv)
         settingsJ = dev::LoadJson(settingsPath);
     }
 
-    auto app = dev::DevectorApp(settingsPath, settingsJ);
+    auto app = dev::DevectorApp(settingsPath, settingsJ, path);
     if (!app.IsInited()) return (int)app.GetError();
     app.Run();
 

@@ -17,14 +17,16 @@
 #include "core/fdd_consts.h"
 
 dev::DevectorApp::DevectorApp(
-	const std::string& _stringPath, nlohmann::json _settingsJ)
+	const std::string& _stringPath, nlohmann::json _settingsJ,
+	const std::string& _path)
 	:
 	ImGuiApp(_settingsJ, _stringPath, "Devector"),
 	m_glUtils(m_status == AppStatus::INITED)
 {
 	if (m_status == AppStatus::INITED) {
-		SettingsInit();
+		SettingsInit(_path);
 		WindowsInit();
+		Load(_path);
 	}
 }
 
@@ -70,7 +72,7 @@ void dev::DevectorApp::WindowsInit()
 	m_hardwareP->Request(Hardware::Req::RUN);
 }
 
-void dev::DevectorApp::SettingsInit()
+void dev::DevectorApp::SettingsInit(const std::string& _path)
 {
 	Request(Req::LOAD_FONT);
 	AppStyleInit();
@@ -91,6 +93,41 @@ void dev::DevectorApp::SettingsInit()
 	if (m_mountRecentFddImg) m_reqUI.type = ReqUI::Type::LOAD_RECENT_FDD_IMG;
 }
 
+void dev::DevectorApp::Load(const std::string& _path)
+{
+	// load the rom/fdd/rec image if it was send via the console command
+	if (!_path.empty())
+	{
+		bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+		if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
+
+		auto path = dev::StrToStrW(_path);
+		auto ext = StrToUpper(dev::GetExt(path));
+
+		if (ext == EXT_ROM)
+		{
+			RecentFilesUpdate(FileType::ROM, path);
+		}
+		else if (ext == EXT_FDD)
+		{
+			RecentFilesUpdate(FileType::FDD, path, 0, true);
+		}
+		else if (ext == EXT_REC)
+		{
+			LoadRecording(path);
+		}
+		else {
+			dev::Log(L"Not supported file type: {}", path);
+			m_loadingRes.state = LoadingRes::State::NONE;
+			return;
+		}
+
+		RecentFilesStore();
+		Reload();
+
+		if (isRunning) m_hardwareP->Request(Hardware::Req::RUN);
+	}
+}
 
 // UI thread
 void dev::DevectorApp::Update()
