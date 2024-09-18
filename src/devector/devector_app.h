@@ -18,17 +18,17 @@
 #include "ui/about_window.h"
 #include "ui/feedback_window.h"
 #include "ui/recorder_window.h"
+#include "ui/keyboard_window.h"
 
 #include "core/hardware.h"
 #include "core/debugger.h"
 
 namespace dev
 {
+	static const char* APP_NAME = "Devector";
+
 	class DevectorApp : public ImGuiApp
 	{
-		// TODO: Find out why ImGuiApp(_settingsJ, _stringPath, APP_NAME) crashes
-		//const std::string APP_NAME = "Devector";
-		const std::string FONT_CODE_PATH_DEFAULT = "Devector";
 		static constexpr int RECENT_FILES_MAX = 10;
 		const std::wstring EXT_ROM = L".ROM";
 		const std::wstring EXT_FDD = L".FDD";
@@ -101,6 +101,7 @@ namespace dev
 		std::unique_ptr <dev::AboutWindow>m_aboutWindowP;
 		std::unique_ptr <dev::FeedbackWindow>m_feedbackWindowP;
 		std::unique_ptr <dev::RecorderWindow>m_recorderWindowP;
+		std::unique_ptr <dev::KeyboardWindow>m_keyboardWindowP;
 
 		bool m_displayWindowVisible = false;
 		bool m_disasmWindowVisible = false;
@@ -113,6 +114,9 @@ namespace dev
 		bool m_aboutWindowVisible = false;
 		bool m_feedbackWindowVisible = false;
 		bool m_recorderWindowVisible = false;
+		bool m_keyboardWindowVisible = false;
+
+		std::string m_pathImgVector;
 
 		bool m_ruslat = false;
 		bool m_restartOnLoadFdd = false;

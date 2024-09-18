@@ -22,6 +22,7 @@ set(3RD_PARTY_DIR ${SRC_DIR}/3rd_party)
 set(SDL3_DIR ${3RD_PARTY_DIR}/SDL)
 set(IMGUI_DIR ${3RD_PARTY_DIR}/imgui)
 set(TINY_DIALOGS_DIR ${3RD_PARTY_DIR}/libtinyfiledialogs)
+set(STB_IMAGE_DIR ${3RD_PARTY_DIR}/stb_image)
 set(GLAD_DIR ${SRC_DIR}/glad)
 set(CORE_DIR ${SRC_DIR}/core)
 set(UTILS_DIR ${SRC_DIR}/utils)
@@ -92,6 +93,11 @@ set(TINY_DIALOGS_SRC
 	${TINY_DIALOGS_DIR}/tinyfiledialogs.c
 )
 
+# libtinyfiledialogs source
+set(STB_IMAGE_SRC
+	${STB_IMAGE_DIR}/stb_image.h
+)
+
 # devector source
 file(GLOB_RECURSE CORE_SRC ${CORE_DIR}/*.cpp ${CORE_DIR}/*.h)
 file(GLOB_RECURSE UTILS_SRC ${UTILS_DIR}/*.cpp ${UTILS_DIR}/*.h)
@@ -129,11 +135,13 @@ set(SOURCES
 	${DEVECTOR_DIR}/ui/trace_log_window.cpp
 	${DEVECTOR_DIR}/ui/trace_log_window.h
 	${DEVECTOR_DIR}/ui/watchpoints_window.cpp
-	${DEVECTOR_DIR}/ui/watchpoints_window.h	
+	${DEVECTOR_DIR}/ui/watchpoints_window.h
+	${DEVECTOR_DIR}/ui/keyboard_window.cpp
+	${DEVECTOR_DIR}/ui/keyboard_window.h		
 )
 
 # Executable
-add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC} ${TINY_DIALOGS_SRC})
+add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC} ${TINY_DIALOGS_SRC} ${STB_IMAGE_SRC})
 
 # Add Unicode definitions for Windows
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE)
