@@ -436,21 +436,18 @@ bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 	
 	auto scancode = _event->key.scancode;
 	auto action = _event->type;
-	
+
 	if (appP && appP->GetStatus() != AppStatus::EXIT)
 	{
 		auto displayFocused = appP->m_displayWindowP->IsFocused();
-/*
-		if (displayFocused)
+
+		if (action == SDL_EVENT_KEY_DOWN || action == SDL_EVENT_KEY_UP)
 		{
-			app->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "scancode", scancode }, { "action", action} });
-			return SDL_FALSE; // do not pass the event to SDL
+			if (displayFocused){
+				appP->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "scancode", scancode }, { "action", action} });
+				return SDL_FALSE; // do not pass the event to SDL
+			}
 		}
-		
-		if (!displayFocused || scancode != SDL_SCANCODE_LALT) {
-			return SDL_TRUE; // pass the event to SDL
-		}
-*/
 	}
 
 	return SDL_TRUE; // pass the event to SDL

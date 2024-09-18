@@ -96,7 +96,7 @@ void dev::ArgsParser::AddParamToHelp(const std::string& _arg,
 	if (_type == ArgType::INT) defaultStr = std::to_string(std::any_cast<int>(_default));
 	if (_type == ArgType::STRING) defaultStr = std::any_cast<std::string>(_default);
 
-	m_help += std::format("-{} \n\ttype: {}, required: {}, default: {}, \n{}\n\n",
+	m_help += std::format("-{} \n\ttype: {}, required: {}, default: {}\n{}\n\n",
 		_arg,
 		ArgTypeStr[static_cast<size_t>(_type)],
 		_required ? "true" : "false",
