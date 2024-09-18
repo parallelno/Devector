@@ -66,7 +66,7 @@ void dev::DevectorApp::WindowsInit()
 	m_aboutWindowP = std::make_unique<dev::AboutWindow>(&m_dpiScale);
 	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(&m_dpiScale);
 	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
-	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(*m_hardwareP, &m_dpiScale, m_reqUI, m_pathImgVector);
+	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI, m_pathImgKeyboard);
 
 	// Set up the event callback function
 	SDL_SetEventFilter(DevectorApp::EventFilter, this);
@@ -89,7 +89,7 @@ void dev::DevectorApp::SettingsInit(const std::string& _path)
 	m_traceLogWindowVisible = GetSettingsBool("traceLogWindowVisible", false);
 	m_recorderWindowVisible = GetSettingsBool("recorderWindowVisible", false);
 	m_keyboardWindowVisible = GetSettingsBool("keyboardWindowVisible", false);
-	m_pathImgVector = GetSettingsString("pathImgVector", "images//vector_keyboard.jpg");
+	m_pathImgKeyboard = GetSettingsString("pathImgKeyboard", "images//vector_keyboard.jpg");
 
 	RecentFilesInit();
 	

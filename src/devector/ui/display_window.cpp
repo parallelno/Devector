@@ -283,6 +283,7 @@ void dev::DisplayWindow::DrawDisplay()
 		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
 		ImGui::Image((void*)(intptr_t)framebufferTex, displaySize, borderMin, borderMax);
 		m_displayIsHovered = ImGui::IsItemHovered();
+		
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
 			ImGui::OpenPopup(m_contextMenuName);

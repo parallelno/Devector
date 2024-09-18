@@ -116,7 +116,7 @@ namespace dev
 		bool m_recorderWindowVisible = false;
 		bool m_keyboardWindowVisible = false;
 
-		std::string m_pathImgVector;
+		std::string m_pathImgKeyboard;
 
 		bool m_ruslat = false;
 		bool m_restartOnLoadFdd = false;
