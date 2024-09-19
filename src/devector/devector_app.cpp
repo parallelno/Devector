@@ -446,10 +446,11 @@ bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 	if (appP && appP->GetStatus() != AppStatus::EXIT)
 	{
 		auto displayFocused = appP->m_displayWindowP->IsFocused();
+		auto keyboardFocused = appP->m_keyboardWindowP->IsFocused();
 
 		if (action == SDL_EVENT_KEY_DOWN || action == SDL_EVENT_KEY_UP)
 		{
-			if (displayFocused){
+			if (displayFocused || keyboardFocused){
 				appP->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "scancode", scancode }, { "action", action} });
 				return SDL_FALSE; // do not pass the event to SDL
 			}

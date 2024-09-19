@@ -15,32 +15,39 @@ auto dev::Keyboard::KeyHandling(int _scancode, int _action)
 
 	switch (_scancode)
 	{
+		// BLK + VVOD functionality
 	case SDL_SCANCODE_F11:
 		if (_action == SDL_EVENT_KEY_UP) {
-			// BLK + VVOD functionality
 			return Operation::RESET;
 		}
 		break;
+
+		// BLK + SBR functionality		
 	case SDL_SCANCODE_F10: // TODO: F12 causes debug interruption. It is an ImGui feature perhaps. Fix it.
 		if (_action == SDL_EVENT_KEY_UP) {
-			// BLK + SBR functionality
 			return Operation::RESTART;
 		}
 		break;
-		// shift keys
+		
+		// SS (shift) key
 	case SDL_SCANCODE_LSHIFT: [[fallthrough]];
 	case SDL_SCANCODE_RSHIFT:
 		m_keySS = _action == SDL_EVENT_KEY_DOWN;
-		break; // shift/ss
+		break;
+		
+		// US (ctrl) key
 	case SDL_SCANCODE_LCTRL:
 		m_keyUS = _action == SDL_EVENT_KEY_DOWN;
-		break; // ctrl/us
+		break;
+
+		// RUS/LAT (cmd) key
 	case SDL_SCANCODE_LGUI: [[fallthrough]];
 	case SDL_SCANCODE_LALT: [[fallthrough]];
 	case SDL_SCANCODE_F6:
 		m_keyRus = _action == SDL_EVENT_KEY_DOWN;
-		break; // cmd/rus
-		// matrix keys
+		break;
+		
+		// Matrix keys
 	default:
 
 		auto it = m_keymap.find(_scancode);
@@ -83,7 +90,7 @@ void dev::Keyboard::InitMapping()
 	// Keyboard encoding matrix:
 	//              columns
 	//     │ 7   6   5   4   3   2   1   0
-	// ──--┼───────────────────────────────
+	// ────┼───────────────────────────────
 	//   7 │SPC  ^   ]   \   [   Z   Y   X
 	//   6 │ W   V   U   T   S   R   Q   P
 	// r 5 │ O   N   M   L   K   J   I   H
@@ -91,7 +98,7 @@ void dev::Keyboard::InitMapping()
 	// w 3 │ /   .   =   ,   ;   :   9   8
 	// s 2 │ 7   6   5   4   3   2   1   0
 	//   1 │F5  F4  F3  F2  F1  AR2 STR LDA,
-	//   0 │DN  RT  UP  LFT ZAB VK  PS  TAB
+	//   0 │DN  RT  UP  LFT ZB  VK  PS  TAB
 	//
 	// LDA - left diagonal arrow
 
@@ -131,7 +138,7 @@ void dev::Keyboard::InitMapping()
 		{ SDL_SCANCODE_C,			0x408 },
 		{ SDL_SCANCODE_B,			0x404 },
 		{ SDL_SCANCODE_A,			0x402 },
-		{ SDL_SCANCODE_MINUS,		0x401 }, // 189:-@
+		{ SDL_SCANCODE_MINUS,		0x401 }, // '@'
 
 		{ SDL_SCANCODE_SLASH,		0x380 },
 		{ SDL_SCANCODE_PERIOD,		0x340 },
@@ -156,17 +163,17 @@ void dev::Keyboard::InitMapping()
 		{ SDL_SCANCODE_F3,			0x120 },
 		{ SDL_SCANCODE_F2,			0x110 },
 		{ SDL_SCANCODE_F1,			0x108 },
-		{ SDL_SCANCODE_ESCAPE,		0x104 },
+		{ SDL_SCANCODE_ESCAPE,		0x104 }, // AR2
 		{ SDL_SCANCODE_F8,			0x102 }, // STR
-		{ SDL_SCANCODE_F7,			0x101 }, // ^\ ?
+		{ SDL_SCANCODE_F7,			0x101 }, // LDA - left diagonal arrow
 
 		{ SDL_SCANCODE_DOWN,		0x080 },
 		{ SDL_SCANCODE_RIGHT,		0x040 },
 		{ SDL_SCANCODE_UP,			0x020 },
 		{ SDL_SCANCODE_LEFT,		0x010 },
-		{ SDL_SCANCODE_BACKSPACE,	0x008 },
-		{ SDL_SCANCODE_RETURN,		0x004 },
-		{ SDL_SCANCODE_RALT,		0x002 },
-		{ SDL_SCANCODE_TAB,			0x001 },
+		{ SDL_SCANCODE_BACKSPACE,	0x008 }, // ZB
+		{ SDL_SCANCODE_RETURN,		0x004 }, // VK
+		{ SDL_SCANCODE_RALT,		0x002 }, // PS
+		{ SDL_SCANCODE_TAB,			0x001 }, // TAB
 	};
 }

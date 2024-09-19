@@ -24,19 +24,20 @@ namespace dev
 		GLuint m_vramShaderId = -1;
 		GLUtils::MaterialId m_vramMatId;
 		GLuint m_vramTexId = -1;	
-		int m_imgKeyboardW;
 		int m_imgKeyboardH;
+		int m_imgKeyboardW;
 		int m_imgKeyboardCh;
 		bool m_displayIsHovered = false;
 		const char* m_contextMenuName = "##keyboardCMenu";
+		bool m_windowFocused = false;
 
 		bool Init();
-		void DrawContextMenu();
 
 	public:
 		KeyboardWindow(Hardware& _hardware, const float* const _dpiScaleP, 
 			GLUtils& _glUtils, ReqUI& _reqUI, const std::string& _pathImgKeyboard);
 		void Update(bool& _visible);
 		void Draw(const bool _isRunning);
+		bool IsFocused() const;
 	};
 };

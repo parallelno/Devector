@@ -189,24 +189,24 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
 	static constexpr float DISASM_TBL_BREAKPOINT_SIZE = 0.35f;
 	static constexpr float DISASM_TBL_BREAKPOINT_SIZE_HOVERED = 0.40f;
 
-    ImGuiWindow* window = ImGui::GetCurrentWindow();
-    if (window->SkipItems)
-        return false;
+	ImGuiWindow* window = ImGui::GetCurrentWindow();
+	if (window->SkipItems)
+		return false;
 
-    ImGuiContext& g = *GImGui;
+	ImGuiContext& g = *GImGui;
 	
-    const ImGuiStyle& style = g.Style;
+	const ImGuiStyle& style = g.Style;
 	const ImGuiID id = window->GetID(label);
 
-    const ImVec2 totalSize = ImVec2(g.FontSize, g.FontSize);
+	const ImVec2 totalSize = ImVec2(g.FontSize, g.FontSize);
 	ImVec2 pos = window->DC.CursorPos;
 	pos.x += _posXOffset * g.FontSize;
-    pos.y += window->DC.CurrLineTextBaseOffset;
-    const ImRect bb(pos, pos + totalSize);
+	pos.y += window->DC.CurrLineTextBaseOffset;
+	const ImRect bb(pos, pos + totalSize);
 
 	ImGui::ItemSize(_itemHasSize ? totalSize : ImVec2{}, 0.0f);
-    if (!ImGui::ItemAdd(bb, 0))
-        return false;
+	if (!ImGui::ItemAdd(bb, 0))
+		return false;
 
 	auto hovered = ImGui::IsMouseHoveringRect(bb.Min, bb.Max);
 	bool pressed = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
@@ -235,7 +235,7 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
 	}
 
 	ImU32 color = *_statusP == Breakpoint::Status::ACTIVE ? DISASM_TBL_COLOR_BREAKPOINT : DISASM_TBL_COLOR_BREAKPOINT_DISABLED;
-    auto drawPos = bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
+	auto drawPos = bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
 
 	// render the hover highlight
 	if (hovered)
@@ -290,7 +290,7 @@ void dev::DrawProperty2EditableI(const char* _name, const char* _label, int* _va
 
 	ImGui::TableNextColumn();
 	ImGui::InputInt(_label, _value);
-	if (*_help != '\0') {
+	if (_help && *_help != '\0') {
 		ImGui::SameLine();
 		ImGui::Dummy({12,10});
 		ImGui::SameLine();
@@ -311,7 +311,7 @@ void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::str
 
 	ImGui::TableNextColumn();
 	ImGui::InputTextWithHint(_label, _hint, _value, _flags);
-	if (*_help != '\0') {
+	if (_help && *_help != '\0') {
 		ImGui::SameLine();
 		ImGui::Dummy({12,10});
 		ImGui::SameLine();
@@ -331,7 +331,7 @@ void dev::DrawProperty2Combo(const char* _name, const char* _label,
 
 	ImGui::TableNextColumn();
 	ImGui::Combo(_label, _currentItem, _items, _itemsCount);
-	if (*_help != '\0') {
+	if (_help && *_help != '\0') {
 		ImGui::SameLine();
 		ImGui::Dummy({ 12,10 });
 		ImGui::SameLine();
@@ -352,7 +352,7 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 	ImGui::TableNextColumn();
 	ImGui::Checkbox(_label, _val);
 
-	if (*_help != '\0') {
+	if (_help && *_help != '\0') {
 		ImGui::SameLine();
 		ImGui::Dummy({ 80,10 });
 		ImGui::SameLine();
@@ -378,7 +378,7 @@ void dev::DrawProperty2EditableCheckBox4(const char* _name,
 	ImGui::Checkbox(_label2, _val2); ImGui::SameLine();
 	ImGui::Checkbox(_label3, _val3);
 
-	if (*_help != '\0') {
+	if (_help && *_help != '\0') {
 		ImGui::SameLine();
 		ImGui::Dummy({ 8, 10 });
 		ImGui::SameLine();
@@ -411,7 +411,7 @@ void dev::DrawProperty2RadioButtons(
 		}
 	}
 
-	if (*_help != '\0') {
+	if (_help && *_help != '\0') {
 		ImGui::SameLine();
 		ImGui::Dummy({ 12,10 });
 		ImGui::SameLine();
@@ -604,4 +604,49 @@ void dev::DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels
 			break;
 		}
 	}
+}
+
+auto dev::DrawTransparentButtonWithBorder(const char* _label, const ImVec2& _pos, const ImVec2& _size, const char* _hint) 
+-> const ButtonAction
+{
+	ButtonAction out = ButtonAction::NONE;
+
+	// Set a transparent background color for the button (RGBA with 0.0 alpha)
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));          // Transparent background
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0.3));   // Transparent when hovered
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));    // Transparent when clicked
+
+	// Set a border color (e.g., white)
+	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));  // White border
+
+	// Ensure borders are enabled and set a border thickness
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);  // Enable border and set its size
+
+	// Draw the button
+	ImGui::SetCursorPos(_pos);
+
+	if (ImGui::Button(_label, _size)) {
+		out = ButtonAction::RELEASED;
+	}
+
+	// Detect if the button is being held
+	if (ImGui::IsItemActivated()){
+		out = ButtonAction::PRESSED;
+	}
+
+	// Restore the previous style
+	ImGui::PopStyleVar();           // Pop FrameBorderSize
+	ImGui::PopStyleColor(4);        // Pop all colors (Button, Hovered, Active, Border)
+
+	if (_hint && ImGui::IsItemHovered()) {
+		if (ImGui::BeginItemTooltip())
+		{
+			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+			ImGui::TextUnformatted(_hint);
+			ImGui::PopTextWrapPos();
+			ImGui::EndTooltip();
+		}
+	}
+	
+	return out;
 }

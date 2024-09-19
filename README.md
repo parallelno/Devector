@@ -23,7 +23,7 @@ To use Devector, follow these steps:
 
 On Linux
 1. sudo apt update
-2. sudo apt-get install build-essential git gcc-13 g++-13 make cmake libgl1-mesa-dev xorg-dev ninja-build libgtk-3-dev
+2. sudo apt-get install build-essential git gcc-13 g++-13 make cmake libgl1-mesa-dev xorg-dev ninja-build libgtk-3-dev libx11-dev
 3. mkdir build
 3. cd build
 4. cmake -G Ninja ..

@@ -13,6 +13,9 @@
 
 namespace dev 
 {
+	enum class ButtonAction{
+		NONE = 0, PRESSED, RELEASED
+	};
 
 #define DEV_COL32_R_MASK     0xFF000000
 #define DEV_COL32_G_MASK     0x00FF0000
@@ -116,6 +119,8 @@ namespace dev
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();
 	}
+
+
 	void DrawHelpMarker(const char* _text);
 	bool HyperLink(const char* label, bool underlineWhenHoveredOnly = true);
 	void DrawPopup(const char* _title, const char* _text);
@@ -126,24 +131,26 @@ namespace dev
 	void DrawProperty2(const char* _name, const char* _value,
 		const char* _hint = nullptr, const ImVec4& _valColor = CLR_WHITE);
 	void DrawSeparator2(const char* _text);
-	void DrawProperty2EditableI(const char* _name, const char* _label, int* _value, const char* _help = "");
+	void DrawProperty2EditableI(const char* _name, const char* _label, int* _value, const char* _help = nullptr);
 	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
-			const char* _hint = "", const char* _help = "", 
+			const char* _hint = nullptr, const char* _help = nullptr, 
 		const ImGuiInputTextFlags _flags = ImGuiInputTextFlags_EnterReturnsTrue);
 	void DrawProperty2Combo(const char* _name, const char* _label, int* _currentItem,
-		const char* const _items[], int _itemsCount, const char* _help = "");
+		const char* const _items[], int _itemsCount, const char* _help = nullptr);
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, 
-		bool* _val, const char* _help = "");
+		bool* _val, const char* _help = nullptr);
 	void DrawProperty2EditableCheckBox4(const char* _name, 
 		const char* _label0, const char* _label1, const char* _label2, const char* _label3,
 		bool* _val0, bool* _val1, bool* _val2, bool* _val3, const char* _help);
 	void DrawProperty2RadioButtons(const char* _name, int* _currentItem, 
 		const char* const _items[], int _itemsCount, const float _space = 15.0f, 
-		const char* _help = "");
+		const char* _help = nullptr);
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 	auto DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab) -> UIItemMouseAction;
 	void DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels = 20);
 	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color, 
 		const ImVec4& _highlightColor, bool _forceHighlight = false) -> UIItemMouseAction;
 	void DrawTooltipTimer(const char* _text = nullptr, const float _timer = 0.7f);
+	auto DrawTransparentButtonWithBorder(const char* _label, 
+		const ImVec2& _pos, const ImVec2& _size, const char* _hint = nullptr) -> const ButtonAction;
 }
