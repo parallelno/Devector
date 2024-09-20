@@ -23,7 +23,7 @@ auto dev::Keyboard::KeyHandling(int _scancode, int _action)
 		break;
 
 		// BLK + SBR functionality		
-	case SDL_SCANCODE_F10: // TODO: F12 causes debug interruption. It is an ImGui feature perhaps. Fix it.
+	case SDL_SCANCODE_F12: // TODO: F12 causes debug interruption. It is an ImGui feature perhaps. Fix it.
 		if (_action == SDL_EVENT_KEY_UP) {
 			return Operation::RESTART;
 		}

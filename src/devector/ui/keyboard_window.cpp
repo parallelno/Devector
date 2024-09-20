@@ -41,7 +41,7 @@ void dev::KeyboardWindow::Update(bool& _visible)
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
 	{
 		m_windowFocused = ImGui::IsWindowFocused();
-		
+
 		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 
 		Draw(isRunning);
@@ -118,8 +118,8 @@ ButtonTransform buttons[] = {
 	{738.0f + 93.0f * 1, 557.0f, 90.0f, 60.0f, SDL_SCANCODE_BACKSPACE, "Hotkey: Backspace"},
 
 	{989.0f + 62.25f * 0, 305.0f + 63.25f * 0, 62.0f, 60.0f, SDL_SCANCODE_F11, "Hotkey: 'F11'"},
-	{989.0f + 62.25f * 1, 305.0f + 63.25f * 0, 62.0f, 60.0f, SDL_SCANCODE_F10, "Hotkey: 'F10'"},
-	{989.0f + 62.25f * 2, 305.0f + 63.25f * 0, 62.0f, 60.0f, SDL_SCANCODE_F10, "Hotkey: 'F10'"},
+	{989.0f + 62.25f * 1, 305.0f + 63.25f * 0, 62.0f, 60.0f, SDL_SCANCODE_F12, "Hotkey: 'F12'"},
+	{989.0f + 62.25f * 2, 305.0f + 63.25f * 0, 62.0f, 60.0f, SDL_SCANCODE_F12, "Hotkey: 'F12'"},
 	{989.0f + 62.25f * 0, 305.0f + 63.25f * 1, 62.0f, 60.0f, SDL_SCANCODE_F1, "Hotkey: 'F1'"},
 	{989.0f + 62.25f * 1, 305.0f + 63.25f * 1, 62.0f, 60.0f, SDL_SCANCODE_F2, "Hotkey: 'F2'"},
 	{989.0f + 62.25f * 2, 305.0f + 63.25f * 1, 62.0f, 60.0f, SDL_SCANCODE_F3, "Hotkey: 'F3'"},
@@ -172,7 +172,7 @@ void dev::KeyboardWindow::Draw(const bool _isRunning)
 			{
 				std::string keyS {buttons[i].hint};
 				std::string actionS {action == dev::ButtonAction::PRESSED ? "SDL_EVENT_KEY_DOWN" : "SDL_EVENT_KEY_UP"};
-				dev::Log("key is: {}, action: {}", keyS, actionS);
+
 				m_hardware.Request(Hardware::Req::KEY_HANDLING, { { "scancode", buttons[i].scancode }, { "action", action == dev::ButtonAction::PRESSED ? SDL_EVENT_KEY_DOWN : SDL_EVENT_KEY_UP} });
 			};
 		}

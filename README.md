@@ -17,9 +17,20 @@ Devector is a cross-platform emulator of a Soviet personal computer Vector06c. I
 
 To use Devector, follow these steps:
 
+On Windows
 1. Run the emulator: `./Devector.exe`
+On Linux
+1. Run the emulator: `./Devector`
 
 ## Build
+
+On Windows
+It requires VS 2019+ c++ dev env installed
+1. mkdir build
+2. cd build
+3. cmake ..
+4. open Visual Studio solution and build win32 app there
+5. copy source folder into a bin folder within the executible file
 
 On Linux
 1. sudo apt update
