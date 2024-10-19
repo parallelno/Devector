@@ -1,0 +1,23 @@
+{
+    "bootPath": "boot//boot.bin",
+
+    "displayWindowVisible": true,
+    "fontItalicPath": "fonts//medium_italic.ttf",
+    "fontItalicSize": 18.0,
+    "fontPath": "fonts//medium.ttf",
+    "fontSize": 18.0,
+    "m_mountRecentFddImg": true,
+    "mainWindowHeight": 768,
+    "mainWindowWidth": 953,
+    "mainWindowX": 0,
+    "mainWindowY": 30,
+    "pathImgKeyboard": "images//vector_keyboard.jpg",
+    "ramDiskClearAfterRestart": false,
+    "ramDiskDataPath": "ramDisks.bin",
+    "recentFiles": [],
+    "recorderWindowVisible": false,
+    "restartOnLoadFdd": true,
+    "showSaveDiscardFddDialog": true,
+    "traceLogWindowVisible": false,
+    "watchpointsWindowVisible": false
+}
