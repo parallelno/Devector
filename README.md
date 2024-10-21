@@ -2,11 +2,11 @@
 
 ## Overview
 
-Devector is a cross-platform emulator of a Soviet personal computer Vector06c. It is designed to simplify the development process and speed up the work. Currently, it is in the early stages of development, so please use it on your own risk.
+Devector is a multi-platform emulator of a Soviet personal computer Vector06c. It is designed to simplify the development process and speed up the work. Currently, it is in the early stages of development, so please use it on your own risk.
 
 ## Features
 
-- A cross-platform precise emulator of a Soviet personal computer Vector06c
+- A multi-platform precise emulator of a Soviet personal computer Vector06c
 - Debugging functionality
 - FDD support
 - Up to 8 Ram-Disk support
