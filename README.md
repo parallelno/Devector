@@ -30,7 +30,7 @@ It requires VS 2019+ c++ dev env installed
 2. cd build
 3. cmake ..
 4. open Visual Studio solution and build win32 app there
-5. copy source folder into a bin folder within the executible file
+5. copy the content of the resources folder into the bin folder
 
 On Linux
 1. sudo apt update
