@@ -2,8 +2,6 @@
 using System.Data;
 using System.Windows;
 
-//using dev;
-
 namespace Devector
 {
 
@@ -12,6 +10,7 @@ namespace Devector
     /// </summary>
     public partial class App : Application
     {
+
     }
 
 }

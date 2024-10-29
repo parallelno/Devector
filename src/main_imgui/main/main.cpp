@@ -16,12 +16,12 @@ int main(int argc, char** argv)
     auto settingsPath = argsParser.GetString("settingsPath",
         "The path to the settings.", false, "settings.json");
 
-    auto path = argsParser.GetString("path",
+    auto rom_fdd_recPath = argsParser.GetString("path",
         "The path to the rom/fdd/rec file.", false, "");
 
-    if (!path.empty() && !dev::IsFileExist(path)){
-        dev::Log("A path is invalid: {}", path);
-        path = "";
+    if (!rom_fdd_recPath.empty() && !dev::IsFileExist(rom_fdd_recPath)){
+        dev::Log("A path is invalid: {}", rom_fdd_recPath);
+        rom_fdd_recPath = "";
     }
 
     if (!argsParser.IsRequirementSatisfied())
@@ -38,7 +38,7 @@ int main(int argc, char** argv)
         settingsJ = dev::LoadJson(settingsPath);
     }
 
-    auto app = dev::DevectorApp(settingsPath, settingsJ, path);
+    auto app = dev::DevectorApp(settingsPath, settingsJ, rom_fdd_recPath);
     if (!app.IsInited()) return (int)app.GetError();
     app.Run();
 

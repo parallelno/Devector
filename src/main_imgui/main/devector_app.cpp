@@ -17,16 +17,16 @@
 #include "core/fdd_consts.h"
 
 dev::DevectorApp::DevectorApp(
-	const std::string& _stringPath, nlohmann::json _settingsJ,
-	const std::string& _path)
+	const std::string& _settingsPath, nlohmann::json _settingsJ,
+	const std::string& _rom_fdd_recPath)
 	:
-	ImGuiApp(_settingsJ, _stringPath, APP_NAME),
+	ImGuiApp(_settingsJ, _settingsPath, APP_NAME),
 	m_glUtils(m_status == AppStatus::INITED)
 {
 	if (m_status == AppStatus::INITED) {
-		SettingsInit(_path);
+		SettingsInit();
 		WindowsInit();
-		Load(_path);
+		Load(_rom_fdd_recPath);
 	}
 }
 
@@ -74,7 +74,7 @@ void dev::DevectorApp::WindowsInit()
 	m_hardwareP->Request(Hardware::Req::RUN);
 }
 
-void dev::DevectorApp::SettingsInit(const std::string& _path)
+void dev::DevectorApp::SettingsInit()
 {
 	Request(Req::LOAD_FONT);
 	AppStyleInit();
@@ -97,15 +97,15 @@ void dev::DevectorApp::SettingsInit(const std::string& _path)
 	if (m_mountRecentFddImg) m_reqUI.type = ReqUI::Type::LOAD_RECENT_FDD_IMG;
 }
 
-void dev::DevectorApp::Load(const std::string& _path)
+void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 {
 	// load the rom/fdd/rec image if it was send via the console command
-	if (!_path.empty())
+	if (!_rom_fdd_recPath.empty())
 	{
 		bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 		if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
 
-		auto path = dev::StrToStrW(_path);
+		auto path = dev::StrToStrW(_rom_fdd_recPath);
 		auto ext = StrToUpper(dev::GetExt(path));
 
 		if (ext == EXT_ROM)

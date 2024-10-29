@@ -59,7 +59,7 @@ public:
         int tone_src = this->tons >> ch;        // tone source
         int noise_ena_l = mixer >> (ch + 3);    // noise enable
         int noise_gen_op = this->noiv;          // noise source
-        float mix = ((tone_ena_l | tone_src) & (noise_ena_l | noise_gen_op)) & 1;
+        float mix = static_cast<float>(((tone_ena_l | tone_src) & (noise_ena_l | noise_gen_op)) & 1);
 
         float result = mix * amp[mode_l ? this->envv : ((this->ayr[8 + ch] & 0x0f))];
         return result;

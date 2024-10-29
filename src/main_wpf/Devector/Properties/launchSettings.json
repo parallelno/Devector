@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Devector": {
+      "commandName": "Project",
+      "workingDirectory": "$(SolutionDir)bin\\$(Configuration)",
+      "nativeDebugging": true
+    }
+  }
+}

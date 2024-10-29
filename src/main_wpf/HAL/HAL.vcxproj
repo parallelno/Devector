@@ -19,9 +19,65 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\core\audio.h" />
+    <ClInclude Include="..\..\core\breakpoint.h" />
+    <ClInclude Include="..\..\core\breakpoints.h" />
+    <ClInclude Include="..\..\core\cpu_i8080.h" />
+    <ClInclude Include="..\..\core\debugger.h" />
+    <ClInclude Include="..\..\core\debug_data.h" />
+    <ClInclude Include="..\..\core\disasm.h" />
+    <ClInclude Include="..\..\core\display.h" />
+    <ClInclude Include="..\..\core\fdc_wd1793.h" />
+    <ClInclude Include="..\..\core\fdd_consts.h" />
+    <ClInclude Include="..\..\core\hardware.h" />
+    <ClInclude Include="..\..\core\io.h" />
+    <ClInclude Include="..\..\core\keyboard.h" />
+    <ClInclude Include="..\..\core\memory.h" />
+    <ClInclude Include="..\..\core\recorder.h" />
+    <ClInclude Include="..\..\core\sound_ay8910.h" />
+    <ClInclude Include="..\..\core\timer_i8253.h" />
+    <ClInclude Include="..\..\core\trace_log.h" />
+    <ClInclude Include="..\..\core\watchpoint.h" />
+    <ClInclude Include="..\..\core\watchpoints.h" />
+    <ClInclude Include="..\..\njson\json.hpp" />
+    <ClInclude Include="..\..\utils\args_parser.h" />
+    <ClInclude Include="..\..\utils\consts.h" />
+    <ClInclude Include="..\..\utils\json_utils.h" />
+    <ClInclude Include="..\..\utils\result.h" />
+    <ClInclude Include="..\..\utils\str_utils.h" />
+    <ClInclude Include="..\..\utils\tqueue.h" />
+    <ClInclude Include="..\..\utils\types.h" />
+    <ClInclude Include="..\..\utils\utils.h" />
+    <ClInclude Include="..\glew\include\GL\eglew.h" />
+    <ClInclude Include="..\glew\include\GL\glew.h" />
+    <ClInclude Include="..\glew\include\GL\glxew.h" />
+    <ClInclude Include="..\glew\include\GL\wglew.h" />
     <ClInclude Include="halwrapper.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\core\audio.cpp" />
+    <ClCompile Include="..\..\core\breakpoint.cpp" />
+    <ClCompile Include="..\..\core\breakpoints.cpp" />
+    <ClCompile Include="..\..\core\cpu_i8080.cpp" />
+    <ClCompile Include="..\..\core\debugger.cpp" />
+    <ClCompile Include="..\..\core\debug_data.cpp" />
+    <ClCompile Include="..\..\core\disasm.cpp" />
+    <ClCompile Include="..\..\core\display.cpp" />
+    <ClCompile Include="..\..\core\fdc_wd1793.cpp" />
+    <ClCompile Include="..\..\core\hardware.cpp" />
+    <ClCompile Include="..\..\core\io.cpp" />
+    <ClCompile Include="..\..\core\keyboard.cpp" />
+    <ClCompile Include="..\..\core\memory.cpp" />
+    <ClCompile Include="..\..\core\recorder.cpp" />
+    <ClCompile Include="..\..\core\sound_ay8910.cpp" />
+    <ClCompile Include="..\..\core\timer_i8253.cpp" />
+    <ClCompile Include="..\..\core\trace_log.cpp" />
+    <ClCompile Include="..\..\core\watchpoint.cpp" />
+    <ClCompile Include="..\..\core\watchpoints.cpp" />
+    <ClCompile Include="..\..\utils\args_parser.cpp" />
+    <ClCompile Include="..\..\utils\json_utils.cpp" />
+    <ClCompile Include="..\..\utils\str_utils.cpp" />
+    <ClCompile Include="..\..\utils\utils.cpp" />
     <ClCompile Include="halwrapper.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -101,64 +157,68 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\3rd_party\SDL\include\;$(SolutionDir)src\;$(SolutionDir)src\main_wpf\glew\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)src\wpf\SDL\lib\$(Platform)\SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)src\main_wpf\SDL\lib\$(Platform)\SDL3.lib;D3DCompiler.lib;opengl32.lib;glu32.lib;user32.lib;$(SolutionDir)src\main_wpf\glew\lib\Release\$(Platform)\glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>if not exist "$(SolutionDir)bin\$(Configuration)" mkdir "$(SolutionDir)bin\$(Configuration)"
+copy "$(SolutionDir)src\main_wpf\SDL\dll\$(Platform)\SDL3.dll" "$(SolutionDir)bin\$(Configuration)"
+copy "$(SolutionDir)src\main_wpf\glew\bin\Release\$(Platform)\glew32.dll" "$(SolutionDir)bin\$(Configuration)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\3rd_party\SDL\include\;$(SolutionDir)src\;$(SolutionDir)src\main_wpf\glew\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)src\wpf\SDL\lib\$(Platform)\SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)src\main_wpf\SDL\lib\$(Platform)\SDL3.lib;D3DCompiler.lib;opengl32.lib;glu32.lib;user32.lib;$(SolutionDir)src\main_wpf\glew\lib\Release\$(Platform)\glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>if not exist "$(SolutionDir)bin\$(Configuration)" mkdir "$(SolutionDir)bin\$(Configuration)"
+copy "$(SolutionDir)src\main_wpf\SDL\dll\$(Platform)\SDL3.dll" "$(SolutionDir)bin\$(Configuration)"
+copy "$(SolutionDir)src\main_wpf\glew\bin\Release\$(Platform)\glew32.dll" "$(SolutionDir)bin\$(Configuration)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\3rd_party\SDL\include\;$(SolutionDir)src\;$(SolutionDir)src\main_wpf\glew\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)src\wpf\SDL\lib\$(Platform)\SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)src\main_wpf\SDL\lib\$(Platform)\SDL3.lib;D3DCompiler.lib;opengl32.lib;glu32.lib;user32.lib;$(SolutionDir)src\main_wpf\glew\lib\Release\$(Platform)\glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>if not exist "$(SolutionDir)bin\$(Configuration)" mkdir "$(SolutionDir)bin\$(Configuration)"
+copy "$(SolutionDir)src\main_wpf\SDL\dll\$(Platform)\SDL3.dll" "$(SolutionDir)bin\$(Configuration)"
+copy "$(SolutionDir)src\main_wpf\glew\bin\Release\$(Platform)\glew32.dll" "$(SolutionDir)bin\$(Configuration)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\3rd_party\SDL\include\;$(SolutionDir)src\;$(SolutionDir)src\main_wpf\glew\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)src\wpf\SDL\lib\$(Platform)\SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)src\main_wpf\SDL\lib\$(Platform)\SDL3.lib;D3DCompiler.lib;opengl32.lib;glu32.lib;user32.lib;$(SolutionDir)src\main_wpf\glew\lib\Release\$(Platform)\glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>if not exist "$(SolutionDir)bin\$(Configuration)" mkdir "$(SolutionDir)bin\$(Configuration)"
+copy "$(SolutionDir)src\main_wpf\SDL\dll\$(Platform)\SDL3.dll" "$(SolutionDir)bin\$(Configuration)"
+copy "$(SolutionDir)src\main_wpf\glew\bin\Release\$(Platform)\glew32.dll" "$(SolutionDir)bin\$(Configuration)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

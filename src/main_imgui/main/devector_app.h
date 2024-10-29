@@ -136,14 +136,15 @@ namespace dev
 		GLUtils m_glUtils;
 
 	public:
-		DevectorApp(const std::string& _stringPath, nlohmann::json _settingsJ, const std::string& _romfddPath = "");
+		DevectorApp(const std::string& _settingsPath, nlohmann::json _settingsJ,
+					const std::string& _rom_fdd_recPath = "");
 		~DevectorApp();
 
 		virtual void Update();
 
 	protected:
 		void WindowsInit();
-		void SettingsInit(const std::string& _path = "");
+		void SettingsInit();
 		void RecentFilesInit();
 		void RecentFilesStore();
 		void RecentFilesUpdate(const FileType _fileType, const std::wstring& _path, const int _driveIdx = -1, const bool _autoBoot = false);

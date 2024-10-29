@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <BaseOutputPath>$(SolutionDir)build\wpf\out\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)build\main_wpf\hal\obj\$(Configuration)\$(Platform)\</BaseIntermediateOutputPath>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <IncludeSymbols>False</IncludeSymbols>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HAL\HAL.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="if not exist &quot;$(SolutionDir)bin\$(Configuration)&quot; mkdir &quot;$(SolutionDir)bin\$(Configuration)&quot;&#xD;&#xA;copy &quot;$(OutDir)Devector.dll&quot; &quot;$(SolutionDir)bin\$(Configuration)&quot;&#xD;&#xA;copy &quot;$(OutDir)Devector.exe&quot; &quot;$(SolutionDir)bin\$(Configuration)&quot;&#xD;&#xA;copy &quot;$(OutDir)HAL.dll&quot; &quot;$(SolutionDir)bin\$(Configuration)&quot;&#xD;&#xA;copy &quot;$(OutDir)Ijwhost.dll&quot; &quot;$(SolutionDir)bin\$(Configuration)&quot;&#xD;&#xA;copy &quot;$(OutDir)Devector.runtimeconfig.json&quot; &quot;$(SolutionDir)bin\$(Configuration)&quot;&#xD;&#xA;xcopy /s /y &quot;$(SolutionDir)resources&quot; &quot;$(SolutionDir)bin\$(Configuration)&quot;" />
+  </Target>
+
+</Project>

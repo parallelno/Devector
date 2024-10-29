@@ -24,8 +24,10 @@ On Linux
 
 ## Build
 
+ImGui frontend:
+
 On Windows
-It requires VS 2019+ c++ dev env installed
+It requires VS 2019+ c++ development environment installed
 1. mkdir build
 2. cd build
 3. cmake ..
@@ -42,6 +44,14 @@ On Linux
 or 
 4. cmake ..
 5. cmake --build .
+
+WPF frontend:
+It requires VS 2019+ c++ development environment installed
+1. open DevectorWPF.sln VS Studio solution
+2. install NuGet package:
+    1. Tools -> NuGet Package Manager -> Package Manager Console
+    2. Install-Package SharpDX.Direct3D11
+3. build
 
 ## Contributing
 

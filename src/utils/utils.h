@@ -121,7 +121,7 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	static void Exit(
 		const std::string& _errStr,
 		dev::ErrCode _err,
-		SendEmergencyMsgT _sendEmergencyMsg = nullptr)
+		SendEmergencyMsgT _sendEmergencyMsg = static_cast<SendEmergencyMsgT>(nullptr))
 	{
 		dev::Log("EXIT. err code: {}, msg: {}",
 				(int)_err, _errStr);
