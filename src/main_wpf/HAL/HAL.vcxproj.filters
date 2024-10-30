@@ -13,8 +13,8 @@
     <Filter Include="src\core">
       <UniqueIdentifier>{a874e1ce-d9e8-4208-8f46-6c5f41533f27}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\GL">
-      <UniqueIdentifier>{6e279bb8-d042-4367-8e81-84e79b74ab83}</UniqueIdentifier>
+    <Filter Include="src\glad">
+      <UniqueIdentifier>{0fe9e8f2-9dc3-455e-8db4-6c001c9f2de5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -89,6 +89,9 @@
     </ClCompile>
     <ClCompile Include="..\..\core\watchpoints.cpp">
       <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\utils\gl_utils.cpp">
+      <Filter>src\utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -182,17 +185,11 @@
     <ClInclude Include="..\..\core\watchpoints.h">
       <Filter>src\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\glew\include\GL\eglew.h">
-      <Filter>src\GL</Filter>
+    <ClInclude Include="..\..\glad\include\glad\glad.h">
+      <Filter>src\glad</Filter>
     </ClInclude>
-    <ClInclude Include="..\glew\include\GL\glew.h">
-      <Filter>src\GL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\glew\include\GL\glxew.h">
-      <Filter>src\GL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\glew\include\GL\wglew.h">
-      <Filter>src\GL</Filter>
+    <ClInclude Include="..\..\utils\gl_utils.h">
+      <Filter>src\utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

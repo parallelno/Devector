@@ -1,10 +1,10 @@
 #pragma once
 #include <glad/glad.h>
-#include <SDL3/SDL_opengl.h>
+//#include <SDL3/SDL_opengl.h>
 
-#ifdef APIENTRY
-    #undef APIENTRY
-#endif
+//#ifdef APIENTRY
+//    #undef APIENTRY
+//#endif
 
 #include <vector>
 #include <unordered_map>
@@ -13,7 +13,7 @@
 #include "core/hardware.h"
 
 
-namespace dev 
+namespace dev
 {
 	class GLUtils
 	{
@@ -81,7 +81,7 @@ namespace dev
 			const TextureIds& _textureIds, const ShaderParams& _paramParams, 
 			const int _framebufferTextureFilter = GL_NEAREST)
 				-> dev::Result<MaterialId>;
-		auto InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, const int textureFilter = GL_NEAREST)
+		auto InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, const GLint _textureFilter = GL_NEAREST)
 				-> Result<GLuint>;
 
 		auto Draw(const MaterialId _renderDataId) const -> int;

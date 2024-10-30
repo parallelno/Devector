@@ -11,6 +11,8 @@
 #include "core/hardware.h"
 #include "core/debugger.h"
 
+#include "utils/gl_utils.h"
+
 namespace dev 
 {
 

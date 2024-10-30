@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{c052f34e-76b8-4ec8-b0a8-ba387fe70d87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\glad">
+      <UniqueIdentifier>{2e3e6c60-5480-4778-940b-a7278d55e428}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\KHR">
+      <UniqueIdentifier>{058b5108-5123-4c93-a894-74c727b27e75}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\glad\include\glad\glad.h">
+      <Filter>src\glad</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\glad\include\KHR\khrplatform.h">
+      <Filter>src\KHR</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\glad\src\glad.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

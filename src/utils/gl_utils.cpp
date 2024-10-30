@@ -1,20 +1,10 @@
 #include <format>
 
-#include "utils/glu_utils.h"
+#include "utils/gl_utils.h"
 #include "utils/result.h"
 #include "utils/str_utils.h"
 
 
-// vertices of a quad with UV coordinates
-/*
-GLfloat vertices[] = {
-	// Positions          // UV Coords
-	 -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,
-	 -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,
-	  1.0f,  1.0f, 0.0f,  1.0f, 0.0f,
-	  1.0f, -1.0f, 0.0f,  1.0f, 1.0f,
-};
-*/
 GLfloat vertices[] = {
     // First triangle
     -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,  // bottom-left
@@ -33,7 +23,7 @@ GLfloat vertices[] = {
  {
 	if (!_init) return;
 	
-	// Initialize GLAD (replaces GLEW initialization)
+	// Initialize GLAD
 	m_gladInited = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 	if (!m_gladInited) {
 		dev::Log("Failed to initialize GLAD");
@@ -152,7 +142,6 @@ int dev::GLUtils::Draw(const MaterialId _materialId) const
 	}
 	// Bind the VAO and draw the quad
 	glBindVertexArray(vtxArrayObj);
-	//glDrawArrays(GL_QUADS, 0, 4);
 	glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
 	glBindVertexArray(0);
 	// Unbind the framebuffer to return to default framebuffer
@@ -280,14 +269,15 @@ dev::GLUtils::Texture::Texture(GLsizei _w, GLsizei _h, Format _format, GLint _fi
 }
 
 auto dev::GLUtils::InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, 
-		const GLint _filter) -> Result<GLuint>
+		const GLint _textureFilter) 
+-> Result<GLuint>
 {
 	if (_w <= 0 || _h <= 0) 
 	{
 		return {};
 	}
 
-	Texture texture{_w, _h, _format, _filter};
+	Texture texture{_w, _h, _format, _textureFilter };
 	auto id = texture.id;
 	auto p = std::pair{ id , std::move(texture) };
 
