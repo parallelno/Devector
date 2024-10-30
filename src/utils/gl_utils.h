@@ -1,10 +1,9 @@
 #pragma once
 #include <glad/glad.h>
-//#include <SDL3/SDL_opengl.h>
 
-//#ifdef APIENTRY
-//    #undef APIENTRY
-//#endif
+#ifdef APIENTRY
+    #undef APIENTRY
+#endif
 
 #include <vector>
 #include <unordered_map>
@@ -12,12 +11,24 @@
 #include "utils/consts.h"
 #include "core/hardware.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 
 namespace dev
 {
 	class GLUtils
 	{
+#ifdef _WIN32
+		HWND m_hWnd = nullptr;
+		HDC m_hdc = nullptr;
+		HGLRC m_hglrc = nullptr;
+#endif
+
 	public:
+		enum class Status { NOT_INITED, INITED, FAILED_GLAD, FAILED_DC, FAILED_PIXEL_FORMAT, FAILED_SET_PIXEL_FORMAT, FAILED_GL_CONTEXT, FAILED_CURRENT_GL_CONTEXT};
+
 		struct Vec4 { 
 			float x, y, z, w; 
 			Vec4() : x(0.0f), y(0.0f), z(0.0f), w(1.0f) {};	
@@ -66,14 +77,23 @@ namespace dev
 		std::unordered_map<GLuint, Texture> m_textures;
 		std::vector<GLuint> m_shaders;
 
-		GLenum m_gladInited = 0;
+		Status m_status = Status::NOT_INITED;
+
 
 		auto CompileShader(GLenum _shaderType, const char* _source) -> Result<GLuint>;
 		auto GLCheckError(GLuint _obj, const std::string& _txt) -> Result<GLuint>;
 
 	public:
-		GLUtils(bool _init);
 		~GLUtils();
+
+#ifdef _WIN32 
+		auto InitWGL(HWND _hWnd) -> Status;
+#endif
+		auto InitGL(
+#ifdef _WIN32 
+			HWND _hWnd = nullptr
+#endif
+		) -> Status;
 
 		auto InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource) -> Result<GLuint>;
 

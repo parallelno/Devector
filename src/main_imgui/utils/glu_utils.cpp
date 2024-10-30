@@ -1,9 +1,8 @@
 #include <format>
 
-#include "utils/gl_utils.h"
+#include "utils/glu_utils.h"
 #include "utils/result.h"
 #include "utils/str_utils.h"
-
 
 
 GLfloat vertices[] = {
@@ -18,80 +17,18 @@ GLfloat vertices[] = {
     1.0f,  1.0f, 0.0f,   1.0f, 0.0f   // top-right
 };
 
-// init OpenGL context
-#ifdef _WIN32
-auto dev::GLUtils::InitWGL(HWND _hWnd)
--> Status
-{
-	m_hWnd = _hWnd;
-
-	// hWnd is the handle to the window
-	m_hdc = GetDC(_hWnd);
-	if (m_hdc == nullptr) { return Status::FAILED_DC; } // Failed to get device context
-
-	// Set the pixel format to a format compatible with OpenGL
-	int pixelFormat;
-	PIXELFORMATDESCRIPTOR pfd = {
-		sizeof(PIXELFORMATDESCRIPTOR),
-		1,
-		PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-		PFD_TYPE_RGBA,
-		24,
-		0, 0, 0, 0, 0, 0,
-		0,
-		0,
-		0,
-		0, 0, 0, 0
-	};
-	pixelFormat = ChoosePixelFormat(m_hdc, &pfd);
-	if (pixelFormat == 0) 
-	{
-		ReleaseDC(_hWnd, m_hdc);
-		return Status::FAILED_PIXEL_FORMAT; // Failed to choose pixel format
-	}
-	if (!SetPixelFormat(m_hdc, pixelFormat, &pfd)) {
-		ReleaseDC(_hWnd, m_hdc);
-		return Status::FAILED_SET_PIXEL_FORMAT; //Failed to set pixel format
-	}
-
-	// Create an OpenGL context
-	m_hglrc = wglCreateContext(m_hdc);
-	if (m_hglrc == NULL) {
-		ReleaseDC(_hWnd, m_hdc);
-		return Status::FAILED_GL_CONTEXT; //Failed to create OpenGL context
-	}
-
-	// Make the context current
-	if (!wglMakeCurrent(m_hdc, m_hglrc)) {
-		wglDeleteContext(m_hglrc);
-		ReleaseDC(_hWnd, m_hdc);
-		return Status::FAILED_CURRENT_GL_CONTEXT; //Failed to make OpenGL context current
-	}
-
-	return Status::NOT_INITED;
-}
-#endif
-
-
-// GL initialization
-// it assums the window was inited already by ImGui or WPF
-auto dev::GLUtils::InitGL(
-#ifdef _WIN32 
-	HWND _hWnd
-#endif
-	)
--> Status
-{	
-#ifdef _WIN32 
-	if (_hWnd) {
-		m_status = InitWGL(_hWnd);
-	}
-#endif
-
-	// Initialize GLAD
-	int gladInited = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
-	if (!gladInited) { return Status::FAILED_GLAD; } // Exit if GLAD failed to initialize
+// it is not initializing the Window and OpenGL 3.3 context
+// assumming ImGui and did it already
+ dev::GLUtils::GLUtils(bool _init)
+ {
+	if (!_init) return;
 	
+	// Initialize GLAD (replaces GLEW initialization)
+	m_gladInited = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
+	if (!m_gladInited) {
+		dev::Log("Failed to initialize GLAD");
+		return;  // Exit if GLAD failed to initialize
+	}
 
 	// Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
 	glGenVertexArrays(1, &vtxArrayObj);
@@ -109,8 +46,6 @@ auto dev::GLUtils::InitGL(
 	// Unbind the buffer and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-
-	return m_status = Status::INITED;
 }
 
 auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const int _framebufferH, 
@@ -118,7 +53,7 @@ auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const
 		const int _framebufferTextureFilter)
 -> dev::Result<MaterialId>
 {
-	if (m_status != Status::INITED) return {};
+	if (!m_gladInited) return {};
 	
 	MaterialId materialId = m_materialId++;
 	auto& material = m_materials.emplace(materialId, Material{_shaderId, _framebufferW, _framebufferH, _paramParams}).first->second;
@@ -160,7 +95,7 @@ auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const
 
 dev::GLUtils::~GLUtils()
 {
-	if (m_status != Status::INITED) return;
+	if (!m_gladInited) return;
 	
 	for (const auto& [id, material] : m_materials)
 	{
@@ -178,19 +113,11 @@ dev::GLUtils::~GLUtils()
 
 	glDeleteVertexArrays(1, &vtxArrayObj);
 	glDeleteBuffers(1, &vtxBufferObj);
-
-#ifdef _WIN32
-	if (m_hWnd)
-	{
-		if (m_hglrc) wglDeleteContext(m_hglrc);
-		if (m_hdc) ReleaseDC(m_hWnd, m_hdc);
-	}
-#endif
 }
 
 int dev::GLUtils::Draw(const MaterialId _materialId) const
 {
-	if (m_status != Status::INITED || !IsMaterialReady(_materialId)) return -1;
+	if (!m_gladInited || !IsMaterialReady(_materialId)) return -1;
 
 	auto& material = m_materials.at(_materialId);
 
@@ -342,15 +269,14 @@ dev::GLUtils::Texture::Texture(GLsizei _w, GLsizei _h, Format _format, GLint _fi
 }
 
 auto dev::GLUtils::InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, 
-		const GLint _textureFilter) 
--> Result<GLuint>
+		const GLint _filter) -> Result<GLuint>
 {
 	if (_w <= 0 || _h <= 0) 
 	{
 		return {};
 	}
 
-	Texture texture{_w, _h, _format, _textureFilter };
+	Texture texture{_w, _h, _format, _filter};
 	auto id = texture.id;
 	auto p = std::pair{ id , std::move(texture) };
 

@@ -21,9 +21,9 @@ dev::DevectorApp::DevectorApp(
 	const std::string& _rom_fdd_recPath)
 	:
 	ImGuiApp(_settingsJ, _settingsPath, APP_NAME),
-	m_glUtils(m_status == AppStatus::INITED)
 {
 	if (m_status == AppStatus::INITED) {
+		m_glUtils.Init(true);
 		SettingsInit();
 		WindowsInit();
 		Load(_rom_fdd_recPath);
