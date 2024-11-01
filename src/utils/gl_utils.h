@@ -77,23 +77,27 @@ namespace dev
 		std::unordered_map<GLuint, Texture> m_textures;
 		std::vector<GLuint> m_shaders;
 
+		bool m_wgl_inited = false;
 		Status m_status = Status::NOT_INITED;
 
 
 		auto CompileShader(GLenum _shaderType, const char* _source) -> Result<GLuint>;
 		auto GLCheckError(GLuint _obj, const std::string& _txt) -> Result<GLuint>;
 
+#ifdef WPF 
+		auto InitWGL(HWND _hWnd) -> Status;
+		void ReseaseWGL();
+#endif
+
 	public:
 		~GLUtils();
 
-#ifdef _WIN32 
-		auto InitWGL(HWND _hWnd) -> Status;
-#endif
-		auto InitGL(
-#ifdef _WIN32 
-			HWND _hWnd = nullptr
-#endif
-		) -> Status;
+		
+#ifdef WPF
+		auto InitGL(HWND _hWnd) -> Status;
+#else
+		auto InitGL() -> Status;
+#endif		
 
 		auto InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource) -> Result<GLuint>;
 

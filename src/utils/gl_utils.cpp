@@ -4,28 +4,35 @@
 #include "utils/result.h"
 #include "utils/str_utils.h"
 
-
-
 GLfloat vertices[] = {
-    // First triangle
-    -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,  // bottom-left
-    1.0f, -1.0f, 0.0f,   1.0f, 1.0f,  // bottom-right
-    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  // top-left
+	// First triangle
+	-1.0f, -1.0f, 0.0f,  0.0f, 1.0f,  // bottom-left
+	1.0f, -1.0f, 0.0f,   1.0f, 1.0f,  // bottom-right
+	-1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  // top-left
 
-    // Second triangle
-    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  // top-left
-    1.0f, -1.0f, 0.0f,   1.0f, 1.0f,  // bottom-right
-    1.0f,  1.0f, 0.0f,   1.0f, 0.0f   // top-right
+	// Second triangle
+	-1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  // top-left
+	1.0f, -1.0f, 0.0f,   1.0f, 1.0f,  // bottom-right
+	1.0f,  1.0f, 0.0f,   1.0f, 0.0f   // top-right
 };
 
+
+#ifdef WPF
+void dev::GLUtils::ReseaseWGL()
+{
+	if (m_wgl_inited) wglMakeCurrent(m_hdc, NULL);
+	if (m_hglrc) wglDeleteContext(m_hglrc);
+	if (m_hdc) ReleaseDC(m_hWnd, m_hdc);
+}
+#endif
+
 // init OpenGL context
-#ifdef _WIN32
+#ifdef WPF
 auto dev::GLUtils::InitWGL(HWND _hWnd)
 -> Status
 {
-	m_hWnd = _hWnd;
-
 	// hWnd is the handle to the window
+	m_hWnd = _hWnd;
 	m_hdc = GetDC(_hWnd);
 	if (m_hdc == nullptr) { return Status::FAILED_DC; } // Failed to get device context
 
@@ -46,52 +53,50 @@ auto dev::GLUtils::InitWGL(HWND _hWnd)
 	pixelFormat = ChoosePixelFormat(m_hdc, &pfd);
 	if (pixelFormat == 0) 
 	{
-		ReleaseDC(_hWnd, m_hdc);
 		return Status::FAILED_PIXEL_FORMAT; // Failed to choose pixel format
 	}
 	if (!SetPixelFormat(m_hdc, pixelFormat, &pfd)) {
-		ReleaseDC(_hWnd, m_hdc);
 		return Status::FAILED_SET_PIXEL_FORMAT; //Failed to set pixel format
 	}
 
 	// Create an OpenGL context
 	m_hglrc = wglCreateContext(m_hdc);
 	if (m_hglrc == NULL) {
-		ReleaseDC(_hWnd, m_hdc);
 		return Status::FAILED_GL_CONTEXT; //Failed to create OpenGL context
 	}
 
 	// Make the context current
 	if (!wglMakeCurrent(m_hdc, m_hglrc)) {
-		wglDeleteContext(m_hglrc);
-		ReleaseDC(_hWnd, m_hdc);
 		return Status::FAILED_CURRENT_GL_CONTEXT; //Failed to make OpenGL context current
 	}
 
-	return Status::NOT_INITED;
+	return Status::INITED;
 }
 #endif
 
-
 // GL initialization
 // it assums the window was inited already by ImGui or WPF
-auto dev::GLUtils::InitGL(
-#ifdef _WIN32 
-	HWND _hWnd
-#endif
-	)
+#ifdef WPF
+auto dev::GLUtils::InitGL(HWND _hWnd) 
 -> Status
-{	
-#ifdef _WIN32 
-	if (_hWnd) {
-		m_status = InitWGL(_hWnd);
-	}
-#endif
+{
+	auto res = InitWGL(_hWnd);
+	if (res != Status::INITED) { return res; }
 
 	// Initialize GLAD
+	if (!gladLoadGL()) 
+	{ 
+		m_wgl_inited = true;
+		ReseaseWGL();
+		return Status::FAILED_GLAD; 
+	}
+#else
+auto dev::GLUtils::InitGL() 
+-> Status
+{
 	int gladInited = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 	if (!gladInited) { return Status::FAILED_GLAD; } // Exit if GLAD failed to initialize
-	
+#endif
 
 	// Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
 	glGenVertexArrays(1, &vtxArrayObj);
@@ -179,12 +184,8 @@ dev::GLUtils::~GLUtils()
 	glDeleteVertexArrays(1, &vtxArrayObj);
 	glDeleteBuffers(1, &vtxBufferObj);
 
-#ifdef _WIN32
-	if (m_hWnd)
-	{
-		if (m_hglrc) wglDeleteContext(m_hglrc);
-		if (m_hdc) ReleaseDC(m_hWnd, m_hdc);
-	}
+#ifdef WPF
+	ReseaseWGL();
 #endif
 }
 

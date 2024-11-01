@@ -16,6 +16,7 @@ using dev;
 
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Devector
 {
@@ -49,17 +50,26 @@ namespace Devector
         
         private int counter = 0;
 
+        private bool m_inited = false;
+
         private void Button_Click(object sender, RoutedEventArgs e)
         {
+
             counter++;
             var cc = m_hal.GetCC();
             label.Content = "Counter: " + cc.ToString();
 
 
-            var wih = new System.Windows.Interop.WindowInteropHelper(this);
-            IntPtr hWnd = wih.Handle;
+            //var wih = new System.Windows.Interop.WindowInteropHelper(this);
+            //IntPtr hWnd = wih.Handle;
 
-            m_hal.RenderTexture(hWnd);        // Call the C++/CLI function
+            IntPtr hWnd = viewport.Handle;
+            var viewportW = viewport.ActualWidth;
+            var viewportH = viewport.ActualHeight;
+
+            if (!m_inited) m_hal.Init(hWnd);
+
+            m_hal.RenderTexture(hWnd, (int)viewportW, (int)viewportH);        // Call the C++/CLI function
         }
 
         HAL m_hal;

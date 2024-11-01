@@ -13,19 +13,40 @@
 
 #include "utils/gl_utils.h"
 
+#define CONCATENATE(x, y) x##y
+
 namespace dev 
 {
 
     public ref class HAL
     {
+        static constexpr float FRAME_PXL_SIZE_W = 1.0f / Display::FRAME_W;
+        static constexpr float FRAME_PXL_SIZE_H = 1.0f / Display::FRAME_H;
+
         Hardware* m_hardwareP;
         Debugger* m_debuggerP;
 
-        void RenderTextureOnHWND(HWND hWnd);
+        GLUtils* m_gl_utilsP;
+
+        GLUtils::Vec4* m_activeArea_pxlSizeP;
+        GLUtils::Vec4* m_scrollV_crtXY_highlightMulP;
+        GLUtils::Vec4* m_bordsLRTBP;
+
+        GLuint m_vramShaderId = -1;
+        GLUtils::MaterialId m_vramMatId;
+        GLuint m_vramTexId = -1;
+        bool m_isGLInited = false;
+        bool m_displayIsHovered = false;
+        const char* m_contextMenuName = "##displayCMenu";
+
+        void RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH);
+        void Render(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH);
+
+        bool DisplayWindowInit();
 
     public:
 
-        void Init();
+        void Init(System::IntPtr hwnd);
 
 
         HAL(System::String^ _pathBootData, System::String^ _pathRamDiskData,
@@ -38,11 +59,7 @@ namespace dev
         !HAL();
 
 
-        void RenderTexture(System::IntPtr hwnd)
-        {
-            HWND hWnd = static_cast<HWND>(hwnd.ToPointer());
-            RenderTextureOnHWND(hWnd);
-        }
+        void RenderTexture(System::IntPtr _hwnd, GLsizei _viewportW, GLsizei _viewportH);
 
     };
 }

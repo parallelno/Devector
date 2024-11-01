@@ -160,7 +160,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions);WPF</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)src\3rd_party\SDL\include\;$(SolutionDir)src\;$(SolutionDir)src\glad\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -176,7 +176,7 @@ copy "$(SolutionDir)src\main_wpf\SDL\dll\$(Platform)\SDL3.dll" "$(SolutionDir)bi
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions);WPF</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)src\3rd_party\SDL\include\;$(SolutionDir)src\;$(SolutionDir)src\glad\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -192,7 +192,7 @@ copy "$(SolutionDir)src\main_wpf\SDL\dll\$(Platform)\SDL3.dll" "$(SolutionDir)bi
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions);WPF</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)src\3rd_party\SDL\include\;$(SolutionDir)src\;$(SolutionDir)src\glad\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -208,7 +208,7 @@ copy "$(SolutionDir)src\main_wpf\SDL\dll\$(Platform)\SDL3.dll" "$(SolutionDir)bi
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);WPF</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)src\3rd_party\SDL\include\;$(SolutionDir)src\;$(SolutionDir)src\glad\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>

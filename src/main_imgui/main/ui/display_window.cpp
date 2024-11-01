@@ -1,8 +1,6 @@
 #include "ui/display_window.h"
 #include "utils/imgui_utils.h"
 
-//#include "imgui_impl_opengl3_loader.h"
-
 // Vertex shader source code
 const char* vtxShaderS = R"#(
 	#version 330 core

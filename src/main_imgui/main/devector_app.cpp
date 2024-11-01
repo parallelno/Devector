@@ -23,7 +23,7 @@ dev::DevectorApp::DevectorApp(
 	ImGuiApp(_settingsJ, _settingsPath, APP_NAME),
 {
 	if (m_status == AppStatus::INITED) {
-		m_glUtils.Init(true);
+		m_glUtils.Init(GLUtils::TYPE::IMGUI);
 		SettingsInit();
 		WindowsInit();
 		Load(_rom_fdd_recPath);
