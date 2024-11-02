@@ -6,16 +6,13 @@ namespace Devector;
 
 public class Viewport : HwndHost
 {
-    private IntPtr _hwndHost;
+    private IntPtr _hwnd;
 
-    public IntPtr Handle
-    {
-        get { return _hwndHost; }
-    }
+    public new IntPtr Handle => _hwnd;
 
     protected override HandleRef BuildWindowCore(HandleRef hwndParent)
     {
-        _hwndHost = CreateWindowEx(
+        _hwnd = CreateWindowEx(
             0,
             "static",
             "",
@@ -27,7 +24,7 @@ public class Viewport : HwndHost
             IntPtr.Zero,
             0);
 
-        return new HandleRef(this, _hwndHost);
+        return new HandleRef(this, _hwnd);
     }
 
     protected override void DestroyWindowCore(HandleRef hwnd)

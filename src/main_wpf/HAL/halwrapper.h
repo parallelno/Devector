@@ -46,7 +46,7 @@ namespace dev
 
     public:
 
-        void Init(System::IntPtr hwnd);
+        void Init(System::IntPtr hwnd, GLsizei _viewportW, GLsizei _viewportH);
 
 
         HAL(System::String^ _pathBootData, System::String^ _pathRamDiskData,
@@ -59,7 +59,7 @@ namespace dev
         !HAL();
 
 
-        void RenderTexture(System::IntPtr _hwnd, GLsizei _viewportW, GLsizei _viewportH);
+        void RenderTexture(System::IntPtr _hwnd);
 
     };
 }

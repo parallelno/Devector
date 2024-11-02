@@ -12,10 +12,10 @@ dev::HAL::HAL(System::String^ _pathBootData, System::String^ _pathRamDiskData,
 
 	m_hardwareP = new Hardware(pathBootData, pathRamDiskData, _ramDiskClearAfterRestart);
 	m_debuggerP = new Debugger(*m_hardwareP);
-    m_gl_utils = new GLUtils();
+    m_gl_utilsP = new GLUtils();
 }
 
-void dev::HAL::Init(System::IntPtr _hwnd)
+void dev::HAL::Init(System::IntPtr _hwnd, GLsizei _viewportW, GLsizei _viewportH)
 {
     m_activeArea_pxlSizeP = new GLUtils::Vec4({ Display::ACTIVE_AREA_W, Display::ACTIVE_AREA_H, FRAME_PXL_SIZE_W, FRAME_PXL_SIZE_H });
     m_scrollV_crtXY_highlightMulP = new GLUtils::Vec4({ 255.0f * FRAME_PXL_SIZE_H, 0.0f, 0.0f, 1.0f });
@@ -27,7 +27,7 @@ void dev::HAL::Init(System::IntPtr _hwnd)
 
     m_hardwareP->Request(Hardware::Req::RUN);
     HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-    m_gl_utils->InitGL(hWnd);
+    m_gl_utilsP->Init(hWnd, _viewportW, _viewportH);
 }
 
 dev::HAL::~HAL()
@@ -39,7 +39,7 @@ dev::HAL::!HAL()
 {
     delete m_debuggerP; m_debuggerP = nullptr;
     delete m_hardwareP; m_hardwareP = nullptr;
-    delete m_gl_utils; m_gl_utils = nullptr;
+    delete m_gl_utilsP; m_gl_utilsP = nullptr;
 
     delete m_activeArea_pxlSizeP; m_activeArea_pxlSizeP = nullptr;
     delete m_scrollV_crtXY_highlightMulP; m_scrollV_crtXY_highlightMulP = nullptr;
@@ -59,10 +59,10 @@ void dev::HAL::Run()
     m_hardwareP->Request(Hardware::Req::RUN);
 }
 
-void dev::HAL::RenderTexture(System::IntPtr _hwnd, GLsizei _viewportW, GLsizei _viewportH)
+void dev::HAL::RenderTexture(System::IntPtr _hwnd)
 {
     HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-    RenderTextureOnHWND(hWnd, _viewportW, _viewportH);
+    RenderTextureOnHWND(hWnd, 128, 128);
 }
 
 void dev::HAL::Render(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH)
@@ -259,7 +259,7 @@ void dev::HAL::RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _view
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
         MessageBox(_hWnd, L"OpenGL error occurred", L"Error", MB_OK);
-        wglMakeCurrent(hdc, NULL);
+        wglMakeCurrent(NULL, NULL);
         wglDeleteContext(hglrc);
         ReleaseDC(_hWnd, hdc);
         return;
@@ -275,7 +275,7 @@ void dev::HAL::RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _view
     error = glGetError();
     if (error != GL_NO_ERROR) {
         MessageBox(_hWnd, L"OpenGL error occurred", L"Error", MB_OK);
-        wglMakeCurrent(hdc, NULL);
+        wglMakeCurrent(NULL, NULL);
         wglDeleteContext(hglrc);
         ReleaseDC(_hWnd, hdc);
         return;
@@ -294,7 +294,7 @@ void dev::HAL::RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _view
     // Swap the buffers to display the green color
     if (!SwapBuffers(hdc)) {
         MessageBox(_hWnd, L"Failed to swap buffers", L"Error", MB_OK);
-        wglMakeCurrent(hdc, NULL);
+        wglMakeCurrent(NULL, NULL);
         wglDeleteContext(hglrc);
         ReleaseDC(_hWnd, hdc);
         return;
@@ -308,7 +308,7 @@ void dev::HAL::RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _view
     glDeleteVertexArrays(1, &vtxArrayObj);
     glDeleteBuffers(1, &vtxBufferObj);
 
-    wglMakeCurrent(hdc, NULL);
+    wglMakeCurrent(NULL, NULL);
     wglDeleteContext(hglrc);
     ReleaseDC(_hWnd, hdc);
 }

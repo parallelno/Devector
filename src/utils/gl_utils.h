@@ -77,6 +77,9 @@ namespace dev
 		std::unordered_map<GLuint, Texture> m_textures;
 		std::vector<GLuint> m_shaders;
 
+		GLsizei m_viewportW;
+		GLsizei m_viewportH;
+
 		bool m_wgl_inited = false;
 		Status m_status = Status::NOT_INITED;
 
@@ -85,19 +88,21 @@ namespace dev
 		auto GLCheckError(GLuint _obj, const std::string& _txt) -> Result<GLuint>;
 
 #ifdef WPF 
-		auto InitWGL(HWND _hWnd) -> Status;
-		void ReseaseWGL();
+		// used by wpf window
+		auto InitGLContext(HWND _hWnd) -> Status;
+		void ReseaseGL();
 #endif
 
 	public:
 		~GLUtils();
 
 		
+		auto Init(
 #ifdef WPF
-		auto InitGL(HWND _hWnd) -> Status;
-#else
-		auto InitGL() -> Status;
+		HWND _hWnd,
 #endif		
+			GLsizei _viewportW, GLsizei _viewportH) -> Status;
+
 
 		auto InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource) -> Result<GLuint>;
 
@@ -112,5 +117,6 @@ namespace dev
 		void UpdateTexture(const int _texureId, const uint8_t* _memP);
 		auto GetFramebufferTexture(const int _materialId) const -> GLuint;
 		bool IsMaterialReady(const int _materialId) const;
+		void UpdateViewportSize(GLsizei _viewportW, GLsizei _viewportH) { m_viewportW = _viewportW; m_viewportH = _viewportH; };
 	};
 }

@@ -17,18 +17,9 @@ GLfloat vertices[] = {
 };
 
 
-#ifdef WPF
-void dev::GLUtils::ReseaseWGL()
-{
-	if (m_wgl_inited) wglMakeCurrent(m_hdc, NULL);
-	if (m_hglrc) wglDeleteContext(m_hglrc);
-	if (m_hdc) ReleaseDC(m_hWnd, m_hdc);
-}
-#endif
-
 // init OpenGL context
 #ifdef WPF
-auto dev::GLUtils::InitWGL(HWND _hWnd)
+auto dev::GLUtils::InitGLContext(HWND _hWnd)
 -> Status
 {
 	// hWnd is the handle to the window
@@ -61,42 +52,50 @@ auto dev::GLUtils::InitWGL(HWND _hWnd)
 
 	// Create an OpenGL context
 	m_hglrc = wglCreateContext(m_hdc);
-	if (m_hglrc == NULL) {
+	if (m_hglrc == nullptr) {
 		return Status::FAILED_GL_CONTEXT; //Failed to create OpenGL context
 	}
 
-	// Make the context current
-	if (!wglMakeCurrent(m_hdc, m_hglrc)) {
-		return Status::FAILED_CURRENT_GL_CONTEXT; //Failed to make OpenGL context current
-	}
+	//// Make the context current
+	//if (!wglMakeCurrent(m_hdc, m_hglrc)) {
+	//	return Status::FAILED_CURRENT_GL_CONTEXT; //Failed to make OpenGL context current
+	//}
+
+	wglMakeCurrent(m_hdc, nullptr);
 
 	return Status::INITED;
 }
 #endif
 
 // GL initialization
-// it assums the window was inited already by ImGui or WPF
-#ifdef WPF
-auto dev::GLUtils::InitGL(HWND _hWnd) 
+// it assums the window was created already by ImGui or WPF
+auto dev::GLUtils::Init(
+#ifdef WPF	
+	HWND _hWnd, 
+#endif
+	GLsizei _viewportW, GLsizei _viewportH)
 -> Status
 {
-	auto res = InitWGL(_hWnd);
+
+#ifdef WPF
+	auto res = InitGLContext(_hWnd);
 	if (res != Status::INITED) { return res; }
 
 	// Initialize GLAD
-	if (!gladLoadGL()) 
+	if (!gladLoadGL())
 	{ 
 		m_wgl_inited = true;
-		ReseaseWGL();
-		return Status::FAILED_GLAD; 
+		ReseaseGL();
+		return Status::FAILED_GLAD;
 	}
+
+	wglMakeCurrent(m_hdc, m_hglrc);
 #else
-auto dev::GLUtils::InitGL() 
--> Status
-{
 	int gladInited = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 	if (!gladInited) { return Status::FAILED_GLAD; } // Exit if GLAD failed to initialize
 #endif
+
+	UpdateViewportSize(_viewportW, _viewportH);
 
 	// Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
 	glGenVertexArrays(1, &vtxArrayObj);
@@ -114,6 +113,10 @@ auto dev::GLUtils::InitGL()
 	// Unbind the buffer and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+#ifdef WPF
+	wglMakeCurrent(nullptr, nullptr);
+#endif
 
 	return m_status = Status::INITED;
 }
@@ -142,7 +145,13 @@ auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const
 
 	// Check framebuffer status
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		
+#ifdef WPF 
+		MessageBox(m_hWnd, L"Framebuffer is not complete!", L"Error", MB_OK);
+#else
 		dev::Log("Framebuffer is not complete!");
+#endif
+
 		return {};
 	}
 	// Unbind framebuffer
@@ -185,9 +194,22 @@ dev::GLUtils::~GLUtils()
 	glDeleteBuffers(1, &vtxBufferObj);
 
 #ifdef WPF
-	ReseaseWGL();
+	ReseaseGL();
 #endif
 }
+
+#ifdef WPF
+void dev::GLUtils::ReseaseGL()
+{
+	wglMakeCurrent(nullptr, nullptr);
+	if (m_hglrc) wglDeleteContext(m_hglrc);
+	if (m_hdc) ReleaseDC(m_hWnd, m_hdc);
+
+	m_hWnd = nullptr;
+	m_hdc = nullptr;
+	m_hglrc = nullptr;
+}
+#endif
 
 int dev::GLUtils::Draw(const MaterialId _materialId) const
 {
@@ -258,8 +280,13 @@ auto dev::GLUtils::GLCheckError(GLuint _obj, const std::string& _txt)
 	glGetShaderiv(_obj, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		GLchar infoLog[512];
-		glGetShaderInfoLog(_obj, 512, NULL, infoLog);
+		glGetShaderInfoLog(_obj, 512, nullptr, infoLog);
+#ifdef WPF 
+		auto err = std::format("{}:\n{}", _txt, infoLog);
+		MessageBox(m_hWnd, dev::StrToStrW(err).c_str(), L"Error", MB_OK);
+#else
 		dev::Log("{}:\n {}", _txt, std::string(infoLog));
+#endif
 		return {};
 	}
 	return _obj;
@@ -269,7 +296,7 @@ auto dev::GLUtils::CompileShader(GLenum _shaderType, const char* _source)
 -> Result<GLuint>
 {
 	GLuint shader = glCreateShader(_shaderType);
-	glShaderSource(shader, 1, &_source, NULL);
+	glShaderSource(shader, 1, &_source, nullptr);
 	glCompileShader(shader);
 
 	return GLCheckError(shader, std::format("Shader compilation failed:\n {}", _source));

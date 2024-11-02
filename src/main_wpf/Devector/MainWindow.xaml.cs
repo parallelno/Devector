@@ -67,9 +67,9 @@ namespace Devector
             var viewportW = viewport.ActualWidth;
             var viewportH = viewport.ActualHeight;
 
-            if (!m_inited) m_hal.Init(hWnd);
+            if (!m_inited) m_hal.Init(hWnd, (int)viewportW, (int)viewportH);
 
-            m_hal.RenderTexture(hWnd, (int)viewportW, (int)viewportH);        // Call the C++/CLI function
+            m_hal.RenderTexture(hWnd);        // Call the C++/CLI function
         }
 
         HAL m_hal;
