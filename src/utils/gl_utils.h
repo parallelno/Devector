@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <tuple>
 
 #include "utils/consts.h"
 #include "core/hardware.h"
@@ -20,11 +21,6 @@ namespace dev
 {
 	class GLUtils
 	{
-#ifdef _WIN32
-		HWND m_hWnd = nullptr;
-		HDC m_hdc = nullptr;
-		HGLRC m_hglrc = nullptr;
-#endif
 
 	public:
 		enum class Status { NOT_INITED, INITED, FAILED_GLAD, FAILED_DC, FAILED_PIXEL_FORMAT, FAILED_SET_PIXEL_FORMAT, FAILED_GL_CONTEXT, FAILED_CURRENT_GL_CONTEXT};
@@ -70,6 +66,34 @@ namespace dev
 		};
 
 	private:
+#ifdef WPF
+
+		struct GfxContext
+		{
+			HWND hWnd = nullptr; // window handle
+			HDC hdc = nullptr; // digital context
+			HGLRC hglrc = nullptr; // opengl render context
+
+			GLsizei viewportW = 0;
+			GLsizei viewportH = 0;
+
+			void Release();
+		};
+
+		// to auto release a context when it's out of scope
+		struct CurrentGfxContext {
+			CurrentGfxContext(const GfxContext& _gfxContext){
+				wglMakeCurrent(_gfxContext.hdc, _gfxContext.hglrc);
+			}
+
+			~CurrentGfxContext() {
+				wglMakeCurrent(nullptr, nullptr);
+			}
+		};
+
+		GfxContext m_gfxContext;
+#endif
+
 		MaterialId m_materialId = 0;
 		std::unordered_map<MaterialId, Material> m_materials;
 		GLuint vtxArrayObj = 0;
@@ -77,10 +101,6 @@ namespace dev
 		std::unordered_map<GLuint, Texture> m_textures;
 		std::vector<GLuint> m_shaders;
 
-		GLsizei m_viewportW;
-		GLsizei m_viewportH;
-
-		bool m_wgl_inited = false;
 		Status m_status = Status::NOT_INITED;
 
 
@@ -88,35 +108,33 @@ namespace dev
 		auto GLCheckError(GLuint _obj, const std::string& _txt) -> Result<GLuint>;
 
 #ifdef WPF 
-		// used by wpf window
-		auto InitGLContext(HWND _hWnd) -> Status;
-		void ReseaseGL();
+		// called by wpf window when created or its resolution has changed
+		auto CreateGfxContext(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH) -> std::tuple<Status, GfxContext>;
 #endif
 
 	public:
 		~GLUtils();
+		GLUtils();
 
-		
-		auto Init(
-#ifdef WPF
-		HWND _hWnd,
-#endif		
-			GLsizei _viewportW, GLsizei _viewportH) -> Status;
-
+#ifdef WPF	
+		auto Init(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH) -> Status;
+#endif
+		void InitGeometry();
 
 		auto InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource) -> Result<GLuint>;
 
-		auto InitMaterial(GLuint _shaderId, const int _framebufferW, const int _framebufferH, 
+		auto InitMaterial(
+			GLuint _shaderId, const int _framebufferW, const int _framebufferH, 
 			const TextureIds& _textureIds, const ShaderParams& _paramParams, 
 			const int _framebufferTextureFilter = GL_NEAREST)
 				-> dev::Result<MaterialId>;
+
 		auto InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, const GLint _textureFilter = GL_NEAREST)
 				-> Result<GLuint>;
 
-		auto Draw(const MaterialId _renderDataId) const -> int;
+		auto Draw(const MaterialId _renderDataId) const -> dev::ErrCode;
 		void UpdateTexture(const int _texureId, const uint8_t* _memP);
 		auto GetFramebufferTexture(const int _materialId) const -> GLuint;
 		bool IsMaterialReady(const int _materialId) const;
-		void UpdateViewportSize(GLsizei _viewportW, GLsizei _viewportH) { m_viewportW = _viewportW; m_viewportH = _viewportH; };
 	};
 }

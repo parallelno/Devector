@@ -20,7 +20,7 @@ namespace dev
 
 	enum class ErrCode : int {
 		NO_ERRORS = 0,
-		UNSPECIFIED,
+		UNSPECIFIED = -1,
 		NO_FILES,
 		FAILED_SDL_INIT,
 		FAILED_CREATION_WINDOW,

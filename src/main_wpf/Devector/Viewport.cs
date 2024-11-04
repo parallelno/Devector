@@ -7,8 +7,8 @@ namespace Devector;
 public class Viewport : HwndHost
 {
     private IntPtr _hwnd;
-
     public new IntPtr Handle => _hwnd;
+    //public event EventHandler<IntPtr>? HwndReady;
 
     protected override HandleRef BuildWindowCore(HandleRef hwndParent)
     {
@@ -23,6 +23,8 @@ public class Viewport : HwndHost
             IntPtr.Zero,
             IntPtr.Zero,
             0);
+
+        //HwndReady?.Invoke(this, _hwnd);
 
         return new HandleRef(this, _hwnd);
     }

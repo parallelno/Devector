@@ -59,16 +59,11 @@ void dev::HAL::Run()
     m_hardwareP->Request(Hardware::Req::RUN);
 }
 
-void dev::HAL::RenderTexture(System::IntPtr _hwnd)
-{
-    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-    RenderTextureOnHWND(hWnd, 128, 128);
-}
-
-void dev::HAL::Render(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH)
-{
-
-}
+//void dev::HAL::RenderTexture(System::IntPtr _hwnd)
+//{
+//    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
+//    RenderTextureOnHWND(hWnd, 128, 128);
+//}
 
 
 
@@ -140,7 +135,7 @@ auto GLCheckError(GLuint _obj, const std::string& _txt, HWND hWnd)
 }
 
 
-
+/*
 void dev::HAL::RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH)
 {
     // Assuming hWnd is the handle to the window
@@ -267,8 +262,6 @@ void dev::HAL::RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _view
 
     // Set the clear color to green
     glClearColor(0.0f, 1.0f, 0.0f, 1.0f); // RGBA
-
-    // Clear the screen with the green color
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Check for OpenGL errors
@@ -312,6 +305,307 @@ void dev::HAL::RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _view
     wglDeleteContext(hglrc);
     ReleaseDC(_hWnd, hdc);
 }
+*/
+
+HDC hdc;
+HGLRC hglrc;
+GLuint program;
+GLuint vertexShader;
+GLuint fragmentShader;
+// Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
+GLuint vtxArrayObj = 0;
+GLuint vtxBufferObj = 0;
+
+void dev::HAL::RenderInit(System::IntPtr _hwnd)
+{
+    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
+
+    // Assuming hWnd is the handle to the window
+    hdc = GetDC(hWnd);
+    if (hdc == NULL) {
+        MessageBox(hWnd, L"Failed to get device context", L"Error", MB_OK);
+        return;
+    }
+
+    // Set the pixel format to a format compatible with OpenGL
+    int pixelFormat;
+    PIXELFORMATDESCRIPTOR pfd = {
+        sizeof(PIXELFORMATDESCRIPTOR),
+        1,
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+        PFD_TYPE_RGBA,
+        24,
+        0, 0, 0, 0, 0, 0,
+        0,
+        0,
+        0,
+        0, 0, 0, 0
+    };
+    pixelFormat = ChoosePixelFormat(hdc, &pfd);
+    if (pixelFormat == 0) {
+        MessageBox(hWnd, L"Failed to choose pixel format", L"Error", MB_OK);
+        ReleaseDC(hWnd, hdc);
+        return;
+    }
+    if (!SetPixelFormat(hdc, pixelFormat, &pfd)) {
+        MessageBox(hWnd, L"Failed to set pixel format", L"Error", MB_OK);
+        ReleaseDC(hWnd, hdc);
+        return;
+    }
+
+    // Create an OpenGL context
+    hglrc = wglCreateContext(hdc);
+    if (hglrc == NULL) {
+        MessageBox(hWnd, L"Failed to create OpenGL context", L"Error", MB_OK);
+        ReleaseDC(hWnd, hdc);
+        return;
+    }
+
+    // Make the context current
+    if (!wglMakeCurrent(hdc, hglrc)) {
+        MessageBox(hWnd, L"Failed to make OpenGL context current", L"Error", MB_OK);
+        wglDeleteContext(hglrc);
+        ReleaseDC(hWnd, hdc);
+        return;
+    }
+
+    if (!gladLoadGL()) {
+        MessageBox(hWnd, L"Failed to initialize GLAD", L"Error", MB_OK);
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(hglrc);
+        ReleaseDC(hWnd, hdc);
+        return;
+    }
+
+    ////////////////////////////////////
+    // Compile the shaders
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+
+    GLCheckError(vertexShader, "fragmentShaderSource", hWnd);
+
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
+
+    GLCheckError(fragmentShader, "fragmentShaderSource", hWnd);
+
+    // Create a program and link the shaders
+    program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+
+
+
+    glGenVertexArrays(1, &vtxArrayObj);
+    glGenBuffers(1, &vtxBufferObj);
+    glBindVertexArray(vtxArrayObj);
+    glBindBuffer(GL_ARRAY_BUFFER, vtxBufferObj);
+    // Upload vertex data to the buffer
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_STATIC_DRAW);
+    // Specify layout of vertex data (position)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+    // Specify layout of texture coordinates
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    // Unbind the buffer and VAO
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    wglMakeCurrent(NULL, NULL);
+}
+
+HDC hdc2;
+
+void dev::HAL::RenderInit2(System::IntPtr _hwnd)
+{
+    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
+
+    // Assuming hWnd is the handle to the window
+    hdc2 = GetDC(hWnd);
+    if (hdc2 == NULL) {
+        MessageBox(hWnd, L"Failed to get device context", L"Error", MB_OK);
+        return;
+    }
+
+    // Set the pixel format to a format compatible with OpenGL
+    int pixelFormat;
+    PIXELFORMATDESCRIPTOR pfd = {
+        sizeof(PIXELFORMATDESCRIPTOR),
+        1,
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+        PFD_TYPE_RGBA,
+        24,
+        0, 0, 0, 0, 0, 0,
+        0,
+        0,
+        0,
+        0, 0, 0, 0
+    };
+    pixelFormat = ChoosePixelFormat(hdc2, &pfd);
+    if (pixelFormat == 0) {
+        MessageBox(hWnd, L"Failed to choose pixel format", L"Error", MB_OK);
+        ReleaseDC(hWnd, hdc2);
+        return;
+    }
+    if (!SetPixelFormat(hdc2, pixelFormat, &pfd)) {
+        MessageBox(hWnd, L"Failed to set pixel format", L"Error", MB_OK);
+        ReleaseDC(hWnd, hdc2);
+        return;
+    }
+}
+    ////////////////////////////////////////////////////////////////
+
+void dev::HAL::RenderDraw(System::IntPtr _hwnd,
+    GLsizei _viewportW, GLsizei _viewportH,
+    float r, float g, float b)
+{
+    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
+
+    wglMakeCurrent(hdc, hglrc);
+
+    // Set up the OpenGL viewport
+    //int width = 80; // Replace with your window width
+    //int height = 480; // Replace with your window height
+    glViewport(0, 0, GLsizei(_viewportW), GLsizei(_viewportH));
+
+    // Check for OpenGL errors
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        MessageBox(hWnd, L"OpenGL error occurred", L"Error", MB_OK);
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(hglrc);
+        ReleaseDC(hWnd, hdc);
+        return;
+    }
+
+    // Set the clear color to green
+    glClearColor(r, g, b, 1.0f); // RGBA
+
+    // Clear the screen with the green color
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Check for OpenGL errors
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        MessageBox(hWnd, L"OpenGL error occurred", L"Error", MB_OK);
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(hglrc);
+        ReleaseDC(hWnd, hdc);
+        return;
+    }
+
+    // Render the quad
+    glUseProgram(program);
+    auto paramId = glGetUniformLocation(program, "viewport_size");
+    glUniform4f(paramId, (float)_viewportW, (float)_viewportH, 0, 0);
+    glBindVertexArray(vtxBufferObj);
+    glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
+    glBindVertexArray(0);
+    glUseProgram(0);
+
+
+    // Swap the buffers to display the green color
+    if (!SwapBuffers(hdc)) {
+        MessageBox(hWnd, L"Failed to swap buffers", L"Error", MB_OK);
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(hglrc);
+        ReleaseDC(hWnd, hdc);
+        return;
+    }
+
+    wglMakeCurrent(NULL, NULL);
+}
+
+void dev::HAL::RenderDraw2(System::IntPtr _hwnd,
+    GLsizei _viewportW, GLsizei _viewportH,
+    float r, float g, float b)
+{
+    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
+
+    wglMakeCurrent(hdc2, hglrc);
+
+    // Set up the OpenGL viewport
+    //int width = 80; // Replace with your window width
+    //int height = 480; // Replace with your window height
+    glViewport(0, 0, GLsizei(_viewportW), GLsizei(_viewportH));
+
+    // Check for OpenGL errors
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        MessageBox(hWnd, L"OpenGL error occurred", L"Error", MB_OK);
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(hglrc);
+        ReleaseDC(hWnd, hdc2);
+        return;
+    }
+
+    // Set the clear color to green
+    glClearColor(r, g, b, 1.0f); // RGBA
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Check for OpenGL errors
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        MessageBox(hWnd, L"OpenGL error occurred", L"Error", MB_OK);
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(hglrc);
+        ReleaseDC(hWnd, hdc2);
+        return;
+    }
+
+    // Render the quad
+    glUseProgram(program);
+    auto paramId = glGetUniformLocation(program, "viewport_size");
+    glUniform4f(paramId, (float)_viewportW * 2.0f, (float)_viewportH * 2.0f, 0, 0);
+    glBindVertexArray(vtxBufferObj);
+    glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
+    glBindVertexArray(0);
+    glUseProgram(0);
+
+
+    // Swap the buffers to display the green color
+    if (!SwapBuffers(hdc2)) {
+        MessageBox(hWnd, L"Failed to swap buffers", L"Error", MB_OK);
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(hglrc);
+        ReleaseDC(hWnd, hdc2);
+        return;
+    }
+
+    wglMakeCurrent(NULL, NULL);
+}
+
+void dev::HAL::RenderDel(System::IntPtr _hwnd)
+{
+    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
+
+    wglMakeCurrent(hdc, hglrc);
+    // Clean up
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    glDeleteProgram(program);
+
+    glDeleteVertexArrays(1, &vtxArrayObj);
+    glDeleteBuffers(1, &vtxBufferObj);
+
+    wglMakeCurrent(NULL, NULL);
+    wglDeleteContext(hglrc);
+    ReleaseDC(hWnd, hdc);
+}
+
+void dev::HAL::RenderDel2(System::IntPtr _hwnd)
+{
+    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
+
+    wglMakeCurrent(NULL, NULL);
+    ReleaseDC(hWnd, hdc2);
+}
+
 
 // Vertex shader source code
 const char* vtxShaderS = R"#(

@@ -14,8 +14,6 @@ using System.Windows.Shapes;
 
 using dev;
 
-using SharpDX.Direct3D11;
-using SharpDX.DXGI;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace Devector
@@ -45,15 +43,20 @@ namespace Devector
             m_hal.Run();
 
             Loaded += MainWindow_Loaded;
+            Closed += MainWindow_Closed;
         }
 
-        
-        private int counter = 0;
-
-        private bool m_inited = false;
-
-        private void Button_Click(object sender, RoutedEventArgs e)
+        protected override void OnRender(DrawingContext drawingContext)
         {
+            base.OnRender(drawingContext);
+            // This will only be called when WPF determines a redraw is needed
+            RedrawMyContent();
+        }
+
+        void RedrawMyContent()
+        {
+            
+            if (!glInited) return;
 
             counter++;
             var cc = m_hal.GetCC();
@@ -63,13 +66,25 @@ namespace Devector
             //var wih = new System.Windows.Interop.WindowInteropHelper(this);
             //IntPtr hWnd = wih.Handle;
 
-            IntPtr hWnd = viewport.Handle;
-            var viewportW = viewport.ActualWidth;
-            var viewportH = viewport.ActualHeight;
+            var viewportW = viewport.ActualWidth / 2;
+            var viewportH = viewport.ActualHeight / 2;
 
-            if (!m_inited) m_hal.Init(hWnd, (int)viewportW, (int)viewportH);
+            var viewportW2 = viewport2.ActualWidth / 1.5;
+            var viewportH2 = viewport2.ActualHeight / 1.5;
 
-            m_hal.RenderTexture(hWnd);        // Call the C++/CLI function
+            //m_hal.RenderTexture(hWnd);        // Call the C++/CLI function
+            m_hal.RenderDraw(viewport.Handle, (int)viewportW, (int)viewportH, 1.0f, 0.5f, 0.0f);        // Call the C++/CLI function
+            m_hal.RenderDraw2(viewport2.Handle, (int)viewportW2, (int)viewportH2, 0.0f, 0.5f, 1.0f);        // Call the C++/CLI function
+        }
+
+
+        private int counter = 0;
+
+        private bool m_inited = false;
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            RedrawMyContent();
         }
 
         HAL m_hal;
@@ -80,9 +95,23 @@ namespace Devector
         ///
         /// 
         /// 
+        bool glInited = false;
+
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            // do not render here because the window is not formed yet.
+            //if (!m_inited) m_hal.Init(hWnd, (int)viewportW, (int)viewportH);
+            m_hal.RenderInit(viewport.Handle);        // Call the C++/CLI function
+            m_hal.RenderInit2(viewport2.Handle);        // Call the C++/CLI function
+
+            glInited = true;
+        }
+
+        private void MainWindow_Closed(object? sender, EventArgs e)
+        {
+
+            m_hal.RenderDel2(viewport2.Handle);
+
+            m_hal.RenderDel(viewport.Handle);
         }
 
     }

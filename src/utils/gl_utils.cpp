@@ -16,87 +16,23 @@ GLfloat vertices[] = {
 	1.0f,  1.0f, 0.0f,   1.0f, 0.0f   // top-right
 };
 
-
-// init OpenGL context
-#ifdef WPF
-auto dev::GLUtils::InitGLContext(HWND _hWnd)
--> Status
+dev::GLUtils::GLUtils()
 {
-	// hWnd is the handle to the window
-	m_hWnd = _hWnd;
-	m_hdc = GetDC(_hWnd);
-	if (m_hdc == nullptr) { return Status::FAILED_DC; } // Failed to get device context
-
-	// Set the pixel format to a format compatible with OpenGL
-	int pixelFormat;
-	PIXELFORMATDESCRIPTOR pfd = {
-		sizeof(PIXELFORMATDESCRIPTOR),
-		1,
-		PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-		PFD_TYPE_RGBA,
-		24,
-		0, 0, 0, 0, 0, 0,
-		0,
-		0,
-		0,
-		0, 0, 0, 0
-	};
-	pixelFormat = ChoosePixelFormat(m_hdc, &pfd);
-	if (pixelFormat == 0) 
-	{
-		return Status::FAILED_PIXEL_FORMAT; // Failed to choose pixel format
-	}
-	if (!SetPixelFormat(m_hdc, pixelFormat, &pfd)) {
-		return Status::FAILED_SET_PIXEL_FORMAT; //Failed to set pixel format
-	}
-
-	// Create an OpenGL context
-	m_hglrc = wglCreateContext(m_hdc);
-	if (m_hglrc == nullptr) {
-		return Status::FAILED_GL_CONTEXT; //Failed to create OpenGL context
-	}
-
-	//// Make the context current
-	//if (!wglMakeCurrent(m_hdc, m_hglrc)) {
-	//	return Status::FAILED_CURRENT_GL_CONTEXT; //Failed to make OpenGL context current
-	//}
-
-	wglMakeCurrent(m_hdc, nullptr);
-
-	return Status::INITED;
-}
-#endif
-
-// GL initialization
-// it assums the window was created already by ImGui or WPF
-auto dev::GLUtils::Init(
-#ifdef WPF	
-	HWND _hWnd, 
-#endif
-	GLsizei _viewportW, GLsizei _viewportH)
--> Status
-{
-
-#ifdef WPF
-	auto res = InitGLContext(_hWnd);
-	if (res != Status::INITED) { return res; }
-
+#ifndef WPF
 	// Initialize GLAD
-	if (!gladLoadGL())
-	{ 
-		m_wgl_inited = true;
-		ReseaseGL();
-		return Status::FAILED_GLAD;
+	if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) 
+	{
+		dev::Log("Failed to initialize GLAD");
+		return;  // Exit if GLAD failed to initialize
 	}
+	m_status = Status::INITED;
 
-	wglMakeCurrent(m_hdc, m_hglrc);
-#else
-	int gladInited = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
-	if (!gladInited) { return Status::FAILED_GLAD; } // Exit if GLAD failed to initialize
+	InitGeometry();
 #endif
+}
 
-	UpdateViewportSize(_viewportW, _viewportH);
-
+void dev::GLUtils::InitGeometry()
+{
 	// Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
 	glGenVertexArrays(1, &vtxArrayObj);
 	glGenBuffers(1, &vtxBufferObj);
@@ -113,20 +49,156 @@ auto dev::GLUtils::Init(
 	// Unbind the buffer and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-
-#ifdef WPF
-	wglMakeCurrent(nullptr, nullptr);
-#endif
-
-	return m_status = Status::INITED;
 }
 
-auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const int _framebufferH, 
+
+
+// init OpenGL context
+#ifdef WPF
+auto dev::GLUtils::CreateGfxContext(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH)
+-> std::tuple<Status, GfxContext>
+{
+	GfxContext gfxContext;
+
+	gfxContext.hWnd = _hWnd;
+	gfxContext.viewportW = _viewportW;
+	gfxContext.viewportH = _viewportH;
+	gfxContext.hdc = GetDC(_hWnd);
+
+	if (gfxContext.hdc == nullptr) return { Status::FAILED_DC, gfxContext }; // Failed to get device context
+
+	// Set the pixel format to a format compatible with OpenGL
+	int pixelFormat;
+	PIXELFORMATDESCRIPTOR pfd = {
+		sizeof(PIXELFORMATDESCRIPTOR),
+		1,
+		PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+		PFD_TYPE_RGBA,
+		24,
+		0, 0, 0, 0, 0, 0,
+		0,
+		0,
+		0,
+		0, 0, 0, 0
+	};
+	pixelFormat = ChoosePixelFormat(gfxContext.hdc, &pfd);
+	if (pixelFormat == 0)
+	{
+		return { Status::FAILED_PIXEL_FORMAT, gfxContext }; // Failed to choose pixel format
+	}
+	if (!SetPixelFormat(gfxContext.hdc, pixelFormat, &pfd)) {
+		return { Status::FAILED_SET_PIXEL_FORMAT, gfxContext }; //Failed to set pixel format
+	}
+
+	// Create an OpenGL render context
+	gfxContext.hglrc = wglCreateContext(gfxContext.hdc);
+	if (gfxContext.hglrc == nullptr) {
+		return { Status::FAILED_GL_CONTEXT, gfxContext }; //Failed to create OpenGL context
+	}
+
+	return { Status::INITED, gfxContext };
+}
+
+
+auto dev::GLUtils::Init(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH)
+-> Status
+{
+	if (m_gfxContext.hWnd == nullptr)
+	{
+		auto [status, gfxContextNew] = CreateGfxContext(_hWnd, _viewportW, _viewportH);
+
+		if (status != Status::INITED)
+		{
+			gfxContextNew.Release();
+			return status;
+		}
+
+		m_gfxContext = gfxContextNew;
+	}
+
+	// Make the OpenGl render context current
+	CurrentGfxContext currentGfxContext{ m_gfxContext };
+
+	// Initialize GLAD
+	if (!gladLoadGL())
+	{
+		m_gfxContext.Release();
+		return Status::FAILED_GLAD;
+	}
+
+	InitGeometry();
+
+	return Status::INITED;
+}
+
+void dev::GLUtils::GfxContext::Release()
+{
+	wglMakeCurrent(nullptr, nullptr);
+	if (hglrc) wglDeleteContext(hglrc);
+	if (hdc) ReleaseDC(hWnd, hdc);
+
+	hWnd = nullptr;
+	hdc = nullptr;
+	hglrc = nullptr;
+}
+#endif
+
+
+dev::GLUtils::~GLUtils()
+{
+	if (m_status != Status::INITED) return;
+
+	for (const auto& [id, material] : m_materials)
+	{
+		glDeleteFramebuffers(1, &material.framebuffer);
+		glDeleteTextures(1, &material.framebufferTexture);
+	}
+
+	for (const auto& [id, texture] : m_textures) {
+		glDeleteTextures(1, &id);
+	}
+
+	for (const auto id : m_shaders) {
+		glDeleteProgram(id);
+	}
+
+	glDeleteVertexArrays(1, &vtxArrayObj);
+	glDeleteBuffers(1, &vtxBufferObj);
+
+#ifdef WPF
+	m_gfxContext.Release();
+#endif
+}
+
+dev::GLUtils::Material::Material(GLuint _shaderId,
+	const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams,
+	const Vec4& _backColor)
+	:
+	shaderId(_shaderId), textureParams(), framebufferTexture(0), framebuffer(0),
+	framebufferW(_framebufferW), framebufferH(_framebufferH), backColor(_backColor)
+{
+	// get uniform vars ids
+	for (const auto& [name, val] : _paramParams)
+	{
+		auto paramId = glGetUniformLocation(_shaderId, name.c_str());
+		if (paramId < 0) continue;
+
+		params[paramId] = val;
+	}
+};
+
+auto dev::GLUtils::InitMaterial(
+		GLuint _shaderId, const int _framebufferW, const int _framebufferH, 
 		const TextureIds& _textureIds, const ShaderParams& _paramParams, 
 		const int _framebufferTextureFilter)
 -> dev::Result<MaterialId>
 {
+
 	if (m_status != Status::INITED) return {};
+
+#ifdef WPF
+	CurrentGfxContext currentGfxContext{ m_gfxContext };
+#endif
 	
 	MaterialId materialId = m_materialId++;
 	auto& material = m_materials.emplace(materialId, Material{_shaderId, _framebufferW, _framebufferH, _paramParams}).first->second;
@@ -147,13 +219,13 @@ auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		
 #ifdef WPF 
-		MessageBox(m_hWnd, L"Framebuffer is not complete!", L"Error", MB_OK);
+		MessageBox(m_gfxContext.hWnd, L"Framebuffer is not complete!", L"Error", MB_OK);
 #else
 		dev::Log("Framebuffer is not complete!");
 #endif
-
 		return {};
 	}
+
 	// Unbind framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -167,89 +239,30 @@ auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const
 		material.textureParams.emplace(GL_TEXTURE0 + i, _textureIds[i]);
 	}
 
-	if (!IsMaterialReady(materialId)) return {};
+	if (!IsMaterialReady(materialId)) { return {}; }
 
 	return materialId;
 }
 
-dev::GLUtils::~GLUtils()
+
+bool dev::GLUtils::IsMaterialReady(const int _materialId) const
 {
-	if (m_status != Status::INITED) return;
-	
-	for (const auto& [id, material] : m_materials)
-	{
-		glDeleteFramebuffers(1, &material.framebuffer);
-		glDeleteTextures(1, &material.framebufferTexture);
-	}
-
-	for (const auto& [id, texture] : m_textures){
-		glDeleteTextures(1, &id);
-	}
-	
-	for (const auto id : m_shaders){
-		glDeleteProgram(id);
-	}
-
-	glDeleteVertexArrays(1, &vtxArrayObj);
-	glDeleteBuffers(1, &vtxBufferObj);
-
-#ifdef WPF
-	ReseaseGL();
-#endif
-}
-
-#ifdef WPF
-void dev::GLUtils::ReseaseGL()
-{
-	wglMakeCurrent(nullptr, nullptr);
-	if (m_hglrc) wglDeleteContext(m_hglrc);
-	if (m_hdc) ReleaseDC(m_hWnd, m_hdc);
-
-	m_hWnd = nullptr;
-	m_hdc = nullptr;
-	m_hglrc = nullptr;
-}
-#endif
-
-int dev::GLUtils::Draw(const MaterialId _materialId) const
-{
-	if (m_status != Status::INITED || !IsMaterialReady(_materialId)) return -1;
-
 	auto& material = m_materials.at(_materialId);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, material.framebuffer);
-	glViewport(0, 0, material.framebufferW, material.framebufferH);
-	glClearColor(material.backColor.x, material.backColor.y, material.backColor.z, material.backColor.w);
-	glClear(GL_COLOR_BUFFER_BIT);
+	bool ready = vtxArrayObj && vtxBufferObj && material.shaderId >= 0 &&
+		material.framebuffer >= 0 && material.framebufferTexture >= 0;
 
-	glUseProgram(material.shaderId);
-
-	// Pass uniform parameters to the shader
-	for (const auto& [paramId, paramValue] : material.params)
-	{
-		glUniform4f(paramId, paramValue->x, paramValue->y, paramValue->z, paramValue->w);
-	}
-
-	// Bind textures
-	for (const auto& [activateId, id] : material.textureParams)
-	{
-		glActiveTexture(activateId);
-		glBindTexture(GL_TEXTURE_2D, id);
-	}
-	// Bind the VAO and draw the quad
-	glBindVertexArray(vtxArrayObj);
-	glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
-	glBindVertexArray(0);
-	// Unbind the framebuffer to return to default framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	return (int)dev::ErrCode::NO_ERRORS;
+	return ready;
 }
 
 void dev::GLUtils::UpdateTexture(const int _texureId, const uint8_t* _memP)
 {
 	//if (_materialId >= m_renderDatas.size()) return;
 	auto& texture = m_textures.at(_texureId);
+
+#ifdef WPF
+	CurrentGfxContext currentGfxContext{ m_gfxContext };
+#endif
 
 	glBindTexture(GL_TEXTURE_2D, texture.id);
 
@@ -264,83 +277,7 @@ void dev::GLUtils::UpdateTexture(const int _texureId, const uint8_t* _memP)
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
 	glTexImage2D(GL_TEXTURE_2D, 0, texture.internalFormat, texture.w, texture.h, 0, texture.internalFormat, texture.type, _memP);
-}
 
-auto dev::GLUtils::GetFramebufferTexture(const int _materialId) const
--> GLuint
-{
-	return m_materials.at(_materialId).framebufferTexture;
-}
-
-auto dev::GLUtils::GLCheckError(GLuint _obj, const std::string& _txt)
--> Result<GLuint>
-{
-	// Check for compilation errors
-	GLint success;
-	glGetShaderiv(_obj, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		GLchar infoLog[512];
-		glGetShaderInfoLog(_obj, 512, nullptr, infoLog);
-#ifdef WPF 
-		auto err = std::format("{}:\n{}", _txt, infoLog);
-		MessageBox(m_hWnd, dev::StrToStrW(err).c_str(), L"Error", MB_OK);
-#else
-		dev::Log("{}:\n {}", _txt, std::string(infoLog));
-#endif
-		return {};
-	}
-	return _obj;
-}
-
-auto dev::GLUtils::CompileShader(GLenum _shaderType, const char* _source)
--> Result<GLuint>
-{
-	GLuint shader = glCreateShader(_shaderType);
-	glShaderSource(shader, 1, &_source, nullptr);
-	glCompileShader(shader);
-
-	return GLCheckError(shader, std::format("Shader compilation failed:\n {}", _source));
-}
-
-auto dev::GLUtils::InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource)
--> Result<GLuint>
-{
-	// Compile vertex and fragment shaders
-	auto vertexShaderRes = CompileShader(GL_VERTEX_SHADER, _vertexShaderSource);
-	if (!vertexShaderRes) return {};
-	GLuint vertexShader = *vertexShaderRes;
-
-	auto fragmentShaderRes = CompileShader(GL_FRAGMENT_SHADER, _fragmentShaderSource);
-	if (!fragmentShaderRes) return {};
-	GLuint fragmentShader = *fragmentShaderRes;
-
-	// Create shader program
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	// TODO: figure out if this check is required. if so, fix it
-	//auto shaderProgramRes = GLCheckError(shaderProgram, "Shader program linking failed:\n");
-	//if (!shaderProgramRes) return {};
-
-	// Delete shaders
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	m_shaders.push_back(shaderProgram);
-
-	return shaderProgram;
-}
-
-bool dev::GLUtils::IsMaterialReady(const int _materialId) const
-{
-	auto& material = m_materials.at(_materialId);
-
-	bool ready = vtxArrayObj && vtxBufferObj && material.shaderId >= 0 &&
-				material.framebuffer >= 0 && material.framebufferTexture >= 0;
-
-	return ready;
 }
 
 dev::GLUtils::Texture::Texture(GLsizei _w, GLsizei _h, Format _format, GLint _filter) 
@@ -373,33 +310,143 @@ auto dev::GLUtils::InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format,
 		const GLint _textureFilter) 
 -> Result<GLuint>
 {
-	if (_w <= 0 || _h <= 0) 
+#ifdef WPF
+	CurrentGfxContext currentGfxContext{ m_gfxContext };
+#endif
+
+	int id = -1;
+
+	if (_w > 0 && _h > 0)
 	{
+
+		Texture texture{ _w, _h, _format, _textureFilter };
+		id = texture.id;
+		auto p = std::pair{ id , std::move(texture) };
+
+		m_textures.emplace(std::move(p));
+	}
+
+	return id < 0 ? Result<GLuint>{} : Result<GLuint>(id);
+}
+
+auto dev::GLUtils::GetFramebufferTexture(const int _materialId) const
+-> GLuint
+{
+	return m_materials.at(_materialId).framebufferTexture;
+}
+
+auto dev::GLUtils::GLCheckError(GLuint _obj, const std::string& _txt)
+-> Result<GLuint>
+{
+#ifdef WPF
+	CurrentGfxContext currentGfxContext{ m_gfxContext };
+#endif
+
+	// Check for compilation errors
+	GLint success;
+	glGetShaderiv(_obj, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		GLchar infoLog[512];
+		glGetShaderInfoLog(_obj, 512, nullptr, infoLog);
+#ifdef WPF 
+		auto err = std::format("{}:\n{}", _txt, infoLog);
+		MessageBox(m_gfxContext.hWnd, dev::StrToStrW(err).c_str(), L"Error", MB_OK);
+#else
+		dev::Log("{}:\n {}", _txt, std::string(infoLog));
+#endif
 		return {};
 	}
 
-	Texture texture{_w, _h, _format, _textureFilter };
-	auto id = texture.id;
-	auto p = std::pair{ id , std::move(texture) };
-
-	m_textures.emplace(std::move(p));
-
-	return id;
+	return _obj;
 }
 
-dev::GLUtils::Material::Material(GLuint _shaderId, 
-		const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams,
-		const Vec4& _backColor) 
-	:
-	shaderId(_shaderId), textureParams(), framebufferTexture(0), framebuffer(0),
-	framebufferW(_framebufferW), framebufferH(_framebufferH), backColor(_backColor)
+auto dev::GLUtils::CompileShader(GLenum _shaderType, const char* _source)
+-> Result<GLuint>
 {
-	// get uniform vars ids
-	for (const auto& [name, val] : _paramParams)
-	{
-		auto paramId = glGetUniformLocation(_shaderId, name.c_str());
-		if (paramId < 0) continue;
+	GLuint shader = glCreateShader(_shaderType);
+	glShaderSource(shader, 1, &_source, nullptr);
+	glCompileShader(shader);
 
-		params[paramId] = val;
+	return GLCheckError(shader, std::format("Shader compilation failed:\n {}", _source));
+}
+
+auto dev::GLUtils::InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource)
+-> Result<GLuint>
+{
+#ifdef WPF
+	CurrentGfxContext currentGfxContext{ m_gfxContext };
+#endif
+
+	auto programs = m_shaders.size();
+
+	// Compile vertex and fragment shaders
+	auto vertexShaderRes = CompileShader(GL_VERTEX_SHADER, _vertexShaderSource);
+	if (vertexShaderRes)
+	{
+		GLuint vertexShader = *vertexShaderRes;
+
+		auto fragmentShaderRes = CompileShader(GL_FRAGMENT_SHADER, _fragmentShaderSource);
+		if (fragmentShaderRes)
+		{
+			GLuint fragmentShader = *fragmentShaderRes;
+
+			// Create shader program
+			GLuint shaderProgram = glCreateProgram();
+			glAttachShader(shaderProgram, vertexShader);
+			glAttachShader(shaderProgram, fragmentShader);
+			glLinkProgram(shaderProgram);
+
+			// TODO: figure out if this check is required. if so, fix it
+			//auto shaderProgramRes = GLCheckError(shaderProgram, "Shader program linking failed:\n");
+			//if (!shaderProgramRes) goto ReleaseOGLC;
+
+			// Delete shaders
+			glDeleteShader(vertexShader);
+			glDeleteShader(fragmentShader);
+
+			m_shaders.push_back(shaderProgram);
+		}
 	}
-};
+
+	return programs == m_shaders.size() ? Result<GLuint>{} : m_shaders.back();
+}
+
+auto dev::GLUtils::Draw(const MaterialId _materialId) const
+-> dev::ErrCode
+{
+	if (m_status != Status::INITED || !IsMaterialReady(_materialId)) return dev::ErrCode::UNSPECIFIED;
+
+	auto& material = m_materials.at(_materialId);
+
+#ifdef WPF
+	CurrentGfxContext currentGfxContext{ m_gfxContext };
+#endif
+
+	glBindFramebuffer(GL_FRAMEBUFFER, material.framebuffer);
+	glViewport(0, 0, material.framebufferW, material.framebufferH);
+	glClearColor(material.backColor.x, material.backColor.y, material.backColor.z, material.backColor.w);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glUseProgram(material.shaderId);
+
+	// Pass uniform parameters to the shader
+	for (const auto& [paramId, paramValue] : material.params)
+	{
+		glUniform4f(paramId, paramValue->x, paramValue->y, paramValue->z, paramValue->w);
+	}
+
+	// Bind textures
+	for (const auto& [activateId, id] : material.textureParams)
+	{
+		glActiveTexture(activateId);
+		glBindTexture(GL_TEXTURE_2D, id);
+	}
+	// Bind the VAO and draw the quad
+	glBindVertexArray(vtxArrayObj);
+	glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
+	glBindVertexArray(0);
+	// Unbind the framebuffer to return to default framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	return dev::ErrCode::NO_ERRORS;
+}

@@ -5,11 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Devector"
         mc:Ignorable="d"
-        Title="MainWindow" Height="620" Width="800">
+        Title="MainWindow" Height="591" Width="831">
+    <ScrollViewer VerticalScrollBarVisibility="Visible">
     <Grid>
         <Button x:Name="button" Content="Click me" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click"/>
         <Label x:Name="label" Content="Counter: 0" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top"/>
         <local:Viewport x:Name="viewport" Width="256" Height="256" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,80,0,0" />
-        <local:Viewport x:Name="viewport2" Width="256" Height="256" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="300,80,0,0" />
+        <local:Viewport x:Name="viewport2" Width="512" Height="512" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="283,80,0,0" />
     </Grid>
+    </ScrollViewer>
 </Window>

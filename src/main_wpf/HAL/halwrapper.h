@@ -39,8 +39,7 @@ namespace dev
         bool m_displayIsHovered = false;
         const char* m_contextMenuName = "##displayCMenu";
 
-        void RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH);
-        void Render(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH);
+        //void RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH);
 
         bool DisplayWindowInit();
 
@@ -59,7 +58,20 @@ namespace dev
         !HAL();
 
 
-        void RenderTexture(System::IntPtr _hwnd);
+        //void RenderTexture(System::IntPtr _hwnd);
+
+        void RenderInit(System::IntPtr _hwnd);
+        void RenderInit2(System::IntPtr _hwnd);
+
+        void RenderDraw(System::IntPtr _hwnd,
+            GLsizei _viewportW, GLsizei _viewportH,
+            float r, float g, float b);
+        void RenderDraw2(System::IntPtr _hwnd,
+            GLsizei _viewportW, GLsizei _viewportH,
+            float r, float g, float b);
+
+        void RenderDel(System::IntPtr _hwnd);
+        void RenderDel2(System::IntPtr _hwnd);
 
     };
 }
