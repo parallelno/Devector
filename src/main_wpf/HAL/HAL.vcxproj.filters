@@ -90,6 +90,9 @@
     <ClCompile Include="..\..\core\watchpoints.cpp">
       <Filter>src\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\utils\win_gl_utils.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\utils\gl_utils.cpp">
       <Filter>src\utils</Filter>
     </ClCompile>
@@ -187,6 +190,9 @@
     </ClInclude>
     <ClInclude Include="..\..\glad\include\glad\glad.h">
       <Filter>src\glad</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\utils\win_gl_utils.h">
+      <Filter>src\utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\utils\gl_utils.h">
       <Filter>src\utils</Filter>

@@ -12,7 +12,7 @@ dev::HAL::HAL(System::String^ _pathBootData, System::String^ _pathRamDiskData,
 
 	m_hardwareP = new Hardware(pathBootData, pathRamDiskData, _ramDiskClearAfterRestart);
 	m_debuggerP = new Debugger(*m_hardwareP);
-    m_gl_utilsP = new GLUtils();
+    m_winGlUtilsP = new WinGlUtils();
 }
 
 void dev::HAL::Init(System::IntPtr _hwnd, GLsizei _viewportW, GLsizei _viewportH)
@@ -26,8 +26,10 @@ void dev::HAL::Init(System::IntPtr _hwnd, GLsizei _viewportW, GLsizei _viewportH
                         static_cast<float>(Display::SCAN_ACTIVE_AREA_TOP + Display::ACTIVE_AREA_H) * FRAME_PXL_SIZE_H });
 
     m_hardwareP->Request(Hardware::Req::RUN);
-    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-    m_gl_utilsP->Init(hWnd, _viewportW, _viewportH);
+    m_hwnd_temp = static_cast<HWND>(_hwnd.ToPointer());
+    auto res = m_winGlUtilsP->CreateGfxContext(m_hwnd_temp, _viewportW, _viewportH);
+
+    DisplayWindowInit();
 }
 
 dev::HAL::~HAL()
@@ -39,7 +41,7 @@ dev::HAL::!HAL()
 {
     delete m_debuggerP; m_debuggerP = nullptr;
     delete m_hardwareP; m_hardwareP = nullptr;
-    delete m_gl_utilsP; m_gl_utilsP = nullptr;
+    delete m_winGlUtilsP; m_winGlUtilsP = nullptr;
 
     delete m_activeArea_pxlSizeP; m_activeArea_pxlSizeP = nullptr;
     delete m_scrollV_crtXY_highlightMulP; m_scrollV_crtXY_highlightMulP = nullptr;
@@ -693,11 +695,11 @@ bool dev::HAL::DisplayWindowInit()
     m_bordsLRTBP->x = borderLeft * FRAME_PXL_SIZE_W;
     m_bordsLRTBP->y = (borderLeft + Display::ACTIVE_AREA_W) * FRAME_PXL_SIZE_W;
 
-    auto vramShaderRes = m_gl_utilsP->InitShader(vtxShaderS, fragShaderS);
+    auto vramShaderRes = m_winGlUtilsP->InitShader(m_hwnd_temp, vtxShaderS, fragShaderS);
     if (!vramShaderRes) return false;
     m_vramShaderId = *vramShaderRes;
 
-    auto m_vramTexRes = m_gl_utilsP->InitTexture(Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
+    auto m_vramTexRes = m_winGlUtilsP->InitTexture(m_hwnd_temp, Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
     if (!m_vramTexRes) return false;
     m_vramTexId = *m_vramTexRes;
 
@@ -706,8 +708,10 @@ bool dev::HAL::DisplayWindowInit()
         { "m_scrollV_crtXY_highlightMul", &(*m_scrollV_crtXY_highlightMulP) },
         { "m_bordsLRTB", &(*m_bordsLRTBP) }
     };
-    auto vramMatRes = m_gl_utilsP->InitMaterial(m_vramShaderId, Display::FRAME_W, Display::FRAME_H,
+    
+    auto vramMatRes = m_winGlUtilsP->InitMaterial(m_hwnd_temp, m_vramShaderId, Display::FRAME_W, Display::FRAME_H,
         { m_vramTexRes }, shaderParams);
+
     if (!vramMatRes) return false;
     m_vramMatId = *vramMatRes;
 

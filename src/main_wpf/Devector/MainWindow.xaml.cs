@@ -11,10 +11,13 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using SharpDX;
+using SharpDX.Direct3D9;
 
 using dev;
 
 using static System.Net.Mime.MediaTypeNames;
+using System.Numerics;
 
 namespace Devector
 {
@@ -53,31 +56,6 @@ namespace Devector
             RedrawMyContent();
         }
 
-        void RedrawMyContent()
-        {
-            
-            if (!glInited) return;
-
-            counter++;
-            var cc = m_hal.GetCC();
-            label.Content = "Counter: " + cc.ToString();
-
-
-            //var wih = new System.Windows.Interop.WindowInteropHelper(this);
-            //IntPtr hWnd = wih.Handle;
-
-            var viewportW = viewport.ActualWidth / 2;
-            var viewportH = viewport.ActualHeight / 2;
-
-            var viewportW2 = viewport2.ActualWidth / 1.5;
-            var viewportH2 = viewport2.ActualHeight / 1.5;
-
-            //m_hal.RenderTexture(hWnd);        // Call the C++/CLI function
-            m_hal.RenderDraw(viewport.Handle, (int)viewportW, (int)viewportH, 1.0f, 0.5f, 0.0f);        // Call the C++/CLI function
-            m_hal.RenderDraw2(viewport2.Handle, (int)viewportW2, (int)viewportH2, 0.0f, 0.5f, 1.0f);        // Call the C++/CLI function
-        }
-
-
         private int counter = 0;
 
         private bool m_inited = false;
@@ -99,20 +77,43 @@ namespace Devector
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            //if (!m_inited) m_hal.Init(hWnd, (int)viewportW, (int)viewportH);
             m_hal.RenderInit(viewport.Handle);        // Call the C++/CLI function
             m_hal.RenderInit2(viewport2.Handle);        // Call the C++/CLI function
 
+            var viewportW = viewport.ActualWidth;
+            var viewportH = viewport.ActualHeight;
+            m_hal.Init(viewport.Handle, (int)viewportW, (int)viewportH);        // Call the C++/CLI function
+
             glInited = true;
+        }
+
+        void RedrawMyContent()
+        {
+
+            if (!glInited) return;
+
+            counter++;
+            var cc = m_hal.GetCC();
+            label.Content = "Counter: " + cc.ToString();
+
+
+            var viewportW = viewport.ActualWidth / 2;
+            var viewportH = viewport.ActualHeight / 2;
+
+            var viewportW2 = viewport2.ActualWidth / 1.5;
+            var viewportH2 = viewport2.ActualHeight / 1.5;
+
+            m_hal.RenderDraw(viewport.Handle, (int)viewportW, (int)viewportH, 1.0f, 0.5f, 0.0f);        // Call the C++/CLI function
+            m_hal.RenderDraw2(viewport2.Handle, (int)viewportW2, (int)viewportH2, 0.0f, 0.5f, 1.0f);        // Call the C++/CLI function
         }
 
         private void MainWindow_Closed(object? sender, EventArgs e)
         {
 
             m_hal.RenderDel2(viewport2.Handle);
-
             m_hal.RenderDel(viewport.Handle);
         }
+
 
     }
 }

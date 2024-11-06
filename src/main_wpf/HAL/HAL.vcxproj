@@ -44,6 +44,7 @@
     <ClInclude Include="..\..\utils\args_parser.h" />
     <ClInclude Include="..\..\utils\consts.h" />
     <ClInclude Include="..\..\utils\gl_utils.h" />
+    <ClInclude Include="..\..\utils\win_gl_utils.h" />
     <ClInclude Include="..\..\utils\json_utils.h" />
     <ClInclude Include="..\..\utils\result.h" />
     <ClInclude Include="..\..\utils\str_utils.h" />
@@ -74,6 +75,7 @@
     <ClCompile Include="..\..\core\watchpoints.cpp" />
     <ClCompile Include="..\..\utils\args_parser.cpp" />
     <ClCompile Include="..\..\utils\gl_utils.cpp" />
+    <ClCompile Include="..\..\utils\win_gl_utils.cpp" />
     <ClCompile Include="..\..\utils\json_utils.cpp" />
     <ClCompile Include="..\..\utils\str_utils.cpp" />
     <ClCompile Include="..\..\utils\utils.cpp" />

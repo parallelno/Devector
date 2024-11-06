@@ -5,13 +5,15 @@
 #include <iostream>
 #include <array>
 
+#include <windows.h>
+
 #include "utils/types.h"
 #include "utils/json_utils.h"
 
 #include "core/hardware.h"
 #include "core/debugger.h"
 
-#include "utils/gl_utils.h"
+#include "utils/win_gl_utils.h"
 
 #define CONCATENATE(x, y) x##y
 
@@ -26,7 +28,7 @@ namespace dev
         Hardware* m_hardwareP;
         Debugger* m_debuggerP;
 
-        GLUtils* m_gl_utilsP;
+        WinGlUtils* m_winGlUtilsP;
 
         GLUtils::Vec4* m_activeArea_pxlSizeP;
         GLUtils::Vec4* m_scrollV_crtXY_highlightMulP;
@@ -40,6 +42,8 @@ namespace dev
         const char* m_contextMenuName = "##displayCMenu";
 
         //void RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH);
+
+        HWND m_hwnd_temp = nullptr;
 
         bool DisplayWindowInit();
 
