@@ -28,32 +28,45 @@ namespace dev
 			FAILED_SET_PIXEL_FORMAT, //Failed to set pixel format
 			FAILED_GL_CONTEXT, //Failed to create OpenGL context
 			FAILED_GLAD, // Initialize to load GLAD lib
+			FAILED_INIT_GL_UTILS,
+			FAILED_INIT_BLIT_SHADER,
+			FAILET_INIT_BLIT_TEX,
+			FAILED_INIT_BLIT_MAT,
 		};
 
 	private:
-
-		std::shared_ptr<GLUtils> m_gLUtilsP;
 
 		struct GfxContext
 		{
 			HWND hWnd = nullptr; // window handle
 			HDC hdc = nullptr; // digital context
 			HGLRC* hglrcP = nullptr; // shared gl render context
-
-			GLsizei viewportW = 0;
-			GLsizei viewportH = 0;
 		};
 
 		std::unordered_map<HWND, GfxContext> m_gfxContexts;
 		HGLRC m_hglrc = nullptr; // shared opengl render context between WPF controls
 
+		std::shared_ptr<GLUtils> m_gLUtilsP;
+
+		// resources to blit on window
+		GLUtils::Vec4 m_shaderParamUvScale = { 1.0f, 1.0f, 0.0f, 0.0f };
+		GLUtils::MaterialId m_matId = 0;
 		
 		void CleanGfxContext(GfxContext& _gfxContext);
+		auto InitRenderObjects(const GfxContext& _gfxContext,
+			const GLsizei _viewportW, const GLsizei _viewportH) -> Status;
 
 		// helper class to auto-release the gfx context when it's out of scope
-		struct CurrentGfxContext {
-			CurrentGfxContext(const GfxContext& _gfxContext) {
-				wglMakeCurrent(_gfxContext.hdc, *_gfxContext.hglrcP);
+		struct CurrentGfxContext 
+		{
+			const GfxContext& gfxContext;
+
+			CurrentGfxContext(const GfxContext& _gfxContext) 
+				: gfxContext(_gfxContext)
+			{ Refresh(); }
+
+			void Refresh() {
+				wglMakeCurrent(gfxContext.hdc, *gfxContext.hglrcP);
 			}
 
 			~CurrentGfxContext() {
@@ -61,11 +74,15 @@ namespace dev
 			}
 		};
 
+		// TODO: for TEST!
+		//bool DisplayWindowInit(HWND m_hwnd_temp);
+
 	public:
 		~WinGlUtils();
 
 		// called by a wpf window when it's created or its resolution has changed
-		auto CreateGfxContext(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH) -> Status;
+		auto CreateGfxContext(HWND _hWnd,
+			const int _framebufferW, const int _framebufferH) -> Status;
 
 		// called by a wpf window when it's about to close
 		void DeleteGfxContext(HWND _hWnd);
@@ -74,9 +91,9 @@ namespace dev
 		auto InitShader(HWND _hWnd, 
 			const char* _vertexShaderSource, const char* _fragmentShaderSource) -> Result<GLuint>;
 
-		auto InitMaterial(HWND _hWnd,
-			GLuint _shaderId, const int _framebufferW, const int _framebufferH,
+		auto InitMaterial(HWND _hWnd, GLuint _shaderId, 
 			const GLUtils::TextureIds& _textureIds, const GLUtils::ShaderParams& _paramParams,
+			const int _framebufferW = 0, const int _framebufferH = 0,
 			const int _framebufferTextureFilter = GL_NEAREST)
 				-> dev::Result<GLUtils::MaterialId>;
 
@@ -86,8 +103,11 @@ namespace dev
 
 		void UpdateTexture(HWND _hWnd, const int _texureId, const uint8_t* _memP);
 
-		auto Draw(HWND _hWnd, const GLUtils::MaterialId _renderDataId) const -> dev::ErrCode;
-		auto GetFramebufferTexture(HWND _hWnd, const int _materialId) const -> GLuint;
+		auto Draw(HWND _hWnd, const GLUtils::MaterialId _materialId) const -> dev::ErrCode;
+		auto DrawOnWindow(HWND _hWnd, const GLUtils::MaterialId _materialId,
+			const GLsizei _viewportW, const GLsizei _viewportH,
+			const GLsizei _clippedViewport, const GLsizei _clippedViewportH,
+			GLuint _textId) const->dev::ErrCode;
 	};
 }
 #endif // end WPF

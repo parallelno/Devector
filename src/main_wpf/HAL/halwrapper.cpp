@@ -29,7 +29,7 @@ void dev::HAL::Init(System::IntPtr _hwnd, GLsizei _viewportW, GLsizei _viewportH
     m_hwnd_temp = static_cast<HWND>(_hwnd.ToPointer());
     auto res = m_winGlUtilsP->CreateGfxContext(m_hwnd_temp, _viewportW, _viewportH);
 
-    DisplayWindowInit();
+    m_isGLInited = DisplayWindowInit();
 }
 
 dev::HAL::~HAL()
@@ -59,553 +59,6 @@ uint64_t dev::HAL::GetCC()
 void dev::HAL::Run()
 {
     m_hardwareP->Request(Hardware::Req::RUN);
-}
-
-//void dev::HAL::RenderTexture(System::IntPtr _hwnd)
-//{
-//    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-//    RenderTextureOnHWND(hWnd, 128, 128);
-//}
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////
-GLfloat vertices1[] = {
-    // First triangle
-    -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,  // bottom-left
-    1.0f, -1.0f, 0.0f,   1.0f, 1.0f,  // bottom-right
-    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  // top-left
-
-    // Second triangle
-    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  // top-left
-    1.0f, -1.0f, 0.0f,   1.0f, 1.0f,  // bottom-right
-    1.0f,  1.0f, 0.0f,   1.0f, 0.0f   // top-right
-};
-
-
-const char* vertexShaderSource = R"(
-    #version 330 core
-    layout (location = 0) in vec2 position;
-	//layout (location = 0) in vec3 pos;
-	//layout (location = 1) in vec2 uv;
-
-    void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
-    }
-)";
-
-// Create a fragment shader
-const char* fragmentShaderSource = R"(
-    #version 330 core
-
-    uniform vec4 viewport_size;
-
-    out vec4 FragColor;
-
-    void main() 
-    {
-        vec2 uv = gl_FragCoord.xy / viewport_size.xy;
-
-        float tiles = 4.0f;
-
-        float checker_x = step(0.5f, fract(uv.x * tiles));
-        float checker_y = step(0.5f, fract(uv.y * tiles));
-        float checker = checker_y == 0.0f ? 1.0f - checker_x : checker_x;
-
-        FragColor = vec4(checker, 0, 0.0f, 1.0f); // orange color
-    }
-)";
-
-auto GLCheckError(GLuint _obj, const std::string& _txt, HWND hWnd)
--> std::string
-{
-    // Check for compilation errors
-    GLint success;
-    glGetShaderiv(_obj, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        GLchar infoLog[512];
-        glGetShaderInfoLog(_obj, 512, NULL, infoLog);
-        System::Console::WriteLine(_txt.c_str());
-        System::Console::WriteLine(infoLog);
-        MessageBox(hWnd, dev::StrToStrW(infoLog).c_str(), L"Error", MB_OK);
-        return std::string(infoLog);
-    }
-    return {};
-}
-
-
-/*
-void dev::HAL::RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH)
-{
-    // Assuming hWnd is the handle to the window
-    HDC hdc = GetDC(_hWnd);
-    if (hdc == NULL) {
-        MessageBox(_hWnd, L"Failed to get device context", L"Error", MB_OK);
-        return;
-    }
-
-
-    // Set the pixel format to a format compatible with OpenGL
-    int pixelFormat;
-    PIXELFORMATDESCRIPTOR pfd = {
-        sizeof(PIXELFORMATDESCRIPTOR),
-        1,
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-        PFD_TYPE_RGBA,
-        24,
-        0, 0, 0, 0, 0, 0,
-        0,
-        0,
-        0,
-        0, 0, 0, 0
-    };
-    pixelFormat = ChoosePixelFormat(hdc, &pfd);
-    if (pixelFormat == 0) {
-        MessageBox(_hWnd, L"Failed to choose pixel format", L"Error", MB_OK);
-        ReleaseDC(_hWnd, hdc);
-        return;
-    }
-    if (!SetPixelFormat(hdc, pixelFormat, &pfd)) {
-        MessageBox(_hWnd, L"Failed to set pixel format", L"Error", MB_OK);
-        ReleaseDC(_hWnd, hdc);
-        return;
-    }
-
-
-
-
-    // Create an OpenGL context
-    HGLRC hglrc = wglCreateContext(hdc);
-    if (hglrc == NULL) {
-        MessageBox(_hWnd, L"Failed to create OpenGL context", L"Error", MB_OK);
-        ReleaseDC(_hWnd, hdc);
-        return;
-    }
-
-    // Make the context current
-    if (!wglMakeCurrent(hdc, hglrc)) {
-        MessageBox(_hWnd, L"Failed to make OpenGL context current", L"Error", MB_OK);
-        wglDeleteContext(hglrc);
-        ReleaseDC(_hWnd, hdc);
-        return;
-    }
-
-
-
-    if (!gladLoadGL()) {
-        MessageBox(_hWnd, L"Failed to initialize GLAD", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(_hWnd, hdc);
-        return;
-    }
-
-
-    ////////////////////////////////////
-    // Compile the shaders
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    GLCheckError(vertexShader, "fragmentShaderSource", _hWnd);
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    GLCheckError(fragmentShader, "fragmentShaderSource", _hWnd);
-
-    // Create a program and link the shaders
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-
-    // Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
-    GLuint vtxArrayObj = 0;
-    GLuint vtxBufferObj = 0;
-
-    glGenVertexArrays(1, &vtxArrayObj);
-    glGenBuffers(1, &vtxBufferObj);
-    glBindVertexArray(vtxArrayObj);
-    glBindBuffer(GL_ARRAY_BUFFER, vtxBufferObj);
-    // Upload vertex data to the buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_STATIC_DRAW);
-    // Specify layout of vertex data (position)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    // Specify layout of texture coordinates
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-    // Unbind the buffer and VAO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    ////////////////////////////////////////////////////////////////
-
-    // Set up the OpenGL viewport
-    //int width = 80; // Replace with your window width
-    //int height = 480; // Replace with your window height
-    glViewport(0, 0, GLsizei(_viewportW), GLsizei(_viewportH));
-
-    // Check for OpenGL errors
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
-        MessageBox(_hWnd, L"OpenGL error occurred", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(_hWnd, hdc);
-        return;
-    }
-
-    // Set the clear color to green
-    glClearColor(0.0f, 1.0f, 0.0f, 1.0f); // RGBA
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Check for OpenGL errors
-    error = glGetError();
-    if (error != GL_NO_ERROR) {
-        MessageBox(_hWnd, L"OpenGL error occurred", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(_hWnd, hdc);
-        return;
-    }
-
-    // Render the quad
-    glUseProgram(program);
-    auto paramId = glGetUniformLocation(program, "viewport_size");
-    glUniform4f(paramId, _viewportW, _viewportH, 0, 0);
-    glBindVertexArray(vtxBufferObj);
-    glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
-    glBindVertexArray(0);
-    glUseProgram(0);
-
-
-    // Swap the buffers to display the green color
-    if (!SwapBuffers(hdc)) {
-        MessageBox(_hWnd, L"Failed to swap buffers", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(_hWnd, hdc);
-        return;
-    }
-
-    // Clean up
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    glDeleteProgram(program);
-
-    glDeleteVertexArrays(1, &vtxArrayObj);
-    glDeleteBuffers(1, &vtxBufferObj);
-
-    wglMakeCurrent(NULL, NULL);
-    wglDeleteContext(hglrc);
-    ReleaseDC(_hWnd, hdc);
-}
-*/
-
-HDC hdc;
-HGLRC hglrc;
-GLuint program;
-GLuint vertexShader;
-GLuint fragmentShader;
-// Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
-GLuint vtxArrayObj = 0;
-GLuint vtxBufferObj = 0;
-
-void dev::HAL::RenderInit(System::IntPtr _hwnd)
-{
-    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-
-    // Assuming hWnd is the handle to the window
-    hdc = GetDC(hWnd);
-    if (hdc == NULL) {
-        MessageBox(hWnd, L"Failed to get device context", L"Error", MB_OK);
-        return;
-    }
-
-    // Set the pixel format to a format compatible with OpenGL
-    int pixelFormat;
-    PIXELFORMATDESCRIPTOR pfd = {
-        sizeof(PIXELFORMATDESCRIPTOR),
-        1,
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-        PFD_TYPE_RGBA,
-        24,
-        0, 0, 0, 0, 0, 0,
-        0,
-        0,
-        0,
-        0, 0, 0, 0
-    };
-    pixelFormat = ChoosePixelFormat(hdc, &pfd);
-    if (pixelFormat == 0) {
-        MessageBox(hWnd, L"Failed to choose pixel format", L"Error", MB_OK);
-        ReleaseDC(hWnd, hdc);
-        return;
-    }
-    if (!SetPixelFormat(hdc, pixelFormat, &pfd)) {
-        MessageBox(hWnd, L"Failed to set pixel format", L"Error", MB_OK);
-        ReleaseDC(hWnd, hdc);
-        return;
-    }
-
-    // Create an OpenGL context
-    hglrc = wglCreateContext(hdc);
-    if (hglrc == NULL) {
-        MessageBox(hWnd, L"Failed to create OpenGL context", L"Error", MB_OK);
-        ReleaseDC(hWnd, hdc);
-        return;
-    }
-
-    // Make the context current
-    if (!wglMakeCurrent(hdc, hglrc)) {
-        MessageBox(hWnd, L"Failed to make OpenGL context current", L"Error", MB_OK);
-        wglDeleteContext(hglrc);
-        ReleaseDC(hWnd, hdc);
-        return;
-    }
-
-    if (!gladLoadGL()) {
-        MessageBox(hWnd, L"Failed to initialize GLAD", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(hWnd, hdc);
-        return;
-    }
-
-    ////////////////////////////////////
-    // Compile the shaders
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    GLCheckError(vertexShader, "fragmentShaderSource", hWnd);
-
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    GLCheckError(fragmentShader, "fragmentShaderSource", hWnd);
-
-    // Create a program and link the shaders
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-
-
-
-    glGenVertexArrays(1, &vtxArrayObj);
-    glGenBuffers(1, &vtxBufferObj);
-    glBindVertexArray(vtxArrayObj);
-    glBindBuffer(GL_ARRAY_BUFFER, vtxBufferObj);
-    // Upload vertex data to the buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_STATIC_DRAW);
-    // Specify layout of vertex data (position)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    // Specify layout of texture coordinates
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-    // Unbind the buffer and VAO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    wglMakeCurrent(NULL, NULL);
-}
-
-HDC hdc2;
-
-void dev::HAL::RenderInit2(System::IntPtr _hwnd)
-{
-    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-
-    // Assuming hWnd is the handle to the window
-    hdc2 = GetDC(hWnd);
-    if (hdc2 == NULL) {
-        MessageBox(hWnd, L"Failed to get device context", L"Error", MB_OK);
-        return;
-    }
-
-    // Set the pixel format to a format compatible with OpenGL
-    int pixelFormat;
-    PIXELFORMATDESCRIPTOR pfd = {
-        sizeof(PIXELFORMATDESCRIPTOR),
-        1,
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-        PFD_TYPE_RGBA,
-        24,
-        0, 0, 0, 0, 0, 0,
-        0,
-        0,
-        0,
-        0, 0, 0, 0
-    };
-    pixelFormat = ChoosePixelFormat(hdc2, &pfd);
-    if (pixelFormat == 0) {
-        MessageBox(hWnd, L"Failed to choose pixel format", L"Error", MB_OK);
-        ReleaseDC(hWnd, hdc2);
-        return;
-    }
-    if (!SetPixelFormat(hdc2, pixelFormat, &pfd)) {
-        MessageBox(hWnd, L"Failed to set pixel format", L"Error", MB_OK);
-        ReleaseDC(hWnd, hdc2);
-        return;
-    }
-}
-    ////////////////////////////////////////////////////////////////
-
-void dev::HAL::RenderDraw(System::IntPtr _hwnd,
-    GLsizei _viewportW, GLsizei _viewportH,
-    float r, float g, float b)
-{
-    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-
-    wglMakeCurrent(hdc, hglrc);
-
-    // Set up the OpenGL viewport
-    //int width = 80; // Replace with your window width
-    //int height = 480; // Replace with your window height
-    glViewport(0, 0, GLsizei(_viewportW), GLsizei(_viewportH));
-
-    // Check for OpenGL errors
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
-        MessageBox(hWnd, L"OpenGL error occurred", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(hWnd, hdc);
-        return;
-    }
-
-    // Set the clear color to green
-    glClearColor(r, g, b, 1.0f); // RGBA
-
-    // Clear the screen with the green color
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Check for OpenGL errors
-    error = glGetError();
-    if (error != GL_NO_ERROR) {
-        MessageBox(hWnd, L"OpenGL error occurred", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(hWnd, hdc);
-        return;
-    }
-
-    // Render the quad
-    glUseProgram(program);
-    auto paramId = glGetUniformLocation(program, "viewport_size");
-    glUniform4f(paramId, (float)_viewportW, (float)_viewportH, 0, 0);
-    glBindVertexArray(vtxBufferObj);
-    glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
-    glBindVertexArray(0);
-    glUseProgram(0);
-
-
-    // Swap the buffers to display the green color
-    if (!SwapBuffers(hdc)) {
-        MessageBox(hWnd, L"Failed to swap buffers", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(hWnd, hdc);
-        return;
-    }
-
-    wglMakeCurrent(NULL, NULL);
-}
-
-void dev::HAL::RenderDraw2(System::IntPtr _hwnd,
-    GLsizei _viewportW, GLsizei _viewportH,
-    float r, float g, float b)
-{
-    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-
-    wglMakeCurrent(hdc2, hglrc);
-
-    // Set up the OpenGL viewport
-    //int width = 80; // Replace with your window width
-    //int height = 480; // Replace with your window height
-    glViewport(0, 0, GLsizei(_viewportW), GLsizei(_viewportH));
-
-    // Check for OpenGL errors
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
-        MessageBox(hWnd, L"OpenGL error occurred", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(hWnd, hdc2);
-        return;
-    }
-
-    // Set the clear color to green
-    glClearColor(r, g, b, 1.0f); // RGBA
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Check for OpenGL errors
-    error = glGetError();
-    if (error != GL_NO_ERROR) {
-        MessageBox(hWnd, L"OpenGL error occurred", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(hWnd, hdc2);
-        return;
-    }
-
-    // Render the quad
-    glUseProgram(program);
-    auto paramId = glGetUniformLocation(program, "viewport_size");
-    glUniform4f(paramId, (float)_viewportW * 2.0f, (float)_viewportH * 2.0f, 0, 0);
-    glBindVertexArray(vtxBufferObj);
-    glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
-    glBindVertexArray(0);
-    glUseProgram(0);
-
-
-    // Swap the buffers to display the green color
-    if (!SwapBuffers(hdc2)) {
-        MessageBox(hWnd, L"Failed to swap buffers", L"Error", MB_OK);
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hglrc);
-        ReleaseDC(hWnd, hdc2);
-        return;
-    }
-
-    wglMakeCurrent(NULL, NULL);
-}
-
-void dev::HAL::RenderDel(System::IntPtr _hwnd)
-{
-    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-
-    wglMakeCurrent(hdc, hglrc);
-    // Clean up
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    glDeleteProgram(program);
-
-    glDeleteVertexArrays(1, &vtxArrayObj);
-    glDeleteBuffers(1, &vtxBufferObj);
-
-    wglMakeCurrent(NULL, NULL);
-    wglDeleteContext(hglrc);
-    ReleaseDC(hWnd, hdc);
-}
-
-void dev::HAL::RenderDel2(System::IntPtr _hwnd)
-{
-    HWND hWnd = static_cast<HWND>(_hwnd.ToPointer());
-
-    wglMakeCurrent(NULL, NULL);
-    ReleaseDC(hWnd, hdc2);
 }
 
 
@@ -699,9 +152,9 @@ bool dev::HAL::DisplayWindowInit()
     if (!vramShaderRes) return false;
     m_vramShaderId = *vramShaderRes;
 
-    auto m_vramTexRes = m_winGlUtilsP->InitTexture(m_hwnd_temp, Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
-    if (!m_vramTexRes) return false;
-    m_vramTexId = *m_vramTexRes;
+    auto vramTexRes = m_winGlUtilsP->InitTexture(m_hwnd_temp, Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
+    if (!vramTexRes) return false;
+    m_vramTexId = *vramTexRes;
 
     GLUtils::ShaderParams shaderParams = {
         { "m_activeArea_pxlSize", &(*m_activeArea_pxlSizeP) },
@@ -709,11 +162,135 @@ bool dev::HAL::DisplayWindowInit()
         { "m_bordsLRTB", &(*m_bordsLRTBP) }
     };
     
-    auto vramMatRes = m_winGlUtilsP->InitMaterial(m_hwnd_temp, m_vramShaderId, Display::FRAME_W, Display::FRAME_H,
-        { m_vramTexRes }, shaderParams);
+    auto vramMatRes = m_winGlUtilsP->InitMaterial(
+        m_hwnd_temp, m_vramShaderId, { vramTexRes }, shaderParams,
+        Display::FRAME_W, Display::FRAME_H);
 
     if (!vramMatRes) return false;
     m_vramMatId = *vramMatRes;
 
     return true;
+}
+
+void dev::HAL::UpdateData(const bool _isRunning,
+    const GLsizei _viewportW, const GLsizei _viewportH)
+{
+    uint64_t cc = m_hardwareP->Request(Hardware::Req::GET_CC)->at("cc");
+    auto ccDiff = cc - m_ccLast;
+    m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
+    m_ccLast = cc;
+
+    m_scrollV_crtXY_highlightMulP->w = 1.0f;
+
+    if (!_isRunning)
+    {
+        if (ccDiff)
+        {
+            auto res = m_hardwareP->Request(Hardware::Req::GET_DISPLAY_DATA);
+            const auto& displayData = *res;
+            m_rasterPixel = displayData["rasterPixel"];
+            m_rasterLine = displayData["rasterLine"];
+        }
+        if (!m_displayIsHovered)
+        {
+            m_scrollV_crtXY_highlightMulP->y = (float)m_rasterPixel * FRAME_PXL_SIZE_W;
+            m_scrollV_crtXY_highlightMulP->z = (float)m_rasterLine * FRAME_PXL_SIZE_H;
+            m_scrollV_crtXY_highlightMulP->w = SCANLINE_HIGHLIGHT_MUL;
+        }
+    }
+
+    // update
+    if (m_isGLInited)
+    {
+        //uint8_t scrollVert = (m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert") + 1; // adding +1 offset because the default is 255
+        m_scrollV_crtXY_highlightMulP->x = 0;//FRAME_PXL_SIZE_H* scrollVert;
+
+        auto frameP = m_hardwareP->GetFrame(_isRunning);
+        m_winGlUtilsP->UpdateTexture(m_hwnd_temp, m_vramTexId, (uint8_t*)frameP->data());
+        
+        m_winGlUtilsP->DrawOnWindow(m_hwnd_temp, m_vramMatId,
+            _viewportW, _viewportW,
+            _viewportW, _viewportW,
+            m_vramTexId);
+    }
+}
+
+void dev::HAL::DrawDisplay(const GLsizei _viewportW, const GLsizei _viewportH)
+{
+    if (m_isGLInited)
+    {/*
+        float border = 0;
+        ImVec2 borderMin;
+        ImVec2 borderMax;
+        switch (m_borderType)
+        {
+        case dev::DisplayWindow::BorderType::FULL:
+            borderMin = { 0.0f, 0.0f };
+            borderMax = { 1.0f, 1.0f };
+            break;
+
+        case dev::DisplayWindow::BorderType::NORMAL:
+            border = Display::BORDER_VISIBLE;
+            [[fallthrough]];
+
+        case dev::DisplayWindow::BorderType::NONE:
+        {
+            int borderLeft = m_hardwareP->Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
+
+            borderMin = {
+                (borderLeft - border * 2) * FRAME_PXL_SIZE_W,
+                (Display::SCAN_ACTIVE_AREA_TOP - border) * FRAME_PXL_SIZE_H };
+            borderMax = {
+                borderMin.x + (Display::ACTIVE_AREA_W + border * 4) * FRAME_PXL_SIZE_W,
+                borderMin.y + (Display::ACTIVE_AREA_H + border * 2) * FRAME_PXL_SIZE_H };
+            break;
+        }
+        }
+
+        ImVec2 displaySize;
+        switch (m_displaySize)
+        {
+        case dev::DisplayWindow::DisplaySize::R256_256:
+            displaySize.x = 256.0f;
+            displaySize.y = 256.0f;
+            break;
+        case dev::DisplayWindow::DisplaySize::R512_256:
+            displaySize.x = 512.0f;
+            displaySize.y = 256.0f;
+            break;
+        case dev::DisplayWindow::DisplaySize::R512_512:
+            displaySize.x = 512.0f;
+            displaySize.y = 512.0f;
+            break;
+        case dev::DisplayWindow::DisplaySize::MAX:
+        {
+            ImGuiStyle& style = ImGui::GetStyle();
+            auto wMax = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
+            auto hMax = ImGui::GetWindowHeight() - style.FramePadding.y * 14;
+
+            displaySize.x = wMax;
+            displaySize.y = displaySize.x * WINDOW_ASPECT;
+            if (displaySize.y > hMax)
+            {
+                displaySize.y = hMax;
+                displaySize.x = displaySize.y / WINDOW_ASPECT;
+            }
+            break;
+        }
+        }
+
+        auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
+        ImGui::Image((void*)(intptr_t)framebufferTex, displaySize, borderMin, borderMax);
+        //m_displayIsHovered = ImGui::IsItemHovered();
+        */
+        
+        /*m_winGlUtilsP->DrawOnWindow(m_hwnd_temp, m_vramMatId, 
+            _viewportW, _viewportH,
+            _viewportW, _viewportH);*/
+
+        /*if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+        {
+            ImGui::OpenPopup(m_contextMenuName);
+        }*/
+    }
 }

@@ -562,7 +562,7 @@ auto dev::Hardware::GetRam() const
 	return m_memory.GetRam();
 }
 
-// UI thread
+// UI thread. Non-blocking reading.
 auto dev::Hardware::GetFrame(const bool _vsync)
 ->const Display::FrameBuffer*
 {

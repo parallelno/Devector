@@ -24,15 +24,18 @@ namespace dev
     {
         static constexpr float FRAME_PXL_SIZE_W = 1.0f / Display::FRAME_W;
         static constexpr float FRAME_PXL_SIZE_H = 1.0f / Display::FRAME_H;
+        static constexpr float SCANLINE_HIGHLIGHT_MUL = 0.3f;
 
         Hardware* m_hardwareP;
         Debugger* m_debuggerP;
-
         WinGlUtils* m_winGlUtilsP;
 
         GLUtils::Vec4* m_activeArea_pxlSizeP;
         GLUtils::Vec4* m_scrollV_crtXY_highlightMulP;
         GLUtils::Vec4* m_bordsLRTBP;
+
+        int64_t m_ccLast = -1; // to force the first stats update
+        int64_t m_ccLastRun = 0;
 
         GLuint m_vramShaderId = -1;
         GLUtils::MaterialId m_vramMatId;
@@ -40,12 +43,15 @@ namespace dev
         bool m_isGLInited = false;
         bool m_displayIsHovered = false;
         const char* m_contextMenuName = "##displayCMenu";
+        int m_rasterPixel = 0;
+        int m_rasterLine = 0;
 
         //void RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH);
 
         HWND m_hwnd_temp = nullptr;
 
         bool DisplayWindowInit();
+        
 
     public:
 
@@ -61,21 +67,9 @@ namespace dev
         ~HAL();
         !HAL();
 
-
-        //void RenderTexture(System::IntPtr _hwnd);
-
-        void RenderInit(System::IntPtr _hwnd);
-        void RenderInit2(System::IntPtr _hwnd);
-
-        void RenderDraw(System::IntPtr _hwnd,
-            GLsizei _viewportW, GLsizei _viewportH,
-            float r, float g, float b);
-        void RenderDraw2(System::IntPtr _hwnd,
-            GLsizei _viewportW, GLsizei _viewportH,
-            float r, float g, float b);
-
-        void RenderDel(System::IntPtr _hwnd);
-        void RenderDel2(System::IntPtr _hwnd);
+        void UpdateData(const bool _isRunning,
+            const GLsizei _viewportW, const GLsizei _viewportH);
+        void DrawDisplay(const GLsizei _viewportW, const GLsizei _viewportH);
 
     };
 }

@@ -45,16 +45,20 @@ namespace dev
 		struct Material
 		{
 			GLuint shaderId = 0;
+			bool renderToTexture;
 			GLuint framebufferTexture;
 			GLuint framebuffer;
-			int framebufferW;
-			int framebufferH;
+			int viewportW;
+			int viewportH;
 			Vec4 backColor;
 			ShaderParamData params;
 			ShaderTextureParams textureParams;
 
-			Material(GLuint _shaderId, const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams,
-					const Vec4& _backColor = Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			Material(GLuint _shaderId, 
+				const ShaderParams& _paramParams,
+				const int _framebufferW, const int _framebufferH,
+				const bool _renderToTexture,
+				const Vec4& _backColor = Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 			Material() = delete;
 		};
 
@@ -68,6 +72,7 @@ namespace dev
 
 		GLenum m_gladInited = 0;
 
+		void InitGeometry();
 		auto CompileShader(GLenum _shaderType, const char* _source) -> Result<GLuint>;
 		auto GLCheckError(GLuint _obj, const std::string& _txt) -> Result<GLuint>;
 
@@ -77,16 +82,22 @@ namespace dev
 
 		auto InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource) -> Result<GLuint>;
 
-		auto InitMaterial(GLuint _shaderId, const int _framebufferW, const int _framebufferH, 
-			const TextureIds& _textureIds, const ShaderParams& _paramParams, 
+		auto InitMaterial(GLuint _shaderId, 
+			const TextureIds& _textureIds, const ShaderParams& _paramParams,
+			const int _framebufferW, const int _framebufferH, 
+			const bool _renderToTexture = false,
 			const int _framebufferTextureFilter = GL_NEAREST)
 				-> dev::Result<MaterialId>;
 		auto InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, const int textureFilter = GL_NEAREST)
 				-> Result<GLuint>;
 
 		auto Draw(const MaterialId _renderDataId) const -> ErrCode;
-		void UpdateTexture(const int _texureId, const uint8_t* _memP);
+		void UpdateTexture(const GLuint _texureId, const uint8_t* _memP);
 		auto GetFramebufferTexture(const int _materialId) const -> GLuint;
 		bool IsMaterialReady(const int _materialId) const;
+		auto GetVtxArrayObj() const -> GLuint { return vtxArrayObj; };
+		auto GetVtxBufferObj() const -> GLuint { return vtxBufferObj; };
+		auto IsInited() const -> GLenum { return m_gladInited; };
+		auto GetMaterial(const MaterialId _matId) -> Material*;
 	};
 }

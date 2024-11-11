@@ -33,53 +33,67 @@ GLfloat vertices[] = {
 	m_gladInited = true;
 #endif
 
-	// Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
-	glGenVertexArrays(1, &vtxArrayObj);
-	glGenBuffers(1, &vtxBufferObj);
-	glBindVertexArray(vtxArrayObj);
-	glBindBuffer(GL_ARRAY_BUFFER, vtxBufferObj);
-	// Upload vertex data to the buffer
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	// Specify layout of vertex data (position)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-	// Specify layout of texture coordinates
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);
-	// Unbind the buffer and VAO
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	InitGeometry();
 }
 
-auto dev::GLUtils::InitMaterial(GLuint _shaderId, const int _framebufferW, const int _framebufferH, 
-		const TextureIds& _textureIds, const ShaderParams& _paramParams, 
+ // init a quad
+ void dev::GLUtils::InitGeometry()
+ {
+	 // Create Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
+	 glGenVertexArrays(1, &vtxArrayObj);
+	 glGenBuffers(1, &vtxBufferObj);
+	 glBindVertexArray(vtxArrayObj);
+	 glBindBuffer(GL_ARRAY_BUFFER, vtxBufferObj);
+	 // Upload vertex data to the buffer
+	 glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	 // Specify layout of vertex data (position)
+	 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+	 glEnableVertexAttribArray(0);
+	 // Specify layout of texture coordinates
+	 glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	 glEnableVertexAttribArray(1);
+	 // Unbind the buffer and VAO
+	 glBindBuffer(GL_ARRAY_BUFFER, 0);
+	 glBindVertexArray(0);
+ }
+// OUTs:
+// material ID == 0 : FAIL
+ // material ID > 0 : VALID INIT
+auto dev::GLUtils::InitMaterial(GLuint _shaderId, 
+		const TextureIds& _textureIds, const ShaderParams& _paramParams,
+		const int _framebufferW, const int _framebufferH,
+		const bool _renderToTexture,
 		const int _framebufferTextureFilter)
 -> dev::Result<MaterialId>
 {
 	if (!m_gladInited) return {};
 	
 	MaterialId materialId = m_materialId++;
-	auto& material = m_materials.emplace(materialId, Material{_shaderId, _framebufferW, _framebufferH, _paramParams}).first->second;
+	auto& material = m_materials.emplace(materialId, Material{_shaderId, _paramParams, _framebufferW, _framebufferH, _renderToTexture }).first->second;
 
-	// Create and bind a framebuffer object (FBO)
-	glGenFramebuffers(1, &material.framebuffer);
-	
-	// Create a framebuffer texture to render to
-	glGenTextures(1, &material.framebufferTexture);
-	glBindFramebuffer(GL_FRAMEBUFFER, material.framebuffer);
-	glBindTexture(GL_TEXTURE_2D, material.framebufferTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _framebufferW, _framebufferH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _framebufferTextureFilter);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _framebufferTextureFilter);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, material.framebufferTexture, 0);
 
-	// Check framebuffer status
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		dev::Log("Framebuffer is not complete!");
-		return {};
+	if (_renderToTexture)
+	{
+		// Create and bind a framebuffer object (FBO)
+		glGenFramebuffers(1, &material.framebuffer);
+
+		// Create a framebuffer texture to render to
+		glGenTextures(1, &material.framebufferTexture);
+		glBindFramebuffer(GL_FRAMEBUFFER, material.framebuffer);
+		glBindTexture(GL_TEXTURE_2D, material.framebufferTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _framebufferW, _framebufferH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, _framebufferTextureFilter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _framebufferTextureFilter);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, material.framebufferTexture, 0);
+
+		// Check framebuffer status
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			dev::Log("Framebuffer is not complete!");
+			return {};
+		}
+		// Unbind framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
-	// Unbind framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// activate texture slots
 	glUseProgram(_shaderId);
@@ -118,15 +132,18 @@ dev::GLUtils::~GLUtils()
 	glDeleteBuffers(1, &vtxBufferObj);
 }
 
-auto dev::GLUtils::Draw(const MaterialId _materialId) const 
+auto dev::GLUtils::Draw(const MaterialId _materialId) const
 -> ErrCode
 {
 	if (!m_gladInited || !IsMaterialReady(_materialId)) return ErrCode::UNSPECIFIED;
 
 	auto& material = m_materials.at(_materialId);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, material.framebuffer);
-	glViewport(0, 0, material.framebufferW, material.framebufferH);
+	if (material.renderToTexture){
+		glBindFramebuffer(GL_FRAMEBUFFER, material.framebuffer);
+	}
+
+	glViewport(0, 0, material.viewportW, material.viewportH);
 	glClearColor(material.backColor.x, material.backColor.y, material.backColor.z, material.backColor.w);
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -144,18 +161,19 @@ auto dev::GLUtils::Draw(const MaterialId _materialId) const
 		glActiveTexture(activateId);
 		glBindTexture(GL_TEXTURE_2D, id);
 	}
+	
 	// Bind the VAO and draw the quad
 	glBindVertexArray(vtxArrayObj);
-	//glDrawArrays(GL_QUADS, 0, 4);
 	glDrawArrays(GL_TRIANGLES, 0, 6);  // 6 vertices for two triangles
+
+	// Unbind the framebuffer and VAO
 	glBindVertexArray(0);
-	// Unbind the framebuffer to return to default framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	return dev::ErrCode::NO_ERRORS;
 }
 
-void dev::GLUtils::UpdateTexture(const int _texureId, const uint8_t* _memP)
+void dev::GLUtils::UpdateTexture(const GLuint _texureId, const uint8_t* _memP)
 {
 	//if (_materialId >= m_renderDatas.size()) return;
 	auto& texture = m_textures.at(_texureId);
@@ -224,10 +242,6 @@ auto dev::GLUtils::InitShader(const char* _vertexShaderSource, const char* _frag
 	glAttachShader(shaderProgram, fragmentShader);
 	glLinkProgram(shaderProgram);
 
-	// TODO: figure out if this check is required. if so, fix it
-	//auto shaderProgramRes = GLCheckError(shaderProgram, "Shader program linking failed:\n");
-	//if (!shaderProgramRes) return {};
-
 	// Delete shaders
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
@@ -239,10 +253,10 @@ auto dev::GLUtils::InitShader(const char* _vertexShaderSource, const char* _frag
 
 bool dev::GLUtils::IsMaterialReady(const int _materialId) const
 {
-	auto& material = m_materials.at(_materialId);
+	auto materialI = m_materials.find(_materialId);
+	if (materialI == m_materials.end()) return false;
 
-	bool ready = vtxArrayObj && vtxBufferObj && material.shaderId >= 0 &&
-				material.framebuffer >= 0 && material.framebufferTexture >= 0;
+	bool ready = vtxArrayObj && vtxBufferObj && materialI->second.shaderId >= 0;
 
 	return ready;
 }
@@ -291,11 +305,14 @@ auto dev::GLUtils::InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format,
 }
 
 dev::GLUtils::Material::Material(GLuint _shaderId, 
-		const int _framebufferW, const int _framebufferH, const ShaderParams& _paramParams,
-		const Vec4& _backColor) 
+	const ShaderParams& _paramParams,
+	const int _framebufferW, const int _framebufferH,
+	const bool _renderToTexture,
+	const Vec4& _backColor) 
 	:
 	shaderId(_shaderId), textureParams(), framebufferTexture(0), framebuffer(0),
-	framebufferW(_framebufferW), framebufferH(_framebufferH), backColor(_backColor)
+	viewportW(_framebufferW), viewportH(_framebufferH), backColor(_backColor),
+	renderToTexture(_renderToTexture)
 {
 	// get uniform vars ids
 	for (const auto& [name, val] : _paramParams)
@@ -306,3 +323,10 @@ dev::GLUtils::Material::Material(GLuint _shaderId,
 		params[paramId] = val;
 	}
 };
+
+auto dev::GLUtils::GetMaterial(const MaterialId _matId) 
+-> Material*
+{
+	auto matIdI = m_materials.find(_matId);
+	return matIdI == m_materials.end() ? nullptr : &(matIdI->second);
+}

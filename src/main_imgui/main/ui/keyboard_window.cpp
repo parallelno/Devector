@@ -25,9 +25,9 @@ bool dev::KeyboardWindow::Init()
 		return false;
 	}
 
-	auto m_vramTexRes = m_glUtils.InitTexture(m_imgKeyboardW, m_imgKeyboardH, GLUtils::Texture::Format::RGB);
-	if (!m_vramTexRes) return false;
-	m_vramTexId = *m_vramTexRes;
+	auto vramTexRes = m_glUtils.InitTexture(m_imgKeyboardW, m_imgKeyboardH, GLUtils::Texture::Format::RGB);
+	if (!vramTexRes) return false;
+	m_vramTexId = *vramTexRes;
 
 	m_glUtils.UpdateTexture(m_vramTexId, (uint8_t*)dataP);
 

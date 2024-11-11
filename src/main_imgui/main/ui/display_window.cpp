@@ -100,18 +100,18 @@ bool dev::DisplayWindow::Init()
 	if (!vramShaderRes) return false;
 	m_vramShaderId = *vramShaderRes;
 
-	auto m_vramTexRes = m_glUtils.InitTexture(Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
-	if (!m_vramTexRes) return false;
-	m_vramTexId = *m_vramTexRes;
+	auto vramTexRes = m_glUtils.InitTexture(Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
+	if (!vramTexRes) return false;
+	m_vramTexId = *vramTexRes;
 
 	GLUtils::ShaderParams shaderParams = {
 		{ "m_activeArea_pxlSize", &m_activeArea_pxlSize },
 		{ "m_scrollV_crtXY_highlightMul", &m_scrollV_crtXY_highlightMul },
 		{ "m_bordsLRTB", &m_bordsLRTB }};
 	auto vramMatRes = m_glUtils.InitMaterial(m_vramShaderId, Display::FRAME_W, Display::FRAME_H,
-			{m_vramTexRes}, shaderParams);
+			{vramTexRes}, shaderParams);
 	if (!vramMatRes) return false;
-	m_vramMatId = *vramMatRes;
+	vramMatId = *vramMatRes;
 
 	return true;
 }
