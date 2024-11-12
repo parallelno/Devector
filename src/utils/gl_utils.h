@@ -57,7 +57,7 @@ namespace dev
 			Material(GLuint _shaderId, 
 				const ShaderParams& _paramParams,
 				const int _framebufferW, const int _framebufferH,
-				const bool _renderToTexture,
+				const bool _renderToTexture = true,
 				const Vec4& _backColor = Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 			Material() = delete;
 		};
@@ -85,11 +85,11 @@ namespace dev
 		auto InitMaterial(GLuint _shaderId, 
 			const TextureIds& _textureIds, const ShaderParams& _paramParams,
 			const int _framebufferW, const int _framebufferH, 
-			const bool _renderToTexture = false,
+			const bool _renderToTexture = true,
 			const int _framebufferTextureFilter = GL_NEAREST)
 				-> dev::Result<MaterialId>;
-		auto InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, const int textureFilter = GL_NEAREST)
-				-> Result<GLuint>;
+		auto InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, 
+			const GLint textureFilter = GL_NEAREST) -> Result<GLuint>;
 
 		auto Draw(const MaterialId _renderDataId) const -> ErrCode;
 		void UpdateTexture(const GLuint _texureId, const uint8_t* _memP);

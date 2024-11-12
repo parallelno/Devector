@@ -47,10 +47,6 @@ namespace dev
 		HGLRC m_hglrc = nullptr; // shared opengl render context between WPF controls
 
 		std::shared_ptr<GLUtils> m_gLUtilsP;
-
-		// resources to blit on window
-		GLUtils::Vec4 m_shaderParamUvScale = { 1.0f, 1.0f, 0.0f, 0.0f };
-		GLUtils::MaterialId m_matId = 0;
 		
 		void CleanGfxContext(GfxContext& _gfxContext);
 		auto InitRenderObjects(const GfxContext& _gfxContext,
@@ -74,9 +70,6 @@ namespace dev
 			}
 		};
 
-		// TODO: for TEST!
-		//bool DisplayWindowInit(HWND m_hwnd_temp);
-
 	public:
 		~WinGlUtils();
 
@@ -94,6 +87,7 @@ namespace dev
 		auto InitMaterial(HWND _hWnd, GLuint _shaderId, 
 			const GLUtils::TextureIds& _textureIds, const GLUtils::ShaderParams& _paramParams,
 			const int _framebufferW = 0, const int _framebufferH = 0,
+			const bool _renderToTexture = true,
 			const int _framebufferTextureFilter = GL_NEAREST)
 				-> dev::Result<GLUtils::MaterialId>;
 
@@ -103,11 +97,8 @@ namespace dev
 
 		void UpdateTexture(HWND _hWnd, const int _texureId, const uint8_t* _memP);
 
-		auto Draw(HWND _hWnd, const GLUtils::MaterialId _materialId) const -> dev::ErrCode;
-		auto DrawOnWindow(HWND _hWnd, const GLUtils::MaterialId _materialId,
-			const GLsizei _viewportW, const GLsizei _viewportH,
-			const GLsizei _clippedViewport, const GLsizei _clippedViewportH,
-			GLuint _textId) const->dev::ErrCode;
+		auto Draw(HWND _hWnd, const GLUtils::MaterialId _materialId,
+			const GLsizei _viewportW, const GLsizei _viewportH) const->dev::ErrCode;
 	};
 }
 #endif // end WPF

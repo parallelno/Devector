@@ -178,6 +178,7 @@ auto dev::WinGlUtils::InitShader(HWND _hWnd,
 auto dev::WinGlUtils::InitMaterial(HWND _hWnd,
 		GLuint _shaderId, const GLUtils::TextureIds& _textureIds, const GLUtils::ShaderParams& _paramParams,
 		const int _framebufferW, const int _framebufferH, 
+		const bool _renderToTexture,
 		const int _framebufferTextureFilter)
 -> dev::Result<GLUtils::MaterialId>
 {
@@ -188,7 +189,7 @@ auto dev::WinGlUtils::InitMaterial(HWND _hWnd,
 
 	return m_gLUtilsP->InitMaterial( _shaderId,
 		_textureIds, _paramParams,
-		_framebufferW, _framebufferH,
+		_framebufferW, _framebufferH, _renderToTexture,
 		_framebufferTextureFilter);
 }
 
@@ -217,24 +218,8 @@ void dev::WinGlUtils::UpdateTexture(HWND _hWnd, const int _texureId, const uint8
 	m_gLUtilsP->UpdateTexture(_texureId, _memP);
 }
 
-
-
-auto dev::WinGlUtils::Draw(HWND _hWnd, const GLUtils::MaterialId _materialId) const
--> dev::ErrCode
-{
-	auto it = m_gfxContexts.find(_hWnd);
-	if (it == m_gfxContexts.end()) return {};
-	auto& gfxContext = it->second;
-	CurrentGfxContext currentGfxContext{ gfxContext };
-
-	return m_gLUtilsP->Draw(_materialId);
-}
-
-
-auto dev::WinGlUtils::DrawOnWindow(HWND _hWnd, const GLUtils::MaterialId _materialId,
-	const GLsizei _viewportW, const GLsizei _viewportH,
-	const GLsizei _clippedViewport, const GLsizei _clippedViewportH,
-	GLuint _textId) const
+auto dev::WinGlUtils::Draw(HWND _hWnd, const GLUtils::MaterialId _materialId,
+	const GLsizei _viewportW, const GLsizei _viewportH) const
 -> dev::ErrCode
 {
 	auto it = m_gfxContexts.find(_hWnd);
@@ -242,18 +227,13 @@ auto dev::WinGlUtils::DrawOnWindow(HWND _hWnd, const GLUtils::MaterialId _materi
 	auto& gfxContext = it->second;
 	CurrentGfxContext currentGfxContext{ gfxContext };
 
-	auto matP = m_gLUtilsP->GetMaterial(m_matId);
+	auto matP = m_gLUtilsP->GetMaterial(_materialId);
 	if (matP) {
 		matP->viewportW = _viewportW;
 		matP->viewportH = _viewportH;
 	}
 
-	// TODO: test
-	// _textId
-	matP->textureParams.begin()->second = _textId;
-	// end test
-
-	m_gLUtilsP->Draw(m_matId);
+	m_gLUtilsP->Draw(_materialId);
 
 	if (!SwapBuffers(gfxContext.hdc)) { return ErrCode::UNSPECIFIED; }
 
@@ -273,29 +253,7 @@ auto dev::WinGlUtils::InitRenderObjects(const GfxContext& _gfxContext,
 	m_gLUtilsP = std::make_shared<GLUtils>(true);
 	if (m_gLUtilsP->IsInited() == 0) {
 		return Status::FAILED_INIT_GL_UTILS;
-	};	
-
-
-	auto shaderRes = m_gLUtilsP->InitShader(vtxShader1S, fragShader1S);
-	if (!shaderRes) {
-		return Status::FAILED_INIT_BLIT_SHADER;
-	}
-	auto shaderId = *shaderRes;
-
-
-	auto texRes = m_gLUtilsP->InitTexture(Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
-	if (!texRes) return Status::FAILET_INIT_BLIT_TEX;
-	auto texId = *texRes;
-
-	GLUtils::ShaderParams shaderParams = {
-		{ "uvScale", &m_shaderParamUvScale },
 	};
-
-	auto matRes = m_gLUtilsP->InitMaterial(shaderId, 
-		{ texId }, shaderParams, _viewportW, _viewportH);
-
-	if (!matRes) return Status::FAILED_INIT_BLIT_MAT;
-	m_matId = *matRes;
 
 	return Status::INITED;
 }

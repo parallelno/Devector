@@ -98,7 +98,7 @@ namespace Devector
             var viewportH = viewport.ActualHeight;
             
             m_hal.UpdateData(true, (int)viewportW, (int)viewportH);
-            //m_hal.DrawDisplay((int)viewportW3, (int)viewportH3);
+            m_hal.DrawDisplay((int)viewportW, (int)viewportH);
         }
 
         private void MainWindow_Closed(object? sender, EventArgs e)

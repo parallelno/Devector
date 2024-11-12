@@ -109,7 +109,7 @@ bool dev::DisplayWindow::Init()
 		{ "m_scrollV_crtXY_highlightMul", &m_scrollV_crtXY_highlightMul },
 		{ "m_bordsLRTB", &m_bordsLRTB }};
 	auto vramMatRes = m_glUtils.InitMaterial(m_vramShaderId, Display::FRAME_W, Display::FRAME_H,
-			{vramTexRes}, shaderParams);
+			{m_vramTexId}, shaderParams);
 	if (!vramMatRes) return false;
 	vramMatId = *vramMatRes;
 

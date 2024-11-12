@@ -29,7 +29,7 @@ void dev::HAL::Init(System::IntPtr _hwnd, GLsizei _viewportW, GLsizei _viewportH
     m_hwnd_temp = static_cast<HWND>(_hwnd.ToPointer());
     auto res = m_winGlUtilsP->CreateGfxContext(m_hwnd_temp, _viewportW, _viewportH);
 
-    m_isGLInited = DisplayWindowInit();
+    m_isGLInited = DisplayWindowInit(_viewportW, _viewportH);
 }
 
 dev::HAL::~HAL()
@@ -74,7 +74,7 @@ const char* vtxShaderS = R"#(
 
 	void main()
 	{
-		uv0 = vec2(uv.x, 1.0f - uv.y);
+		uv0 = uv;
 		gl_Position = vec4(pos.xyz, 1.0f);
 	}
 )#";
@@ -142,7 +142,7 @@ const char* fragShaderS = R"#(
 	}
 )#";
 
-bool dev::HAL::DisplayWindowInit()
+bool dev::HAL::DisplayWindowInit(const GLsizei _viewportW, const GLsizei _viewportH)
 {
     int borderLeft = m_hardwareP->Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
     m_bordsLRTBP->x = borderLeft * FRAME_PXL_SIZE_W;
@@ -163,8 +163,8 @@ bool dev::HAL::DisplayWindowInit()
     };
     
     auto vramMatRes = m_winGlUtilsP->InitMaterial(
-        m_hwnd_temp, m_vramShaderId, { vramTexRes }, shaderParams,
-        Display::FRAME_W, Display::FRAME_H);
+        m_hwnd_temp, m_vramShaderId, { m_vramTexId }, shaderParams,
+        Display::FRAME_W, Display::FRAME_H, false);
 
     if (!vramMatRes) return false;
     m_vramMatId = *vramMatRes;
@@ -206,12 +206,7 @@ void dev::HAL::UpdateData(const bool _isRunning,
         m_scrollV_crtXY_highlightMulP->x = 0;//FRAME_PXL_SIZE_H* scrollVert;
 
         auto frameP = m_hardwareP->GetFrame(_isRunning);
-        m_winGlUtilsP->UpdateTexture(m_hwnd_temp, m_vramTexId, (uint8_t*)frameP->data());
-        
-        m_winGlUtilsP->DrawOnWindow(m_hwnd_temp, m_vramMatId,
-            _viewportW, _viewportW,
-            _viewportW, _viewportW,
-            m_vramTexId);
+        m_winGlUtilsP->UpdateTexture(m_hwnd_temp, m_vramTexId, (uint8_t*)frameP->data());        
     }
 }
 
@@ -284,6 +279,9 @@ void dev::HAL::DrawDisplay(const GLsizei _viewportW, const GLsizei _viewportH)
         //m_displayIsHovered = ImGui::IsItemHovered();
         */
         
+        m_winGlUtilsP->Draw(m_hwnd_temp, m_vramMatId,
+            _viewportW, _viewportH);
+
         /*m_winGlUtilsP->DrawOnWindow(m_hwnd_temp, m_vramMatId, 
             _viewportW, _viewportH,
             _viewportW, _viewportH);*/

@@ -288,7 +288,8 @@ dev::GLUtils::Texture::Texture(GLsizei _w, GLsizei _h, Format _format, GLint _fi
 }
 
 auto dev::GLUtils::InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, 
-		const GLint _filter) -> Result<GLuint>
+		const GLint _filter) 
+-> Result<GLuint>
 {
 	if (_w <= 0 || _h <= 0) 
 	{

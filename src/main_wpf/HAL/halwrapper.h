@@ -46,11 +46,9 @@ namespace dev
         int m_rasterPixel = 0;
         int m_rasterLine = 0;
 
-        //void RenderTextureOnHWND(HWND _hWnd, GLsizei _viewportW, GLsizei _viewportH);
-
         HWND m_hwnd_temp = nullptr;
 
-        bool DisplayWindowInit();
+        bool DisplayWindowInit(const GLsizei _viewportW, const GLsizei _viewportH);
         
 
     public:
