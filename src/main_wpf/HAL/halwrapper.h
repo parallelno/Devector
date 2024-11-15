@@ -30,45 +30,128 @@ namespace dev
         Debugger* m_debuggerP;
         WinGlUtils* m_winGlUtilsP;
 
-        GLUtils::Vec4* m_activeArea_pxlSizeP;
-        GLUtils::Vec4* m_scrollV_crtXY_highlightMulP;
-        GLUtils::Vec4* m_bordsLRTBP;
-
         int64_t m_ccLast = -1; // to force the first stats update
         int64_t m_ccLastRun = 0;
 
-        GLuint m_vramShaderId = -1;
-        GLUtils::MaterialId m_vramMatId;
-        GLuint m_vramTexId = -1;
-        bool m_isGLInited = false;
+        //Id m_vramShaderId = INVALID_ID;
+        //Id m_vramMatId = INVALID_ID;
+        //Id m_vramTexId = INVALID_ID;
+
+        bool m_glInited = false;
         bool m_displayIsHovered = false;
         const char* m_contextMenuName = "##displayCMenu";
         int m_rasterPixel = 0;
         int m_rasterLine = 0;
 
-        HWND m_hwnd_temp = nullptr;
-
-        bool DisplayWindowInit(const GLsizei _viewportW, const GLsizei _viewportH);
+        //bool DisplayWindowInit(const GLsizei _viewportW, const GLsizei _viewportH);
         
 
     public:
 
-        void Init(System::IntPtr hwnd, GLsizei _viewportW, GLsizei _viewportH);
+		enum class Req : int {
+			NONE = 0,
+			RUN,
+			STOP,
+			IS_RUNNING,
+			EXIT,
+			RESET,			// reboot the pc, enable the ROM
+			RESTART,		// reboot the pc, disable the ROM
+			EXECUTE_INSTR,
+			EXECUTE_FRAME,
+			EXECUTE_FRAME_NO_BREAKS,
+			GET_CC,
+			GET_REGS,
+			GET_REG_PC,
+			GET_BYTE_GLOBAL,
+			GET_BYTE_RAM,
+			GET_THREE_BYTES_RAM,
+			GET_WORD_STACK,
+			GET_DISPLAY_DATA,
+			GET_MEMORY_MAPPING,
+			GET_GLOBAL_ADDR_RAM,
+			GET_FDC_INFO,
+			GET_FDD_INFO,
+			GET_FDD_IMAGE,
+			GET_RUSLAT_HISTORY,
+			GET_PALETTE,
+			GET_SCROLL_VERT,
+			GET_STEP_OVER_ADDR,
+			GET_IO_PORTS,
+			GET_IO_PORTS_IN_DATA,
+			GET_IO_PORTS_OUT_DATA,
+			GET_IO_DISPLAY_MODE,
+			GET_IO_PALETTE_COMMIT_TIME,
+			SET_IO_PALETTE_COMMIT_TIME,
+			GET_DISPLAY_BORDER_LEFT,
+			SET_DISPLAY_BORDER_LEFT,
+			GET_DISPLAY_IRQ_COMMIT_PXL,
+			SET_DISPLAY_IRQ_COMMIT_PXL,
+			SET_MEM,
+			SET_CPU_SPEED,
+			IS_MEMROM_ENABLED,
+			KEY_HANDLING,
+			LOAD_FDD,
+			RESET_UPDATE_FDD,
+			DEBUG_ATTACH,
+			DEBUG_RESET,
+
+			DEBUG_RECORDER_RESET,
+			DEBUG_RECORDER_PLAY_FORWARD,
+			DEBUG_RECORDER_PLAY_REVERSE,
+			DEBUG_RECORDER_GET_STATE_RECORDED,
+			DEBUG_RECORDER_GET_STATE_CURRENT,
+			DEBUG_RECORDER_SERIALIZE,
+			DEBUG_RECORDER_DESERIALIZE,
+
+			DEBUG_BREAKPOINT_ADD,
+			DEBUG_BREAKPOINT_DEL,
+			DEBUG_BREAKPOINT_DEL_ALL,
+			DEBUG_BREAKPOINT_GET_STATUS,
+			DEBUG_BREAKPOINT_SET_STATUS,
+			DEBUG_BREAKPOINT_ACTIVE,
+			DEBUG_BREAKPOINT_DISABLE,
+			DEBUG_BREAKPOINT_GET_ALL,
+			DEBUG_BREAKPOINT_GET_UPDATES,
+
+			DEBUG_WATCHPOINT_ADD,
+			DEBUG_WATCHPOINT_DEL_ALL,
+			DEBUG_WATCHPOINT_DEL,
+			DEBUG_WATCHPOINT_GET_UPDATES,
+			DEBUG_WATCHPOINT_GET_ALL,
+
+		};
+
+        bool CreateGfxContext(System::IntPtr hwnd, GLsizei _viewportW, GLsizei _viewportH);
 
 
         HAL(System::String^ _pathBootData, System::String^ _pathRamDiskData,
             const bool _ramDiskClearAfterRestart);
 
-        uint64_t GetCC();
+        auto GetCC() -> uint64_t;
         void Run();
 
         ~HAL();
         !HAL();
 
-        void UpdateData(const bool _isRunning,
+        /*void UpdateData(const bool _isRunning,
             const GLsizei _viewportW, const GLsizei _viewportH);
-        void DrawDisplay(const GLsizei _viewportW, const GLsizei _viewportH);
+        void DrawDisplay(const GLsizei _viewportW, const GLsizei _viewportH);*/
+        
+        auto InitShader(System::IntPtr _hWnd,
+            System::String^ _vtxShaderS, System::String^ _fragShaderS)
+            -> Id;
 
+        auto InitMaterial(System::IntPtr _hWnd, const Id _shaderId,
+            const GLUtils::TextureIds& _textureIds, 
+            const GLUtils::ShaderParams& _shaderParams,
+            const int _framebufferW, const int _framebufferH)
+            -> Id;
+
+        auto InitTexture(System::IntPtr _hWnd, const GLsizei _w, const GLsizei _h)
+            -> Id;
+
+        auto Request(const Req _req, System::String^ _dataS)
+            -> System::String^;
     };
 }
 

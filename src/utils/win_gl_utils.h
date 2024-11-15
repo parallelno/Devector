@@ -82,23 +82,26 @@ namespace dev
 
 
 		auto InitShader(HWND _hWnd, 
-			const char* _vertexShaderSource, const char* _fragmentShaderSource) -> Result<GLuint>;
+			const char* _vtxShaderS, const char* _fragShaderS) 
+			-> Id;
 
-		auto InitMaterial(HWND _hWnd, GLuint _shaderId, 
-			const GLUtils::TextureIds& _textureIds, const GLUtils::ShaderParams& _paramParams,
+		auto InitMaterial(const HWND _hWnd, const Id _shaderId,
+			const GLUtils::TextureIds& _textureIds, const GLUtils::ShaderParams& _shaderParams,
 			const int _framebufferW = 0, const int _framebufferH = 0,
-			const bool _renderToTexture = true,
+			const bool _renderToTexture = false,
 			const int _framebufferTextureFilter = GL_NEAREST)
-				-> dev::Result<GLUtils::MaterialId>;
+			-> Id;
 
-		auto InitTexture(HWND _hWnd, GLsizei _w, GLsizei _h, 
-			GLUtils::Texture::Format _format, const GLint _textureFilter = GL_NEAREST)
-				-> Result<GLuint>;
+		auto InitTexture(const HWND _hWnd, const GLsizei _w, const GLsizei _h,
+			const GLUtils::Texture::Format _format = GLUtils::Texture::Format::RGBA,
+			const GLint _textureFilter = GL_NEAREST)
+			-> Id;
 
-		void UpdateTexture(HWND _hWnd, const int _texureId, const uint8_t* _memP);
+		void UpdateTexture(const HWND _hWnd, const Id _texureId, const uint8_t* _memP);
 
-		auto Draw(HWND _hWnd, const GLUtils::MaterialId _materialId,
-			const GLsizei _viewportW, const GLsizei _viewportH) const->dev::ErrCode;
+		auto Draw(const HWND _hWnd, const Id _materialId,
+			const GLsizei _viewportW, const GLsizei _viewportH) const 
+			-> dev::ErrCode;
 	};
 }
 #endif // end WPF

@@ -162,25 +162,26 @@ dev::WinGlUtils::~WinGlUtils()
 }
 
 
-auto dev::WinGlUtils::InitShader(HWND _hWnd, 
-		const char* _vertexShaderSource, const char* _fragmentShaderSource)
--> Result<GLuint>
+auto dev::WinGlUtils::InitShader(const HWND _hWnd,
+	const char* _vtxShaderS, const char* _fragShaderS)
+-> Id
 {
 	auto it = m_gfxContexts.find(_hWnd);
 	if (it == m_gfxContexts.end()) return {};
 	auto& gfxContext = it->second;
 	CurrentGfxContext currentGfxContext{ gfxContext };
 
-	return m_gLUtilsP->InitShader(_vertexShaderSource, _fragmentShaderSource);
+	return m_gLUtilsP->InitShader(_vtxShaderS, _fragShaderS);
 }
 
 
-auto dev::WinGlUtils::InitMaterial(HWND _hWnd,
-		GLuint _shaderId, const GLUtils::TextureIds& _textureIds, const GLUtils::ShaderParams& _paramParams,
+auto dev::WinGlUtils::InitMaterial(const HWND _hWnd,
+		const Id _shaderId, const GLUtils::TextureIds& _textureIds, 
+		const GLUtils::ShaderParams& _shaderParams,
 		const int _framebufferW, const int _framebufferH, 
 		const bool _renderToTexture,
 		const int _framebufferTextureFilter)
--> dev::Result<GLUtils::MaterialId>
+-> Id
 {
 	auto it = m_gfxContexts.find(_hWnd);
 	if (it == m_gfxContexts.end()) return {};
@@ -188,16 +189,17 @@ auto dev::WinGlUtils::InitMaterial(HWND _hWnd,
 	CurrentGfxContext currentGfxContext{ gfxContext };
 
 	return m_gLUtilsP->InitMaterial( _shaderId,
-		_textureIds, _paramParams,
+		_textureIds, _shaderParams,
 		_framebufferW, _framebufferH, _renderToTexture,
 		_framebufferTextureFilter);
 }
 
 
-auto dev::WinGlUtils::InitTexture(HWND _hWnd, 
-		GLsizei _w, GLsizei _h, GLUtils::Texture::Format _format,
+auto dev::WinGlUtils::InitTexture(const HWND _hWnd,
+		const GLsizei _w, const GLsizei _h, 
+		const GLUtils::Texture::Format _format,
 		const GLint _textureFilter) 
--> Result<GLuint>
+-> Id
 {
 	auto it = m_gfxContexts.find(_hWnd);
 	if (it == m_gfxContexts.end()) return {};
@@ -208,7 +210,7 @@ auto dev::WinGlUtils::InitTexture(HWND _hWnd,
 }
 
 
-void dev::WinGlUtils::UpdateTexture(HWND _hWnd, const int _texureId, const uint8_t* _memP)
+void dev::WinGlUtils::UpdateTexture(const HWND _hWnd, const Id _texureId, const uint8_t* _memP)
 {
 	auto it = m_gfxContexts.find(_hWnd);
 	if (it == m_gfxContexts.end()) return;
@@ -218,7 +220,7 @@ void dev::WinGlUtils::UpdateTexture(HWND _hWnd, const int _texureId, const uint8
 	m_gLUtilsP->UpdateTexture(_texureId, _memP);
 }
 
-auto dev::WinGlUtils::Draw(HWND _hWnd, const GLUtils::MaterialId _materialId,
+auto dev::WinGlUtils::Draw(const HWND _hWnd, const Id _materialId,
 	const GLsizei _viewportW, const GLsizei _viewportH) const
 -> dev::ErrCode
 {

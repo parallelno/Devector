@@ -23,11 +23,12 @@ namespace dev
 			Vec4() : x(0.0f), y(0.0f), z(0.0f), w(1.0f) {};	
 			Vec4(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {};
 		};
-		using ShaderParamData = std::unordered_map<GLuint, Vec4*>;
-		using ShaderParams = std::unordered_map<std::string, Vec4*>;
-		using ShaderTextureParams = std::unordered_map<GLenum, GLuint>;
-		using TextureIds = std::vector<GLuint>;
-		using MaterialId = uint32_t;
+
+		using ShaderParamIds = std::unordered_map <std::string, Id>;
+		using ShaderParamData = std::unordered_map <Id, Vec4>;
+		using ShaderParams = std::unordered_map <std::string, Vec4>;
+		using ShaderTextureParams = std::unordered_map<GLenum, Id>;
+		using TextureIds = std::vector<Id>;
 
 		struct Texture
 		{
@@ -44,7 +45,7 @@ namespace dev
 
 		struct Material
 		{
-			GLuint shaderId = 0;
+			Id shaderId = 0;
 			bool renderToTexture;
 			GLuint framebufferTexture;
 			GLuint framebuffer;
@@ -52,52 +53,55 @@ namespace dev
 			int viewportH;
 			Vec4 backColor;
 			ShaderParamData params;
+			ShaderParamIds paramIds;
 			ShaderTextureParams textureParams;
 
-			Material(GLuint _shaderId, 
-				const ShaderParams& _paramParams,
+			Material(Id _shaderId, 
+				const ShaderParams& _shaderParams,
 				const int _framebufferW, const int _framebufferH,
 				const bool _renderToTexture = true,
 				const Vec4& _backColor = Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 			Material() = delete;
+			auto GetParamId(const std::string& _paramName) -> Id;
+			auto SetParam(const Id _id, const Vec4& _data) -> ErrCode;
 		};
 
 	private:
-		MaterialId m_materialId = 0;
-		std::unordered_map<MaterialId, Material> m_materials;
+		Id m_materialId = 0;
+		std::unordered_map<Id, Material> m_materials;
 		GLuint vtxArrayObj = 0;
 		GLuint vtxBufferObj = 0;
 		std::unordered_map<GLuint, Texture> m_textures;
-		std::vector<GLuint> m_shaders;
+		std::vector<Id> m_shaders;
 
 		GLenum m_gladInited = 0;
 
 		void InitGeometry();
-		auto CompileShader(GLenum _shaderType, const char* _source) -> Result<GLuint>;
-		auto GLCheckError(GLuint _obj, const std::string& _txt) -> Result<GLuint>;
+		auto CompileShader(GLenum _shaderType, const char* _source) -> Id;
+		auto GLCheckError(Id _id, const std::string& _txt) -> Id;
 
 	public:
 		GLUtils(bool _init);
 		~GLUtils();
 
-		auto InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource) -> Result<GLuint>;
+		auto InitShader(const char* _vtxShaderS, const char* _fragShaderS) -> Id;
 
-		auto InitMaterial(GLuint _shaderId, 
-			const TextureIds& _textureIds, const ShaderParams& _paramParams,
+		auto InitMaterial(Id _shaderId,
+			const TextureIds& _textureIds, const ShaderParams& _shaderParams,
 			const int _framebufferW, const int _framebufferH, 
 			const bool _renderToTexture = true,
 			const int _framebufferTextureFilter = GL_NEAREST)
-				-> dev::Result<MaterialId>;
+				-> Id;
 		auto InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, 
-			const GLint textureFilter = GL_NEAREST) -> Result<GLuint>;
+			const GLint textureFilter = GL_NEAREST) -> Id;
 
-		auto Draw(const MaterialId _renderDataId) const -> ErrCode;
-		void UpdateTexture(const GLuint _texureId, const uint8_t* _memP);
-		auto GetFramebufferTexture(const int _materialId) const -> GLuint;
-		bool IsMaterialReady(const int _materialId) const;
-		auto GetVtxArrayObj() const -> GLuint { return vtxArrayObj; };
-		auto GetVtxBufferObj() const -> GLuint { return vtxBufferObj; };
+		auto Draw(const Id _renderDataId) const -> ErrCode;
+		void UpdateTexture(const Id _texureId, const uint8_t* _memP);
+		auto GetFramebufferTexture(const Id _materialId) const -> Id;
+		auto GetMaterial(const Id _matId) -> Material*;
+		auto GetVtxArrayObj() const -> Id { return vtxArrayObj; };
+		auto GetVtxBufferObj() const -> Id { return vtxBufferObj; };
 		auto IsInited() const -> GLenum { return m_gladInited; };
-		auto GetMaterial(const MaterialId _matId) -> Material*;
+		bool IsMaterialReady(const Id _materialId) const;
 	};
 }

@@ -59,16 +59,16 @@ GLfloat vertices[] = {
 // OUTs:
 // material ID == 0 : FAIL
  // material ID > 0 : VALID INIT
-auto dev::GLUtils::InitMaterial(GLuint _shaderId, 
+auto dev::GLUtils::InitMaterial(Id _shaderId, 
 		const TextureIds& _textureIds, const ShaderParams& _paramParams,
 		const int _framebufferW, const int _framebufferH,
 		const bool _renderToTexture,
 		const int _framebufferTextureFilter)
--> dev::Result<MaterialId>
+-> Id
 {
-	if (!m_gladInited) return {};
+	if (!m_gladInited) return INVALID_ID;
 	
-	MaterialId materialId = m_materialId++;
+	Id materialId = m_materialId++;
 	auto& material = m_materials.emplace(materialId, Material{_shaderId, _paramParams, _framebufferW, _framebufferH, _renderToTexture }).first->second;
 
 
@@ -97,7 +97,7 @@ auto dev::GLUtils::InitMaterial(GLuint _shaderId,
 
 	// activate texture slots
 	glUseProgram(_shaderId);
-	for (int i = 0; i < _textureIds.size(); i++) 
+	for (int i = 0; i < _textureIds.size(); i++)
 	{
 		auto paramId = glGetUniformLocation(_shaderId, std::format("texture{}", i).c_str());
 		if (paramId < 0) continue;
@@ -132,7 +132,7 @@ dev::GLUtils::~GLUtils()
 	glDeleteBuffers(1, &vtxBufferObj);
 }
 
-auto dev::GLUtils::Draw(const MaterialId _materialId) const
+auto dev::GLUtils::Draw(const Id _materialId) const
 -> ErrCode
 {
 	if (!m_gladInited || !IsMaterialReady(_materialId)) return ErrCode::UNSPECIFIED;
@@ -152,7 +152,7 @@ auto dev::GLUtils::Draw(const MaterialId _materialId) const
 	// Pass uniform parameters to the shader
 	for (const auto& [paramId, paramValue] : material.params)
 	{
-		glUniform4f(paramId, paramValue->x, paramValue->y, paramValue->z, paramValue->w);
+		glUniform4f(paramId, paramValue.x, paramValue.y, paramValue.z, paramValue.w);
 	}
 
 	// Bind textures
@@ -173,10 +173,14 @@ auto dev::GLUtils::Draw(const MaterialId _materialId) const
 	return dev::ErrCode::NO_ERRORS;
 }
 
-void dev::GLUtils::UpdateTexture(const GLuint _texureId, const uint8_t* _memP)
+void dev::GLUtils::UpdateTexture(const Id _texureId, const uint8_t* _memP)
 {
-	//if (_materialId >= m_renderDatas.size()) return;
-	auto& texture = m_textures.at(_texureId);
+	if (_texureId == INVALID_ID) return;
+
+	auto it = m_textures.find(_texureId);
+	if (it == m_textures.end()) return;
+
+	auto& texture = it->second;
 
 	glBindTexture(GL_TEXTURE_2D, texture.id);
 
@@ -193,29 +197,29 @@ void dev::GLUtils::UpdateTexture(const GLuint _texureId, const uint8_t* _memP)
 	glTexImage2D(GL_TEXTURE_2D, 0, texture.internalFormat, texture.w, texture.h, 0, texture.internalFormat, texture.type, _memP);
 }
 
-auto dev::GLUtils::GetFramebufferTexture(const int _materialId) const
--> GLuint
+auto dev::GLUtils::GetFramebufferTexture(const Id _materialId) const
+-> Id
 {
 	return m_materials.at(_materialId).framebufferTexture;
 }
 
-auto dev::GLUtils::GLCheckError(GLuint _obj, const std::string& _txt)
--> Result<GLuint>
+auto dev::GLUtils::GLCheckError(Id _id, const std::string& _txt)
+-> Id
 {
 	// Check for compilation errors
 	GLint success;
-	glGetShaderiv(_obj, GL_COMPILE_STATUS, &success);
+	glGetShaderiv(_id, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		GLchar infoLog[512];
-		glGetShaderInfoLog(_obj, 512, NULL, infoLog);
+		glGetShaderInfoLog(_id, 512, NULL, infoLog);
 		dev::Log("{}:\n {}", _txt, std::string(infoLog));
-		return {};
+		return INVALID_ID;
 	}
-	return _obj;
+	return _id;
 }
 
 auto dev::GLUtils::CompileShader(GLenum _shaderType, const char* _source)
--> Result<GLuint>
+-> Id
 {
 	GLuint shader = glCreateShader(_shaderType);
 	glShaderSource(shader, 1, &_source, NULL);
@@ -224,34 +228,32 @@ auto dev::GLUtils::CompileShader(GLenum _shaderType, const char* _source)
 	return GLCheckError(shader, std::format("Shader compilation failed:\n {}", _source));
 }
 
-auto dev::GLUtils::InitShader(const char* _vertexShaderSource, const char* _fragmentShaderSource)
--> Result<GLuint>
+auto dev::GLUtils::InitShader(const char* _vtxShaderS, const char* _fragShaderS)
+-> Id
 {
 	// Compile vertex and fragment shaders
-	auto vertexShaderRes = CompileShader(GL_VERTEX_SHADER, _vertexShaderSource);
-	if (!vertexShaderRes) return {};
-	GLuint vertexShader = *vertexShaderRes;
+	auto vtxShaderId = CompileShader(GL_VERTEX_SHADER, _vtxShaderS);
+	if (vtxShaderId == INVALID_ID) return INVALID_ID;
 
-	auto fragmentShaderRes = CompileShader(GL_FRAGMENT_SHADER, _fragmentShaderSource);
-	if (!fragmentShaderRes) return {};
-	GLuint fragmentShader = *fragmentShaderRes;
+	auto fragShaderId = CompileShader(GL_FRAGMENT_SHADER, _fragShaderS);
+	if (fragShaderId ==  INVALID_ID) return INVALID_ID;
 
 	// Create shader program
 	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
+	glAttachShader(shaderProgram, vtxShaderId);
+	glAttachShader(shaderProgram, fragShaderId);
 	glLinkProgram(shaderProgram);
 
 	// Delete shaders
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	glDeleteShader(vtxShaderId);
+	glDeleteShader(fragShaderId);
 
 	m_shaders.push_back(shaderProgram);
 
 	return shaderProgram;
 }
 
-bool dev::GLUtils::IsMaterialReady(const int _materialId) const
+bool dev::GLUtils::IsMaterialReady(const Id _materialId) const
 {
 	auto materialI = m_materials.find(_materialId);
 	if (materialI == m_materials.end()) return false;
@@ -289,11 +291,11 @@ dev::GLUtils::Texture::Texture(GLsizei _w, GLsizei _h, Format _format, GLint _fi
 
 auto dev::GLUtils::InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, 
 		const GLint _filter) 
--> Result<GLuint>
+-> Id
 {
 	if (_w <= 0 || _h <= 0) 
 	{
-		return {};
+		return INVALID_ID;
 	}
 
 	Texture texture{_w, _h, _format, _filter};
@@ -305,8 +307,8 @@ auto dev::GLUtils::InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format,
 	return id;
 }
 
-dev::GLUtils::Material::Material(GLuint _shaderId, 
-	const ShaderParams& _paramParams,
+dev::GLUtils::Material::Material(Id _shaderId, 
+	const ShaderParams& _shaderParams,
 	const int _framebufferW, const int _framebufferH,
 	const bool _renderToTexture,
 	const Vec4& _backColor) 
@@ -316,16 +318,36 @@ dev::GLUtils::Material::Material(GLuint _shaderId,
 	renderToTexture(_renderToTexture)
 {
 	// get uniform vars ids
-	for (const auto& [name, val] : _paramParams)
+	for (const auto& [name, val] : _shaderParams)
 	{
 		auto paramId = glGetUniformLocation(_shaderId, name.c_str());
 		if (paramId < 0) continue;
 
 		params[paramId] = val;
+		paramIds[name] = paramId;
 	}
 };
 
-auto dev::GLUtils::GetMaterial(const MaterialId _matId) 
+auto dev::GLUtils::Material::GetParamId(const std::string& _paramName)
+-> Id
+{
+	auto paramIt = paramIds.find(_paramName);
+	
+	return paramIt == paramIds.end() ? INVALID_ID : paramIt->second;
+}
+
+auto dev::GLUtils::Material::SetParam(const Id _id, const Vec4& _data)
+-> ErrCode
+{
+	auto paramIt = params.find(_id);
+
+	if (paramIt == params.end()) return ErrCode::INVALID_ID;
+	paramIt->second = _data;
+
+	return ErrCode::NO_ERRORS;
+}
+
+auto dev::GLUtils::GetMaterial(const Id _matId) 
 -> Material*
 {
 	auto matIdI = m_materials.find(_matId);
