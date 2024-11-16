@@ -15,17 +15,11 @@
 
 #include "utils/win_gl_utils.h"
 
-#define CONCATENATE(x, y) x##y
-
 namespace dev 
 {
 
     public ref class HAL
     {
-        static constexpr float FRAME_PXL_SIZE_W = 1.0f / Display::FRAME_W;
-        static constexpr float FRAME_PXL_SIZE_H = 1.0f / Display::FRAME_H;
-        static constexpr float SCANLINE_HIGHLIGHT_MUL = 0.3f;
-
         Hardware* m_hardwareP;
         Debugger* m_debuggerP;
         WinGlUtils* m_winGlUtilsP;
@@ -47,6 +41,13 @@ namespace dev
         
 
     public:
+		literal float FRAME_PXL_SIZE_W = 1.0f / Display::FRAME_W;
+		literal float FRAME_PXL_SIZE_H = 1.0f / Display::FRAME_H;
+		literal float SCANLINE_HIGHLIGHT_MUL = 0.3f;
+
+		literal float ACTIVE_AREA_W = Display::ACTIVE_AREA_W;
+		literal float ACTIVE_AREA_H = Display::ACTIVE_AREA_H;
+		literal float SCAN_ACTIVE_AREA_TOP = Display::SCAN_ACTIVE_AREA_TOP;
 
 		enum class Req : int {
 			NONE = 0,
@@ -127,31 +128,43 @@ namespace dev
         HAL(System::String^ _pathBootData, System::String^ _pathRamDiskData,
             const bool _ramDiskClearAfterRestart);
 
-        auto GetCC() -> uint64_t;
-        void Run();
-
         ~HAL();
         !HAL();
-
-        /*void UpdateData(const bool _isRunning,
-            const GLsizei _viewportW, const GLsizei _viewportH);
-        void DrawDisplay(const GLsizei _viewportW, const GLsizei _viewportH);*/
         
         auto InitShader(System::IntPtr _hWnd,
             System::String^ _vtxShaderS, System::String^ _fragShaderS)
             -> Id;
 
-        auto InitMaterial(System::IntPtr _hWnd, const Id _shaderId,
-            const GLUtils::TextureIds& _textureIds, 
-            const GLUtils::ShaderParams& _shaderParams,
-            const int _framebufferW, const int _framebufferH)
-            -> Id;
+		auto InitMaterial(
+			System::IntPtr _hWnd,
+			Id _shaderId,
+			cli::array<System::Int32>^ _textureIds,
+			cli::array<System::String^>^ _shaderParamNames,
+			cli::array<System::Numerics::Vector4>^ _shaderParamValues,
+			int _framebufferW, int _framebufferH)
+			-> Id;
 
         auto InitTexture(System::IntPtr _hWnd, const GLsizei _w, const GLsizei _h)
             -> Id;
 
+		void UpdateFrameTexture(System::IntPtr _hWnd, 
+			Id _textureId, const bool _vsync);
+
+		auto Draw(System::IntPtr _hWnd, const Id _materialId,
+			const GLsizei _viewportW, const GLsizei _viewportH)
+			->int;
+
+        ////////////////////////////////////////////////////////////
+		// 
+        // Requests
+        // 
+		////////////////////////////////////////////////////////////
         auto Request(const Req _req, System::String^ _dataS)
-            -> System::String^;
+            -> System::Text::Json::JsonDocument^;
+
+		auto ReqCC() -> uint64_t;
+		bool ReqIsRunning();
+		void ReqRun();
     };
 }
 

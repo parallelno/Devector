@@ -19,7 +19,7 @@ namespace Devector
 
             Hal = new HAL(bootDataPath, ramDiskPath, clearRamDiskAfterRestart);
 
-            Hal.Run();
+            Hal.ReqRun();
         }
 
         public HAL? Hal { get; private set; }
