@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -15,101 +14,94 @@ using dev;
 using static Devector.Consts;
 using static Devector.Shaders;
 
-using static System.Net.Mime.MediaTypeNames;
 using System.Text.Json;
 using System.Numerics;
-using System;
 
 namespace Devector
 {
 
 	public partial class MainWindow : Window
 	{
-		[DllImport("kernel32.dll")]
-		private static extern bool AllocConsole();
+		//////////////////////////////////
+		//
+		// consts
+		// 
+		//////////////////////////////////
 
-		public MainWindow()
+		private const int HW_FRAME_W = 768;                 // Vector06c frame including borders
+		private const int HW_FRAME_H = 312;                 // Vector06c frame including borders
+
+		private bool m_glInited = false;
+		private HAL? Hal;
+
+		private ulong m_ccLast = 0;
+		private int m_rasterPixel = 0;
+		private int m_rasterLine = 0;
+		private bool m_displayIsHovered = false;
+		private Vector4 m_scrollV_crtXY_highlightMul;
+
+		private int m_vramShaderId = INVALID_ID;
+		private int m_vramTexId = INVALID_ID;
+		private int m_vramMatId = INVALID_ID;
+
+		private volatile bool halIsRunning = false;
+        private ulong halCc = 0;
+
+        public MainWindow()
 		{
 			InitializeComponent();
 
-			// opens a console window
-			AllocConsole();
+			Hal = ((Devector.App)System.Windows.Application.Current).Hal;
 
 			Loaded += MainWindow_Loaded;
-			Closed += MainWindow_Closed;
+			//LocationChanged += MainWindow_LocationChanged;
+			//SizeChanged += MainWindow_SizeChanged;
+			Loaded += MainWindow_Loaded;
+			App.DisplayTimer += Update;
+			CompositionTarget.Rendering += OnRendering;
 		}
-
-        //////////////////////////////////
-        ///
-        /// 
-        /// 
-        public const int HW_FRAME_W = 768;                 // Vector06c frame including borders
-        public const int HW_FRAME_H = 312;                 // Vector06c frame including borders
-
-        bool m_glInited = false;
-		HAL? Hal;
-
-		ulong m_ccLast = 0;
-		int m_rasterPixel = 0;
-		int m_rasterLine = 0;
-		bool m_displayIsHovered = false;
-		Vector4 m_scrollV_crtXY_highlightMul;
-
-		int m_vramShaderId = INVALID_ID;
-		int m_vramTexId = INVALID_ID;
-		int m_vramMatId = INVALID_ID;
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			var viewportW = viewport.ActualWidth;
 			var viewportH = viewport.ActualHeight;
 
-			Hal = ((Devector.App)System.Windows.Application.Current).Hal;
-
 			m_glInited = Hal?.CreateGfxContext(viewport.Handle, (int)viewportW, (int)viewportH) ?? false;
 
 			if (!m_glInited) return;
 
-			m_glInited |= DisplayWindowInit((int)viewportW, (int)viewportH);
+			m_glInited |= DisplayInit((int)viewportW, (int)viewportH);
 		}
 
-		private void MainWindow_Closed(object? sender, EventArgs e)
+		private void MainWindow_LocationChanged(object? sender, EventArgs e)
 		{
-
-		}
-
-		protected override void OnRender(DrawingContext drawingContext)
+			Draw();
+        }
+		private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			base.OnRender(drawingContext);
-			// This will only be called when WPF determines a redraw is needed
-			//RedrawMyContent();
-		}
-
-		private void Button_Click(object sender, RoutedEventArgs e)
+            Draw();
+        }
+		protected override void OnClosed(EventArgs e)
 		{
-			RedrawMyContent();
+			base.OnClosed(e);
+			CompositionTarget.Rendering -= OnRendering;
 		}
-
-
-		void RedrawMyContent()
+		private void OnRendering(object? sender, EventArgs e)
 		{
+			Draw();
+        }
 
-			if (!m_glInited) return;
+        private void Draw()
+        {
+            var viewportW = viewport.ActualWidth;
+            var viewportH = viewport.ActualHeight;
 
-			var cc = Hal?.ReqCC();
-			label.Content = "Counter: " + cc.ToString();
+            DrawDisplay(halIsRunning, (int)viewportW, (int)viewportH);
 
-			var isRunning = Hal?.ReqIsRunning() ?? false;
+            label.Content = "Counter: " + halCc.ToString();
+        }
 
-
-			var viewportW = viewport.ActualWidth;
-			var viewportH = viewport.ActualHeight;
-
-			UpdateData(isRunning, (int)viewportW, (int)viewportH);
-			DrawDisplay(isRunning, (int)viewportW, (int)viewportH);
-		}
-
-		private bool DisplayWindowInit(int _viewportW, int _viewportH)
+		private bool DisplayInit(int _viewportW, int _viewportH)
 		{
 			m_vramShaderId = Hal?.InitShader(viewport.Handle, vtxShaderDisplay, fragShaderDisplay) ?? INVALID_ID;
 			if (m_vramShaderId == INVALID_ID) return false;
@@ -143,6 +135,21 @@ namespace Devector
 
 			return m_vramMatId != INVALID_ID;
 		}
+
+		private void Update(object? sender, EventArgs e)
+		{
+			if (!m_glInited) return;
+
+            Dispatcher.Invoke(() =>
+            {
+                halCc = Hal?.ReqCC() ?? 0;
+				halIsRunning = Hal?.ReqIsRunning() ?? false;
+			});
+
+            var viewportW = viewport.ActualWidth;
+            var viewportH = viewport.ActualHeight;
+            UpdateData(halIsRunning, (int)viewportW, (int)viewportH);
+        }
 
 		private bool UpdateData(bool _isRunning, int _viewportW, int _viewportH)
 		{
@@ -192,83 +199,124 @@ namespace Devector
 
 		private bool DrawDisplay(bool _isRunning, int _viewportW, int _viewportH)
 		{
-            if (!m_glInited) return false;
+			if (!m_glInited) return false;
 
-            /*
-                    float border = 0;
-                    ImVec2 borderMin;
-                    ImVec2 borderMax;
-                    switch (m_borderType)
-                    {
-                    case dev::DisplayWindow::BorderType::FULL:
-                        borderMin = { 0.0f, 0.0f };
-                        borderMax = { 1.0f, 1.0f };
-                        break;
+			/*
+					float border = 0;
+					ImVec2 borderMin;
+					ImVec2 borderMax;
+					switch (m_borderType)
+					{
+					case dev::DisplayWindow::BorderType::FULL:
+						borderMin = { 0.0f, 0.0f };
+						borderMax = { 1.0f, 1.0f };
+						break;
 
-                    case dev::DisplayWindow::BorderType::NORMAL:
-                        border = Display::BORDER_VISIBLE;
-                        [[fallthrough]];
+					case dev::DisplayWindow::BorderType::NORMAL:
+						border = Display::BORDER_VISIBLE;
+						[[fallthrough]];
 
-                    case dev::DisplayWindow::BorderType::NONE:
-                    {
-                        int borderLeft = m_hardwareP->Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
+					case dev::DisplayWindow::BorderType::NONE:
+					{
+						int borderLeft = m_hardwareP->Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
 
-                        borderMin = {
-                            (borderLeft - border * 2) * FRAME_PXL_SIZE_W,
-                            (Display::SCAN_ACTIVE_AREA_TOP - border) * FRAME_PXL_SIZE_H };
-                        borderMax = {
-                            borderMin.x + (Display::ACTIVE_AREA_W + border * 4) * FRAME_PXL_SIZE_W,
-                            borderMin.y + (Display::ACTIVE_AREA_H + border * 2) * FRAME_PXL_SIZE_H };
-                        break;
-                    }
-                    }
+						borderMin = {
+							(borderLeft - border * 2) * FRAME_PXL_SIZE_W,
+							(Display::SCAN_ACTIVE_AREA_TOP - border) * FRAME_PXL_SIZE_H };
+						borderMax = {
+							borderMin.x + (Display::ACTIVE_AREA_W + border * 4) * FRAME_PXL_SIZE_W,
+							borderMin.y + (Display::ACTIVE_AREA_H + border * 2) * FRAME_PXL_SIZE_H };
+						break;
+					}
+					}
 
-                    ImVec2 displaySize;
-                    switch (m_displaySize)
-                    {
-                    case dev::DisplayWindow::DisplaySize::R256_256:
-                        displaySize.x = 256.0f;
-                        displaySize.y = 256.0f;
-                        break;
-                    case dev::DisplayWindow::DisplaySize::R512_256:
-                        displaySize.x = 512.0f;
-                        displaySize.y = 256.0f;
-                        break;
-                    case dev::DisplayWindow::DisplaySize::R512_512:
-                        displaySize.x = 512.0f;
-                        displaySize.y = 512.0f;
-                        break;
-                    case dev::DisplayWindow::DisplaySize::MAX:
-                    {
-                        ImGuiStyle& style = ImGui::GetStyle();
-                        auto wMax = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
-                        auto hMax = ImGui::GetWindowHeight() - style.FramePadding.y * 14;
+					ImVec2 displaySize;
+					switch (m_displaySize)
+					{
+					case dev::DisplayWindow::DisplaySize::R256_256:
+						displaySize.x = 256.0f;
+						displaySize.y = 256.0f;
+						break;
+					case dev::DisplayWindow::DisplaySize::R512_256:
+						displaySize.x = 512.0f;
+						displaySize.y = 256.0f;
+						break;
+					case dev::DisplayWindow::DisplaySize::R512_512:
+						displaySize.x = 512.0f;
+						displaySize.y = 512.0f;
+						break;
+					case dev::DisplayWindow::DisplaySize::MAX:
+					{
+						ImGuiStyle& style = ImGui::GetStyle();
+						auto wMax = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
+						auto hMax = ImGui::GetWindowHeight() - style.FramePadding.y * 14;
 
-                        displaySize.x = wMax;
-                        displaySize.y = displaySize.x * WINDOW_ASPECT;
-                        if (displaySize.y > hMax)
-                        {
-                            displaySize.y = hMax;
-                            displaySize.x = displaySize.y / WINDOW_ASPECT;
-                        }
-                        break;
-                    }
-                    }
+						displaySize.x = wMax;
+						displaySize.y = displaySize.x * WINDOW_ASPECT;
+						if (displaySize.y > hMax)
+						{
+							displaySize.y = hMax;
+							displaySize.x = displaySize.y / WINDOW_ASPECT;
+						}
+						break;
+					}
+					}
 
-                    auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
-                    ImGui::Image((void*)(intptr_t)framebufferTex, displaySize, borderMin, borderMax);
-                    //m_displayIsHovered = ImGui::IsItemHovered();
-                    */
+					auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
+					ImGui::Image((void*)(intptr_t)framebufferTex, displaySize, borderMin, borderMax);
+					//m_displayIsHovered = ImGui::IsItemHovered();
+					*/
 
-            var res = Hal?.Draw(viewport.Handle, m_vramMatId, _viewportW, _viewportH);
+			var res = Hal?.Draw(viewport.Handle, m_vramMatId, _viewportW, _viewportH);
 			if (res != (int)ErrCode.NO_ERRORS) return false;
 
-            /*if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
-            {
-                ImGui::OpenPopup(m_contextMenuName);
-            }*/
+			/*if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+			{
+				ImGui::OpenPopup(m_contextMenuName);
+			}*/
 
-            return true;
+			return true;
+		}
+
+        //////////////////////////////////
+        //
+        // Main Menu
+        //
+        //////////////////////////////////
+		///
+        private void NewMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("New command executed.");
+        }
+
+        private void OpenMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Open command executed.");
+        }
+
+        private void SaveMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Save command executed.");
+        }
+
+        private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void UndoMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Undo command executed.");
+        }
+
+        private void RedoMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Redo command executed.");
+        }
+
+        private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("About dialog.");
         }
     }
 }

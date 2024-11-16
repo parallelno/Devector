@@ -24,22 +24,6 @@ namespace dev
         Debugger* m_debuggerP;
         WinGlUtils* m_winGlUtilsP;
 
-        int64_t m_ccLast = -1; // to force the first stats update
-        int64_t m_ccLastRun = 0;
-
-        //Id m_vramShaderId = INVALID_ID;
-        //Id m_vramMatId = INVALID_ID;
-        //Id m_vramTexId = INVALID_ID;
-
-        bool m_glInited = false;
-        bool m_displayIsHovered = false;
-        const char* m_contextMenuName = "##displayCMenu";
-        int m_rasterPixel = 0;
-        int m_rasterLine = 0;
-
-        //bool DisplayWindowInit(const GLsizei _viewportW, const GLsizei _viewportH);
-        
-
     public:
 		literal float FRAME_PXL_SIZE_W = 1.0f / Display::FRAME_W;
 		literal float FRAME_PXL_SIZE_H = 1.0f / Display::FRAME_H;

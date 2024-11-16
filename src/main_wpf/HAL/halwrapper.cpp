@@ -20,9 +20,9 @@ bool dev::HAL::CreateGfxContext(System::IntPtr _hWnd, GLsizei _viewportW, GLsize
 {
 	auto hWnd = static_cast<HWND>(_hWnd.ToPointer());
 	auto glContextStatus = m_winGlUtilsP->CreateGfxContext(hWnd, _viewportW, _viewportH);
-	m_glInited = glContextStatus == WinGlUtils::Status::INITED;
+	auto glInited = glContextStatus == WinGlUtils::Status::INITED;
 
-	return m_glInited;
+	return glInited;
 }
 
 dev::HAL::~HAL()
@@ -115,17 +115,16 @@ auto dev::HAL::Draw(System::IntPtr _hWnd, const Id _materialId,
 auto dev::HAL::Request(const Req _req, System::String^ _dataS)
 -> System::Text::Json::JsonDocument^
 {
-	auto dataS = msclr::interop::marshal_as<std::string>(_dataS);
-	auto dataJ = dataS.empty() ? nlohmann::json() : nlohmann::json::parse(dataS);
+	auto dataJ = System::String::IsNullOrEmpty(_dataS) ?
+		nlohmann::json() :
+		nlohmann::json::parse(msclr::interop::marshal_as<std::string>(_dataS));
 
 	auto req = m_hardwareP->Request(static_cast<Hardware::Req>(_req), dataJ);
 	if (!req) return nullptr;
 
-	dataS = req->dump();
-
-	System::Text::Json::JsonDocumentOptions options;
-
-	return System::Text::Json::JsonDocument::Parse(msclr::interop::marshal_as<System::String^>(dataS), options);
+	auto dataS = req->dump();
+	return System::Text::Json::JsonDocument::Parse(
+		msclr::interop::marshal_as<System::String^>(dataS), {});
 }
 
 auto dev::HAL::ReqCC()
