@@ -57,8 +57,7 @@ namespace Devector
 			//LocationChanged += MainWindow_LocationChanged;
 			//SizeChanged += MainWindow_SizeChanged;
 			Loaded += MainWindow_Loaded;
-			App.DisplayTimer += Update;
-			CompositionTarget.Rendering += OnRendering;
+			App.halDisplayUpdate += Update;
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -84,12 +83,7 @@ namespace Devector
 		protected override void OnClosed(EventArgs e)
 		{
 			base.OnClosed(e);
-			CompositionTarget.Rendering -= OnRendering;
 		}
-		private void OnRendering(object? sender, EventArgs e)
-		{
-			Draw();
-        }
 
         private void Draw()
         {
@@ -149,6 +143,8 @@ namespace Devector
             var viewportW = viewport.ActualWidth;
             var viewportH = viewport.ActualHeight;
             UpdateData(halIsRunning, (int)viewportW, (int)viewportH);
+
+			Draw();
         }
 
 		private bool UpdateData(bool _isRunning, int _viewportW, int _viewportH)

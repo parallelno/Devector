@@ -8,6 +8,7 @@
 #include <windows.h>
 
 #include "utils/types.h"
+#include "utils/consts.h"
 #include "utils/json_utils.h"
 
 #include "core/hardware.h"
@@ -149,6 +150,9 @@ namespace dev
 		auto ReqCC() -> uint64_t;
 		bool ReqIsRunning();
 		void ReqRun();
+		int LoadRom(System::String^ _path);
+		int LoadFdd(System::String^ _path, const int _driveIdx, const bool _autoBoot);
+		int LoadRecording(System::String^ _path);
     };
 }
 

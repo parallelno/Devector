@@ -14,10 +14,10 @@
 #include "utils/utils.h"
 
 dev::ImGuiApp::ImGuiApp(
-		nlohmann::json _settingsJ, const std::string& _stringPath, const std::string& _title) 
+		nlohmann::json _settingsJ, const std::string& _settingsPath, const std::string& _title) 
 	:
 	m_settingsJ(_settingsJ),
-	m_title(_title), m_stringPath(_stringPath),
+	m_title(_title), m_settingsPath(_settingsPath),
 	m_status(AppStatus::NOT_INITED)
 {
 	m_width = dev::GetJsonInt(m_settingsJ, "mainWindowWidth", false, dev::MAIN_WINDOW_W);
@@ -215,7 +215,7 @@ void dev::ImGuiApp::Run()
 
 dev::ImGuiApp::~ImGuiApp()
 {
-	SettingsSave(m_stringPath);
+	SettingsSave(m_settingsPath);
 
 	m_autoUpdateThread.join();
 
@@ -275,7 +275,7 @@ void dev::ImGuiApp::ReqHandling()
 			SettingsUpdate("mainWindowWidth", m_width);
 			SettingsUpdate("mainWindowHeight", m_height);
 
-			SettingsSave(m_stringPath);
+			SettingsSave(m_settingsPath);
 		}
 
 		auto posX = GetSettingsInt("mainWindowX", dev::MAIN_WINDOW_X);
@@ -286,7 +286,7 @@ void dev::ImGuiApp::ReqHandling()
 			SettingsUpdate("mainWindowX", m_posX);
 			SettingsUpdate("mainWindowY", m_posY);
 
-			SettingsSave(m_stringPath);
+			SettingsSave(m_settingsPath);
 		}
 		return;
 	}
@@ -345,7 +345,7 @@ auto dev::ImGuiApp::GetSettingsObject(const std::string& _fieldName)
 -> nlohmann::json
 {
 	std::lock_guard<std::mutex> mlock(m_settingsMutex);
-	return dev::GetJsonObject(m_settingsJ, "recentFiles", false);
+	return dev::GetJsonObject(m_settingsJ, _fieldName, false);
 }
 
 int dev::ImGuiApp::GetSettingsInt(const std::string& _fieldName, int _defaultValue)

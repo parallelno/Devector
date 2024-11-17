@@ -8,8 +8,8 @@
 dev::HAL::HAL(System::String^ _pathBootData, System::String^ _pathRamDiskData,
 	const bool _ramDiskClearAfterRestart)
 {
-	std::wstring pathBootData = msclr::interop::marshal_as<std::wstring>(_pathBootData);
-	std::wstring pathRamDiskData = msclr::interop::marshal_as<std::wstring>(_pathRamDiskData);
+	auto pathBootData = msclr::interop::marshal_as<std::wstring>(_pathBootData);
+	auto pathRamDiskData = msclr::interop::marshal_as<std::wstring>(_pathRamDiskData);
 
 	m_hardwareP = new Hardware(pathBootData, pathRamDiskData, _ramDiskClearAfterRestart);
 	m_debuggerP = new Debugger(*m_hardwareP);
@@ -42,8 +42,8 @@ auto dev::HAL::InitShader(System::IntPtr _hWnd,
 -> Id
 {
 	auto hWnd = static_cast<HWND>(_hWnd.ToPointer());
-	std::string vtxShaderS = msclr::interop::marshal_as<std::string>(_vtxShaderS);
-	std::string fragShaderS = msclr::interop::marshal_as<std::string>(_fragShaderS);
+	auto vtxShaderS = msclr::interop::marshal_as<std::string>(_vtxShaderS);
+	auto fragShaderS = msclr::interop::marshal_as<std::string>(_fragShaderS);
 
 	return m_winGlUtilsP->InitShader(hWnd, vtxShaderS.c_str(), fragShaderS.c_str());
 }
@@ -144,4 +144,82 @@ bool dev::HAL::ReqIsRunning()
 void dev::HAL::ReqRun()
 {
 	m_hardwareP->Request(Hardware::Req::RUN);
+}
+
+int dev::HAL::LoadRecording(System::String^ _path)
+{
+	auto path = msclr::interop::marshal_as<std::wstring>(_path);
+
+	auto result = dev::LoadFile(path);
+	if (!result || result->empty()) return (int)ErrCode::NO_FILES;
+
+	m_hardwareP->Request(Hardware::Req::STOP);
+	m_hardwareP->Request(Hardware::Req::RESET);
+	m_hardwareP->Request(Hardware::Req::RESTART);
+
+	m_hardwareP->Request(Hardware::Req::DEBUG_RECORDER_DESERIALIZE, { {"data", nlohmann::json::binary(*result)} });
+
+	m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", false} }); // has to be called after Hardware loading Rom because it stores the last state of Hardware
+	m_debuggerP->GetDebugData().LoadDebugData(path);
+
+	return (int)(ErrCode::NO_ERRORS);
+}
+
+int dev::HAL::LoadRom(System::String^ _path)
+{
+	auto path = msclr::interop::marshal_as<std::wstring>(_path);
+
+	auto result = dev::LoadFile(path);
+	if (!result || result->empty()) return (int)ErrCode::NO_FILES;
+
+	m_hardwareP->Request(Hardware::Req::STOP);
+	m_hardwareP->Request(Hardware::Req::RESET);
+	m_hardwareP->Request(Hardware::Req::RESTART);
+
+	auto reqData = nlohmann::json({ {"data", *result}, {"addr", Memory::ROM_LOAD_ADDR} });
+	m_hardwareP->Request(Hardware::Req::SET_MEM, reqData);
+
+	m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", true} }); // has to be called after Hardware loading Rom because it stores the last state of Hardware
+	m_debuggerP->GetDebugData().LoadDebugData(path);
+	m_hardwareP->Request(Hardware::Req::RUN);
+
+	return (int)ErrCode::NO_ERRORS;
+}
+
+int dev::HAL::LoadFdd(System::String^ _path, const int _driveIdx, const bool _autoBoot)
+{
+	auto path = msclr::interop::marshal_as<std::wstring>(_path);
+
+	auto fddResult = dev::LoadFile(path);
+	if (!fddResult || fddResult->empty()) return false;
+
+	auto origSize = fddResult->size();
+	auto fddimg = *fddResult;
+
+	int res = (int)ErrCode::NO_ERRORS;
+
+	// TODO: provide error string output
+	if (fddimg.size() > FDD_SIZE) 
+	{
+		res = (int)ErrCode::WARNING_FDD_IMAGE_TOO_BIG;
+		fddimg.resize(FDD_SIZE);
+	}
+
+	if (_autoBoot) m_hardwareP->Request(Hardware::Req::STOP);
+
+	// loading the fdd data
+	m_hardwareP->Request(Hardware::Req::LOAD_FDD, {
+		{"data", fddimg },
+		{"driveIdx", _driveIdx},
+		{"path", dev::StrWToStr(path)}
+		});
+
+	if (_autoBoot)
+	{
+		m_hardwareP->Request(Hardware::Req::RESET);
+		m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", true} }); // has to be called after Hardware loading FDD image because it stores the last state of Hardware
+		m_hardwareP->Request(Hardware::Req::RUN);
+	}
+
+	return res;
 }

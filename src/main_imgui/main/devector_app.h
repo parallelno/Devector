@@ -75,7 +75,7 @@ namespace dev
 			FileType fileType = FileType::ROM;
 
 			void Init(const State& _state, const Type _type = Type::OPEN_FILE_DIALOG, FileType _fileType = FileType::UNDEFINED, const std::wstring& _path = L"",
-				const int _driveIdx = -1, bool _autoBoot = false) 
+				const int _driveIdx = INVALID_ID, bool _autoBoot = false) 
 			{
 				if (state == LoadingRes::State::EXIT) return;
 				fileType = _fileType;
@@ -143,11 +143,13 @@ namespace dev
 		virtual void Update();
 
 	protected:
+		void Init();
+		void HardwareInit();
 		void WindowsInit();
 		void SettingsInit();
 		void RecentFilesInit();
 		void RecentFilesStore();
-		void RecentFilesUpdate(const FileType _fileType, const std::wstring& _path, const int _driveIdx = -1, const bool _autoBoot = false);
+		void RecentFilesUpdate(const FileType _fileType, const std::wstring& _path, const int _driveIdx = INVALID_ID, const bool _autoBoot = false);
 		void AppStyleInit();
 		void MainMenuUpdate();
 		void Load(const std::string& _path);		

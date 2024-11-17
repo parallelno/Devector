@@ -33,7 +33,7 @@ namespace dev {
 			EXIT,
 		};
 
-		ImGuiApp(nlohmann::json _settingsJ, const std::string& _stringPath, const std::string& _title = "New Window");
+		ImGuiApp(nlohmann::json _settingsJ, const std::string& _settingsPath, const std::string& _title = "New Window");
 		~ImGuiApp();
 
 		void Run();
@@ -44,7 +44,7 @@ namespace dev {
 		virtual void Update() {};
 
 	protected:
-		const std::string m_stringPath;
+		const std::string m_settingsPath;
 		int m_width;
 		int m_height;
 		int m_posX;

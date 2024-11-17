@@ -2,6 +2,7 @@
   "profiles": {
     "Devector": {
       "commandName": "Project",
+      "commandLineArgs": "-path ../../rom/games/putup.rom",
       "workingDirectory": "$(SolutionDir)bin\\$(Configuration)",
       "nativeDebugging": true
     }

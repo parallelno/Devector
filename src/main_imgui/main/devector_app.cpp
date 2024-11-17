@@ -23,11 +23,22 @@ dev::DevectorApp::DevectorApp(
 	ImGuiApp(_settingsJ, _settingsPath, APP_NAME),
 {
 	if (m_status == AppStatus::INITED) {
-		m_glUtils.Init(GLUtils::TYPE::IMGUI);
-		SettingsInit();
-		WindowsInit();
-		Load(_rom_fdd_recPath);
+		Init();
 	}
+}
+
+void dev::DevectorApp::Init()
+{
+	m_glUtils.Init(GLUtils::TYPE::IMGUI);
+	SettingsInit();
+	HardwareInit();
+	WindowsInit();
+	Load(_rom_fdd_recPath);
+
+	// Set up the event callback function
+	SDL_SetEventFilter(DevectorApp::EventFilter, this);
+
+	m_hardwareP->Request(Hardware::Req::RUN);
 }
 
 dev::DevectorApp::~DevectorApp()
@@ -44,7 +55,7 @@ dev::DevectorApp::~DevectorApp()
 	SettingsUpdate("keyboardWindowVisible", m_keyboardWindowVisible);
 }
 
-void dev::DevectorApp::WindowsInit()
+void dev::DevectorApp::HardwareInit()
 {
 	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", "boot//boot.bin"));
 	m_restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", true);
@@ -53,7 +64,10 @@ void dev::DevectorApp::WindowsInit()
 
 	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData, m_ramDiskDataPath, m_ramDiskClearAfterRestart);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
+}
 
+void dev::DevectorApp::WindowsInit()
+{
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_dpiScale, m_ruslat);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
 		m_fontItalic, &m_dpiScale, m_reqUI);
@@ -67,11 +81,6 @@ void dev::DevectorApp::WindowsInit()
 	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(&m_dpiScale);
 	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
 	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI, m_pathImgKeyboard);
-
-	// Set up the event callback function
-	SDL_SetEventFilter(DevectorApp::EventFilter, this);
-
-	m_hardwareP->Request(Hardware::Req::RUN);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -100,37 +109,36 @@ void dev::DevectorApp::SettingsInit()
 void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 {
 	// load the rom/fdd/rec image if it was send via the console command
-	if (!_rom_fdd_recPath.empty())
+	if (_rom_fdd_recPath.empty()) return;
+
+	bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+	if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
+
+	auto path = dev::StrToStrW(_rom_fdd_recPath);
+	auto ext = StrToUpper(dev::GetExt(path));
+
+	if (ext == EXT_ROM)
 	{
-		bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-		if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
-
-		auto path = dev::StrToStrW(_rom_fdd_recPath);
-		auto ext = StrToUpper(dev::GetExt(path));
-
-		if (ext == EXT_ROM)
-		{
-			RecentFilesUpdate(FileType::ROM, path);
-		}
-		else if (ext == EXT_FDD)
-		{
-			RecentFilesUpdate(FileType::FDD, path, 0, true);
-		}
-		else if (ext == EXT_REC)
-		{
-			LoadRecording(path);
-		}
-		else {
-			dev::Log(L"Not supported file type: {}", path);
-			m_loadingRes.state = LoadingRes::State::NONE;
-			return;
-		}
-
-		RecentFilesStore();
-		Reload();
-
-		if (isRunning) m_hardwareP->Request(Hardware::Req::RUN);
+		RecentFilesUpdate(FileType::ROM, path);
 	}
+	else if (ext == EXT_FDD)
+	{
+		RecentFilesUpdate(FileType::FDD, path, 0, true);
+	}
+	else if (ext == EXT_REC)
+	{
+		LoadRecording(path);
+	}
+	else {
+		dev::Log(L"Unsupported file type: {}", path);
+		m_loadingRes.state = LoadingRes::State::NONE;
+		return;
+	}
+
+	RecentFilesStore();
+	Reload();
+
+	if (isRunning) m_hardwareP->Request(Hardware::Req::RUN);
 }
 
 // UI thread
@@ -428,7 +436,7 @@ void dev::DevectorApp::RecentFilesUpdate(const FileType _fileType, const std::ws
 
 	// add a new one
 	m_recentFilePaths.push_front({ _fileType, _path, _driveIdx, _autoBoot });
-	// check the amount
+	// check the amount, remove last if excids
 	if (m_recentFilePaths.size() > RECENT_FILES_MAX)
 	{
 		m_recentFilePaths.pop_back();

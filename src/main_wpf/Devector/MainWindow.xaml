@@ -28,8 +28,8 @@
         <!-- Scrollable Content -->
         <ScrollViewer VerticalScrollBarVisibility="Visible">
             <Grid>
-                <Label x:Name="label" Content="Counter: 0" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top"/>
-                <local:Viewport x:Name="viewport" Width="640" Height="480" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,71,0,0" />
+                <Label x:Name="label" Content="Counter: 0" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                <local:Viewport x:Name="viewport" Width="640" Height="480" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,41,0,0" />
             </Grid>
         </ScrollViewer>
     </DockPanel>
