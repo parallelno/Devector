@@ -10,15 +10,26 @@
         <!-- Main Menu -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_New" Click="NewMenuItem_Click"/>
                 <MenuItem Header="_Open" Click="OpenMenuItem_Click"/>
-                <MenuItem Header="_Save" Click="SaveMenuItem_Click"/>
+                <MenuItem Header="_Recent Files">
+                    <MenuItem.ItemsSource>
+                        <Binding Source="{x:Static Application.Current}" Path="RecentFilePaths" />
+                    </MenuItem.ItemsSource>
+                    <MenuItem.ItemTemplate>
+                        <DataTemplate>
+                            <MenuItem Header="{Binding Path}" Command="{Binding DataContext.OpenRecentFileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </MenuItem.ItemTemplate>
+                </MenuItem>
+                <MenuItem Header="_SaveRec" Click="SaveRecMenuItem_Click"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
             </MenuItem>
-            <MenuItem Header="_Edit">
-                <MenuItem Header="_Undo" Click="UndoMenuItem_Click"/>
-                <MenuItem Header="_Redo" Click="RedoMenuItem_Click"/>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="HardwareStats" Click="ToolOpenMenuItem_Click"/>
+                <MenuItem Header="Disasm" Click="ToolOpenMenuItem_Click"/>
+                <MenuItem Header="Breakpoints" Click="ToolOpenMenuItem_Click"/>
+                <MenuItem Header="Watchpoints" Click="ToolOpenMenuItem_Click"/>
             </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="_About" Click="AboutMenuItem_Click"/>

@@ -16,6 +16,11 @@ using static Devector.Shaders;
 
 using System.Text.Json;
 using System.Numerics;
+using System.Reflection.PortableExecutable;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using static Devector.App;
 
 namespace Devector
 {
@@ -53,11 +58,14 @@ namespace Devector
 
 			Hal = ((Devector.App)System.Windows.Application.Current).Hal;
 
-			Loaded += MainWindow_Loaded;
+            DataContext = this; // Set the DataContext to allow binding to commands
+
+            Loaded += MainWindow_Loaded;
 			//LocationChanged += MainWindow_LocationChanged;
 			//SizeChanged += MainWindow_SizeChanged;
 			Loaded += MainWindow_Loaded;
-			App.halDisplayUpdate += Update;
+            var app = (App)Application.Current;
+            app.halDisplayUpdate += Update;
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -134,11 +142,8 @@ namespace Devector
 		{
 			if (!m_glInited) return;
 
-            Dispatcher.Invoke(() =>
-            {
-                halCc = Hal?.ReqCC() ?? 0;
-				halIsRunning = Hal?.ReqIsRunning() ?? false;
-			});
+			halCc = Hal?.ReqCC() ?? 0;
+			halIsRunning = Hal?.ReqIsRunning() ?? false;
 
             var viewportW = viewport.ActualWidth;
             var viewportH = viewport.ActualHeight;
@@ -280,17 +285,18 @@ namespace Devector
         //
         //////////////////////////////////
 		///
-        private void NewMenuItem_Click(object sender, RoutedEventArgs e)
+        private void OpenMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var app = (App)Application.Current;
+            app.OpenFile();
+        }
+
+        private void RecentFilesMenuItem_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("New command executed.");
         }
 
-        private void OpenMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Open command executed.");
-        }
-
-        private void SaveMenuItem_Click(object sender, RoutedEventArgs e)
+        private void SaveRecMenuItem_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Save command executed.");
         }
@@ -300,19 +306,43 @@ namespace Devector
             Close();
         }
 
-        private void UndoMenuItem_Click(object sender, RoutedEventArgs e)
+        private void ToolOpenMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Undo command executed.");
-        }
+			var windowName = ((MenuItem)sender).Header.ToString();
 
-        private void RedoMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Redo command executed.");
+            switch (windowName)
+			{
+				case "HardwareStats":
+					break;
+
+                case "Disasm":
+                    break;
+
+                case "Breakpoints":
+                    break;
+
+                case "Watchpoints":
+                    break;
+            }
+
+            // create and show a window
         }
 
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("About dialog.");
+        }
+
+        private ICommand? _openRecentFileCommand;
+        public ICommand OpenRecentFileCommand => _openRecentFileCommand ??= new RelayCommand<RecentFile>(OpenRecentFile);
+
+        private void OpenRecentFile(RecentFile? file)
+        {
+            if (file is not null)
+            {
+                var app = (App)Application.Current;
+				app.Load(file);
+            }
         }
     }
 }

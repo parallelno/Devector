@@ -165,7 +165,7 @@ namespace dev
 		void OpenFile();
 		void SaveFile();
 		void DrawSelectDrivePopup();
-		void ResLoadingStatusHandling();
+		void LoadingResStatusHandling();
 		void ReqUIHandling();
 		void DebugAttach();
 		void RestartOnLoadFdd();

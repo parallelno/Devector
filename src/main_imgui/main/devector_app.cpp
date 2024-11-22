@@ -150,7 +150,7 @@ void dev::DevectorApp::Update()
 	
 	DebugAttach();
 
-	ResLoadingStatusHandling();
+	LoadingResStatusHandling();
 
 	m_hardwareStatsWindowP->Update(m_hardwareStatsWindowVisible);
 	m_disasmWindowP->Update(m_disasmWindowVisible);
@@ -296,7 +296,7 @@ void dev::DevectorApp::MainMenuUpdate()
 	}
 }
 
-void dev::DevectorApp::ResLoadingStatusHandling()
+void dev::DevectorApp::LoadingResStatusHandling()
 {
 	// handle the statuses
 	switch (m_loadingRes.state)
@@ -742,7 +742,6 @@ void dev::DevectorApp::ReqUIHandling()
 	case ReqUI::Type::LOAD_RECENT_FDD_IMG:
 		MountRecentFddImg();
 		m_reqUI.type = ReqUI::Type::NONE;
-		int a;
 		break;
 	}
 }

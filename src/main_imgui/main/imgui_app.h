@@ -25,9 +25,9 @@ namespace dev {
 	{
 	public:
 		enum class AppStatus {
-			NOT_INITED = 0,
-			INITED,
-			RUN,
+			NOT_INITED = 0, // ImGui not initialized
+			INITED, // ImGui initialized
+			RUN, // app is running
 			REQ_PREPARE_FOR_EXIT,
 			PREPARE_FOR_EXIT,
 			EXIT,

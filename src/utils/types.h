@@ -10,7 +10,8 @@ namespace dev
 	using ColorI = uint32_t;
 	using Id = int;
 
-	// inter UI requests
+	// The User initiated requests in the UI thread
+	// for window-to-window communication
 	struct ReqUI {
 		enum class Type : int {
 			NONE = 0,
