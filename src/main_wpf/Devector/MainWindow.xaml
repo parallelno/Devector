@@ -5,10 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Devector"
         mc:Ignorable="d"
-        Title="MainWindow" Height="591" Width="680">
+        Title="Devector" Height="664" Width="680"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        ui:WindowHelper.UseModernWindowStyle="True"
+        MouseRightButtonDown="Viewport_MouseRightButtonUp">
     <DockPanel>
         <!-- Main Menu -->
-        <Menu DockPanel.Dock="Top">
+        <Menu Name="menuBar" DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" Click="OpenMenuItem_Click"/>
                 <MenuItem Header="_Recent Files">
@@ -35,13 +38,20 @@
                 <MenuItem Header="_About" Click="AboutMenuItem_Click"/>
             </MenuItem>
         </Menu>
-
-        <!-- Scrollable Content -->
-        <ScrollViewer VerticalScrollBarVisibility="Visible">
-            <Grid>
-                <Label x:Name="label" Content="Counter: 0" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-                <local:Viewport x:Name="viewport" Width="640" Height="480" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,41,0,0" />
-            </Grid>
-        </ScrollViewer>
+        <Grid>
+            <DockPanel>
+                <local:Viewport x:Name="viewport" Height="591" Width="680">
+                    <local:Viewport.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Option 1" />
+                            <MenuItem Header="Option 2 with Submenu">
+                                <MenuItem Header="Sub Option 1" />
+                                <MenuItem Header="Sub Option 2" />
+                            </MenuItem>
+                        </ContextMenu>
+                    </local:Viewport.ContextMenu>
+                </local:Viewport>
+            </DockPanel>
+        </Grid>
     </DockPanel>
 </Window>

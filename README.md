@@ -50,7 +50,7 @@ It requires VS 2019+ c++ development environment installed
 1. open DevectorWPF.sln VS Studio solution
 2. install NuGet package:
     1. Tools -> NuGet Package Manager -> Package Manager Console
-    2. Install-Package SharpDX.Direct3D11
+    2. Install-Package ModernWpfUI
 3. build
 
 ## Contributing

@@ -1,0 +1,43 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.modernwpf.com/2019">
+    <!-- Define Dark Mode Colors -->
+    <ResourceDictionary.MergedDictionaries>
+        <ui:ColorPaletteResources
+            TargetTheme="Dark"
+            Accent="#FF569CD6"
+            AltHigh="#FF1E1E1E"
+            AltLow="#FF252526"
+            AltMedium="#FF3C3C3C"
+            AltMediumHigh="#FF464646"
+            AltMediumLow="#FF2D2D30"
+            BaseHigh="#FFFFFFFF"
+            BaseLow="#FF333333"
+            BaseMedium="#FF3F3F46"
+            BaseMediumHigh="#FF575757"
+            BaseMediumLow="#FF404040"
+            ChromeAltLow="#FF1E1E1E"
+            ChromeBlackHigh="#FF000000"
+            ChromeBlackLow="#FF252526"
+            ChromeBlackMedium="#FF1E1E1E"
+            ChromeBlackMediumLow="#FF2D2D30"
+            ChromeDisabledHigh="#FF3C3C3C"
+            ChromeDisabledLow="#FF464646"
+            ChromeGray="#FF3F3F46"
+            ChromeHigh="#FF007ACC"
+            ChromeLow="#FF1E1E1E"
+            ChromeMedium="#FF333333"
+            ChromeMediumLow="#FF252526"
+            ChromeWhite="#FFFFFFFF"
+            ListLow="#FF1E1E1E"
+            ListMedium="#FF252526" />
+        <ResourceDictionary>
+            <Color x:Key="SystemChromeAltMediumHighColor">#CC353819</Color>
+            <Color x:Key="SystemChromeAltHighColor">#FF353819</Color>
+            <Color x:Key="SystemRevealListLowColor">#FF535350</Color>
+            <Color x:Key="SystemRevealListMediumColor">#FF787878</Color>
+            <Color x:Key="RegionColor">#FF353819</Color>
+            <SolidColorBrush x:Key="RegionBrush" Color="{StaticResource RegionColor}" />
+        </ResourceDictionary>
+    </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>

@@ -66,9 +66,50 @@ namespace Devector
 			Loaded += MainWindow_Loaded;
             var app = (App)Application.Current;
             app.halDisplayUpdate += Update;
+
+            CompositionTarget.Rendering += DrawEvent;
 		}
 
-		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void Viewport_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            // Get the position of the mouse relative to the Viewport control
+            Point mousePos = e.GetPosition(viewport);
+
+            // Get the size and position of the Viewport control
+            Rect viewportBounds = new Rect(0, 0, viewport.ActualWidth, viewport.ActualHeight);
+
+            // Check if the mouse click occurred inside the defined area
+            if (viewportBounds.Contains(mousePos))
+            {
+                viewport.ContextMenu.IsOpen = true;
+            }
+        }
+
+        private void DrawEvent(object? sender, EventArgs e)
+        {
+            var widthToHeightRatio = 4.0 / 3.0;
+			double margin = 5.0;
+            var viewportW = this.ActualWidth - margin;
+            var viewportH = this.ActualHeight - menuBar.ActualHeight - SystemParameters.WindowCaptionHeight - margin * 2;
+
+			if (viewportW < 0 || viewportH < 0) return;
+
+            if (viewportW / viewportH > widthToHeightRatio)
+            {
+                viewportW = viewportH * widthToHeightRatio;
+            }
+            else
+            {
+                viewportH = viewportW / widthToHeightRatio;
+            }
+
+			viewport.Width = viewportW;
+			viewport.Height = viewportH;
+
+            DrawDisplay(halIsRunning, (int)viewportW, (int)viewportH);
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			var viewportW = viewport.ActualWidth;
 			var viewportH = viewport.ActualHeight;
@@ -95,15 +136,17 @@ namespace Devector
 
         private void Draw()
         {
-            var viewportW = viewport.ActualWidth;
+            // TODO: now draw is called by DrawEvent because it fixes the issue with white flashes while window resizing.
+            // but it renders more often than required (50 Hz). Figure out what is the best in this situation.
+            /*
+			var viewportW = viewport.ActualWidth;
             var viewportH = viewport.ActualHeight;
 
             DrawDisplay(halIsRunning, (int)viewportW, (int)viewportH);
-
-            label.Content = "Counter: " + halCc.ToString();
+			*/
         }
 
-		private bool DisplayInit(int _viewportW, int _viewportH)
+        private bool DisplayInit(int _viewportW, int _viewportH)
 		{
 			m_vramShaderId = Hal?.InitShader(viewport.Handle, vtxShaderDisplay, fragShaderDisplay) ?? INVALID_ID;
 			if (m_vramShaderId == INVALID_ID) return false;

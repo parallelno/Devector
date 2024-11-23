@@ -17,6 +17,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using static Devector.App;
+using System.Reflection;
 
 namespace Devector
 {
@@ -65,6 +66,7 @@ namespace Devector
 
 		bool m_mountRecentFddImg = false;
 
+		/*
 		// The User initiated requests in the UI thread
 		// for window-to-window communication
 		public struct ReqUI
@@ -97,6 +99,7 @@ namespace Devector
 		}
 
 		ReqUI m_reqUI = new ReqUI();
+		*/
 
 		// path, file type, driveIdx, autoBoot
 		public record RecentFile(string Path, int DriveIdx = 0, bool AutoBoot = true);
@@ -110,10 +113,10 @@ namespace Devector
 			// opens a console window
 			AllocConsole();
 
-			Init(e.Args);
+            Init(e.Args);
 		}
 
-		private void Init(string[] args)
+        private void Init(string[] args)
 		{
 			// init a timer
 			_halDisplayUpdateTmer = new DispatcherTimer(TimeSpan.FromMilliseconds(DISPLAY_UPDATE_DELAY),
@@ -121,7 +124,6 @@ namespace Devector
 										 halDisplayUpdateTimerCallback,
 										 Dispatcher.CurrentDispatcher);
 			_halDisplayUpdateTmer.Start();
-
 
 
 			(m_settingsPath, m_settingsJ, m_romFddRecPath) = HandleArgs(args, DEFAULT_SETTING_PATH);
@@ -396,42 +398,7 @@ namespace Devector
 
 		private void Update(object? sender, EventArgs e)
 		{
-			//ReqUIHandling();
-
-			//...
 		}
-
-		/*
-		private void ReqUIHandling()
-		{
-			switch (m_reqUI.type)
-			{
-				case ReqUI.Type.RELOAD_ROM_FDD_REC:
-					Reload();
-					m_reqUI.type = ReqUI.Type.DISASM_UPDATE;
-					break;
-
-				case ReqUI.Type.LOAD_RECENT_FDD_IMG:
-					MountRecentFddImg();
-					m_reqUI.type = ReqUI.Type.NONE;
-					break;
-			}
-		}
-
-		private void MountRecentFddImg()
-		{
-			foreach(var recentFilePath in m_recentFilePaths)
-			{
-				var (pathN, driveIdx, autoBoot) = recentFilePath;
-				
-				if (fileType == FileType.FDD)
-				{
-					PrintLoadingError(Hal?.LoadFdd(pathN, driveIdx, autoBoot), pathN);
-					break;
-				}
-			}
-		}
-		*/
 
 		public void Load(RecentFile file, bool updateRecentFiles = true)
 		{
@@ -490,6 +457,6 @@ namespace Devector
 				Load(new RecentFile(path));
 			}
 		}
-	}
+    }
 
 }
