@@ -93,9 +93,15 @@ namespace dev
 			const int _framebufferTextureFilter = GL_NEAREST)
 				-> Id;
 		auto InitTexture(GLsizei _w, GLsizei _h, Texture::Format _format, 
-			const GLint textureFilter = GL_NEAREST) -> Id;
+			const GLint textureFilter = GL_NEAREST) 
+			-> Id;
 
 		auto Draw(const Id _renderDataId) const -> ErrCode;
+
+		auto GetMaterialParamId(const Id _materialId, const std::string& _paramName) -> Id;
+		auto UpdateMaterialParam(const Id _materialId, const Id _paramId, const Vec4& _param) 
+			-> ErrCode;
+		
 		void UpdateTexture(const Id _texureId, const uint8_t* _memP);
 		auto GetFramebufferTexture(const Id _materialId) const -> Id;
 		auto GetMaterial(const Id _matId) -> Material*;

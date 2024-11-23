@@ -102,6 +102,14 @@ namespace dev
 		auto Draw(const HWND _hWnd, const Id _materialId,
 			const GLsizei _viewportW, const GLsizei _viewportH) const 
 			-> dev::ErrCode;
+
+		auto GetMaterialParamId(const HWND _hWnd,
+			const Id _materialId, const std::string& _paramName)
+			-> Id;
+
+		auto UpdateMaterialParam(const HWND _hWnd,
+			const Id _materialId, const Id _paramId, const GLUtils::Vec4& _paramVal)
+			->ErrCode;
 	};
 }
 #endif // end WPF

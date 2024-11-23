@@ -105,6 +105,29 @@ auto dev::HAL::Draw(System::IntPtr _hWnd, const Id _materialId,
 		_materialId, _viewportW, _viewportH));
 }
 
+auto dev::HAL::GetMaterialParamId(System::IntPtr _hWnd,
+	const Id _materialId, System::String^ _paramName)
+-> Id
+{
+	auto paramName = msclr::interop::marshal_as<std::string>(_paramName);
+
+	return m_winGlUtilsP->GetMaterialParamId(
+		static_cast<HWND>(_hWnd.ToPointer()),
+		static_cast<Id>(_materialId), paramName);
+}
+
+auto dev::HAL::UpdateMaterialParam(System::IntPtr _hWnd,
+	const Id _materialId, const Id _paramId, 
+	const System::Numerics::Vector4^ _paramVal)
+-> int
+{
+	GLUtils::Vec4 paramVal { _paramVal->X, _paramVal->Y, _paramVal->Z, _paramVal->W };
+
+	return static_cast<int>(m_winGlUtilsP->UpdateMaterialParam(
+		static_cast<HWND>(_hWnd.ToPointer()),
+		_materialId, _paramId, paramVal));
+}
+
 ////////////////////////////////////////////////
 //
 // Requests

@@ -242,6 +242,30 @@ auto dev::WinGlUtils::Draw(const HWND _hWnd, const Id _materialId,
 	return dev::ErrCode::NO_ERRORS;
 }
 
+auto dev::WinGlUtils::GetMaterialParamId(const HWND _hWnd,
+	const Id _materialId, const std::string& _paramName)
+-> Id
+{
+	auto it = m_gfxContexts.find(_hWnd);
+	if (it == m_gfxContexts.end()) return {};
+	auto& gfxContext = it->second;
+	CurrentGfxContext currentGfxContext{ gfxContext };
+
+	return m_gLUtilsP->GetMaterialParamId(_materialId, _paramName);
+}
+
+auto dev::WinGlUtils::UpdateMaterialParam(const HWND _hWnd,
+	const Id _materialId, const Id _paramId, const GLUtils::Vec4& _paramVal)
+-> ErrCode
+{
+	auto it = m_gfxContexts.find(_hWnd);
+	if (it == m_gfxContexts.end()) return {};
+	auto& gfxContext = it->second;
+	CurrentGfxContext currentGfxContext{ gfxContext };
+
+	return m_gLUtilsP->UpdateMaterialParam(_materialId, _paramId, _paramVal);
+}
+
 auto dev::WinGlUtils::InitRenderObjects(const GfxContext& _gfxContext,
 	const GLsizei _viewportW, const GLsizei _viewportH)
 -> Status

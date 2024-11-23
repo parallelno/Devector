@@ -33,6 +33,7 @@ namespace dev
 		literal float ACTIVE_AREA_W = Display::ACTIVE_AREA_W;
 		literal float ACTIVE_AREA_H = Display::ACTIVE_AREA_H;
 		literal float SCAN_ACTIVE_AREA_TOP = Display::SCAN_ACTIVE_AREA_TOP;
+		literal float BORDER_VISIBLE = Display::BORDER_VISIBLE;
 
 		enum class Req : int {
 			NONE = 0,
@@ -138,6 +139,15 @@ namespace dev
 		auto Draw(System::IntPtr _hWnd, const Id _materialId,
 			const GLsizei _viewportW, const GLsizei _viewportH)
 			->int;
+
+		auto GetMaterialParamId(System::IntPtr _hWnd,
+			const Id _materialId, System::String^ _paramName)
+			-> Id;
+
+		auto UpdateMaterialParam(System::IntPtr _hWnd,
+			const Id _materialId, const Id _paramId,
+			const System::Numerics::Vector4^ _paramVal)
+			-> int;
 
         ////////////////////////////////////////////////////////////
 		// 

@@ -173,6 +173,36 @@ auto dev::GLUtils::Draw(const Id _materialId) const
 	return dev::ErrCode::NO_ERRORS;
 }
 
+auto dev::GLUtils::GetMaterialParamId(const Id _materialId,
+	const std::string& _paramName)
+-> Id
+{
+	if (!m_gladInited || !IsMaterialReady(_materialId)) return INVALID_ID;
+
+	auto& material = m_materials.at(_materialId);
+
+	auto paramIt = material.paramIds.find(_paramName);
+
+	if (paramIt == material.paramIds.end()) return INVALID_ID;
+
+	return paramIt->second;
+}
+
+auto dev::GLUtils::UpdateMaterialParam(const Id _materialId, 
+		const Id _paramId, const Vec4& _param)
+-> ErrCode
+{
+	if (!m_gladInited || !IsMaterialReady(_materialId)) return ErrCode::UNSPECIFIED;
+
+	auto& material = m_materials.at(_materialId);
+
+	auto& paramValue = material.params[_paramId];
+	
+	paramValue = _param;
+
+	return ErrCode::NO_ERRORS;
+}
+
 void dev::GLUtils::UpdateTexture(const Id _texureId, const uint8_t* _memP)
 {
 	if (_texureId == INVALID_ID) return;

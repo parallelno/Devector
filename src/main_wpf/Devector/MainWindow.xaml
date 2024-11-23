@@ -8,7 +8,7 @@
         Title="Devector" Height="664" Width="680"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         ui:WindowHelper.UseModernWindowStyle="True"
-        MouseRightButtonDown="Viewport_MouseRightButtonUp">
+        MouseRightButtonDown="Viewport_ContextMenuOpen">
     <DockPanel>
         <!-- Main Menu -->
         <Menu Name="menuBar" DockPanel.Dock="Top">
@@ -43,11 +43,13 @@
                 <local:Viewport x:Name="viewport" Height="591" Width="680">
                     <local:Viewport.ContextMenu>
                         <ContextMenu>
-                            <MenuItem Header="Option 1" />
-                            <MenuItem Header="Option 2 with Submenu">
-                                <MenuItem Header="Sub Option 1" />
-                                <MenuItem Header="Sub Option 2" />
+                            <MenuItem Header="Border Size">
+                                <MenuItem Header="None" Click="BorderSizeUpdate" Tag="{x:Static local:BorderSizeOption.None}"/>
+                                <MenuItem Header="Normal" Click="BorderSizeUpdate" Tag="{x:Static local:BorderSizeOption.Normal}"/>
+                                <MenuItem Header="Full" Click="BorderSizeUpdate" Tag="{x:Static local:BorderSizeOption.Full}"/>
                             </MenuItem>
+                            <MenuItem Header="Display Size" />
+                            <MenuItem Header="Emulation Speed" />
                         </ContextMenu>
                     </local:Viewport.ContextMenu>
                 </local:Viewport>
