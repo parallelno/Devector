@@ -21,8 +21,20 @@ namespace Devector
 
 	public enum EmuSpeedOption { _20PERCENT, HALF, NORMAL, X2, MAX }
 
+	public enum WindowClassOption { 
+		HARDWARE_STATS, 
+		DISASM,
+		BREAKPOINTS,
+		WATCHPOINTS,
+		MEMORY_DISPLAY,
+		HEX_VIEWER,
+		TRACE_LOG,
+		RECORDER,
+		SCREEN_KEYBOARD,
+		ABOUT
+	}
 
-    public partial class MainWindow : Window
+	public partial class MainWindow : Window
 	{
 		//////////////////////////////////
 		//
@@ -36,6 +48,30 @@ namespace Devector
 		private const double DISPLAY_RATIO = 4.0 / 3.0;
 		private const double VIEWPORT_MARGIN = 5.0;         // the margin between the window and the viewport
 
+		//////////////////////////////////
+		//
+		// Windows
+		//
+		//////////////////////////////////
+
+		HardwareStats? hardwareStatsWindow = null;
+		Disasm? disasmWindow = null;
+		Breakpoints? breakpointsWindow = null;
+		Watchpoints? watchpointsWindow = null;
+		MemoryDisplay? memoryDisplayWindow = null;
+		HexViewer? hexViewerWindow = null;
+		TraceLog? traceLogWindow = null;
+		Recorder? recorderWindow = null;
+		ScreenKeyboard? screenKeyboardWindow = null;
+		About? aboutWindow = null;
+
+
+		//////////////////////////////////
+		//
+		// Vars
+		//
+		//////////////////////////////////
+
 		private bool m_glInited = false;
 		private HAL? Hal;
 
@@ -48,7 +84,7 @@ namespace Devector
 		private Vector2 viewportSize;
 		private EmuSpeedOption m_emuSpeedOption = EmuSpeedOption.NORMAL;
 
-        private string m_matParamName_scrollV_crtXY_highlightMul = "m_scrollV_crtXY_highlightMul";
+		private string m_matParamName_scrollV_crtXY_highlightMul = "m_scrollV_crtXY_highlightMul";
 		private string m_matParamName_bordsLRTB = "m_bordsLRTB";
 		private string m_matParamName_uvMinMax = "m_uvMinMax";
 		private Vector4 m_matParamVal_scrollV_crtXY_highlightMul;
@@ -109,7 +145,7 @@ namespace Devector
 		private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
 			SetViewportSize(m_viewportSizeOption);
-        }
+		}
 		protected override void OnClosed(EventArgs e)
 		{
 			base.OnClosed(e);
@@ -347,29 +383,66 @@ namespace Devector
 
 		private void ToolOpenMenuItem_Click(object sender, RoutedEventArgs e)
 		{
-			var windowName = ((MenuItem)sender).Header.ToString();
+			if (sender is MenuItem menuItem && menuItem.Tag is WindowClassOption option)
 
-			switch (windowName)
+			switch (option)
 			{
-				case "HardwareStats":
+				case WindowClassOption.HARDWARE_STATS:
+					ToggleWindowVisibility(ref hardwareStatsWindow);
 					break;
 
-				case "Disasm":
+				case WindowClassOption.DISASM:
+					ToggleWindowVisibility(ref disasmWindow);
 					break;
 
-				case "Breakpoints":
+				case WindowClassOption.BREAKPOINTS:
+					ToggleWindowVisibility(ref breakpointsWindow);
 					break;
 
-				case "Watchpoints":
+				case WindowClassOption.WATCHPOINTS:
+					ToggleWindowVisibility(ref watchpointsWindow);
+					break;
+
+				case WindowClassOption.MEMORY_DISPLAY:
+					ToggleWindowVisibility(ref memoryDisplayWindow);
+					break;
+
+				case WindowClassOption.HEX_VIEWER:
+					ToggleWindowVisibility(ref hexViewerWindow);
+					break;
+
+				case WindowClassOption.TRACE_LOG:
+					ToggleWindowVisibility(ref traceLogWindow);
+					break;
+
+				case WindowClassOption.RECORDER:
+					ToggleWindowVisibility(ref recorderWindow);
+					break;
+
+				case WindowClassOption.SCREEN_KEYBOARD:
+					ToggleWindowVisibility(ref screenKeyboardWindow);
+					break;
+
+				case WindowClassOption.ABOUT:
+					ToggleWindowVisibility(ref aboutWindow);
 					break;
 			}
 
 			// create and show a window
 		}
 
-		private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
+		static private void ToggleWindowVisibility<T>(ref T? window) where T : Window, new()
 		{
-			MessageBox.Show("About dialog.");
+			if (window?.IsVisible == true)
+			{
+				window.Close();
+				window = null;
+			}
+			else
+			{
+				window = new();
+				window.Show();
+			}
 		}
 
 		private ICommand? _openRecentFileCommand;
@@ -484,7 +557,7 @@ namespace Devector
 			if (sender is MenuItem menuItem && menuItem.Tag is BorderSizeOption option)
 			{
 				SetBorderSize(option);
-            }
+			}
 		}
 
 		private void ViewportSizeUpdate(object sender, RoutedEventArgs e)
@@ -492,70 +565,70 @@ namespace Devector
 			if (sender is MenuItem menuItem && menuItem.Tag is ViewportSizeOption option)
 			{
 				SetViewportSize(option);
-            }
+			}
 		}
 
-        private void EmuSpeedUpdate(object sender, RoutedEventArgs e)
-        {
-            if (sender is MenuItem menuItem && menuItem.Tag is EmuSpeedOption option)
-            {
-                SetEmuSpeed(option);
-            }
-        }
-
-        private void SetBorderSize(BorderSizeOption option)
+		private void EmuSpeedUpdate(object sender, RoutedEventArgs e)
 		{
-            m_borderSizeOption = option;
-            m_matParamVal_uvMinMax = GetViewportUVMinMax(option);
+			if (sender is MenuItem menuItem && menuItem.Tag is EmuSpeedOption option)
+			{
+				SetEmuSpeed(option);
+			}
+		}
+
+		private void SetBorderSize(BorderSizeOption option)
+		{
+			m_borderSizeOption = option;
+			m_matParamVal_uvMinMax = GetViewportUVMinMax(option);
 
 			Hal?.UpdateMaterialParam(viewport.Handle, m_vramMatId,
 				m_matParamId_uvMinMax, m_matParamVal_uvMinMax);
 		}
 
-        private void SetViewportSize(ViewportSizeOption option)
-        {
-            m_viewportSizeOption = option;
-            viewportSize = GetViewportSize(option);
-            viewport.Width = viewportSize.X;
-            viewport.Height = viewportSize.Y;
-        }
+		private void SetViewportSize(ViewportSizeOption option)
+		{
+			m_viewportSizeOption = option;
+			viewportSize = GetViewportSize(option);
+			viewport.Width = viewportSize.X;
+			viewport.Height = viewportSize.Y;
+		}
 
-        private void SetEmuSpeed(EmuSpeedOption option)
-        {
-            m_emuSpeedOption = option;
+		private void SetEmuSpeed(EmuSpeedOption option)
+		{
+			m_emuSpeedOption = option;
 
 			var data = new JsonObject
 			{
 				["speed"] = (int)m_emuSpeedOption
-            };
+			};
 
-            Hal?.Request(HAL.Req.SET_CPU_SPEED, data.ToJsonString());
-        }
+			Hal?.Request(HAL.Req.SET_CPU_SPEED, data.ToJsonString());
+		}
 
 
 
-        //////////////////////////////////
-        //
-        // Shortcuts
-        //
-        //////////////////////////////////
+		//////////////////////////////////
+		//
+		// Shortcuts
+		//
+		//////////////////////////////////
 
-        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+		private void MainWindow_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (Keyboard.IsKeyDown(Key.LeftCtrl))
 			{
 				switch (e.Key)
 				{
 					case Key.S:
-                        var viewportSizeOption = (ViewportSizeOption)(((int)(m_viewportSizeOption) + 1) % Enum.GetValues(typeof(ViewportSizeOption)).Length);
-                        SetViewportSize(viewportSizeOption);
-                        e.Handled = true;
+						var viewportSizeOption = (ViewportSizeOption)(((int)(m_viewportSizeOption) + 1) % Enum.GetValues(typeof(ViewportSizeOption)).Length);
+						SetViewportSize(viewportSizeOption);
+						e.Handled = true;
 						break;
 					case Key.B:
-                        // Get the next value in the enum
-                        var borderSizeOption = (BorderSizeOption)(((int)(m_borderSizeOption) + 1) % Enum.GetValues(typeof(BorderSizeOption)).Length);
-                        SetBorderSize(borderSizeOption);
-                        e.Handled = true;
+						// Get the next value in the enum
+						var borderSizeOption = (BorderSizeOption)(((int)(m_borderSizeOption) + 1) % Enum.GetValues(typeof(BorderSizeOption)).Length);
+						SetBorderSize(borderSizeOption);
+						e.Handled = true;
 						break;
 				}
 			}

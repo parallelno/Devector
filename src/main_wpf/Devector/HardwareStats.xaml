@@ -1,0 +1,118 @@
+﻿<Window x:Class="Devector.HardwareStats"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        ui:WindowHelper.UseModernWindowStyle="True"
+        Title="Hardware Stats" Width="600" Height ="400">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.15*"/>
+            <ColumnDefinition Width="0.15*"/>
+            <ColumnDefinition Width="0.5*"/>
+            <ColumnDefinition Width="0.5*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Regs Panel -->
+        <DockPanel Grid.Column="0">
+            <Border Background="LightGray" Padding="5" DockPanel.Dock="Top">
+                <TextBlock Text="Regs" FontWeight="Bold"/>
+            </Border>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Register Pairs -->
+                <StackPanel Grid.Row="0" Margin="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="AF" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="FFFF" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="BC" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="DE" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="HL" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="SP" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="PC" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Flags -->
+                <StackPanel Grid.Row="1" Margin="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="C" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Z" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="P" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="S" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="AC" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </DockPanel>
+
+        <!-- Stack Panel -->
+        <DockPanel Grid.Column="1">
+            <Border Background="LightGray" Padding="5">
+                <TextBlock Text="Stack" FontWeight="Bold"/>
+            </Border>
+        </DockPanel>
+
+        <!-- Hardware Panel -->
+        <DockPanel Grid.Column="2">
+            <Border Background="LightGray" Padding="5">
+                <TextBlock Text="Hardware" FontWeight="Bold"/>
+            </Border>
+        </DockPanel>
+
+        <!-- Peripheral Panel -->
+        <DockPanel Grid.Column="3">
+            <Border Background="LightGray" Padding="5">
+                <TextBlock Text="Peripheral" FontWeight="Bold"/>
+            </Border>
+        </DockPanel>
+    </Grid>
+</Window>

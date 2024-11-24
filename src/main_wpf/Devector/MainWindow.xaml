@@ -5,16 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Devector"
         mc:Ignorable="d"
-        Title="Devector" Height="664" Width="680"
+        Title="Devector" Height="580" Width="680"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         ui:WindowHelper.UseModernWindowStyle="True"
         MouseRightButtonDown="Viewport_ContextMenuOpen">
     <DockPanel>
         <!-- Main Menu -->
         <Menu Name="menuBar" DockPanel.Dock="Top">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open" Click="OpenMenuItem_Click"/>
-                <MenuItem Header="_Recent Files">
+            <MenuItem Header="File">
+                <MenuItem Header="Open" Click="OpenMenuItem_Click"/>
+                <MenuItem Header="Recent Files">
                     <MenuItem.ItemsSource>
                         <Binding Source="{x:Static Application.Current}" Path="RecentFilePaths" />
                     </MenuItem.ItemsSource>
@@ -24,23 +24,28 @@
                         </DataTemplate>
                     </MenuItem.ItemTemplate>
                 </MenuItem>
-                <MenuItem Header="_SaveRec" Click="SaveRecMenuItem_Click"/>
+                <MenuItem Header="SaveRec" Click="SaveRecMenuItem_Click"/>
                 <Separator/>
-                <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
+                <MenuItem Header="Exit" Click="ExitMenuItem_Click"/>
             </MenuItem>
-            <MenuItem Header="_Tools">
-                <MenuItem Header="HardwareStats" Click="ToolOpenMenuItem_Click"/>
-                <MenuItem Header="Disasm" Click="ToolOpenMenuItem_Click"/>
-                <MenuItem Header="Breakpoints" Click="ToolOpenMenuItem_Click"/>
-                <MenuItem Header="Watchpoints" Click="ToolOpenMenuItem_Click"/>
+            <MenuItem Header="Tools">
+                <MenuItem Header="HardwareStats" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.HARDWARE_STATS}"/>
+                <MenuItem Header="Disasm" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.DISASM}"/>
+                <MenuItem Header="Breakpoints" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.BREAKPOINTS}"/>
+                <MenuItem Header="Watchpoints" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.WATCHPOINTS}"/>
+                <MenuItem Header="Memory Display" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.MEMORY_DISPLAY}"/>
+                <MenuItem Header="Hex Viewer" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.HEX_VIEWER}"/>
+                <MenuItem Header="Trace Log" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.TRACE_LOG}"/>
+                <MenuItem Header="Recorder" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.RECORDER}"/>
+                <MenuItem Header="Screen Keyboard" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.SCREEN_KEYBOARD}"/>
             </MenuItem>
             <MenuItem Header="_Help">
-                <MenuItem Header="_About" Click="AboutMenuItem_Click"/>
+                <MenuItem Header="About" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.ABOUT}"/>
             </MenuItem>
         </Menu>
         <Grid>
             <DockPanel>
-                <local:Viewport x:Name="viewport" Height="591" Width="680">
+                <local:Viewport x:Name="viewport" Height="512" Width="680">
                     <local:Viewport.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="Border Size">
