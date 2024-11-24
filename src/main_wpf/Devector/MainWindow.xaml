@@ -53,7 +53,13 @@
                                 <MenuItem Header="512 x 512" Click="ViewportSizeUpdate" Tag="{x:Static local:ViewportSizeOption.R512_512}" InputGestureText="Ctrl+S"/>
                                 <MenuItem Header="Maximize" Click="ViewportSizeUpdate" Tag="{x:Static local:ViewportSizeOption.MAX}" InputGestureText="Ctrl+S"/>
                             </MenuItem>
-                            <MenuItem Header="Emulation Speed" />
+                            <MenuItem Header="Emulation Speed">
+                                <MenuItem Header="20%" Click="EmuSpeedUpdate" Tag="{x:Static local:EmuSpeedOption._20PERCENT}" InputGestureText="Ctrl+F1"/>
+                                <MenuItem Header="50%" Click="EmuSpeedUpdate" Tag="{x:Static local:EmuSpeedOption.HALF}" InputGestureText="Ctrl+F2"/>
+                                <MenuItem Header="100%" Click="EmuSpeedUpdate" Tag="{x:Static local:EmuSpeedOption.NORMAL}" InputGestureText="Ctrl+F3"/>
+                                <MenuItem Header="200%" Click="EmuSpeedUpdate" Tag="{x:Static local:EmuSpeedOption.X2}" InputGestureText="Ctrl+F4"/>
+                                <MenuItem Header="Max" Click="EmuSpeedUpdate" Tag="{x:Static local:EmuSpeedOption.MAX}" InputGestureText="Ctrl+F5"/>
+                            </MenuItem>
                         </ContextMenu>
                     </local:Viewport.ContextMenu>
                 </local:Viewport>

@@ -11,24 +11,18 @@ using static Devector.Shaders;
 using static Devector.App;
 using System;
 using Microsoft.VisualBasic.FileIO;
+using System.Text.Json.Nodes;
 
 namespace Devector
 {
-	public enum BorderSizeOption
-	{
-		None,
-		Normal,
-		Full
-	}
+	public enum BorderSizeOption { None, Normal, Full }
 
-	public enum ViewportSizeOption
-	{
-		R256_256,
-		R512_512,
-		MAX
-	}
+	public enum ViewportSizeOption	{ R256_256, R512_512, MAX }
 
-	public partial class MainWindow : Window
+	public enum EmuSpeedOption { _20PERCENT, HALF, NORMAL, X2, MAX }
+
+
+    public partial class MainWindow : Window
 	{
 		//////////////////////////////////
 		//
@@ -52,8 +46,9 @@ namespace Devector
 		private BorderSizeOption m_borderSizeOption = BorderSizeOption.Normal;
 		private ViewportSizeOption m_viewportSizeOption = ViewportSizeOption.MAX;
 		private Vector2 viewportSize;
+		private EmuSpeedOption m_emuSpeedOption = EmuSpeedOption.NORMAL;
 
-		private string m_matParamName_scrollV_crtXY_highlightMul = "m_scrollV_crtXY_highlightMul";
+        private string m_matParamName_scrollV_crtXY_highlightMul = "m_scrollV_crtXY_highlightMul";
 		private string m_matParamName_bordsLRTB = "m_bordsLRTB";
 		private string m_matParamName_uvMinMax = "m_uvMinMax";
 		private Vector4 m_matParamVal_scrollV_crtXY_highlightMul;
@@ -500,7 +495,15 @@ namespace Devector
             }
 		}
 
-		private void SetBorderSize(BorderSizeOption option)
+        private void EmuSpeedUpdate(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem menuItem && menuItem.Tag is EmuSpeedOption option)
+            {
+                SetEmuSpeed(option);
+            }
+        }
+
+        private void SetBorderSize(BorderSizeOption option)
 		{
             m_borderSizeOption = option;
             m_matParamVal_uvMinMax = GetViewportUVMinMax(option);
@@ -516,6 +519,20 @@ namespace Devector
             viewport.Width = viewportSize.X;
             viewport.Height = viewportSize.Y;
         }
+
+        private void SetEmuSpeed(EmuSpeedOption option)
+        {
+            m_emuSpeedOption = option;
+
+			var data = new JsonObject
+			{
+				["speed"] = (int)m_emuSpeedOption
+            };
+
+            Hal?.Request(HAL.Req.SET_CPU_SPEED, data.ToJsonString());
+        }
+
+
 
         //////////////////////////////////
         //
