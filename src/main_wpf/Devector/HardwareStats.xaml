@@ -14,7 +14,7 @@
 
         <!-- Regs Panel -->
         <DockPanel Grid.Column="0">
-            <Border Background="LightGray" Padding="5" DockPanel.Dock="Top">
+            <Border Background="#FF3F3F3F" Padding="5" DockPanel.Dock="Top">
                 <TextBlock Text="Regs" FontWeight="Bold"/>
             </Border>
 
@@ -40,22 +40,22 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="AF" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="AF" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="FFFF" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="BC" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="BC" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="DE" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="DE" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="2" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="HL" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="HL" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="SP" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="SP" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="4" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="5" Grid.Column="0" Text="PC" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="PC" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="5" Grid.Column="1" Text="0000" HorizontalAlignment="Right"/>
                     </Grid>
                 </StackPanel>
@@ -75,19 +75,19 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="C" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="C" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Z" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Z" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="P" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="P" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="2" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="S" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="S" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="AC" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="AC" Margin="0,0,10,5" Foreground="DarkGray"/>
                         <TextBlock Grid.Row="4" Grid.Column="1" Text="0" HorizontalAlignment="Right"/>
                     </Grid>
                 </StackPanel>
@@ -96,21 +96,21 @@
 
         <!-- Stack Panel -->
         <DockPanel Grid.Column="1">
-            <Border Background="LightGray" Padding="5">
+            <Border Background="#FF3F3F3F" Padding="5">
                 <TextBlock Text="Stack" FontWeight="Bold"/>
             </Border>
         </DockPanel>
 
         <!-- Hardware Panel -->
         <DockPanel Grid.Column="2">
-            <Border Background="LightGray" Padding="5">
+            <Border Background="#FF3F3F3F" Padding="5">
                 <TextBlock Text="Hardware" FontWeight="Bold"/>
             </Border>
         </DockPanel>
 
         <!-- Peripheral Panel -->
         <DockPanel Grid.Column="3">
-            <Border Background="LightGray" Padding="5">
+            <Border Background="#FF3F3F3F" Padding="5">
                 <TextBlock Text="Peripheral" FontWeight="Bold"/>
             </Border>
         </DockPanel>

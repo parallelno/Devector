@@ -9,8 +9,7 @@ using dev;
 using static Devector.Consts;
 using static Devector.Shaders;
 using static Devector.App;
-using System;
-using Microsoft.VisualBasic.FileIO;
+using static Devector.SDLScancodes;
 using System.Text.Json.Nodes;
 
 namespace Devector
@@ -114,8 +113,9 @@ namespace Devector
 			SizeChanged += MainWindow_SizeChanged;
 			var app = (App)Application.Current;
 			this.KeyDown += MainWindow_KeyDown;
+            this.KeyUp += MainWindow_KeyUp;
 
-			app.halDisplayUpdate += Update;         // if the display rendering is called only by the timer, it brings artefacts - white blinking during resize. calling rendering by resize event doesn't fix the issue.
+            app.halDisplayUpdate += Update;         // if the display rendering is called only by the timer, it brings artefacts - white blinking during resize. calling rendering by resize event doesn't fix the issue.
 			CompositionTarget.Rendering += DrawEvent;   // a partial solution is to render onRender
 		}
 
@@ -427,8 +427,6 @@ namespace Devector
 					ToggleWindowVisibility(ref aboutWindow);
 					break;
 			}
-
-			// create and show a window
 		}
 
 		static private void ToggleWindowVisibility<T>(ref T? window) where T : Window, new()
@@ -632,6 +630,32 @@ namespace Devector
 						break;
 				}
 			}
+			else
+			{
+				// send the key code to HAL
+                var data = new JsonObject
+                {
+                    ["scancode"] = (int)GetScanCode(e.Key),
+                    ["action"] = SDL_EVENT_KEY_DOWN,
+                };
+
+                Hal?.Request(HAL.Req.KEY_HANDLING, data.ToJsonString());
+            }
 		}
-	}
+
+        private void MainWindow_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (!Keyboard.IsKeyDown(Key.LeftCtrl))
+            {
+                // send the key code to HAL
+                var data = new JsonObject
+                {
+                    ["scancode"] = (int)GetScanCode(e.Key),
+                    ["action"] = SDL_EVENT_KEY_UP,
+                };
+
+                Hal?.Request(HAL.Req.KEY_HANDLING, data.ToJsonString());
+            }
+        }
+    }
 }
