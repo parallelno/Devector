@@ -14,11 +14,18 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace Devector
 {
-    public enum BorderSizeOption
+	public enum BorderSizeOption
+	{
+		None,
+		Normal,
+		Full
+	}
+
+    public enum ViewportSizeOption
     {
-        None,
-        Normal,
-        Full
+        R256_256,
+        R512_512,
+        MAX
     }
 
     public partial class MainWindow : Window
@@ -43,18 +50,20 @@ namespace Devector
 		private int m_rasterLine = 0;
 		private bool m_displayIsHovered = false;
 		private BorderSizeOption m_borderSizeOption = BorderSizeOption.Normal;
+        private ViewportSizeOption m_viewportSizeOption = ViewportSizeOption.MAX;
+        private Vector2 viewportSize;
 
         private string m_matParamName_scrollV_crtXY_highlightMul = "m_scrollV_crtXY_highlightMul";
-        private string m_matParamName_bordsLRTB = "m_bordsLRTB";
-        private string m_matParamName_uvMinMax = "m_uvMinMax";
-        private Vector4 m_matParamVal_scrollV_crtXY_highlightMul;
-        private Vector4 m_matParamVal_bordsLRTB;
-        private Vector4 m_matParamVal_uvMinMax;
-        private int m_matParamId_scrollV_crtXY_highlightMul = INVALID_ID;
-        private int m_matParamId_bordsLRTB = INVALID_ID;
-        private int m_matParamId_uvMinMax = INVALID_ID;
+		private string m_matParamName_bordsLRTB = "m_bordsLRTB";
+		private string m_matParamName_uvMinMax = "m_uvMinMax";
+		private Vector4 m_matParamVal_scrollV_crtXY_highlightMul;
+		private Vector4 m_matParamVal_bordsLRTB;
+		private Vector4 m_matParamVal_uvMinMax;
+		private int m_matParamId_scrollV_crtXY_highlightMul = INVALID_ID;
+		private int m_matParamId_bordsLRTB = INVALID_ID;
+		private int m_matParamId_uvMinMax = INVALID_ID;
 
-        private int m_vramShaderId = INVALID_ID;
+		private int m_vramShaderId = INVALID_ID;
 		private int m_vramTexId = INVALID_ID;
 		private int m_vramMatId = INVALID_ID;
 
@@ -103,8 +112,10 @@ namespace Devector
 		}
 		private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			//Draw();
-		}
+			viewportSize = GetViewportSize(m_viewportSizeOption);
+            viewport.Width = viewportSize.X;
+            viewport.Height = viewportSize.Y;
+        }
 		protected override void OnClosed(EventArgs e)
 		{
 			base.OnClosed(e);
@@ -112,24 +123,7 @@ namespace Devector
 
 		private void Draw()
 		{
-			var viewportW = this.ActualWidth - VIEWPORT_MARGIN;
-			var viewportH = this.ActualHeight - menuBar.ActualHeight - SystemParameters.WindowCaptionHeight - VIEWPORT_MARGIN * 2;
-
-			if (viewportW <= 0 || viewportH <= 0) return;
-
-			if (viewportW / viewportH > DISPLAY_RATIO)
-			{
-				viewportW = viewportH * DISPLAY_RATIO;
-			}
-			else
-			{
-				viewportH = viewportW / DISPLAY_RATIO;
-			}
-
-			viewport.Width = viewportW;
-			viewport.Height = viewportH;
-
-			DrawDisplay(halIsRunning, (int)viewportW, (int)viewportH);
+			DrawDisplay(halIsRunning, (int)viewportSize.X, (int)viewportSize.Y);
 		}
 
 		private bool DisplayInit(int _viewportW, int _viewportH)
@@ -153,22 +147,22 @@ namespace Devector
 							(borderLeft + HAL.ACTIVE_AREA_W) * HAL.FRAME_PXL_SIZE_W,
 							HAL.SCAN_ACTIVE_AREA_TOP * HAL.FRAME_PXL_SIZE_H,
 							(HAL.SCAN_ACTIVE_AREA_TOP + HAL.ACTIVE_AREA_H) * HAL.FRAME_PXL_SIZE_H);
-            m_matParamVal_uvMinMax = GetDisplayUVMinMax(m_borderSizeOption);
+			m_matParamVal_uvMinMax = GetDisplayUVMinMax(m_borderSizeOption);
 
-            var textureIds = new[] { m_vramTexId };
+			var textureIds = new[] { m_vramTexId };
 
-            var shaderParamNames = new[] { 
+			var shaderParamNames = new[] { 
 				"m_activeArea_pxlSize", 
 				m_matParamName_scrollV_crtXY_highlightMul, 
 				m_matParamName_bordsLRTB,
-                m_matParamName_uvMinMax,
+				m_matParamName_uvMinMax,
 			};
 			var shaderParamValues = new[] {
 				new Vector4(HAL.ACTIVE_AREA_W, HAL.ACTIVE_AREA_H, HAL.FRAME_PXL_SIZE_W, HAL.FRAME_PXL_SIZE_H ),
-                m_matParamVal_scrollV_crtXY_highlightMul,
-                m_matParamVal_bordsLRTB,
+				m_matParamVal_scrollV_crtXY_highlightMul,
+				m_matParamVal_bordsLRTB,
 				m_matParamVal_uvMinMax
-            };
+			};
 
 			m_vramMatId = Hal?.InitMaterial(viewport.Handle, m_vramShaderId, textureIds,
 					shaderParamNames, shaderParamValues, _viewportW, _viewportH) ?? INVALID_ID;
@@ -178,15 +172,15 @@ namespace Devector
 				viewport.Handle, m_vramMatId, m_matParamName_scrollV_crtXY_highlightMul) ?? INVALID_ID;
 			if (m_matParamId_scrollV_crtXY_highlightMul == INVALID_ID) return false;
 
-            m_matParamId_bordsLRTB = Hal?.GetMaterialParamId(
-                viewport.Handle, m_vramMatId, m_matParamName_bordsLRTB) ?? INVALID_ID;
-            if (m_matParamId_bordsLRTB == INVALID_ID) return false;
+			m_matParamId_bordsLRTB = Hal?.GetMaterialParamId(
+				viewport.Handle, m_vramMatId, m_matParamName_bordsLRTB) ?? INVALID_ID;
+			if (m_matParamId_bordsLRTB == INVALID_ID) return false;
 
-            m_matParamId_uvMinMax = Hal?.GetMaterialParamId(
+			m_matParamId_uvMinMax = Hal?.GetMaterialParamId(
 			viewport.Handle, m_vramMatId, m_matParamName_uvMinMax) ?? INVALID_ID;
-            if (m_matParamId_uvMinMax == INVALID_ID) return false;
+			if (m_matParamId_uvMinMax == INVALID_ID) return false;
 
-            return true;
+			return true;
 		}
 
 		private void Update(object? sender, EventArgs e)
@@ -211,7 +205,7 @@ namespace Devector
 			var ccDiff = cc - m_ccLast;
 			m_ccLast = cc ?? 0;
 
-            m_matParamVal_scrollV_crtXY_highlightMul.W = 1.0f;
+			m_matParamVal_scrollV_crtXY_highlightMul.W = 1.0f;
 
 			if (!_isRunning)
 			{
@@ -230,9 +224,9 @@ namespace Devector
 				}
 				if (!m_displayIsHovered)
 				{
-                    m_matParamVal_scrollV_crtXY_highlightMul.Y = m_rasterPixel * HAL.FRAME_PXL_SIZE_W;
-                    m_matParamVal_scrollV_crtXY_highlightMul.Z = m_rasterLine * HAL.FRAME_PXL_SIZE_H;
-                    m_matParamVal_scrollV_crtXY_highlightMul.W = HAL.SCANLINE_HIGHLIGHT_MUL;
+					m_matParamVal_scrollV_crtXY_highlightMul.Y = m_rasterPixel * HAL.FRAME_PXL_SIZE_W;
+					m_matParamVal_scrollV_crtXY_highlightMul.Z = m_rasterLine * HAL.FRAME_PXL_SIZE_H;
+					m_matParamVal_scrollV_crtXY_highlightMul.W = HAL.SCANLINE_HIGHLIGHT_MUL;
 				}
 			}
 
@@ -240,7 +234,7 @@ namespace Devector
 			var elem2 = new JsonElement();
 			var res2 = jsonDoc2?.RootElement.TryGetProperty("scrollVert", out elem2);
 			if (res2 == false) return false;
-            m_matParamVal_scrollV_crtXY_highlightMul.X = elem2.GetInt32();
+			m_matParamVal_scrollV_crtXY_highlightMul.X = elem2.GetInt32();
 
 			// TODO: send m_scrollV_crtXY_highlightMul to a shader
 
@@ -419,51 +413,98 @@ namespace Devector
 			1.0,
 		};
 
-        private Vector4 GetDisplayUVMinMax(BorderSizeOption borderType)
+		private Vector4 GetDisplayUVMinMax(BorderSizeOption borderType)
 		{
-            float border = 0;
-            var uvMinMax = new Vector4(0, 0, 1, 1);
+			float border = 0;
+			var uvMinMax = new Vector4(0, 0, 1, 1);
 
-            switch (borderType)
-            {
-                case BorderSizeOption.Full:
-					//uvMinMax = new(0, 0, 1, 1);
-                    break;
+			switch (borderType)
+			{
+				/*
+				case BorderSizeOption.Full:
+					uvMinMax = new(0, 0, 1, 1);
+					break;
+				*/
+				case BorderSizeOption.Normal:
+					border = HAL.BORDER_VISIBLE;
+					goto case BorderSizeOption.None;
 
-                case BorderSizeOption.Normal:
-                    border = HAL.BORDER_VISIBLE;
-                    goto case BorderSizeOption.None;
+				case BorderSizeOption.None:
+					var jsonDoc = Hal?.Request(HAL.Req.GET_DISPLAY_BORDER_LEFT, "");
+					var elem = new JsonElement();
+					var res = jsonDoc?.RootElement.TryGetProperty("borderLeft", out elem);
+					if (res == false) return uvMinMax;
+					int borderLeft = elem.GetInt32();
 
-                case BorderSizeOption.None:
-                    var jsonDoc = Hal?.Request(HAL.Req.GET_DISPLAY_BORDER_LEFT, "");
-                    var elem = new JsonElement();
-                    var res = jsonDoc?.RootElement.TryGetProperty("borderLeft", out elem);
-                    if (res == false) return uvMinMax;
-                    int borderLeft = elem.GetInt32();
+					uvMinMax.X = (borderLeft - border * 2) * HAL.FRAME_PXL_SIZE_W;
+					uvMinMax.Y = (HAL.SCAN_ACTIVE_AREA_TOP - border) * HAL.FRAME_PXL_SIZE_H;
 
-                    uvMinMax.X = (borderLeft - border * 2) * HAL.FRAME_PXL_SIZE_W;
-                    uvMinMax.Y = (HAL.SCAN_ACTIVE_AREA_TOP - border) * HAL.FRAME_PXL_SIZE_H;
-
-                    uvMinMax.Z = uvMinMax.X +
-                        (HAL.ACTIVE_AREA_W + border * 4) * HAL.FRAME_PXL_SIZE_W;
-                    uvMinMax.W = uvMinMax.Y +
-                        (HAL.ACTIVE_AREA_H + border * 2) * HAL.FRAME_PXL_SIZE_H;
-                    break;
-            }
+					uvMinMax.Z = uvMinMax.X +
+						(HAL.ACTIVE_AREA_W + border * 4) * HAL.FRAME_PXL_SIZE_W;
+					uvMinMax.W = uvMinMax.Y +
+						(HAL.ACTIVE_AREA_H + border * 2) * HAL.FRAME_PXL_SIZE_H;
+					break;
+			}
 
 			return uvMinMax;
+		}
+
+        private Vector2 GetViewportSize(ViewportSizeOption viewportSizeOption)
+        {
+			var size = new Vector2();
+
+			switch(viewportSizeOption)
+			{
+				case ViewportSizeOption.R256_256:
+                    size.X = size.Y = 256;
+                    break;
+
+                case ViewportSizeOption.R512_512:
+                    size.X = size.Y = 512;
+					break;
+
+                case ViewportSizeOption.MAX:
+                    var viewportW = this.ActualWidth - VIEWPORT_MARGIN;
+                    var viewportH = this.ActualHeight - menuBar.ActualHeight - SystemParameters.WindowCaptionHeight - VIEWPORT_MARGIN * 2;
+
+                    if (viewportW <= 0 || viewportH <= 0) return new Vector2(0,0);
+
+                    if (viewportW / viewportH > DISPLAY_RATIO)
+                    {
+                        viewportW = viewportH * DISPLAY_RATIO;
+                    }
+                    else
+                    {
+                        viewportH = viewportW / DISPLAY_RATIO;
+                    }
+					size.X = (float)viewportW;
+                    size.Y = (float)viewportH;
+					break;
+            }
+
+			return size;
         }
 
         private void BorderSizeUpdate(object sender, RoutedEventArgs e)
 		{
 			if (sender is MenuItem menuItem && menuItem.Tag is BorderSizeOption option)
 			{
-                m_matParamVal_uvMinMax = GetDisplayUVMinMax(option);
+				m_matParamVal_uvMinMax = GetDisplayUVMinMax(option);
 
-                Hal?.UpdateMaterialParam(viewport.Handle, m_vramMatId,
+				Hal?.UpdateMaterialParam(viewport.Handle, m_vramMatId,
 					m_matParamId_uvMinMax, m_matParamVal_uvMinMax);
-            }
+			}
 		}
 
-	}
+        private void DisplaySizeUpdate(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem menuItem && menuItem.Tag is ViewportSizeOption option)
+            {
+				m_viewportSizeOption = option;
+                viewportSize = GetViewportSize(option);
+                viewport.Width = viewportSize.X;
+                viewport.Height = viewportSize.Y;
+            }
+        }
+    }
 }
