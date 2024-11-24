@@ -44,14 +44,14 @@
                     <local:Viewport.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="Border Size">
-                                <MenuItem Header="None" Click="BorderSizeUpdate" Tag="{x:Static local:BorderSizeOption.None}"/>
-                                <MenuItem Header="Normal" Click="BorderSizeUpdate" Tag="{x:Static local:BorderSizeOption.Normal}"/>
-                                <MenuItem Header="Full" Click="BorderSizeUpdate" Tag="{x:Static local:BorderSizeOption.Full}"/>
+                                <MenuItem Header="None" Click="BorderSizeUpdate" Tag="{x:Static local:BorderSizeOption.None}" InputGestureText="Ctrl+B"/>
+                                <MenuItem Header="Normal" Click="BorderSizeUpdate" Tag="{x:Static local:BorderSizeOption.Normal}" InputGestureText="Ctrl+B"/>
+                                <MenuItem Header="Full" Click="BorderSizeUpdate" Tag="{x:Static local:BorderSizeOption.Full}" InputGestureText="Ctrl+B"/>
                             </MenuItem>
                             <MenuItem Header="Display Size">
-                                <MenuItem Header="256 x 256" Click="DisplaySizeUpdate" Tag="{x:Static local:ViewportSizeOption.R256_256}"/>
-                                <MenuItem Header="512 x 512" Click="DisplaySizeUpdate" Tag="{x:Static local:ViewportSizeOption.R512_512}"/>
-                                <MenuItem Header="Maximize" Click="DisplaySizeUpdate" Tag="{x:Static local:ViewportSizeOption.MAX}"/>
+                                <MenuItem Header="256 x 256" Click="ViewportSizeUpdate" Tag="{x:Static local:ViewportSizeOption.R256_256}" InputGestureText="Ctrl+S"/>
+                                <MenuItem Header="512 x 512" Click="ViewportSizeUpdate" Tag="{x:Static local:ViewportSizeOption.R512_512}" InputGestureText="Ctrl+S"/>
+                                <MenuItem Header="Maximize" Click="ViewportSizeUpdate" Tag="{x:Static local:ViewportSizeOption.MAX}" InputGestureText="Ctrl+S"/>
                             </MenuItem>
                             <MenuItem Header="Emulation Speed" />
                         </ContextMenu>

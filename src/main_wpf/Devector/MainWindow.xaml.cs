@@ -21,14 +21,14 @@ namespace Devector
 		Full
 	}
 
-    public enum ViewportSizeOption
-    {
-        R256_256,
-        R512_512,
-        MAX
-    }
+	public enum ViewportSizeOption
+	{
+		R256_256,
+		R512_512,
+		MAX
+	}
 
-    public partial class MainWindow : Window
+	public partial class MainWindow : Window
 	{
 		//////////////////////////////////
 		//
@@ -40,7 +40,7 @@ namespace Devector
 		private const int HW_FRAME_H = 312;                 // Vector06c frame including borders
 
 		private const double DISPLAY_RATIO = 4.0 / 3.0;
-		private const double VIEWPORT_MARGIN = 5.0;			// the margin between the window and the viewport
+		private const double VIEWPORT_MARGIN = 5.0;         // the margin between the window and the viewport
 
 		private bool m_glInited = false;
 		private HAL? Hal;
@@ -50,10 +50,10 @@ namespace Devector
 		private int m_rasterLine = 0;
 		private bool m_displayIsHovered = false;
 		private BorderSizeOption m_borderSizeOption = BorderSizeOption.Normal;
-        private ViewportSizeOption m_viewportSizeOption = ViewportSizeOption.MAX;
-        private Vector2 viewportSize;
+		private ViewportSizeOption m_viewportSizeOption = ViewportSizeOption.MAX;
+		private Vector2 viewportSize;
 
-        private string m_matParamName_scrollV_crtXY_highlightMul = "m_scrollV_crtXY_highlightMul";
+		private string m_matParamName_scrollV_crtXY_highlightMul = "m_scrollV_crtXY_highlightMul";
 		private string m_matParamName_bordsLRTB = "m_bordsLRTB";
 		private string m_matParamName_uvMinMax = "m_uvMinMax";
 		private Vector4 m_matParamVal_scrollV_crtXY_highlightMul;
@@ -67,7 +67,7 @@ namespace Devector
 		private int m_vramTexId = INVALID_ID;
 		private int m_vramMatId = INVALID_ID;
 
-        private volatile bool halIsRunning = false;
+		private volatile bool halIsRunning = false;
 		private ulong halCc = 0;
 
 		public MainWindow()
@@ -82,8 +82,9 @@ namespace Devector
 			//LocationChanged += MainWindow_LocationChanged;
 			SizeChanged += MainWindow_SizeChanged;
 			var app = (App)Application.Current;
+			this.KeyDown += MainWindow_KeyDown;
 
-			app.halDisplayUpdate += Update;			// if the display rendering is called only by the timer, it brings artefacts - white blinking during resize. calling rendering by resize event doesn't fix the issue.
+			app.halDisplayUpdate += Update;         // if the display rendering is called only by the timer, it brings artefacts - white blinking during resize. calling rendering by resize event doesn't fix the issue.
 			CompositionTarget.Rendering += DrawEvent;   // a partial solution is to render onRender
 		}
 
@@ -112,9 +113,7 @@ namespace Devector
 		}
 		private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			viewportSize = GetViewportSize(m_viewportSizeOption);
-            viewport.Width = viewportSize.X;
-            viewport.Height = viewportSize.Y;
+			SetViewportSize(m_viewportSizeOption);
         }
 		protected override void OnClosed(EventArgs e)
 		{
@@ -147,13 +146,13 @@ namespace Devector
 							(borderLeft + HAL.ACTIVE_AREA_W) * HAL.FRAME_PXL_SIZE_W,
 							HAL.SCAN_ACTIVE_AREA_TOP * HAL.FRAME_PXL_SIZE_H,
 							(HAL.SCAN_ACTIVE_AREA_TOP + HAL.ACTIVE_AREA_H) * HAL.FRAME_PXL_SIZE_H);
-			m_matParamVal_uvMinMax = GetDisplayUVMinMax(m_borderSizeOption);
+			m_matParamVal_uvMinMax = GetViewportUVMinMax(m_borderSizeOption);
 
 			var textureIds = new[] { m_vramTexId };
 
-			var shaderParamNames = new[] { 
-				"m_activeArea_pxlSize", 
-				m_matParamName_scrollV_crtXY_highlightMul, 
+			var shaderParamNames = new[] {
+				"m_activeArea_pxlSize",
+				m_matParamName_scrollV_crtXY_highlightMul,
 				m_matParamName_bordsLRTB,
 				m_matParamName_uvMinMax,
 			};
@@ -329,7 +328,7 @@ namespace Devector
 		// Main Menu
 		//
 		//////////////////////////////////
-		
+
 		private void OpenMenuItem_Click(object sender, RoutedEventArgs e)
 		{
 			var app = (App)Application.Current;
@@ -413,7 +412,7 @@ namespace Devector
 			1.0,
 		};
 
-		private Vector4 GetDisplayUVMinMax(BorderSizeOption borderType)
+		private Vector4 GetViewportUVMinMax(BorderSizeOption borderType)
 		{
 			float border = 0;
 			var uvMinMax = new Vector4(0, 0, 1, 1);
@@ -449,62 +448,100 @@ namespace Devector
 			return uvMinMax;
 		}
 
-        private Vector2 GetViewportSize(ViewportSizeOption viewportSizeOption)
-        {
+		private Vector2 GetViewportSize(ViewportSizeOption viewportSizeOption)
+		{
 			var size = new Vector2();
 
-			switch(viewportSizeOption)
+			switch (viewportSizeOption)
 			{
 				case ViewportSizeOption.R256_256:
-                    size.X = size.Y = 256;
-                    break;
-
-                case ViewportSizeOption.R512_512:
-                    size.X = size.Y = 512;
+					size.X = size.Y = 256;
 					break;
 
-                case ViewportSizeOption.MAX:
-                    var viewportW = this.ActualWidth - VIEWPORT_MARGIN;
-                    var viewportH = this.ActualHeight - menuBar.ActualHeight - SystemParameters.WindowCaptionHeight - VIEWPORT_MARGIN * 2;
+				case ViewportSizeOption.R512_512:
+					size.X = size.Y = 512;
+					break;
 
-                    if (viewportW <= 0 || viewportH <= 0) return new Vector2(0,0);
+				case ViewportSizeOption.MAX:
+					var viewportW = this.ActualWidth - VIEWPORT_MARGIN;
+					var viewportH = this.ActualHeight - menuBar.ActualHeight - SystemParameters.WindowCaptionHeight - VIEWPORT_MARGIN * 2;
 
-                    if (viewportW / viewportH > DISPLAY_RATIO)
-                    {
-                        viewportW = viewportH * DISPLAY_RATIO;
-                    }
-                    else
-                    {
-                        viewportH = viewportW / DISPLAY_RATIO;
-                    }
+					if (viewportW <= 0 || viewportH <= 0) return new Vector2(0, 0);
+
+					if (viewportW / viewportH > DISPLAY_RATIO)
+					{
+						viewportW = viewportH * DISPLAY_RATIO;
+					}
+					else
+					{
+						viewportH = viewportW / DISPLAY_RATIO;
+					}
 					size.X = (float)viewportW;
-                    size.Y = (float)viewportH;
+					size.Y = (float)viewportH;
 					break;
-            }
+			}
 
 			return size;
-        }
+		}
 
-        private void BorderSizeUpdate(object sender, RoutedEventArgs e)
+		private void BorderSizeUpdate(object sender, RoutedEventArgs e)
 		{
 			if (sender is MenuItem menuItem && menuItem.Tag is BorderSizeOption option)
 			{
-				m_matParamVal_uvMinMax = GetDisplayUVMinMax(option);
-
-				Hal?.UpdateMaterialParam(viewport.Handle, m_vramMatId,
-					m_matParamId_uvMinMax, m_matParamVal_uvMinMax);
-			}
+				SetBorderSize(option);
+            }
 		}
 
-        private void DisplaySizeUpdate(object sender, RoutedEventArgs e)
-        {
-            if (sender is MenuItem menuItem && menuItem.Tag is ViewportSizeOption option)
-            {
-				m_viewportSizeOption = option;
-                viewportSize = GetViewportSize(option);
-                viewport.Width = viewportSize.X;
-                viewport.Height = viewportSize.Y;
+		private void ViewportSizeUpdate(object sender, RoutedEventArgs e)
+		{
+			if (sender is MenuItem menuItem && menuItem.Tag is ViewportSizeOption option)
+			{
+				SetViewportSize(option);
             }
+		}
+
+		private void SetBorderSize(BorderSizeOption option)
+		{
+            m_borderSizeOption = option;
+            m_matParamVal_uvMinMax = GetViewportUVMinMax(option);
+
+			Hal?.UpdateMaterialParam(viewport.Handle, m_vramMatId,
+				m_matParamId_uvMinMax, m_matParamVal_uvMinMax);
+		}
+
+        private void SetViewportSize(ViewportSizeOption option)
+        {
+            m_viewportSizeOption = option;
+            viewportSize = GetViewportSize(option);
+            viewport.Width = viewportSize.X;
+            viewport.Height = viewportSize.Y;
         }
-    }
+
+        //////////////////////////////////
+        //
+        // Shortcuts
+        //
+        //////////////////////////////////
+
+        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (Keyboard.IsKeyDown(Key.LeftCtrl))
+			{
+				switch (e.Key)
+				{
+					case Key.S:
+                        var viewportSizeOption = (ViewportSizeOption)(((int)(m_viewportSizeOption) + 1) % Enum.GetValues(typeof(ViewportSizeOption)).Length);
+                        SetViewportSize(viewportSizeOption);
+                        e.Handled = true;
+						break;
+					case Key.B:
+                        // Get the next value in the enum
+                        var borderSizeOption = (BorderSizeOption)(((int)(m_borderSizeOption) + 1) % Enum.GetValues(typeof(BorderSizeOption)).Length);
+                        SetBorderSize(borderSizeOption);
+                        e.Handled = true;
+						break;
+				}
+			}
+		}
+	}
 }
