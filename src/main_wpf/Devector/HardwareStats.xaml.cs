@@ -134,6 +134,9 @@ namespace Devector
 
 
             // Hardware
+            jsonDoc = Hal?.Request(HAL.Req.GET_CC, "");
+            var cc = jsonDoc?.RootElement.GetProperty("cc").GetInt64();
+            _viewModel.CpuCicles = cc.ToString() ?? "";
 
             // Ram-Disk
 
@@ -143,10 +146,6 @@ namespace Devector
 
         private void UpdateDataByTimer()
 		{
-            var jsonDoc = Hal?.Request(HAL.Req.GET_CC, "");
-			var cc = jsonDoc?.RootElement.GetProperty("cc").GetInt64();
-
-            _viewModel.CpuCicles = cc.ToString() ?? "";
 			_viewModel.UpTime = (DateTime.Now - startTime).ToString(@"hh\:mm\:ss");
         }
 

@@ -90,7 +90,7 @@ void dev::HardwareStatsWindow::DrawStack() const
 	}
 }
 
-void dev::HardwareStatsWindow::DrawHardware() const
+void dev::HardwareStatsWindow::DrawHardware(const bool _isRunning) const
 {
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
@@ -147,8 +147,8 @@ void dev::HardwareStatsWindow::DrawHardware() const
 
 		// ports
 		dev::DrawSeparator2("Ports");
-		DrawPortsDataProperty("In", m_portsInData, m_portsInDataColor);
-		DrawPortsDataProperty("Out", m_portsOutData, m_portsOutDataColor);
+		DrawPortsDataProperty("In", m_portsInData, _isRunning, m_portsInDataColor);
+		DrawPortsDataProperty("Out", m_portsOutData, _isRunning, m_portsOutDataColor);
 
 		ImGui::EndTable();
 	}
@@ -215,7 +215,7 @@ void dev::HardwareStatsWindow::DrawStats(const bool _isRunning)
 		ImGui::TableNextColumn();
 		DrawStack();
 		ImGui::TableNextColumn();
-		DrawHardware();
+		DrawHardware(_isRunning);
 		ImGui::TableNextColumn();
 		DrawPeripheral();
 
@@ -429,7 +429,7 @@ void dev::HardwareStatsWindow::UpdateDataRuntime()
 }
 
 void dev::HardwareStatsWindow::DrawPortsDataProperty(const char* _name,
-	const IO::PortsData& _portsData, const PortsDataColors& _colors,
+	const IO::PortsData& _portsData, const bool _isRunning, const PortsDataColors& _colors,
 	const char* _hint) const
 {
 	ImGui::TableNextRow();
@@ -441,7 +441,12 @@ void dev::HardwareStatsWindow::DrawPortsDataProperty(const char* _name,
 
 	ImGui::TableNextColumn();
 	ImGui::Dummy(ImVec2(5.0f, 0.0f)); ImGui::SameLine();
-	ImGui::Text("Break&Hover");
+	if (!_isRunning) {
+		ImGui::Text("Stop emulation for info");
+	}
+	else{
+		ImGui::Text("Hover for info");
+	}
 	if (ImGui::IsItemHovered())
 	{
 		for (int i=0; i<256; i++)

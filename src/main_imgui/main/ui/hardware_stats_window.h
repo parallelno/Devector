@@ -83,10 +83,11 @@ namespace dev
 		void DrawStats(const bool _isRunning);
 		void DrawRegs() const;
 		void DrawStack() const;
-		void DrawHardware() const;
+		void DrawHardware(const bool _isRunning) const;
 		void DrawPeripheral() const;
 		void DrawPortsDataProperty(const char* _name, 
-			const IO::PortsData& _portsData, const PortsDataColors& _colors,
+			const IO::PortsData& _portsData, const bool _isRunning,
+			const PortsDataColors& _colors,
 			const char* _hint = nullptr) const;
 		void UpdateData(const bool _isRunning);
 		void UpdateDataRuntime();

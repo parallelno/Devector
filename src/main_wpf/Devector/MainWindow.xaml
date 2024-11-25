@@ -29,7 +29,7 @@
                 <MenuItem Header="Exit" Click="ExitMenuItem_Click"/>
             </MenuItem>
             <MenuItem Header="Tools">
-                <MenuItem Header="HardwareStats" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.HARDWARE_STATS}"/>
+                <MenuItem Header="Hardware Stats" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.HARDWARE_STATS}"/>
                 <MenuItem Header="Disasm" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.DISASM}"/>
                 <MenuItem Header="Breakpoints" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.BREAKPOINTS}"/>
                 <MenuItem Header="Watchpoints" Click="ToolOpenMenuItem_Click" Tag="{x:Static local:WindowClassOption.WATCHPOINTS}"/>

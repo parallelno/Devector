@@ -4,7 +4,7 @@
 		xmlns:ui="http://schemas.modernwpf.com/2019"
 		xmlns:local="clr-namespace:Devector"
 		ui:WindowHelper.UseModernWindowStyle="True"
-		Title="Hardware Stats" Width="650" Height ="400">
+		Title="Hardware Stats" Width="650" Height ="550">
 	<Grid>
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="0.12*"/>
@@ -22,6 +22,7 @@
 				<Grid Background="#FF1F1F1F">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
 						<RowDefinition Height="*"/>
 					</Grid.RowDefinitions>
 
@@ -41,28 +42,29 @@
 								<RowDefinition Height="Auto"/>
 							</Grid.RowDefinitions>
 
-							<TextBlock Grid.Row="0" Grid.Column="0" Text="AF" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="0" Grid.Column="0" Text="AF" Margin="4,0,10,2" Foreground="DarkGray"/>
 							<TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AF}"/>
 
-							<TextBlock Grid.Row="1" Grid.Column="0" Text="BC" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="1" Grid.Column="0" Text="BC" Margin="4,0,10,2" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding BC}"/>
 
-							<TextBlock Grid.Row="2" Grid.Column="0" Text="DE" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="2" Grid.Column="0" Text="DE" Margin="4,0,10,2" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DE}"/>
 
-							<TextBlock Grid.Row="3" Grid.Column="0" Text="HL" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="3" Grid.Column="0" Text="HL" Margin="4,0,10,2" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding HL}"/>
 
-							<TextBlock Grid.Row="4" Grid.Column="0" Text="SP" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="4" Grid.Column="0" Text="SP" Margin="4,0,10,2" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SP}"/>
 
-							<TextBlock Grid.Row="5" Grid.Column="0" Text="PC" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="5" Grid.Column="0" Text="PC" Margin="4,0,10,2" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding PC}"/>
 						</Grid>
 					</StackPanel>
 
 					<!-- Flags -->
-					<StackPanel Grid.Row="1" Margin="5">
+                    <TextBlock Grid.Row="1" Text="Flags" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+					<StackPanel Grid.Row="2" Margin="5">
 						<Grid>
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="Auto"/>
@@ -76,19 +78,19 @@
 								<RowDefinition Height="Auto"/>
 							</Grid.RowDefinitions>
 
-							<TextBlock Grid.Row="0" Grid.Column="0" Text="C" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="0" Grid.Column="0" Text="C" Margin="4,0,10,1" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding C}"/>
 
-							<TextBlock Grid.Row="1" Grid.Column="0" Text="P" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="1" Grid.Column="0" Text="P" Margin="4,0,10,1" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding P}"/>
 
-							<TextBlock Grid.Row="2" Grid.Column="0" Text="AC" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="2" Grid.Column="0" Text="AC" Margin="4,0,10,1" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AC}"/>
 
-							<TextBlock Grid.Row="3" Grid.Column="0" Text="Z" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="3" Grid.Column="0" Text="Z" Margin="4,0,10,1" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Z}"/>
 
-							<TextBlock Grid.Row="4" Grid.Column="0" Text="S" Margin="0,0,10,5" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="4" Grid.Column="0" Text="S" Margin="4,0,10,1" Foreground="DarkGray"/>
                             <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding S}"/>
 						</Grid>
 					</StackPanel>
@@ -129,37 +131,37 @@
 								<RowDefinition Height="Auto"/>
 							</Grid.RowDefinitions>
 
-							<TextBlock Grid.Row="0" Grid.Column="0" Text="-10" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="0" Grid.Column="0" Text="-10" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SPN10}"/>
 
-							<TextBlock Grid.Row="1" Grid.Column="0" Text="-8" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="1" Grid.Column="0" Text="-8" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SPN8}"/>
 
-							<TextBlock Grid.Row="2" Grid.Column="0" Text="-6" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="2" Grid.Column="0" Text="-6" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SPN6}"/>
 
-							<TextBlock Grid.Row="3" Grid.Column="0" Text="-4" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="3" Grid.Column="0" Text="-4" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SPN4}"/>
 
-							<TextBlock Grid.Row="4" Grid.Column="0" Text="-2" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="4" Grid.Column="0" Text="-2" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SPN2}"/>
 
-							<TextBlock Grid.Row="5" Grid.Column="0" Text="SP" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="5" Grid.Column="0" Text="SP" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SP0}"/>
 
-							<TextBlock Grid.Row="6" Grid.Column="0" Text="2" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="6" Grid.Column="0" Text="2" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SP2}"/>
 
-							<TextBlock Grid.Row="7" Grid.Column="0" Text="4" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="7" Grid.Column="0" Text="4" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SP4}"/>
 
-							<TextBlock Grid.Row="8" Grid.Column="0" Text="6" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="8" Grid.Column="0" Text="6" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding SP6}"/>
 
-							<TextBlock Grid.Row="9" Grid.Column="0" Text="8" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="9" Grid.Column="0" Text="8" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding SP8}"/>
 
-							<TextBlock Grid.Row="10" Grid.Column="0" Text="10" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="10" Grid.Column="0" Text="10" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="10" Grid.Column="1" Text="{Binding SP10}"/>
 						</Grid>
 					</StackPanel>
@@ -173,15 +175,16 @@
 				<TextBlock Text="Hardware" FontWeight="Bold"/>
 			</Border>
 			<Border Background="#FF3F3F3F" Padding=".5">
-				<Grid Background="#FF1F1F1F">
-					<Grid.RowDefinitions>
-						<RowDefinition Height="Auto"/>
-						<RowDefinition Height="*"/>
-					</Grid.RowDefinitions>
+                <Grid Background="#FF1F1F1F">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-					<!-- General HW State -->
-					<StackPanel Grid.Row="0" Margin="5">
-						<Grid>
+                    <!-- General HW State -->
+                    <StackPanel Grid.Row="0" Margin="5">
+                        <Grid>
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="Auto"/>
 								<ColumnDefinition Width="*"/>
@@ -201,45 +204,85 @@
                                 <RowDefinition Height="Auto"/>
 							</Grid.RowDefinitions>
 
-							<TextBlock Grid.Row="0" Grid.Column="0" Text="Up Time" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="0" Grid.Column="0" Text="Up Time" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding UpTime}"/>
 
-							<TextBlock Grid.Row="1" Grid.Column="0" Text="CPU Cicles" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="1" Grid.Column="0" Text="CPU Cicles" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CpuCicles}"/>
 
-							<TextBlock Grid.Row="2" Grid.Column="0" Text="Last Run" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="2" Grid.Column="0" Text="Last Run" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="2" Grid.Column="1" Text="0"/>
 
-							<TextBlock Grid.Row="3" Grid.Column="0" Text="CRT X/Y" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="3" Grid.Column="0" Text="CRT X/Y" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="3" Grid.Column="1" Text="0"/>
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Frame CC" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Frame CC" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="4" Grid.Column="1" Text="0"/>
 
-							<TextBlock Grid.Row="5" Grid.Column="0" Text="Frame Num" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="5" Grid.Column="0" Text="Frame Num" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="5" Grid.Column="1" Text="0"/>
 
-							<TextBlock Grid.Row="6" Grid.Column="0" Text="Display Mode" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="6" Grid.Column="0" Text="Display Mode" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="6" Grid.Column="1" Text="0"/>
 
-							<TextBlock Grid.Row="7" Grid.Column="0" Text="Scroll V" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="7" Grid.Column="0" Text="Scroll V" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="7" Grid.Column="1" Text="0"/>
 
-							<TextBlock Grid.Row="8" Grid.Column="0" Text="Rus/Lat" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="8" Grid.Column="0" Text="Rus/Lat" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="8" Grid.Column="1" Text="0"/>
 
-							<TextBlock Grid.Row="9" Grid.Column="0" Text="INTE" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="9" Grid.Column="0" Text="INTE" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="9" Grid.Column="1" Text="0"/>
 
-							<TextBlock Grid.Row="10" Grid.Column="0" Text="IFF" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="10" Grid.Column="0" Text="IFF" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="10" Grid.Column="1" Text="0"/>
 
-                            <TextBlock Grid.Row="11" Grid.Column="0" Text="HLTA" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                            <TextBlock Grid.Row="10" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="11" Grid.Column="0" Text="HLTA" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Row="11" Grid.Column="1" Text="0"/>
                         </Grid>
 					</StackPanel>
-				</Grid>
-			</Border>
+
+                    <!-- Palette -->
+                    <TextBlock Grid.Row="1" Text="Palette" HorizontalAlignment="Center" Margin="0,10,0,0" />
+                    <StackPanel Grid.Row="2" Margin="5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Column="0" Grid.Row="0" Background="#FFFF0000" Padding="8" Margin="2"/>
+                            <Border Grid.Column="1" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="2" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="3" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="4" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="5" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="6" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="7" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
+
+                            <Border Grid.Column="0" Grid.Row="1" Background="#FFFF0000" Padding="8" Margin="2"/>
+                            <Border Grid.Column="1" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="2" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="3" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="4" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="5" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="6" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="7" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
+                        </Grid>
+                    </StackPanel>
+
+                </Grid>
+            </Border>
 		</DockPanel>
 
 		<!-- Peripheral Panel -->
@@ -257,10 +300,8 @@
 					</Grid.RowDefinitions>
 					
 					<!-- Ram-Disk -->
-					<StackPanel Grid.Row="0" Margin="5">
-						<TextBlock Text="Ram-Disks" HorizontalAlignment="Center"/>
-					</StackPanel>                    
-					<StackPanel Grid.Row="1" Margin="5">
+                    <TextBlock Text="Ram-Disks" Grid.Row="0" HorizontalAlignment="Center"/>
+                    <StackPanel Grid.Row="1" Margin="5">
 						<Grid>
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="Auto"/>
@@ -273,7 +314,11 @@
 								<RowDefinition Height="Auto"/>
 								<RowDefinition Height="Auto"/>
 								<RowDefinition Height="Auto"/>
-							</Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
 							<!-- Ram-Disk Title -->
 							<TextBlock Grid.Row="0" Grid.Column="0" Text="#" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
@@ -338,8 +383,8 @@
 							</Grid>
 
 							<!-- Ram-Disk 4 -->
-							<TextBlock Grid.Row="3" Grid.Column="0" Text="4" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<Grid Grid.Row="3" Grid.Column="1">
+							<TextBlock Grid.Row="4" Grid.Column="0" Text="4" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<Grid Grid.Row="4" Grid.Column="1">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
@@ -347,7 +392,7 @@
 								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
-							<Grid Grid.Row="3" Grid.Column="2">
+							<Grid Grid.Row="4" Grid.Column="2">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
@@ -355,18 +400,93 @@
 								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
-						</Grid>
+
+                            <!-- Ram-Disk 5 -->
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="5" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                            <Grid Grid.Row="5" Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.5*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
+                            </Grid>
+                            <Grid Grid.Row="5" Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.5*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
+                            </Grid>
+
+                            <!-- Ram-Disk 6 -->
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="6" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                            <Grid Grid.Row="6" Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.5*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
+                            </Grid>
+                            <Grid Grid.Row="6" Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.5*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
+                            </Grid>
+
+                            <!-- Ram-Disk 7 -->
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="7" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                            <Grid Grid.Row="7" Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.5*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
+                            </Grid>
+                            <Grid Grid.Row="7" Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.5*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
+                            </Grid>
+                            
+                            <!-- Ram-Disk 8 -->
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="8" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                            <Grid Grid.Row="8" Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.5*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
+                            </Grid>
+                            <Grid Grid.Row="8" Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.5*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
+                            </Grid>
+
+                        </Grid>
 					</StackPanel>
 
 					<!-- Floppy Drive Disk -->
-					<StackPanel Grid.Row="2" Margin="5">
-						<TextBlock Text="Floppy Drive Disks" HorizontalAlignment="Center" />
-					</StackPanel>
-					<StackPanel Grid.Row="3" Margin="5">
+                    <TextBlock Grid.Row="2" Text="Floppy Drive Disks" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                    <StackPanel Grid.Row="3" Margin="5">
 						<Grid>
 							<Grid.ColumnDefinitions>
-								<ColumnDefinition Width="0.5*"/>
-								<ColumnDefinition Width="Auto"/>
+								<ColumnDefinition Width="0.1*"/>
+								<ColumnDefinition Width=".1*"/>
 								<ColumnDefinition Width="0.1*"/>
 							</Grid.ColumnDefinitions>
 							<Grid.RowDefinitions>
@@ -379,23 +499,23 @@
 
 							<TextBlock Grid.Row="0" Grid.Column="0" Text="Selected" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="0" Grid.Column="1" Text="dismounted"/>
-							<TextBlock Grid.Row="0" Grid.Column="2" Text="(c)" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="0" Grid.Column="2" Text="(?)" Foreground="DarkGray"/>
 
 							<TextBlock Grid.Row="1" Grid.Column="0" Text="Drive A" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="1" Grid.Column="1" Text="dismounted"/>
-							<TextBlock Grid.Row="1" Grid.Column="2" Text="(c)" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="1" Grid.Column="2" Text="(?)" Foreground="DarkGray"/>
 
 							<TextBlock Grid.Row="2" Grid.Column="0" Text="Drive B" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="2" Grid.Column="1" Text="dismounted"/>
-							<TextBlock Grid.Row="2" Grid.Column="2" Text="(c)" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="2" Grid.Column="2" Text="(?)" Foreground="DarkGray"/>
 
 							<TextBlock Grid.Row="3" Grid.Column="0" Text="Drive C" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="3" Grid.Column="1" Text="dismounted"/>
-							<TextBlock Grid.Row="3" Grid.Column="2" Text="(c)" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="3" Grid.Column="2" Text="(?)" Foreground="DarkGray"/>
 
 							<TextBlock Grid.Row="4" Grid.Column="0" Text="Drive D" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<TextBlock Grid.Row="4" Grid.Column="1" Text="dismounted"/>
-							<TextBlock Grid.Row="4" Grid.Column="2" Text="(c)" Foreground="DarkGray"/>
+							<TextBlock Grid.Row="4" Grid.Column="2" Text="(?)" Foreground="DarkGray"/>
 						</Grid>
 					</StackPanel>
 				</Grid>
