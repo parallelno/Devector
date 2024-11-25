@@ -17,7 +17,7 @@ namespace Devector
     /// <summary>
     /// Interaction logic for Recorder.xaml
     /// </summary>
-    public partial class Recorder : Window
+    public partial class Recorder : DevectorWindow
     {
         public Recorder()
         {

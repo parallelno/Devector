@@ -313,6 +313,10 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 			m_reqRes.emplace(GetWord(dataJ, Memory::AddrSpace::STACK));
 			break;
 
+		case Req::GET_STACK_SAMPLE:
+			m_reqRes.emplace(GetStackSample(dataJ));
+			break;
+
 		case Req::GET_DISPLAY_DATA:
 			m_reqRes.emplace({
 				{"rasterLine", m_display.GetRasterLine()},
@@ -552,6 +556,38 @@ auto dev::Hardware::GetWord(const nlohmann::json _addrJ, const Memory::AddrSpace
 
 	nlohmann::json out = {
 		{"data", data}
+	};
+	return out;
+}
+
+auto dev::Hardware::GetStackSample(const nlohmann::json _addrJ)
+-> nlohmann::json
+{
+	Addr addr = _addrJ["addr"];
+	auto dataN10 = m_memory.GetByte(addr - 9, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr - 10, Memory::AddrSpace::STACK);
+	auto dataN8 = m_memory.GetByte(addr - 7, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr - 8, Memory::AddrSpace::STACK);
+	auto dataN6 = m_memory.GetByte(addr - 5, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr - 6, Memory::AddrSpace::STACK);
+	auto dataN4 = m_memory.GetByte(addr - 3, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr - 4, Memory::AddrSpace::STACK);
+	auto dataN2 = m_memory.GetByte(addr - 1, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr - 2, Memory::AddrSpace::STACK);
+	auto data = m_memory.GetByte(addr + 1, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr, Memory::AddrSpace::STACK);
+	auto dataP2 = m_memory.GetByte(addr + 3, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr + 2, Memory::AddrSpace::STACK);
+	auto dataP4 = m_memory.GetByte(addr + 5, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr + 4, Memory::AddrSpace::STACK);
+	auto dataP6 = m_memory.GetByte(addr + 7, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr + 6, Memory::AddrSpace::STACK);
+	auto dataP8 = m_memory.GetByte(addr + 9, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr + 8, Memory::AddrSpace::STACK);
+	auto dataP10 = m_memory.GetByte(addr + 11, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(addr + 10, Memory::AddrSpace::STACK);
+
+	nlohmann::json out = {
+		{"-10", dataN10},
+		{"-8", dataN8},
+		{"-6", dataN6},
+		{"-4", dataN4},
+		{"-2", dataN2},
+		{"0", data},
+		{"2", dataP2},
+		{"4", dataP4},
+		{"6", dataP6},
+		{"8", dataP8},
+		{"10", dataP10},
 	};
 	return out;
 }

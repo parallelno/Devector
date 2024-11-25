@@ -51,10 +51,11 @@ void dev::HardwareStatsWindow::DrawRegs() const
 		// flags
 		ImGui::Dummy({1,8});
 		DrawProperty2("C", dev::BoolToStrC(m_cpuState.regs.psw.c, 1), nullptr, *m_flagCColor);
-		DrawProperty2("Z", dev::BoolToStrC(m_cpuState.regs.psw.z, 1), nullptr, *m_flagZColor);
 		DrawProperty2("P", dev::BoolToStrC(m_cpuState.regs.psw.p, 1), nullptr, *m_flagPColor);
-		DrawProperty2("S", dev::BoolToStrC(m_cpuState.regs.psw.s, 1), nullptr, *m_flagSColor);
 		DrawProperty2("AC", dev::BoolToStrC(m_cpuState.regs.psw.ac, 1), nullptr, *m_flagACColor);
+		DrawProperty2("Z", dev::BoolToStrC(m_cpuState.regs.psw.z, 1), nullptr, *m_flagZColor);
+		DrawProperty2("S", dev::BoolToStrC(m_cpuState.regs.psw.s, 1), nullptr, *m_flagSColor);
+		
 
 		ImGui::EndTable();
 	}
@@ -73,10 +74,10 @@ void dev::HardwareStatsWindow::DrawStack() const
 		ImGui::TableSetupColumn("stackAddrs", ImGuiTableColumnFlags_WidthFixed, 30);
 
 		// Stack		
-		DrawProperty2("-12", m_dataAddrN10S.c_str());
-		DrawProperty2("-10", m_dataAddrN8S.c_str());
-		DrawProperty2("-8", m_dataAddrN6S.c_str());
-		DrawProperty2("-6", m_dataAddrN4S.c_str());
+		DrawProperty2("-10", m_dataAddrN10S.c_str());
+		DrawProperty2("-8", m_dataAddrN8S.c_str());
+		DrawProperty2("-6", m_dataAddrN6S.c_str());
+		DrawProperty2("-4", m_dataAddrN4S.c_str());
 		DrawProperty2("-2", m_dataAddrN2S.c_str());
 		DrawProperty2("SP", m_dataAddr0S.c_str());
 		DrawProperty2("+2", m_dataAddrP2S.c_str());

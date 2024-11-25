@@ -17,7 +17,7 @@ namespace Devector
     /// <summary>
     /// Interaction logic for Disasm.xaml
     /// </summary>
-    public partial class Disasm : Window
+    public partial class Disasm : DevectorWindow
     {
         public Disasm()
         {

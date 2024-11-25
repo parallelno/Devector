@@ -64,7 +64,6 @@ namespace Devector
 		ScreenKeyboard? screenKeyboardWindow = null;
 		About? aboutWindow = null;
 
-
 		//////////////////////////////////
 		//
 		// Vars
@@ -104,14 +103,14 @@ namespace Devector
 		{
 			InitializeComponent();
 
-			Hal = ((Devector.App)System.Windows.Application.Current).Hal;
+            var app = (App)Application.Current;
+            Hal = app.Hal;
 
 			DataContext = this; // Set the DataContext to allow binding to commands
 
 			Loaded += MainWindow_Loaded;
 			//LocationChanged += MainWindow_LocationChanged;
 			SizeChanged += MainWindow_SizeChanged;
-			var app = (App)Application.Current;
 			this.KeyDown += MainWindow_KeyDown;
             this.KeyUp += MainWindow_KeyUp;
 
@@ -149,7 +148,8 @@ namespace Devector
 		protected override void OnClosed(EventArgs e)
 		{
 			base.OnClosed(e);
-		}
+            Close();
+        }
 
 		private void Draw()
 		{
@@ -429,7 +429,7 @@ namespace Devector
 			}
 		}
 
-		static private void ToggleWindowVisibility<T>(ref T? window) where T : Window, new()
+		static private void ToggleWindowVisibility<T>(ref T? window) where T : DevectorWindow, new()
 		{
 			if (window?.IsVisible == true)
 			{
@@ -603,8 +603,6 @@ namespace Devector
 			Hal?.Request(HAL.Req.SET_CPU_SPEED, data.ToJsonString());
 		}
 
-
-
 		//////////////////////////////////
 		//
 		// Shortcuts
@@ -642,7 +640,6 @@ namespace Devector
                 Hal?.Request(HAL.Req.KEY_HANDLING, data.ToJsonString());
             }
 		}
-
         private void MainWindow_KeyUp(object sender, KeyEventArgs e)
         {
             if (!Keyboard.IsKeyDown(Key.LeftCtrl))

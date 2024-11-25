@@ -63,6 +63,7 @@ namespace dev
 			GET_BYTE_RAM,
 			GET_THREE_BYTES_RAM,
 			GET_WORD_STACK,
+			GET_STACK_SAMPLE,
 			GET_DISPLAY_DATA,
 			GET_MEMORY_MAPPING,
 			GET_GLOBAL_ADDR_RAM,
@@ -170,6 +171,7 @@ namespace dev
 		auto GetByte(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto Get3Bytes(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto GetWord(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
+		auto GetStackSample(const nlohmann::json _addrJ) -> nlohmann::json;
 		auto GetFddInfo(const int _driveIdx) -> Fdc1793::DiskInfo;
 		auto GetFddImage(const int _driveIdx) -> const std::vector<uint8_t>;
 		auto GetStepOverAddr() -> const Addr;

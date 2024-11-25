@@ -17,7 +17,7 @@ namespace Devector
     /// <summary>
     /// Interaction logic for MemoryDisplay.xaml
     /// </summary>
-    public partial class MemoryDisplay : Window
+    public partial class MemoryDisplay : DevectorWindow
     {
         public MemoryDisplay()
         {

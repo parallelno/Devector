@@ -17,7 +17,7 @@ namespace Devector
     /// <summary>
     /// Interaction logic for Breakpoints.xaml
     /// </summary>
-    public partial class Breakpoints : Window
+    public partial class Breakpoints : DevectorWindow
     {
         public Breakpoints()
         {

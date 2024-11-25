@@ -17,7 +17,7 @@ namespace Devector
     /// <summary>
     /// Interaction logic for Keyboard.xaml
     /// </summary>
-    public partial class ScreenKeyboard : Window
+    public partial class ScreenKeyboard : DevectorWindow
     {
         public ScreenKeyboard()
         {

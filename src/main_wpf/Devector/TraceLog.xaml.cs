@@ -17,7 +17,7 @@ namespace Devector
     /// <summary>
     /// Interaction logic for TraceLog.xaml
     /// </summary>
-    public partial class TraceLog : Window
+    public partial class TraceLog : DevectorWindow
     {
         public TraceLog()
         {

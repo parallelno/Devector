@@ -17,7 +17,7 @@ namespace Devector
     /// <summary>
     /// Interaction logic for Watchpoints.xaml
     /// </summary>
-    public partial class Watchpoints : Window
+    public partial class Watchpoints : DevectorWindow
     {
         public Watchpoints()
         {

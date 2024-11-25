@@ -17,7 +17,7 @@ namespace Devector
     /// <summary>
     /// Interaction logic for HexViewer.xaml
     /// </summary>
-    public partial class HexViewer : Window
+    public partial class HexViewer : DevectorWindow
     {
         public HexViewer()
         {
