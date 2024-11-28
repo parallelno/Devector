@@ -211,34 +211,34 @@
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CpuCicles}"/>
 
 							<TextBlock Grid.Row="2" Grid.Column="0" Text="Last Run" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="2" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding LastRun}"/>
 
 							<TextBlock Grid.Row="3" Grid.Column="0" Text="CRT X/Y" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="3" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CrtXY}"/>
 
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Frame CC" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="4" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding FrameCC}"/>
 
 							<TextBlock Grid.Row="5" Grid.Column="0" Text="Frame Num" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="5" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding FrameNum}"/>
 
 							<TextBlock Grid.Row="6" Grid.Column="0" Text="Display Mode" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="6" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding DisplayMode}"/>
 
 							<TextBlock Grid.Row="7" Grid.Column="0" Text="Scroll V" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="7" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding ScrollV}"/>
 
 							<TextBlock Grid.Row="8" Grid.Column="0" Text="Rus/Lat" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="8" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding RusLat}"/>
 
 							<TextBlock Grid.Row="9" Grid.Column="0" Text="INTE" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="9" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding Inte}"/>
 
 							<TextBlock Grid.Row="10" Grid.Column="0" Text="IFF" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="10" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="10" Grid.Column="1" Text="{Binding Iff}"/>
 
                             <TextBlock Grid.Row="11" Grid.Column="0" Text="HLTA" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                            <TextBlock Grid.Row="11" Grid.Column="1" Text="0"/>
+                            <TextBlock Grid.Row="11" Grid.Column="1" Text="{Binding Hlta}"/>
                         </Grid>
 					</StackPanel>
 
@@ -259,25 +259,48 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Border Grid.Column="0" Grid.Row="0" Background="#FFFF0000" Padding="8" Margin="2"/>
-                            <Border Grid.Column="1" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="2" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="3" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="4" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="5" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="6" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="7" Grid.Row="0" Background="#FFFF0000" Margin="2"/>
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="0" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Grid.Row="0" Text="1" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Grid.Row="0" Text="2" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Grid.Row="0" Text="3" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="4" Grid.Row="0" Text="4" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="5" Grid.Row="0" Text="5" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="6" Grid.Row="0" Text="6" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="7" Grid.Row="0" Text="7" HorizontalAlignment="Center"/>
 
-                            <Border Grid.Column="0" Grid.Row="1" Background="#FFFF0000" Padding="8" Margin="2"/>
-                            <Border Grid.Column="1" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="2" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="3" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="4" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="5" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="6" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
-                            <Border Grid.Column="7" Grid.Row="1" Background="#FFFF0000" Margin="2"/>
+                            <Border Grid.Column="0" Grid.Row="1" Background="{Binding Pal0}" Margin="2" Padding="8" />
+                            <Border Grid.Column="1" Grid.Row="1" Background="{Binding Pal1}" Margin="2"/>
+                            <Border Grid.Column="2" Grid.Row="1" Background="{Binding Pal2}" Margin="2"/>
+                            <Border Grid.Column="3" Grid.Row="1" Background="{Binding Pal3}" Margin="2"/>
+                            <Border Grid.Column="4" Grid.Row="1" Background="{Binding Pal4}" Margin="2"/>
+                            <Border Grid.Column="5" Grid.Row="1" Background="{Binding Pal5}" Margin="2"/>
+                            <Border Grid.Column="6" Grid.Row="1" Background="{Binding Pal6}" Margin="2"/>
+                            <Border Grid.Column="7" Grid.Row="1" Background="{Binding Pal7}" Margin="2"/>
+
+                            <Border Grid.Column="0" Grid.Row="2" Background="#00FF0000" Padding="4" />
+                            
+                            <TextBlock Grid.Column="0" Grid.Row="3" Text="8" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Grid.Row="3" Text="9" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Grid.Row="3" Text="10" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Grid.Row="3" Text="11" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="4" Grid.Row="3" Text="12" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="5" Grid.Row="3" Text="13" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="6" Grid.Row="3" Text="14" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="7" Grid.Row="3" Text="15" HorizontalAlignment="Center"/>
+
+                            <Border Grid.Column="0" Grid.Row="4" Background="{Binding Pal8}" Margin="2" Padding="8" />
+                            <Border Grid.Column="1" Grid.Row="4" Background="{Binding Pal9}" Margin="2"/>
+                            <Border Grid.Column="2" Grid.Row="4" Background="{Binding Pal10}" Margin="2"/>
+                            <Border Grid.Column="3" Grid.Row="4" Background="{Binding Pal11}" Margin="2"/>
+                            <Border Grid.Column="4" Grid.Row="4" Background="{Binding Pal12}" Margin="2"/>
+                            <Border Grid.Column="5" Grid.Row="4" Background="{Binding Pal13}" Margin="2"/>
+                            <Border Grid.Column="6" Grid.Row="4" Background="{Binding Pal14}" Margin="2"/>
+                            <Border Grid.Column="7" Grid.Row="4" Background="{Binding Pal15}" Margin="2"/>
                         </Grid>
                     </StackPanel>
 

@@ -111,6 +111,7 @@ namespace dev
 		auto GetGlobalAddr(const Addr _addr, const AddrSpace _addrSpace) const -> GlobalAddr;
 		auto GetState() const -> const State& { return m_state; };
 		auto GetStateP() -> State* { return &m_state; };
+		auto GetMappingsP() const -> const Mapping* { return m_mappings; };
 		void SetRamDiskMode(uint8_t _diskIdx, uint8_t _data);
 		void SetMemType(const MemType _memType);
 		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);

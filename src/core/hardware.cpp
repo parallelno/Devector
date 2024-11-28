@@ -225,7 +225,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 				});
 			break;
 
-		case Req::GET_PALETTE:
+		case Req::GET_IO_PALETTE:
 		{
 			auto data = m_io.GetPalette();
 			m_reqRes.emplace({
@@ -331,6 +331,16 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 				{"ramdiskIdx", m_memory.GetState().update.ramdiskIdx},
 				});
 			break;
+
+		case Req::GET_MEMORY_MAPPINGS:{
+			auto mappingsP = m_memory.GetMappingsP();
+			nlohmann::json out = {{"ramdiskIdx", m_memory.GetState().update.ramdiskIdx}};
+			for (auto i=0; i < Memory::RAMDISK_MAX; i++) {
+				out["mapping"+std::to_string(i)] = mappingsP[i].data;
+			}
+			m_reqRes.emplace(out);
+			break;
+		}
 		case Req::GET_GLOBAL_ADDR_RAM:
 			m_reqRes.emplace({
 				{"data", m_memory.GetGlobalAddr(dataJ["addr"], Memory::AddrSpace::RAM)}
@@ -419,6 +429,30 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 			if (m_execSpeed == ExecSpeed::_20PERCENT) { m_audio.Mute(true); }
 			else { m_audio.Mute(false); }
 			m_reqRes.emplace({});
+			break;
+		}
+
+		case Req::GET_HW_MAIN_STATS:
+		{
+			auto paletteP = m_io.GetPalette();
+
+			nlohmann::json out = {{"cc", m_cpu.GetCC()},
+				{"rasterLine", m_display.GetRasterLine()},
+				{"rasterPixel", m_display.GetRasterPixel()},
+				{"frameCc", (m_display.GetRasterPixel() + m_display.GetRasterLine() * Display::FRAME_W) / 4},
+				{"frameNum", m_display.GetFrameNum()},
+				{"displayMode", m_io.GetDisplayMode()},
+				{"scrollVert", m_display.GetScrollVert()},
+				{"rusLat", (m_io.GetRusLatHistory() & 0b1000) != 0},
+				{"inte", m_cpu.GetState().ints.inte},
+				{"iff", m_cpu.GetState().ints.iff},
+				{"hlta", m_cpu.GetState().ints.hlta},
+				};
+				for (int i=0; i < IO::PALETTE_LEN; i++ ){
+					out["palette"+std::to_string(i)] = Display::VectorColorToArgb(paletteP->bytes[i]);
+				}
+			
+			m_reqRes.emplace(out);
 			break;
 		}
 		case Req::IS_MEMROM_ENABLED:

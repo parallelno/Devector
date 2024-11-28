@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Windows.Media;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -326,6 +327,16 @@ namespace Devector
         // Hardware
         private string _upTime;
         private string _cpuCicles;
+        private string _lastRun;
+        private string _crtXY;
+        private string _frameCC;
+        private string _frameNum;
+        private string _displayMode;
+        private string _scrollV;
+        private string _rusLat;
+        private string _inte;
+        private string _iff;
+        private string _hlta;
 
         public string UpTime
         {
@@ -352,6 +363,314 @@ namespace Devector
                 }
             }
         }
+
+        public string LastRun
+        {
+            get { return _lastRun; }
+            set
+            {
+                if (_lastRun != value)
+                {
+                    _lastRun = value;
+                    OnPropertyChanged(nameof(LastRun));
+                }
+            }
+        }
+
+        public string CrtXY
+        {
+            get { return _crtXY; }
+            set
+            {
+                if (_crtXY != value)
+                {
+                    _crtXY = value;
+                    OnPropertyChanged(nameof(CrtXY));
+                }
+            }
+        }
+
+        public string FrameCC
+        {
+            get { return _frameCC; }
+            set
+            {
+                if (_frameCC != value)
+                {
+                    _frameCC = value;
+                    OnPropertyChanged(nameof(FrameCC));
+                }
+            }
+        }
+
+        public string FrameNum
+        {
+            get { return _frameNum; }
+            set
+            {
+                if (_frameNum != value)
+                {
+                    _frameNum = value;
+                    OnPropertyChanged(nameof(FrameNum));
+                }
+            }
+        }
+
+        public string DisplayMode
+        {
+            get { return _displayMode; }
+            set
+            {
+                if (_displayMode != value)
+                {
+                    _displayMode = value;
+                    OnPropertyChanged(nameof(DisplayMode));
+                }
+            }
+        }
+
+        public string ScrollV
+        {
+            get { return _scrollV; }
+            set
+            {
+                if (_scrollV != value)
+                {
+                    _scrollV = value;
+                    OnPropertyChanged(nameof(ScrollV));
+                }
+            }
+        }
+
+        public string RusLat
+        {
+            get { return _rusLat; }
+            set
+            {
+                if (_rusLat != value)
+                {
+                    _rusLat = value;
+                    OnPropertyChanged(nameof(RusLat));
+                }
+            }
+        }
+
+        public string Inte
+        {
+            get { return _inte; }
+            set
+            {
+                if (_inte != value)
+                {
+                    _inte = value;
+                    OnPropertyChanged(nameof(Inte));
+                }
+            }
+        }
+
+        public string Iff
+        {
+            get { return _iff; }
+            set
+            {
+                if (_iff != value)
+                {
+                    _iff = value;
+                    OnPropertyChanged(nameof(Iff));
+                }
+            }
+        }
+
+        public string Hlta
+        {
+            get { return _hlta; }
+            set
+            {
+                if (_hlta != value)
+                {
+                    _hlta = value;
+                    OnPropertyChanged(nameof(Hlta));
+                }
+            }
+        }
+
+        // palette
+        private SolidColorBrush _pal0;
+        public SolidColorBrush Pal0
+        {
+            get => _pal0;
+            set
+            {
+                _pal0 = value;
+                OnPropertyChanged(nameof(Pal0));
+            }
+        }
+
+        private SolidColorBrush _pal1;
+        public SolidColorBrush Pal1
+        {
+            get => _pal1;
+            set
+            {
+                _pal1 = value;
+                OnPropertyChanged(nameof(Pal1));
+            }
+        }
+
+        private SolidColorBrush _pal2;
+        public SolidColorBrush Pal2
+        {
+            get => _pal2;
+            set
+            {
+                _pal2 = value;
+                OnPropertyChanged(nameof(Pal2));
+            }
+        }
+
+        private SolidColorBrush _pal3;
+        public SolidColorBrush Pal3
+        {
+            get => _pal3;
+            set
+            {
+                _pal3 = value;
+                OnPropertyChanged(nameof(Pal3));
+            }
+        }
+
+        private SolidColorBrush _pal4;
+        public SolidColorBrush Pal4
+        {
+            get => _pal4;
+            set
+            {
+                _pal4 = value;
+                OnPropertyChanged(nameof(Pal4));
+            }
+        }
+
+        private SolidColorBrush _pal5;
+        public SolidColorBrush Pal5
+        {
+            get => _pal5;
+            set
+            {
+                _pal5 = value;
+                OnPropertyChanged(nameof(Pal5));
+            }
+        }
+
+        private SolidColorBrush _pal6;
+        public SolidColorBrush Pal6
+        {
+            get => _pal6;
+            set
+            {
+                _pal6 = value;
+                OnPropertyChanged(nameof(Pal6));
+            }
+        }
+
+        private SolidColorBrush _pal7;
+        public SolidColorBrush Pal7
+        {
+            get => _pal7;
+            set
+            {
+                _pal7 = value;
+                OnPropertyChanged(nameof(Pal7));
+            }
+        }
+
+        private SolidColorBrush _pal8;
+        public SolidColorBrush Pal8
+        {
+            get => _pal8;
+            set
+            {
+                _pal8 = value;
+                OnPropertyChanged(nameof(Pal8));
+            }
+        }
+
+        private SolidColorBrush _pal9;
+        public SolidColorBrush Pal9
+        {
+            get => _pal9;
+            set
+            {
+                _pal9 = value;
+                OnPropertyChanged(nameof(Pal9));
+            }
+        }
+
+        private SolidColorBrush _pal10;
+        public SolidColorBrush Pal10
+        {
+            get => _pal10;
+            set
+            {
+                _pal10 = value;
+                OnPropertyChanged(nameof(Pal10));
+            }
+        }
+
+        private SolidColorBrush _pal11;
+        public SolidColorBrush Pal11
+        {
+            get => _pal11;
+            set
+            {
+                _pal11 = value;
+                OnPropertyChanged(nameof(Pal11));
+            }
+        }
+
+        private SolidColorBrush _pal12;
+        public SolidColorBrush Pal12
+        {
+            get => _pal12;
+            set
+            {
+                _pal12 = value;
+                OnPropertyChanged(nameof(Pal12));
+            }
+        }
+
+        private SolidColorBrush _pal13;
+        public SolidColorBrush Pal13
+        {
+            get => _pal13;
+            set
+            {
+                _pal13 = value;
+                OnPropertyChanged(nameof(Pal13));
+            }
+        }
+
+        private SolidColorBrush _pal14;
+        public SolidColorBrush Pal14
+        {
+            get => _pal14;
+            set
+            {
+                _pal14 = value;
+                OnPropertyChanged(nameof(Pal14));
+            }
+        }
+
+        private SolidColorBrush _pal15;
+        public SolidColorBrush Pal15
+        {
+            get => _pal15;
+            set
+            {
+                _pal15 = value;
+                OnPropertyChanged(nameof(Pal15));
+            }
+        }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
 

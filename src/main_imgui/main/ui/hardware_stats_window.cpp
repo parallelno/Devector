@@ -286,6 +286,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_cpuState.regs.pc.word = regPC;
 
 	dev::CpuI8080::Int ints{ data["ints"] };
+	m_cpuState.ints = ints;
 
 	// Stack
 	Addr dataAddrN10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 10 } })->at("data");
@@ -342,7 +343,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_frameCCS = std::to_string((rasterPixel + rasterLine * Display::FRAME_W) / 4);
 	m_frameNumS = std::to_string(frameNum);
 
-	res = m_hardware.Request(Hardware::Req::GET_PALETTE);
+	res = m_hardware.Request(Hardware::Req::GET_IO_PALETTE);
 	const auto& paletteDataJ = *res;
 	m_palette.low = paletteDataJ["low"];
 	m_palette.hi = paletteDataJ["hi"];
