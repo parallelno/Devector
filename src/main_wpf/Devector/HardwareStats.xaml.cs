@@ -25,15 +25,16 @@ namespace Devector
         private long _cc;
 
         private HardwareStatsViewModel _viewModel;
-		// timer
-		private DispatcherTimer? _halDisplayUpdateTmer;
+        // timer
+        private DispatcherTimer? _halDisplayUpdateTmer;
 
 		public HardwareStats()
 		{
 			InitializeComponent();
 
 			_viewModel = new HardwareStatsViewModel();
-			DataContext = _viewModel;
+
+            DataContext = _viewModel;
             UpdateData();
             UpdateDataByTimer();
 
@@ -174,9 +175,90 @@ namespace Devector
             // Ram-Disk
             jsonDoc = Hal?.Request(HAL.Req.GET_MEMORY_MAPPINGS, "");
             var ramdiskIdx = jsonDoc?.RootElement.GetProperty("ramdiskIdx").GetInt32();
+            _viewModel.Mapping1 = new MappingData(jsonDoc?.RootElement.GetProperty("mapping0").GetInt32() ?? 0);
+            var mappingData1 = new MappingData(jsonDoc?.RootElement.GetProperty("mapping1").GetInt32() ?? 0);
+            var mappingData2 = new MappingData(jsonDoc?.RootElement.GetProperty("mapping2").GetInt32() ?? 0);
+            var mappingData3 = new MappingData(jsonDoc?.RootElement.GetProperty("mapping3").GetInt32() ?? 0);
+            var mappingData4 = new MappingData(jsonDoc?.RootElement.GetProperty("mapping4").GetInt32() ?? 0);
+            var mappingData5 = new MappingData(jsonDoc?.RootElement.GetProperty("mapping5").GetInt32() ?? 0);
+            var mappingData6 = new MappingData(jsonDoc?.RootElement.GetProperty("mapping6").GetInt32() ?? 0);
+            var mappingData7 = new MappingData(jsonDoc?.RootElement.GetProperty("mapping7").GetInt32() ?? 0);
+
+            for (ulong ramDiskIdx = 0; ramDiskIdx < HAL.RAM_DISK_MAX; ramDiskIdx++)
+            {
+                var mappingData = new MappingData(jsonDoc?.RootElement.GetProperty($"mapping{ramDiskIdx}").GetInt32() ?? 0);
+            }
+            // mapping ram mode
+            //_viewModel.MappingRamMode1 = mappingData0.ModeRamToString();
+            //_viewModel.MappingRamMode2 = mappingData1.ModeRamToString();
+            //_viewModel.MappingRamMode3 = mappingData2.ModeRamToString();
+            //_viewModel.MappingRamMode4 = mappingData3.ModeRamToString();
+            //_viewModel.MappingRamMode5 = mappingData4.ModeRamToString();
+            //_viewModel.MappingRamMode6 = mappingData5.ModeRamToString();
+            //_viewModel.MappingRamMode7 = mappingData6.ModeRamToString();
+            //_viewModel.MappingRamMode8 = mappingData7.ModeRamToString();
+            //// mapping ram page
+            //_viewModel.MappingRamPage1 = mappingData0.ToString();
+            //_viewModel.MappingRamPage2 = mappingData1.ToString();
+            //_viewModel.MappingRamPage3 = mappingData2.ToString();
+            //_viewModel.MappingRamPage4 = mappingData3.ToString();
+            //_viewModel.MappingRamPage5 = mappingData4.ToString();
+            //_viewModel.MappingRamPage6 = mappingData5.ToString();
+            //_viewModel.MappingRamPage7 = mappingData6.ToString();
+            //_viewModel.MappingRamPage8 = mappingData7.ToString();
+            //// mapping stack mode
+            //_viewModel.MappingStackMode1 = mappingData0.ModeStackToString();
+            //_viewModel.MappingStackMode2 = mappingData1.ModeStackToString();
+            //_viewModel.MappingStackMode3 = mappingData2.ModeStackToString();
+            //_viewModel.MappingStackMode4 = mappingData3.ModeStackToString();
+            //_viewModel.MappingStackMode5 = mappingData4.ModeStackToString();
+            //_viewModel.MappingStackMode6 = mappingData5.ModeStackToString();
+            //_viewModel.MappingStackMode7 = mappingData6.ModeStackToString();
+            //_viewModel.MappingStackMode8 = mappingData7.ModeStackToString();
+            //// mapping stack page
+            //_viewModel.MappingStackPage1 = mappingData0.ToString();
+            //_viewModel.MappingStackPage2 = mappingData1.ToString();
+            //_viewModel.MappingStackPage3 = mappingData2.ToString();
+            //_viewModel.MappingStackPage4 = mappingData3.ToString();
+            //_viewModel.MappingStackPage5 = mappingData4.ToString();
+            //_viewModel.MappingStackPage6 = mappingData5.ToString();
+            //_viewModel.MappingStackPage7 = mappingData6.ToString();
+            //_viewModel.MappingStackPage8 = mappingData7.ToString();
+
 
             // FDC
 
+        }
+
+        public struct MappingData
+        {
+            public int pageRam;    // Ram-Disk 64k page idx accesssed via non-stack instructions (all instructions except mentioned below)
+            public int pageStack;  // Ram-Disk 64k page idx accesssed via the stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
+            public bool modeStack; // enabling stack mapping
+            public bool modeRamA;  // enabling ram [0xA000-0xDFFF] mapped into the the Ram-Disk
+            public bool modeRam8;  // enabling ram [0x8000-0x9FFF] mapped into the the Ram-Disk
+            public bool modeRamE;  // enabling ram [0xE000-0xFFFF] mapped into the the Ram-Disk   
+
+            public MappingData(int data = 0)
+            {
+                pageRam = data & 0x2;
+                pageStack = (data >> 2) & 0x2;
+                modeStack = ((data >> 4) & 0x1) != 0;
+                modeRamA = ((data >> 5) & 0x1) != 0;
+                modeRam8 = ((data >> 6) & 0x1) != 0;
+                modeRamE = ((data >> 7) & 0x1) != 0;
+            }
+            public string ModeRamToString()
+            {
+                string mapping = modeRam8 ? "8" : "-";
+                mapping += modeRam8 ? "AC" : "-";
+                mapping += modeRam8 ? "E" : "-";
+                return mapping;
+            }
+            public string ModeStackToString()
+            {
+                return modeStack? "On" : "Off";
+            }
         }
 
         private SolidColorBrush ColorFromBytes(long colorValue)

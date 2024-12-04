@@ -45,7 +45,7 @@ namespace dev
 
 	public:
 		//enum class Req
-		#include "core/hardware_const.h"
+		#include "core/hardware_consts.h"
 		
 
 		using DebugFunc = std::function<bool(

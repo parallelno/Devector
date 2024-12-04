@@ -30,9 +30,11 @@
     <ClInclude Include="..\..\core\fdc_wd1793.h" />
     <ClInclude Include="..\..\core\fdd_consts.h" />
     <ClInclude Include="..\..\core\hardware.h" />
+    <ClInclude Include="..\..\core\hardware_consts.h" />
     <ClInclude Include="..\..\core\io.h" />
     <ClInclude Include="..\..\core\keyboard.h" />
     <ClInclude Include="..\..\core\memory.h" />
+    <ClInclude Include="..\..\core\memory_consts.h" />
     <ClInclude Include="..\..\core\recorder.h" />
     <ClInclude Include="..\..\core\sound_ay8910.h" />
     <ClInclude Include="..\..\core\timer_i8253.h" />

@@ -349,13 +349,13 @@
 							<TextBlock Grid.Row="0" Grid.Column="2" Text="Stack Mode/Page" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Center"/>
 
 							<!-- Ram-Disk 1 -->
-							<TextBlock Grid.Row="1" Grid.Column="0" Text="1" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="1" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 							<Grid Grid.Row="1" Grid.Column="1">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode1}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
 							<Grid Grid.Row="1" Grid.Column="2">
@@ -363,7 +363,7 @@
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode1}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
 
@@ -374,7 +374,7 @@
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode2}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
 							<Grid Grid.Row="2" Grid.Column="2">
@@ -382,7 +382,7 @@
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode2}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
 
@@ -393,7 +393,7 @@
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode3}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
 							<Grid Grid.Row="3" Grid.Column="2">
@@ -401,7 +401,7 @@
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode3}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
 
@@ -412,7 +412,7 @@
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode4}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
 							<Grid Grid.Row="4" Grid.Column="2">
@@ -420,7 +420,7 @@
 									<ColumnDefinition Width="0.5*"/>
 									<ColumnDefinition Width="0.5*"/>
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode4}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
 								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
 							</Grid>
 
@@ -431,7 +431,7 @@
                                     <ColumnDefinition Width="0.5*"/>
                                     <ColumnDefinition Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode5}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
                                 <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
                             </Grid>
                             <Grid Grid.Row="5" Grid.Column="2">
@@ -439,7 +439,7 @@
                                     <ColumnDefinition Width="0.5*"/>
                                     <ColumnDefinition Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode5}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
                                 <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
                             </Grid>
 
@@ -450,7 +450,7 @@
                                     <ColumnDefinition Width="0.5*"/>
                                     <ColumnDefinition Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode6}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
                                 <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
                             </Grid>
                             <Grid Grid.Row="6" Grid.Column="2">
@@ -458,7 +458,7 @@
                                     <ColumnDefinition Width="0.5*"/>
                                     <ColumnDefinition Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode6}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
                                 <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
                             </Grid>
 
@@ -469,7 +469,7 @@
                                     <ColumnDefinition Width="0.5*"/>
                                     <ColumnDefinition Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode7}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
                                 <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
                             </Grid>
                             <Grid Grid.Row="7" Grid.Column="2">
@@ -477,7 +477,7 @@
                                     <ColumnDefinition Width="0.5*"/>
                                     <ColumnDefinition Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode7}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
                                 <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
                             </Grid>
                             
@@ -488,7 +488,7 @@
                                     <ColumnDefinition Width="0.5*"/>
                                     <ColumnDefinition Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode8}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
                                 <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
                             </Grid>
                             <Grid Grid.Row="8" Grid.Column="2">
@@ -496,7 +496,7 @@
                                     <ColumnDefinition Width="0.5*"/>
                                     <ColumnDefinition Width="0.5*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Off" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode8}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
                                 <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
                             </Grid>
 

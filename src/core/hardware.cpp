@@ -335,7 +335,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 		case Req::GET_MEMORY_MAPPINGS:{
 			auto mappingsP = m_memory.GetMappingsP();
 			nlohmann::json out = {{"ramdiskIdx", m_memory.GetState().update.ramdiskIdx}};
-			for (auto i=0; i < Memory::RAMDISK_MAX; i++) {
+			for (auto i=0; i < Memory::RAM_DISK_MAX; i++) {
 				out["mapping"+std::to_string(i)] = mappingsP[i].data;
 			}
 			m_reqRes.emplace(out);

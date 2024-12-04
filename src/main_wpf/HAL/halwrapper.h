@@ -36,7 +36,9 @@ namespace dev
 		literal float BORDER_VISIBLE = Display::BORDER_VISIBLE;
 
 		//enum class Req
-		#include "core/hardware_const.h"
+		#include "core/hardware_consts.h"
+
+		#include "core/memory_consts.h"
 
         bool CreateGfxContext(System::IntPtr hwnd, GLsizei _viewportW, GLsizei _viewportH);
 

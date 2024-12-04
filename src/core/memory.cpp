@@ -14,7 +14,7 @@ dev::Memory::Memory(const std::wstring& _pathBootData, const std::wstring& _path
 	res = dev::LoadFile(_pathRamDiskData);
 	if (res) {
 		RamDiskData ramDiskData = *res;
-		ramDiskData.resize(MEMORY_RAMDISK_LEN * RAMDISK_MAX);
+		ramDiskData.resize(MEMORY_RAMDISK_LEN * RAM_DISK_MAX);
 		std::copy(ramDiskData.begin(), ramDiskData.end(), m_ram.data() + MEMORY_MAIN_LEN);
 	}
 }
@@ -157,7 +157,7 @@ void dev::Memory::SetRamDiskMode(uint8_t _diskIdx, uint8_t _data)
 	m_state.update.mapping.data = 0;
 	m_mappingsEnabled = 0;
 
-	for (int ramdiskIdx = 0; ramdiskIdx < RAMDISK_MAX; ramdiskIdx++)
+	for (int ramdiskIdx = 0; ramdiskIdx < RAM_DISK_MAX; ramdiskIdx++)
 	{
 		if (m_mappings[ramdiskIdx].data & MAPPING_MODE_MASK)
 		{

@@ -197,5 +197,11 @@
     <ClInclude Include="..\..\utils\gl_utils.h">
       <Filter>src\utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\core\memory_consts.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\hardware_consts.h">
+      <Filter>src\core</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

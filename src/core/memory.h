@@ -14,25 +14,11 @@ namespace dev
 	class Memory
 	{
 	public:
-		enum AddrSpace : uint8_t { RAM = 0, STACK = 1 };
-		enum class MemType : uint8_t { ROM = 0, RAM };
-
-		static constexpr GlobalAddr ROM_LOAD_ADDR = 0x100;
-
-		static constexpr size_t MEM_64K = 64 * 1024;
-		static constexpr size_t RAM_DISK_PAGE_LEN = MEM_64K;
-		static constexpr size_t MEMORY_RAMDISK_LEN = 4 * MEM_64K;
-		static constexpr size_t RAMDISK_MAX = 8;
-
-		static constexpr size_t MEMORY_MAIN_LEN = MEM_64K;
-		static constexpr size_t GLOBAL_MEMORY_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAMDISK_MAX;
+		#include "core/memory_consts.h"
 
 		using Rom = std::vector<uint8_t>;
 		using Ram = std::array<uint8_t, GLOBAL_MEMORY_LEN>;
 		using RamDiskData = std::vector<uint8_t>;
-
-		static constexpr uint8_t MAPPING_RAM_MODE_MASK = 0b11100000;
-		static constexpr uint8_t MAPPING_MODE_MASK = 0b11110000;
 
 #pragma pack(push, 1)
 		// RAM-mapping is applied if the RAM-mapping is enabled, the ram accesssed via non-stack instructions, and the addr falls into the RAM-mapping range associated with that particular RAM mapping
@@ -53,7 +39,7 @@ namespace dev
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-		Mapping m_mappings[RAMDISK_MAX];
+		Mapping m_mappings[RAM_DISK_MAX];
 #pragma pack(pop)
 
 		// contains the data stored in memory by the last executed instruction
@@ -61,7 +47,7 @@ namespace dev
 		struct Update
 		{
 			Mapping mapping;
-			uint8_t ramdiskIdx : 3 = 0; // RAMDISK_MAX = 8
+			uint8_t ramdiskIdx : 3 = 0; // RAM_DISK_MAX = 8
 			MemType memType : 1 = MemType::RAM;
 		};
 #pragma pack(pop)
