@@ -14,7 +14,7 @@
 #include "core/hardware.h"
 #include "core/debugger.h"
 
-#include "utils/win_gl_utils.h"
+#include "win_gl_utils.h"
 
 namespace dev 
 {

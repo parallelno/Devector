@@ -17,7 +17,7 @@ find_package(X11 REQUIRED)
 
 # Defining vars
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(DEVECTOR_DIR ${SRC_DIR}/devector)
+set(DEVECTOR_DIR ${SRC_DIR}/main_imgui)
 set(3RD_PARTY_DIR ${SRC_DIR}/3rd_party)
 set(SDL3_DIR ${3RD_PARTY_DIR}/SDL)
 set(IMGUI_DIR ${3RD_PARTY_DIR}/imgui)
@@ -76,7 +76,7 @@ target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 # Optionally, build GLEW utilities (glewinfo, visualinfo)
 set(BUILD_UTILS OFF CACHE BOOL "Build GLEW utilities")
 
-# ImGui source
+# ImGui source 
 set(IMGUI_SRC
 	${IMGUI_DIR}/imgui.cpp
 	${IMGUI_DIR}/imgui_demo.cpp
@@ -88,7 +88,7 @@ set(IMGUI_SRC
 	${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
 )
 
-# libtinyfiledialogs source
+# libtinyfiledialogs source 
 set(TINY_DIALOGS_SRC
 	${TINY_DIALOGS_DIR}/tinyfiledialogs.c
 )
@@ -107,38 +107,43 @@ set(SOURCES
 	${UTILS_SRC}
 	${SRC_DIR}/njson/json.hpp
 	# devector
-	${DEVECTOR_DIR}/main.cpp
-	${DEVECTOR_DIR}/devector_app.h
-	${DEVECTOR_DIR}/devector_app.cpp
-	${DEVECTOR_DIR}/imgui_app.cpp
-	${DEVECTOR_DIR}/imgui_app.cpp
-	${DEVECTOR_DIR}/ui/about_window.cpp
-	${DEVECTOR_DIR}/ui/about_window.h
-	${DEVECTOR_DIR}/ui/base_window.cpp
-	${DEVECTOR_DIR}/ui/base_window.h
-	${DEVECTOR_DIR}/ui/breakpoints_window.cpp
-	${DEVECTOR_DIR}/ui/breakpoints_window.h
-	${DEVECTOR_DIR}/ui/disasm_window.cpp
-	${DEVECTOR_DIR}/ui/disasm_window.h
-	${DEVECTOR_DIR}/ui/display_window.cpp
-	${DEVECTOR_DIR}/ui/display_window.h
-	${DEVECTOR_DIR}/ui/feedback_window.cpp
-	${DEVECTOR_DIR}/ui/feedback_window.h
-	${DEVECTOR_DIR}/ui/hardware_stats_window.cpp
-	${DEVECTOR_DIR}/ui/hardware_stats_window.h
-	${DEVECTOR_DIR}/ui/hex_viewer_window.cpp
-	${DEVECTOR_DIR}/ui/hex_viewer_window.h
-	${DEVECTOR_DIR}/ui/mem_display_window.cpp
-	${DEVECTOR_DIR}/ui/mem_display_window.h
-	${DEVECTOR_DIR}/ui/recorder_window.cpp
-	${DEVECTOR_DIR}/ui/recorder_window.h
-	${DEVECTOR_DIR}/ui/trace_log_window.cpp
-	${DEVECTOR_DIR}/ui/trace_log_window.h
-	${DEVECTOR_DIR}/ui/watchpoints_window.cpp
-	${DEVECTOR_DIR}/ui/watchpoints_window.h
-	${DEVECTOR_DIR}/ui/keyboard_window.cpp
-	${DEVECTOR_DIR}/ui/keyboard_window.h		
-)
+	${DEVECTOR_DIR}/main/main.cpp
+	${DEVECTOR_DIR}/main/devector_app.h
+	${DEVECTOR_DIR}/main/devector_app.cpp
+	
+	${DEVECTOR_DIR}/main/imgui_app.cpp
+	${DEVECTOR_DIR}/main/imgui_app.cpp
+
+	${DEVECTOR_DIR}/main/ui/about_window.cpp
+	${DEVECTOR_DIR}/main/ui/about_window.h
+	${DEVECTOR_DIR}/main/ui/base_window.cpp
+	${DEVECTOR_DIR}/main/ui/base_window.h
+	${DEVECTOR_DIR}/main/ui/breakpoints_window.cpp
+	${DEVECTOR_DIR}/main/ui/breakpoints_window.h
+	${DEVECTOR_DIR}/main/ui/disasm_window.cpp
+	${DEVECTOR_DIR}/main/ui/disasm_window.h
+	${DEVECTOR_DIR}/main/ui/display_window.cpp
+	${DEVECTOR_DIR}/main/ui/display_window.h
+	${DEVECTOR_DIR}/main/ui/feedback_window.cpp
+	${DEVECTOR_DIR}/main/ui/feedback_window.h
+	${DEVECTOR_DIR}/main/ui/hardware_stats_window.cpp
+	${DEVECTOR_DIR}/main/ui/hardware_stats_window.h
+	${DEVECTOR_DIR}/main/ui/hex_viewer_window.cpp
+	${DEVECTOR_DIR}/main/ui/hex_viewer_window.h
+	${DEVECTOR_DIR}/main/ui/mem_display_window.cpp
+	${DEVECTOR_DIR}/main/ui/mem_display_window.h
+	${DEVECTOR_DIR}/main/ui/recorder_window.cpp
+	${DEVECTOR_DIR}/main/ui/recorder_window.h
+	${DEVECTOR_DIR}/main/ui/trace_log_window.cpp
+	${DEVECTOR_DIR}/main/ui/trace_log_window.h
+	${DEVECTOR_DIR}/main/ui/watchpoints_window.cpp
+	${DEVECTOR_DIR}/main/ui/watchpoints_window.h
+	${DEVECTOR_DIR}/main/ui/keyboard_window.cpp
+	${DEVECTOR_DIR}/main/ui/keyboard_window.h		
+
+	${DEVECTOR_DIR}/utils/imgui_utils.cpp
+	${DEVECTOR_DIR}/utils/imgui_utils.h
+) 
 
 # Executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC} ${TINY_DIALOGS_SRC} ${STB_IMAGE_SRC})
@@ -172,8 +177,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	${GLAD_DIR}/include
 	${GLAD_DIR}/src
 	${IMGUI_DIR}/misc/cpp/
-	${DEVECTOR_DIR}
-	${DEVECTOR_DIR}/ui
+	${DEVECTOR_DIR}	
+	${DEVECTOR_DIR}/main
+	${DEVECTOR_DIR}/main/ui
 )
 if(UNIX AND NOT APPLE)
 	# Include GTK and GLib headers

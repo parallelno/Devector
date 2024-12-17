@@ -6,7 +6,7 @@
 #include <thread>
 #include <mutex>
 
-#include "utils/glu_utils.h"
+#include "utils/gl_utils.h"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_opengl3.h"

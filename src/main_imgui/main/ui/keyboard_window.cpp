@@ -25,9 +25,9 @@ bool dev::KeyboardWindow::Init()
 		return false;
 	}
 
-	auto vramTexRes = m_glUtils.InitTexture(m_imgKeyboardW, m_imgKeyboardH, GLUtils::Texture::Format::RGB);
-	if (!vramTexRes) return false;
-	m_vramTexId = *vramTexRes;
+	auto vramTexId = m_glUtils.InitTexture(m_imgKeyboardW, m_imgKeyboardH, GLUtils::Texture::Format::RGB);
+	if (vramTexId == INVALID_ID) return false;
+	m_vramTexId = vramTexId;
 
 	m_glUtils.UpdateTexture(m_vramTexId, (uint8_t*)dataP);
 
@@ -153,7 +153,7 @@ void dev::KeyboardWindow::Draw(const bool _isRunning)
 			displaySize.x = displaySize.y / KEYBOARD_IMG_ASPECT;
 		}
 
-		ImGui::Image((void*)(intptr_t)m_vramTexId, displaySize);
+		ImGui::Image(m_vramTexId, displaySize);
 		m_displayIsHovered = ImGui::IsItemHovered();
 		
 		// Draw buttons

@@ -21,15 +21,15 @@ dev::DevectorApp::DevectorApp(
 	const std::string& _rom_fdd_recPath)
 	:
 	ImGuiApp(_settingsJ, _settingsPath, APP_NAME),
+	m_glUtils(true)
 {
 	if (m_status == AppStatus::INITED) {
-		Init();
+		Init(_rom_fdd_recPath);
 	}
 }
 
-void dev::DevectorApp::Init()
+void dev::DevectorApp::Init(const std::string& _rom_fdd_recPath)
 {
-	m_glUtils.Init(GLUtils::TYPE::IMGUI);
 	SettingsInit();
 	HardwareInit();
 	WindowsInit();
@@ -422,7 +422,7 @@ void dev::DevectorApp::RecentFilesStore()
 		recentFiles.push_back(item);
 	}
 	SettingsUpdate("recentFiles", recentFiles);
-	SettingsSave(m_stringPath);
+	SettingsSave(m_settingsPath);
 }
 
 void dev::DevectorApp::RecentFilesUpdate(const FileType _fileType, const std::wstring& _path, const int _driveIdx, const bool _autoBoot)
@@ -460,12 +460,12 @@ bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 		{
 			if (displayFocused || keyboardFocused){
 				appP->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "scancode", scancode }, { "action", action} });
-				return SDL_FALSE; // do not pass the event to SDL
+				return false; // do not pass the event to SDL
 			}
 		}
 	}
 
-	return SDL_TRUE; // pass the event to SDL
+	return true; // pass the event to SDL
 }
 
 void dev::DevectorApp::AppStyleInit()

@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using static Devector.HardwareStats;
 using System.Runtime.CompilerServices;
+using static Devector.RamMappingViewModel;
+using System.Collections.ObjectModel;
 
 namespace Devector
 {
@@ -673,11 +675,42 @@ namespace Devector
 			}
 		}
 
+
+		public struct Palette
+		{
+			int _idx;
+			SolidColorBrush _color;
+
+            public SolidColorBrush Color
+			{
+				get => _color;
+			}
+			public int Idx
+			{
+				get => _idx;
+			}
+        }
+
+        private ObservableCollection<Palette> _palette;
+        public ObservableCollection<Palette> Palette
+        {
+            get => _palette;
+            set
+            {
+                _palette = value;
+                OnPropertyChanged();
+            }
+        }
+
         // peripherial
 
         // ram-disks
         public RamMappingViewModel RamMappingViewModel { get; }
 
+        public HardwareStatsViewModel()
+        {
+            RamMappingViewModel = new RamMappingViewModel();
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = "")

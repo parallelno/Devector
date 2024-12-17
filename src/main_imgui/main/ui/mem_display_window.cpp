@@ -93,35 +93,45 @@ dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger
 bool dev::MemDisplayWindow::Init()
 {
 	// setting up the mem view rendering
-	auto memViewShaderRes = m_glUtils.InitShader(memViewShaderVtx, memViewShaderFrag);
-	if (!memViewShaderRes) return false;
-	m_memViewShaderId = *memViewShaderRes;
+	auto memViewShaderId = m_glUtils.InitShader(memViewShaderVtx, memViewShaderFrag);
+	if (memViewShaderId == INVALID_ID) return false;
+	m_memViewShaderId = memViewShaderId;
 
 	for (int i = 0; i < RAM_TEXTURES; i++){
 		// ram
-		auto res = m_glUtils.InitTexture(RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::R8);
-		if (!res) return false;
-		m_memViewTexIds[i] = *res;
+		auto memViewTexId = m_glUtils.InitTexture(RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::R8);
+		if (memViewTexId == INVALID_ID) return false;
+		m_memViewTexIds[i] = memViewTexId;
 		// highlight reads + writes
-		auto lastRWRes = m_glUtils.InitTexture(RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::RGBA);
-		if (!res) return false;
-		m_lastRWTexIds[i] = *lastRWRes;
+		auto lastRWTexId = m_glUtils.InitTexture(RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::RGBA);
+		if (lastRWTexId == INVALID_ID) return false;
+		m_lastRWTexIds[i] = lastRWTexId;
 	}
 
 	GLUtils::ShaderParams memViewShaderParams = {
-		{ "globalColorBg", &m_globalColorBg },
-		{ "globalColorFg", &m_globalColorFg },
-		{ "highlightRead",& m_highlightRead },
-		{ "highlightWrite", &m_highlightWrite },
-		{ "highlightWrite", &m_highlightWrite },
-		{ "highlightIdxMax", &m_highlightIdxMax },
+		{ "globalColorBg", m_globalColorBg },
+		{ "globalColorFg", m_globalColorFg },
+		{ "highlightRead", m_highlightRead },
+		{ "highlightWrite", m_highlightWrite },
+		{ "highlightIdxMax", m_highlightIdxMax },
 	};
-	for (int i = 0; i < RAM_TEXTURES; i++){
-		auto res = m_glUtils.InitMaterial(m_memViewShaderId, FRAME_BUFFER_W, FRAME_BUFFER_H,
-			{m_memViewTexIds[i], m_lastRWTexIds[i]}, memViewShaderParams);
-		if (!res) return false;
-		m_memViewMatIds[i] = *res;
+
+	for (int i = 0; i < RAM_TEXTURES; i++)
+	{
+		auto matId = m_glUtils.InitMaterial(m_memViewShaderId,
+			{m_memViewTexIds[i], m_lastRWTexIds[i]}, memViewShaderParams,
+			FRAME_BUFFER_W, FRAME_BUFFER_H);
+
+		if (matId == INVALID_ID) return false;
+		
+		m_memViewMatIds[i] = matId;
 	}
+
+	m_paramId_globalColorBg = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "globalColorBg");
+	m_paramId_globalColorFg = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "globalColorFg");
+	m_paramId_highlightRead = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "highlightRead");
+	m_paramId_highlightWrite = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "highlightWrite");
+	m_paramId_highlightIdxMax = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "highlightIdxMax");
 
 	return true;
 }
@@ -255,7 +265,7 @@ void dev::MemDisplayWindow::DrawDisplay()
 			}
 
 			auto framebufferTex = m_glUtils.GetFramebufferTexture(m_memViewMatIds[i]);
-			ImGui::Image((void*)(intptr_t)framebufferTex, imageSize);
+			ImGui::Image(framebufferTex, imageSize);
 
 			// if clicked, show the addr in the Hex Window
 			if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
@@ -303,6 +313,13 @@ void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
 		
 		if (_isRunning) m_debugger.UpdateLastRW();
 		auto memLastRWP = m_debugger.GetLastRW()->data();
+
+		// update params
+		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_globalColorBg, m_globalColorBg);
+		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_globalColorFg, m_globalColorFg);
+		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_highlightRead, m_highlightRead);
+		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_highlightWrite, m_highlightWrite);
+		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_highlightIdxMax, m_highlightIdxMax);
 
 		// update vram texture
 		for (int i = 0; i < RAM_TEXTURES; i++)

@@ -24,11 +24,11 @@ namespace dev
 			Vec4(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {};
 		};
 
-		using ShaderParamIds = std::unordered_map <std::string, Id>;
-		using ShaderParamData = std::unordered_map <Id, Vec4>;
+		using ShaderParamIds = std::unordered_map <std::string, dev::Id>;
+		using ShaderParamData = std::unordered_map <dev::Id, Vec4>;
 		using ShaderParams = std::unordered_map <std::string, Vec4>;
-		using ShaderTextureParams = std::unordered_map<GLenum, Id>;
-		using TextureIds = std::vector<Id>;
+		using ShaderTextureParams = std::unordered_map<GLenum, dev::Id>;
+		using TextureIds = std::vector<dev::Id>;
 
 		struct Texture
 		{

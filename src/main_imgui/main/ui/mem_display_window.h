@@ -8,7 +8,7 @@
 #include "utils/result.h"
 #include "core/hardware.h"
 #include "core/debugger.h"
-#include "utils/glu_utils.h"
+#include "utils/gl_utils.h"
 
 namespace dev
 {
@@ -36,17 +36,23 @@ namespace dev
 		float m_scale = 1.0f;
 
 		GLUtils& m_glUtils;
+		GLUtils::Vec4 m_globalColorBg = { 0.2f, 0.2f, 0.2f, 1.0f };
+		GLUtils::Vec4 m_globalColorFg = { 1.0f, 1.0f, 1.0f, 1.0f };		
 		GLUtils::Vec4 m_highlightRead = { 0.078f, 0.078f, 1.0f, 0.8f };
 		GLUtils::Vec4 m_highlightWrite = { 1.0f, 0.078f, 0.078f, 0.8f };
-		GLUtils::Vec4 m_globalColorBg = { 0.2f, 0.2f, 0.2f, 1.0f };
-		GLUtils::Vec4 m_globalColorFg = { 1.0f, 1.0f, 1.0f, 1.0f };
 		GLUtils::Vec4 m_highlightIdxMax = {Debugger::LAST_RW_MAX, 0.0f, 0.0f, 0.0f};
-		GLuint m_memViewShaderId = -1;
-		GLuint m_highlightShaderId = -1;
-		std::array<GLUtils::MaterialId, RAM_TEXTURES> m_memViewMatIds;
-		std::array<GLuint, RAM_TEXTURES> m_memViewTexIds;
+		dev::Id m_paramId_globalColorBg = -1;
+		dev::Id m_paramId_globalColorFg = -1;
+		dev::Id m_paramId_highlightRead = -1;
+		dev::Id m_paramId_highlightWrite = -1;
+		dev::Id m_paramId_highlightIdxMax = -1;
+
+		dev::Id m_memViewShaderId = -1;
+		dev::Id m_highlightShaderId = -1;
+		std::array<dev::Id, RAM_TEXTURES> m_memViewMatIds;
+		std::array<dev::Id, RAM_TEXTURES> m_memViewTexIds;
+		std::array<dev::Id, RAM_TEXTURES> m_lastRWTexIds;
 		Debugger::MemLastRW* m_lastRWIdxsP;
-		std::array<GLuint, RAM_TEXTURES> m_lastRWTexIds;
 		bool m_isGLInited = false;
 
 		void DrawDisplay();

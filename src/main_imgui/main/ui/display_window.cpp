@@ -92,26 +92,38 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 
 bool dev::DisplayWindow::Init()
 {
+	// init shader
+	auto vramShaderId = m_glUtils.InitShader(vtxShaderS, fragShaderS);
+	if (vramShaderId == INVALID_ID) return false;
+	m_vramShaderId = vramShaderId;
+
+	// init texture
+	auto vramTexId = m_glUtils.InitTexture(Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
+	if (vramTexId == INVALID_ID) return false;
+	m_vramTexId = vramTexId;
+
+	// shader params
 	int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
 	m_bordsLRTB.x = borderLeft * FRAME_PXL_SIZE_W;
 	m_bordsLRTB.y = (borderLeft + Display::ACTIVE_AREA_W) * FRAME_PXL_SIZE_W;
-
-	auto vramShaderRes = m_glUtils.InitShader(vtxShaderS, fragShaderS);
-	if (!vramShaderRes) return false;
-	m_vramShaderId = *vramShaderRes;
-
-	auto vramTexRes = m_glUtils.InitTexture(Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
-	if (!vramTexRes) return false;
-	m_vramTexId = *vramTexRes;
-
 	GLUtils::ShaderParams shaderParams = {
-		{ "m_activeArea_pxlSize", &m_activeArea_pxlSize },
-		{ "m_scrollV_crtXY_highlightMul", &m_scrollV_crtXY_highlightMul },
-		{ "m_bordsLRTB", &m_bordsLRTB }};
-	auto vramMatRes = m_glUtils.InitMaterial(m_vramShaderId, Display::FRAME_W, Display::FRAME_H,
-			{m_vramTexId}, shaderParams);
-	if (!vramMatRes) return false;
-	vramMatId = *vramMatRes;
+		{ "m_activeArea_pxlSize", m_activeArea_pxlSize },
+		{ "m_scrollV_crtXY_highlightMul", m_scrollV_crtXY_highlightMul },
+		{ "m_bordsLRTB", m_bordsLRTB }
+	};
+
+	// init material
+	auto vramMatId = m_glUtils.InitMaterial(m_vramShaderId,
+			{m_vramTexId}, shaderParams,
+			Display::FRAME_W, Display::FRAME_H);
+	if (vramMatId == INVALID_ID) return false;
+	m_vramMatId = vramMatId;
+
+	// get param ids
+	m_matParamId_scrollV_crtXY_highlightMul = m_glUtils.GetMaterialParamId(vramMatId, "m_scrollV_crtXY_highlightMul");
+	m_matParamId_activeArea_pxlSize = m_glUtils.GetMaterialParamId(vramMatId, "m_activeArea_pxlSize");
+	m_matParamId_bordsLRTB = m_glUtils.GetMaterialParamId(vramMatId, "m_bordsLRTB");
+
 
 	return true;
 }
@@ -208,6 +220,11 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 		//uint8_t scrollVert = (m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert") + 1; // adding +1 offset because the default is 255
 		m_scrollV_crtXY_highlightMul.x = 0;//FRAME_PXL_SIZE_H* scrollVert;
 
+		// update params
+		m_glUtils.UpdateMaterialParam(m_vramMatId, m_matParamId_scrollV_crtXY_highlightMul, m_scrollV_crtXY_highlightMul);
+		m_glUtils.UpdateMaterialParam(m_vramMatId, m_matParamId_bordsLRTB, m_bordsLRTB);
+		m_glUtils.UpdateMaterialParam(m_vramMatId, m_matParamId_activeArea_pxlSize, m_activeArea_pxlSize);
+
 		auto frameP = m_hardware.GetFrame(_isRunning);
 		m_glUtils.UpdateTexture(m_vramTexId, (uint8_t*)frameP->data());
 		m_glUtils.Draw(m_vramMatId);
@@ -279,7 +296,7 @@ void dev::DisplayWindow::DrawDisplay()
 		}
 
 		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
-		ImGui::Image((void*)(intptr_t)framebufferTex, displaySize, borderMin, borderMax);
+		ImGui::Image(framebufferTex, displaySize, borderMin, borderMax);
 		m_displayIsHovered = ImGui::IsItemHovered();
 		
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))

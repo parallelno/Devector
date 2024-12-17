@@ -1,6 +1,6 @@
 #include <format>
 
-#include "utils/win_gl_utils.h"
+#include "win_gl_utils.h"
 #include "utils/result.h"
 #include "utils/str_utils.h"
 

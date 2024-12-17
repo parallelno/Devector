@@ -3,7 +3,7 @@
 #include "core/hardware.h"
 #include "utils/imgui_utils.h"
 #include "ui/base_window.h"
-#include "utils/glu_utils.h"
+#include "utils/gl_utils.h"
 
 namespace dev
 {
@@ -22,7 +22,7 @@ namespace dev
 		GLUtils& m_glUtils;
 		GLUtils::Vec4 m_pressedKeyImgIdx_scaleXY = { 0, 1.0f, 1.0f, 0};
 		GLuint m_vramShaderId = -1;
-		GLUtils::MaterialId m_vramMatId;
+		dev::Id m_vramMatId;
 		GLuint m_vramTexId = -1;	
 		int m_imgKeyboardH;
 		int m_imgKeyboardW;

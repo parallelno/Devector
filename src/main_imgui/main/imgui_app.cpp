@@ -28,7 +28,7 @@ dev::ImGuiApp::ImGuiApp(
 	m_autoUpdateThread = std::thread(&ImGuiApp::AutoUpdate, this);
 
 	// Setup SDL
-	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMEPAD))
+	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
 	{
 		dev::Log("Error: SDL_Init(): {}\n", SDL_GetError());
 		m_error = dev::ErrCode::FAILED_SDL_INIT;

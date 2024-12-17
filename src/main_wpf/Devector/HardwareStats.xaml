@@ -4,12 +4,12 @@
 		xmlns:ui="http://schemas.modernwpf.com/2019"
 		xmlns:local="clr-namespace:Devector"
 		ui:WindowHelper.UseModernWindowStyle="True"
-		Title="Hardware Stats" Width="650" Height ="550">
+		Title="Hardware Stats" Width="749" Height ="550">
 	<Grid>
 		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="0.12*"/>
-			<ColumnDefinition Width="0.13*"/>
-			<ColumnDefinition Width="0.3*"/>
+			<ColumnDefinition Width="0.08*"/>
+			<ColumnDefinition Width="0.1*"/>
+			<ColumnDefinition Width="0.2*"/>
 			<ColumnDefinition Width="0.5*"/>
 		</Grid.ColumnDefinitions>
 
@@ -245,7 +245,7 @@
                     <!-- Palette -->
                     <TextBlock Grid.Row="1" Text="Palette" HorizontalAlignment="Center" Margin="0,10,0,0" />
                     <StackPanel Grid.Row="2" Margin="5">
-                        <Grid>
+                        <Grid DataGridRow.Selected="TestM">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
@@ -325,183 +325,17 @@
 					<!-- Ram-Disk -->
                     <TextBlock Text="Ram-Disks" Grid.Row="0" HorizontalAlignment="Center"/>
                     <StackPanel Grid.Row="1" Margin="5">
-						<Grid>
-							<Grid.ColumnDefinitions>
-								<ColumnDefinition Width="Auto"/>
-								<ColumnDefinition Width="0.5*"/>
-								<ColumnDefinition Width="0.5*"/>
-							</Grid.ColumnDefinitions>
-							<Grid.RowDefinitions>
-								<RowDefinition Height="Auto"/>
-								<RowDefinition Height="Auto"/>
-								<RowDefinition Height="Auto"/>
-								<RowDefinition Height="Auto"/>
-								<RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-							<!-- Ram-Disk Title -->
-							<TextBlock Grid.Row="0" Grid.Column="0" Text="#" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<TextBlock Grid.Row="0" Grid.Column="1" Text="Ram Mode/Page" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Center"/>
-							<TextBlock Grid.Row="0" Grid.Column="2" Text="Stack Mode/Page" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Center"/>
-
-							<!-- Ram-Disk 1 -->
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="1" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<Grid Grid.Row="1" Grid.Column="1">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="0.5*"/>
-									<ColumnDefinition Width="0.5*"/>
-								</Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode1}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-							</Grid>
-							<Grid Grid.Row="1" Grid.Column="2">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="0.5*"/>
-									<ColumnDefinition Width="0.5*"/>
-								</Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode1}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-							</Grid>
-
-							<!-- Ram-Disk 2 -->
-							<TextBlock Grid.Row="2" Grid.Column="0" Text="2" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<Grid Grid.Row="2" Grid.Column="1">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="0.5*"/>
-									<ColumnDefinition Width="0.5*"/>
-								</Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode2}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-							</Grid>
-							<Grid Grid.Row="2" Grid.Column="2">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="0.5*"/>
-									<ColumnDefinition Width="0.5*"/>
-								</Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode2}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-							</Grid>
-
-							<!-- Ram-Disk 3 -->
-							<TextBlock Grid.Row="3" Grid.Column="0" Text="3" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<Grid Grid.Row="3" Grid.Column="1">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="0.5*"/>
-									<ColumnDefinition Width="0.5*"/>
-								</Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode3}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-							</Grid>
-							<Grid Grid.Row="3" Grid.Column="2">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="0.5*"/>
-									<ColumnDefinition Width="0.5*"/>
-								</Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode3}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-							</Grid>
-
-							<!-- Ram-Disk 4 -->
-							<TextBlock Grid.Row="4" Grid.Column="0" Text="4" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-							<Grid Grid.Row="4" Grid.Column="1">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="0.5*"/>
-									<ColumnDefinition Width="0.5*"/>
-								</Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode4}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-							</Grid>
-							<Grid Grid.Row="4" Grid.Column="2">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="0.5*"/>
-									<ColumnDefinition Width="0.5*"/>
-								</Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode4}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-								<TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-							</Grid>
-
-                            <!-- Ram-Disk 5 -->
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="5" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                            <Grid Grid.Row="5" Grid.Column="1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="0.5*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode5}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-                            </Grid>
-                            <Grid Grid.Row="5" Grid.Column="2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="0.5*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode5}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-                            </Grid>
-
-                            <!-- Ram-Disk 6 -->
-                            <TextBlock Grid.Row="6" Grid.Column="0" Text="6" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                            <Grid Grid.Row="6" Grid.Column="1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="0.5*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode6}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-                            </Grid>
-                            <Grid Grid.Row="6" Grid.Column="2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="0.5*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode6}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-                            </Grid>
-
-                            <!-- Ram-Disk 7 -->
-                            <TextBlock Grid.Row="7" Grid.Column="0" Text="7" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                            <Grid Grid.Row="7" Grid.Column="1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="0.5*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode7}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-                            </Grid>
-                            <Grid Grid.Row="7" Grid.Column="2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="0.5*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode7}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-                            </Grid>
-                            
-                            <!-- Ram-Disk 8 -->
-                            <TextBlock Grid.Row="8" Grid.Column="0" Text="8" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                            <Grid Grid.Row="8" Grid.Column="1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="0.5*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingRamMode8}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-                            </Grid>
-                            <Grid Grid.Row="8" Grid.Column="2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="0.5*"/>
-                                    <ColumnDefinition Width="0.5*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding MappingStackMode8}" Margin="0,0,10,5" Foreground="DarkGray" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="1" Text="0" Margin="0,0,10,5" Foreground="DarkGray"/>
-                            </Grid>
-
-                        </Grid>
-					</StackPanel>
+                        <DataGrid
+									ItemsSource="{Binding RamMappingViewModel.MappingDataList}"
+									AutoGenerateColumns="False"
+									IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Idx" Binding="{Binding Idx}" />
+                                <DataGridTextColumn Header="RAM (Mapping/Page)" Binding="{Binding MappingRam}" />
+                                <DataGridTextColumn Header="Stack (Mapping/Page)" Binding="{Binding MappingStack}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
 
 					<!-- Floppy Drive Disk -->
                     <TextBlock Grid.Row="2" Text="Floppy Drive Disks" HorizontalAlignment="Center" Margin="0,10,0,0"/>

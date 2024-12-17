@@ -4,7 +4,7 @@
 
 #include "utils/types.h"
 #include "utils/json_utils.h"
-#include "utils/glu_utils.h"
+#include "utils/gl_utils.h"
 #include "imgui_app.h"
 
 #include "ui/breakpoints_window.h"
@@ -143,7 +143,7 @@ namespace dev
 		virtual void Update();
 
 	protected:
-		void Init();
+		void Init(const std::string& _rom_fdd_recPath);
 		void HardwareInit();
 		void WindowsInit();
 		void SettingsInit();

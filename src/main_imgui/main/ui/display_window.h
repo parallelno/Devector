@@ -9,7 +9,7 @@
 #include "ui/base_window.h"
 #include "utils/result.h"
 #include "core/hardware.h"
-#include "utils/glu_utils.h"
+#include "utils/gl_utils.h"
 
 namespace dev
 {
@@ -48,9 +48,14 @@ namespace dev
 						static_cast<float>(0), // inited in the constructor
 						static_cast<float>(Display::SCAN_ACTIVE_AREA_TOP * FRAME_PXL_SIZE_H),
 						static_cast<float>(Display::SCAN_ACTIVE_AREA_TOP + Display::ACTIVE_AREA_H) * FRAME_PXL_SIZE_H };
-		GLuint m_vramShaderId = -1;
-		GLUtils::MaterialId m_vramMatId;
-		GLuint m_vramTexId = -1;
+
+		dev::Id m_matParamId_scrollV_crtXY_highlightMul = -1;
+		dev::Id m_matParamId_activeArea_pxlSize = -1;
+		dev::Id m_matParamId_bordsLRTB = -1;
+
+		dev::Id m_vramShaderId = -1;
+		dev::Id m_vramTexId = -1;
+		dev::Id m_vramMatId	= -1;		
 		bool m_isGLInited = false;
 		bool m_displayIsHovered = false;
 		const char* m_contextMenuName = "##displayCMenu";
