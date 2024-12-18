@@ -65,8 +65,8 @@ const char* memViewShaderFrag = R"(
 
 		// highlight
 		vec4 rw = texture(texture1, uv);
-		float reads = (rw.x * 255.0f + rw.y ) * 4.0 / highlightIdxMax.x;
-		float writes = (rw.z * 255.0f + rw.w ) * 4.0 / highlightIdxMax.x;
+		float reads = (rw[1] * 256.0f + rw[0]) * 256.0f / highlightIdxMax.x;
+		float writes = (rw[3] * 255.0f + rw[2] ) * 256.0f / highlightIdxMax.x;
 		vec3 readsColor = reads * highlightRead.rgb * highlightRead.a;
 		vec3 writesColor = writes * highlightWrite.rgb * highlightWrite.a;
 		vec3 rwColor = readsColor + writesColor;
@@ -311,7 +311,7 @@ void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
 	{
 		auto memP = m_hardware.GetRam()->data();
 		
-		if (_isRunning) m_debugger.UpdateLastRW();
+		if (ccDiff != 0) m_debugger.UpdateLastRW();
 		auto memLastRWP = m_debugger.GetLastRW()->data();
 
 		// update params

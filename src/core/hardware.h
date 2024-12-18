@@ -56,7 +56,7 @@ namespace dev
 			CpuI8080::State* _cpuState, Memory::State* _memState,
 			IO::State* _ioState, Display::State* _displayState)>;
 
-		enum class ExecSpeed : int { _20PERCENT = 0, HALF, NORMAL, X2, MAX };
+		enum class ExecSpeed : int { _1PERCENT = 0, _20PERCENT, HALF, NORMAL, X2, MAX, LEN };
 
 
         Hardware(const std::wstring& _pathBootData, const std::wstring& _pathRamDiskData, 
@@ -84,7 +84,7 @@ namespace dev
 		TQueue <nlohmann::json> m_reqRes;				// request's result sent back 
 
 		ExecSpeed m_execSpeed = ExecSpeed::NORMAL;
-		std::chrono::microseconds m_execDelays[5] = { 99840us, 39936us, 19968us, 9984us, 10us };
+		std::chrono::microseconds m_execDelays[static_cast<int>(ExecSpeed::LEN)] = { 1996800us, 99840us, 39936us, 19968us, 9984us, 10us };
 
 		void Init();
 		void Execution();
