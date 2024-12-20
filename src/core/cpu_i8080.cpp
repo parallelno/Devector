@@ -467,9 +467,10 @@ uint8_t dev::CpuI8080::ReadInstrMovePC(uint8_t _byteNum)
 	return opcode;
 }
 
-uint8_t dev::CpuI8080::ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace)
+uint8_t dev::CpuI8080::ReadByte(const Addr _addr, 
+	Memory::AddrSpace _addrSpace, const uint8_t _byteNum)
 {
-	return m_memory.CpuRead(_addr, _addrSpace);
+	return m_memory.CpuRead(_addr, _addrSpace, _byteNum);
 }
 
 void dev::CpuI8080::WriteByte(const Addr _addr, uint8_t _value, 
@@ -720,11 +721,11 @@ void dev::CpuI8080::LHLD()
 		W = ReadInstrMovePC(2);
 		return;
 	case 3:
-		L = ReadByte(WZ);
+		L = ReadByte(WZ, Memory::AddrSpace::RAM, 0);
 		WZ++;
 		return;
 	case 4:
-		H = ReadByte(WZ);
+		H = ReadByte(WZ, Memory::AddrSpace::RAM, 1);
 		return;
 	}
 }
@@ -778,16 +779,16 @@ void dev::CpuI8080::XTHL()
 	case 0:
 		return;
 	case 1:
-		Z = ReadByte(SP, Memory::AddrSpace::STACK);
+		Z = ReadByte(SP, Memory::AddrSpace::STACK, 0);
 		return;
 	case 2:
-		W = ReadByte(SP + 1u, Memory::AddrSpace::STACK);
+		W = ReadByte(SP + 1u, Memory::AddrSpace::STACK, 1);
 		return;
 	case 3:
-		WriteByte(SP, L, Memory::AddrSpace::STACK, 0);
+		WriteByte(SP, L, Memory::AddrSpace::STACK, 1);
 		return;
 	case 4:
-		WriteByte(SP + 1u, H, Memory::AddrSpace::STACK, 1);
+		WriteByte(SP + 1u, H, Memory::AddrSpace::STACK, 0);
 		return;
 	case 5:
 		HL = WZ;
@@ -819,11 +820,11 @@ void dev::CpuI8080::POP(uint8_t& _regH, uint8_t& _regL)
 	case 0:
 		return;
 	case 1:
-		_regL = ReadByte(SP, Memory::AddrSpace::STACK);
+		_regL = ReadByte(SP, Memory::AddrSpace::STACK, 0);
 		SP++;
 		return;
 	case 2:
-		_regH = ReadByte(SP, Memory::AddrSpace::STACK);
+		_regH = ReadByte(SP, Memory::AddrSpace::STACK, 1);
 		SP++;
 		return;
 	}
@@ -1300,11 +1301,11 @@ void dev::CpuI8080::RET()
 	case 0:
 		return;
 	case 1:
-		Z = ReadByte(SP, Memory::AddrSpace::STACK);
+		Z = ReadByte(SP, Memory::AddrSpace::STACK, 0);
 		SP++;
 		return;
 	case 2:
-		W = ReadByte(SP, Memory::AddrSpace::STACK);
+		W = ReadByte(SP, Memory::AddrSpace::STACK, 1);
 		SP++;
 		PC = WZ;
 		return;
@@ -1321,11 +1322,11 @@ void dev::CpuI8080::RETCond(bool _condition)
 		if (!_condition) MC = 3;
 		return;
 	case 2:
-		Z = ReadByte(SP, Memory::AddrSpace::STACK);
+		Z = ReadByte(SP, Memory::AddrSpace::STACK, 0);
 		SP++;
 		return;
 	case 3:
-		W = ReadByte(SP, Memory::AddrSpace::STACK);
+		W = ReadByte(SP, Memory::AddrSpace::STACK, 1);
 		SP++;
 		PC = WZ;
 		return;

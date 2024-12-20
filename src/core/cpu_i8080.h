@@ -169,7 +169,8 @@ namespace dev
 		////////////////////////////////////////////////////////////////////////////
 
 		inline uint8_t ReadInstrMovePC(uint8_t _byteNum);
-		inline uint8_t ReadByte(const Addr _addr, Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM);
+		inline uint8_t ReadByte(const Addr _addr, 
+			Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM, const uint8_t _byteNum = 0);
 		inline void WriteByte(const Addr _addr, uint8_t _value,
 			Memory::AddrSpace _addrSpace, const uint8_t _byteNum);
 
