@@ -53,7 +53,7 @@ namespace dev
 				const bool _breakH = false, const bool _breakL = false
 			) :
 				id(_id == -1 ? watchpointId++ : _id), access(_access), globalAddr(_globalAddr), 
-				cond(_cond), value(_value), type(_type), len(_len), breakH(_breakH), breakL(_breakL)
+				cond(_cond), value(_value), type(_type), len(_len), active(_active), breakH(_breakH), breakL(_breakL)
 			{};
 			Data(const uint64_t _data0, const uint64_t _data1)
 				:
