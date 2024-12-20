@@ -53,7 +53,7 @@ void dev::Watchpoints::Check(const Watchpoint::Access _access, const GlobalAddr 
 			return pair.second.Check(_access, _globalAddr, _value);
 		});
 	
-	m_wpBreak = wpI != m_wps.end();
+	m_wpBreak |= wpI != m_wps.end();
 }
 
 // Hardware thread
