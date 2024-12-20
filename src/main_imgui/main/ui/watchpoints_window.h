@@ -28,7 +28,7 @@ namespace dev
 	public:
 		WatchpointsWindow(Hardware& _hardware,
 			const float* const _dpiScaleP, ReqUI& _reqUI);
-		void Update(bool& _visible);
+		void Update(bool& _visible, const bool _isRunning);
 		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });
 	};
 

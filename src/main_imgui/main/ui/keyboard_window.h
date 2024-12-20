@@ -36,7 +36,7 @@ namespace dev
 	public:
 		KeyboardWindow(Hardware& _hardware, const float* const _dpiScaleP, 
 			GLUtils& _glUtils, ReqUI& _reqUI, const std::string& _pathImgKeyboard);
-		void Update(bool& _visible);
+		void Update(bool& _visible, const bool _isRunning);
 		void Draw(const bool _isRunning);
 		bool IsFocused() const;
 	};

@@ -14,7 +14,7 @@ namespace dev
 
 	public:
 		AboutWindow(const float* const _dpiScaleP);
-		void Update(bool& _visible);
+		void Update(bool& _visible, const bool _isRunning);
 		void Draw();
 	};
 };

@@ -18,19 +18,17 @@ dev::DisasmWindow::DisasmWindow(
 	UpdateData(false);
 }
 
-void dev::DisasmWindow::Update(bool& _visible)
+void dev::DisasmWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
 	{
-		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-
-		DrawDebugControls(isRunning);
-		DrawSearch(isRunning);
+		DrawDebugControls(_isRunning);
+		DrawSearch(_isRunning);
 
 
-		isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the bpStatus in DrawDebugControls
+		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the bpStatus in DrawDebugControls
 		UpdateData(isRunning);
 		DrawDisasm(isRunning);
 

@@ -14,16 +14,15 @@ dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 	UpdateData(false);
 }
 
-void dev::HardwareStatsWindow::Update(bool& _visible)
+void dev::HardwareStatsWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
 	{
-		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-		UpdateData(isRunning);
+		UpdateData(_isRunning);
 		UpdateDataRuntime();
-		DrawStats(isRunning);
+		DrawStats(_isRunning);
 		ImGui::End();
 	}
 }

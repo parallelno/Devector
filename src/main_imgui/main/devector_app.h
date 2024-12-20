@@ -19,6 +19,7 @@
 #include "ui/feedback_window.h"
 #include "ui/recorder_window.h"
 #include "ui/keyboard_window.h"
+#include "ui/search_window.h"
 
 #include "core/hardware.h"
 #include "core/debugger.h"
@@ -93,15 +94,16 @@ namespace dev
 		std::unique_ptr <dev::BreakpointsWindow>m_breakpointsWindowP;
 		std::unique_ptr <dev::HardwareStatsWindow> m_hardwareStatsWindowP;
 		std::unique_ptr <dev::DisasmWindow> m_disasmWindowP;
-		std::unique_ptr <dev::WatchpointsWindow>m_watchpointsWindowP;
-		std::unique_ptr <dev::DisplayWindow>m_displayWindowP;
-		std::unique_ptr <dev::MemDisplayWindow>m_memDisplayWindowP;
-		std::unique_ptr <dev::HexViewerWindow>m_hexViewerWindowP;
-		std::unique_ptr <dev::TraceLogWindow>m_traceLogWindowP;
-		std::unique_ptr <dev::AboutWindow>m_aboutWindowP;
-		std::unique_ptr <dev::FeedbackWindow>m_feedbackWindowP;
-		std::unique_ptr <dev::RecorderWindow>m_recorderWindowP;
-		std::unique_ptr <dev::KeyboardWindow>m_keyboardWindowP;
+		std::unique_ptr <dev::WatchpointsWindow> m_watchpointsWindowP;
+		std::unique_ptr <dev::DisplayWindow> m_displayWindowP;
+		std::unique_ptr <dev::MemDisplayWindow> m_memDisplayWindowP;
+		std::unique_ptr <dev::HexViewerWindow> m_hexViewerWindowP;
+		std::unique_ptr <dev::TraceLogWindow> m_traceLogWindowP;
+		std::unique_ptr <dev::AboutWindow> m_aboutWindowP;
+		std::unique_ptr <dev::FeedbackWindow> m_feedbackWindowP;
+		std::unique_ptr <dev::RecorderWindow> m_recorderWindowP;
+		std::unique_ptr <dev::KeyboardWindow> m_keyboardWindowP;
+		std::unique_ptr <dev::SearchWindow> m_searchWindowP;
 
 		bool m_displayWindowVisible = false;
 		bool m_disasmWindowVisible = false;
@@ -115,6 +117,7 @@ namespace dev
 		bool m_feedbackWindowVisible = false;
 		bool m_recorderWindowVisible = false;
 		bool m_keyboardWindowVisible = false;
+		bool m_searchWindowVisible = false;
 
 		std::string m_pathImgKeyboard;
 

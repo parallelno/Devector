@@ -34,7 +34,7 @@ bool dev::KeyboardWindow::Init()
 	return true;
 }
 
-void dev::KeyboardWindow::Update(bool& _visible)
+void dev::KeyboardWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 
@@ -42,9 +42,7 @@ void dev::KeyboardWindow::Update(bool& _visible)
 	{
 		m_windowFocused = ImGui::IsWindowFocused();
 
-		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-
-		Draw(isRunning);
+		Draw(_isRunning);
 
 		ImGui::End();
 	}

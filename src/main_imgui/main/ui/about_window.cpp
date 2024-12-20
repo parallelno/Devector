@@ -7,7 +7,7 @@ dev::AboutWindow::AboutWindow(const float* const _dpiScaleP)
 	BaseWindow("About Devector", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP)
 {}
 
-void dev::AboutWindow::Update(bool& _visible)
+void dev::AboutWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 

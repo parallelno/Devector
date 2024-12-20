@@ -10,7 +10,7 @@ dev::FeedbackWindow::FeedbackWindow(const float* const _dpiScaleP)
 }
 
 
-void dev::FeedbackWindow::Update(bool& _visible)
+void dev::FeedbackWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 

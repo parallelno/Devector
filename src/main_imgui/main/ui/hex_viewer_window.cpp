@@ -9,16 +9,15 @@ dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqUI(_reqUI)
 {}
 
-void dev::HexViewerWindow::Update(bool& _visible)
+void dev::HexViewerWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 
 	static bool open = true;
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-		UpdateData(isRunning);
-		DrawHex(isRunning);
+		UpdateData(_isRunning);
+		DrawHex(_isRunning);
 
 		ImGui::End();
 	}

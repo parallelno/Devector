@@ -99,7 +99,7 @@ namespace dev
 			const float* const _dpiScaleP, 
 			bool& _ruslat);
 		
-		void Update(bool& _visible);
+		void Update(bool& _visible, const bool _isRunning);
 
 	};
 

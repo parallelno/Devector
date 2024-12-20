@@ -12,7 +12,7 @@ dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
 	m_hardware(_hardware), m_reqUI(_reqUI)
 {}
 
-void dev::BreakpointsWindow::Update(bool& _visible)
+void dev::BreakpointsWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 

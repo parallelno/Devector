@@ -12,15 +12,14 @@ dev::RecorderWindow::RecorderWindow(Hardware& _hardware, Debugger& _debugger,
 	m_reqUI(_reqUI)
 {}
 
-void dev::RecorderWindow::Update(bool& _visible)
+void dev::RecorderWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
 	{
-		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-		UpdateData(isRunning);
-		Draw(isRunning);
+		UpdateData(_isRunning);
+		Draw(_isRunning);
 
 		ImGui::End();
 	}

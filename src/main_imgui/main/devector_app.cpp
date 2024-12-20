@@ -53,6 +53,7 @@ dev::DevectorApp::~DevectorApp()
 	SettingsUpdate("traceLogWindowVisible", m_traceLogWindowVisible);
 	SettingsUpdate("recorderWindowVisible", m_recorderWindowVisible);
 	SettingsUpdate("keyboardWindowVisible", m_keyboardWindowVisible);
+	SettingsUpdate("searchWindowVisible", m_searchWindowVisible);
 }
 
 void dev::DevectorApp::HardwareInit()
@@ -81,6 +82,7 @@ void dev::DevectorApp::WindowsInit()
 	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(&m_dpiScale);
 	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
 	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI, m_pathImgKeyboard);
+	m_searchWindowP = std::make_unique<dev::SearchWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -98,6 +100,8 @@ void dev::DevectorApp::SettingsInit()
 	m_traceLogWindowVisible = GetSettingsBool("traceLogWindowVisible", false);
 	m_recorderWindowVisible = GetSettingsBool("recorderWindowVisible", false);
 	m_keyboardWindowVisible = GetSettingsBool("keyboardWindowVisible", false);
+	m_searchWindowVisible = GetSettingsBool("searchWindowVisible", false);
+
 	m_pathImgKeyboard = GetSettingsString("pathImgKeyboard", "images//vector_keyboard.jpg");
 
 	RecentFilesInit();
@@ -152,18 +156,21 @@ void dev::DevectorApp::Update()
 
 	LoadingResStatusHandling();
 
-	m_hardwareStatsWindowP->Update(m_hardwareStatsWindowVisible);
-	m_disasmWindowP->Update(m_disasmWindowVisible);
-	m_displayWindowP->Update(m_displayWindowVisible);
-	m_breakpointsWindowP->Update(m_breakpointsWindowVisisble);
-	m_watchpointsWindowP->Update(m_watchpointsWindowVisible);
-	m_memDisplayWindowP->Update(m_memDisplayWindowVisible);
-	m_hexViewerWindowP->Update(m_hexViewerWindowVisible);
-	m_traceLogWindowP->Update(m_traceLogWindowVisible);
-	m_aboutWindowP->Update(m_aboutWindowVisible);
-	m_feedbackWindowP->Update(m_feedbackWindowVisible);
-	m_recorderWindowP->Update(m_recorderWindowVisible);
-	m_keyboardWindowP->Update(m_keyboardWindowVisible);
+	bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+
+	m_hardwareStatsWindowP->Update(m_hardwareStatsWindowVisible, isRunning);
+	m_disasmWindowP->Update(m_disasmWindowVisible, isRunning);
+	m_displayWindowP->Update(m_displayWindowVisible, isRunning);
+	m_breakpointsWindowP->Update(m_breakpointsWindowVisisble, isRunning);
+	m_watchpointsWindowP->Update(m_watchpointsWindowVisible, isRunning);
+	m_memDisplayWindowP->Update(m_memDisplayWindowVisible, isRunning);
+	m_hexViewerWindowP->Update(m_hexViewerWindowVisible, isRunning);
+	m_traceLogWindowP->Update(m_traceLogWindowVisible, isRunning);
+	m_aboutWindowP->Update(m_aboutWindowVisible, isRunning);
+	m_feedbackWindowP->Update(m_feedbackWindowVisible, isRunning);
+	m_recorderWindowP->Update(m_recorderWindowVisible, isRunning);
+	m_keyboardWindowP->Update(m_keyboardWindowVisible, isRunning);
+	m_searchWindowP->Update(m_searchWindowVisible, isRunning);
 
 	if (m_status == AppStatus::REQ_PREPARE_FOR_EXIT)
 	{
@@ -266,6 +273,7 @@ void dev::DevectorApp::MainMenuUpdate()
 			ImGui::MenuItem(m_traceLogWindowP->m_name.c_str(), NULL, &m_traceLogWindowVisible);
 			ImGui::MenuItem(m_recorderWindowP->m_name.c_str(), NULL, &m_recorderWindowVisible);
 			ImGui::MenuItem(m_keyboardWindowP->m_name.c_str(), NULL, &m_keyboardWindowVisible);
+			ImGui::MenuItem(m_searchWindowP->m_name.c_str(), NULL, &m_searchWindowVisible);
 			ImGui::EndMenu();
 		}
 

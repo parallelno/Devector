@@ -10,7 +10,7 @@ dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
 	m_reqUI(_reqUI)
 {}
 
-void dev::WatchpointsWindow::Update(bool& _visible)
+void dev::WatchpointsWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 

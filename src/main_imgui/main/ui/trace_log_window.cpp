@@ -9,7 +9,7 @@ dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 	m_reqUI(_reqUI)
 {}
 
-void dev::TraceLogWindow::Update(bool& _visible)
+void dev::TraceLogWindow::Update(bool& _visible, const bool _isRunning)
 {
 
 	if (_visible && !m_visible) {
@@ -22,9 +22,8 @@ void dev::TraceLogWindow::Update(bool& _visible)
 
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-		UpdateData(isRunning);
-		DrawLog(isRunning);
+		UpdateData(_isRunning);
+		DrawLog(_isRunning);
 
 		ImGui::End();
 	}

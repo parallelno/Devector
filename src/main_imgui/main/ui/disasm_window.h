@@ -116,7 +116,7 @@ namespace dev
 		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, 
 			const float* const _dpiScaleP, 
 			ReqUI& _reqUI);
-		void Update(bool& _visible);
+		void Update(bool& _visible, const bool _isRunning);
 		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
 			const bool _updateSelection = true);
 	};

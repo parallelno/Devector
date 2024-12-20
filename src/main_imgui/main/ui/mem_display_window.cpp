@@ -136,14 +136,13 @@ bool dev::MemDisplayWindow::Init()
 	return true;
 }
 
-void dev::MemDisplayWindow::Update(bool& _visible)
+void dev::MemDisplayWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-		UpdateData(isRunning);
+		UpdateData(_isRunning);
 		DrawDisplay();
 
 		ImGui::End();

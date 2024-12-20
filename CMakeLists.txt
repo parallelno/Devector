@@ -139,7 +139,9 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/ui/watchpoints_window.cpp
 	${DEVECTOR_DIR}/main/ui/watchpoints_window.h
 	${DEVECTOR_DIR}/main/ui/keyboard_window.cpp
-	${DEVECTOR_DIR}/main/ui/keyboard_window.h		
+	${DEVECTOR_DIR}/main/ui/keyboard_window.h
+	${DEVECTOR_DIR}/main/ui/search_window.cpp
+	${DEVECTOR_DIR}/main/ui/search_window.h
 
 	${DEVECTOR_DIR}/utils/imgui_utils.cpp
 	${DEVECTOR_DIR}/utils/imgui_utils.h

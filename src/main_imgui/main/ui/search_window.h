@@ -6,7 +6,7 @@
 
 namespace dev
 {
-	class RecorderWindow : public BaseWindow
+	class SearchWindow : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
@@ -16,13 +16,18 @@ namespace dev
 		ReqUI& m_reqUI;
 
 		int64_t m_ccLast = -1; // to force the first stats update
-		int m_stateRecorded = 0;
-		int m_stateCurrent = 0;
+
+		bool m_searchEnabled = false;
+		int m_searchStartAddr = 0x0;
+		int m_searchEndAddr = 0xFFFF;
+		int m_searchVal = 0x0;
+
+		std::vector<GlobalAddr> m_searchResults;
 
 		void UpdateData(const bool _isRunning);
 
 	public:
-		RecorderWindow(Hardware& _hardware, Debugger& _debugger, 
+		SearchWindow(Hardware& _hardware, Debugger& _debugger, 
 			const float* const _dpiScaleP,
 			ReqUI& _reqUI);
 		void Update(bool& _visible, const bool _isRunning);

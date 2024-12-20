@@ -128,7 +128,7 @@ bool dev::DisplayWindow::Init()
 	return true;
 }
 
-void dev::DisplayWindow::Update(bool& _visible)
+void dev::DisplayWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 
@@ -158,7 +158,6 @@ void dev::DisplayWindow::Update(bool& _visible)
 		};
 		// TODO: DEBUG test end
 */
-		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 		m_windowFocused = ImGui::IsWindowFocused();
 		
 		// switch the border type
@@ -172,7 +171,7 @@ void dev::DisplayWindow::Update(bool& _visible)
 			DrawTooltipTimer(m_displaySizeAS[(int)(m_displaySize)]);
 		}
 
-		UpdateData(isRunning);
+		UpdateData(_isRunning);
 		DrawContextMenu();
 		DrawDisplay();
 		DrawTooltipTimer();

@@ -44,6 +44,6 @@ namespace dev
 	public:
 		HexViewerWindow(Hardware& _hardware, Debugger& _debugger, 
 				const float* const _dpiScaleP, ReqUI& _reqUI);
-		void Update(bool& _visible);
+		void Update(bool& _visible, const bool _isRunning);
 	};
 };
