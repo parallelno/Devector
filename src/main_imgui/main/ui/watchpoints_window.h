@@ -17,7 +17,7 @@ namespace dev
 		Hardware& m_hardware;
 		ReqUI& m_reqUI;
 		Watchpoints::WpMap m_watchpoints;
-		size_t m_updates = 0; // stores the updates to prevent extra Debug data fetching
+		size_t m_updates = 0; // stores the watchpoint data updates to prevent extra Debug data fetching
 
 		void DrawTable();
 		void DrawPopup(ReqPopup& _reqPopup, const Watchpoints::WpMap& _wps, int _id = -1);
