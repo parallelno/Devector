@@ -6,8 +6,10 @@
 
 #include "utils/types.h"
 #include "utils/str_utils.h"
-#include "core/breakpoint.h"
 #include "core/hardware.h"
+
+#include "core/breakpoints.h"
+#include "core/watchpoints.h"
 
 namespace dev
 {
@@ -30,6 +32,9 @@ namespace dev
 		auto GetConsts(const Addr _addr) const -> const AddrLabels*;
 		void SetConsts(const Addr _addr, const AddrLabels& _labels);
 
+		auto GetBreakpoints() -> Breakpoints* { return &m_breakpoints; };
+		auto GetWatchpoints() -> Watchpoints* { return &m_watchpoints; };
+
 		void LoadDebugData(const std::wstring& _path);
 		void SaveDebugData();
 
@@ -41,6 +46,9 @@ namespace dev
 		Labels m_labels;	// labels
 		Labels m_consts;	// labels used as constants or they point to data
 		Comments m_comments;
+
+		Breakpoints m_breakpoints;
+		Watchpoints m_watchpoints;
 
 		std::wstring m_debugPath;
 	};

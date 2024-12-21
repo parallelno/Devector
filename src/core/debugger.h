@@ -16,8 +16,6 @@
 #include "core/watchpoint.h"
 #include "core/trace_log.h"
 #include "core/recorder.h"
-#include "core/breakpoints.h"
-#include "core/watchpoints.h"
 
 namespace dev
 {
@@ -59,8 +57,6 @@ namespace dev
 		Disasm m_disasm;
 		TraceLog m_traceLog;
 		Recorder m_recorder;
-		Breakpoints m_breakpoints;
-		Watchpoints m_watchpoints;
 
 		std::mutex m_lastRWMutex;
 		LastRWAddrs m_lastReadsAddrs; // a circular buffer that contains addresses

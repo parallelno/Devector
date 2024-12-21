@@ -33,6 +33,23 @@ void dev::Watchpoints::Add(Watchpoint&& _wp)
 	m_wps.emplace(_wp.data.id, std::move(_wp));
 }
 
+void dev::Watchpoints::Add(const nlohmann::json& _wpJ)
+{
+	m_updates++;
+
+	Watchpoint::Data wpData {_wpJ};
+	Watchpoint wp{ std::move(wpData), _wpJ["comment"] };
+
+	auto wpI = m_wps.find(wp.data.id);
+	if (wpI != m_wps.end())
+	{
+		wpI->second.Update(std::move(wp));
+		return;
+	}
+	
+	m_wps.emplace(wp.data.id, std::move(wp));
+}
+
 // Hardware thread
 void dev::Watchpoints::Del(const dev::Id _id)
 {

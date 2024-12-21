@@ -6,12 +6,15 @@ dev::DebugData::DebugData(Hardware& _hardware)
 	: m_hardware(_hardware)
 {}
 
-void dev::DebugData::Reset() 
+void dev::DebugData::Reset()
 {
 	m_debugPath.clear();
 	m_labels.clear();
 	m_consts.clear();
 	m_comments.clear();
+	
+	m_breakpoints.Clear();
+	m_watchpoints.Clear();
 }
 
 bool IsConstLabel(const char* _s)
@@ -37,14 +40,12 @@ auto dev::DebugData::GetComment(const Addr _addr) const
 void dev::DebugData::SetComment(const Addr _addr, const std::string& _comment)
 {
 	m_comments[_addr] = _comment;
-	SaveDebugData();
 }
 
 void dev::DebugData::DelComment(const Addr _addr)
 {
 	auto commentI = m_comments.find(_addr);
 	m_comments.erase(commentI);
-	SaveDebugData();
 }
 
 auto dev::DebugData::GetLabels(const Addr _addr) const -> const AddrLabels*
@@ -62,7 +63,6 @@ void dev::DebugData::SetLabels(const Addr _addr, const AddrLabels& _labels)
 	else {
 		m_labels[_addr] = _labels;
 	}
-	SaveDebugData();
 }
 
 auto dev::DebugData::GetConsts(const Addr _addr) const -> const AddrLabels*
@@ -89,16 +89,13 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 	auto romDir = dev::GetDir(_romPath);
 	m_debugPath = romDir + L"\\" + dev::GetFilename(_romPath) + L".json";
 
-	m_labels.clear();
-	m_consts.clear();
-	m_comments.clear();
-
 	// init empty dictionaries when there is no file found
 	if (!dev::IsFileExist(m_debugPath)) return;
 	
 	auto debugDataJ = LoadJson(m_debugPath);
 
 	// add labels
+	m_labels.clear();
 	if (debugDataJ.contains("labels")) {
 		for (auto& [str, addrS] : debugDataJ["labels"].items())
 		{
@@ -107,6 +104,7 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 		}
 	}
 	// add consts
+	m_consts.clear();
 	if (debugDataJ.contains("consts")) {
 		for (auto& [str, addrS] : debugDataJ["consts"].items())
 		{
@@ -115,11 +113,36 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 		}
 	}
 	// add comments
+	m_comments.clear();
 	if (debugDataJ.contains("comments")) {
 		for (auto& [addrS, str] : debugDataJ["comments"].items())
 		{
 			Addr addr = dev::StrHexToInt(addrS.c_str());
 			m_comments.emplace(addr, str);
+		}
+
+	}
+	// add breakpoints
+	m_breakpoints.Clear();	
+	if (debugDataJ.contains("breakpoints")) {
+		for (auto& breakpointJ : debugDataJ["breakpoints"])
+		{
+			Breakpoint::Data bpData{ breakpointJ };
+
+			Breakpoint bp{ std::move(bpData), breakpointJ["comment"] };
+			auto addr = bp.data.structured.addr;
+			m_breakpoints.Add(std::move(bp));
+		}
+	}
+	// add watchpoints
+	m_watchpoints.Clear();	
+	if (debugDataJ.contains("watchpoints")) {
+		for (auto& watchpointJ : debugDataJ["watchpoints"])
+		{
+			Watchpoint::Data wpData{ watchpointJ };
+
+			Watchpoint wp{ std::move(wpData), watchpointJ["comment"] };
+			m_watchpoints.Add(std::move(wp));
 		}
 	}
 }
@@ -129,11 +152,9 @@ void dev::DebugData::SaveDebugData()
 	if (m_debugPath.empty()) return;
 
 	nlohmann::json debugDataJ = {};
-	debugDataJ["labels"] = {};
-	debugDataJ["consts"] = {};
-	debugDataJ["comments"] = {};
-
+	
 	// update labels
+	debugDataJ["labels"] = {};
 	auto& debugLabels = debugDataJ["labels"];
 	for (const auto& [addr, labels] : m_labels)
 	{
@@ -143,7 +164,7 @@ void dev::DebugData::SaveDebugData()
 	}
 
 	// update consts
-
+	debugDataJ["consts"] = {};
 	auto& debugConsts = debugDataJ["consts"];
 	for (const auto& [addr, consts] : m_consts)
 	{
@@ -153,10 +174,28 @@ void dev::DebugData::SaveDebugData()
 	}
 
 	// update comments
+	debugDataJ["comments"] = {};
 	auto& debugComments = debugDataJ["comments"];
 	for (const auto& [addr, comment] : m_comments)
 	{
 		debugComments[std::format("0x{:04X}", addr)] = comment;
+	}
+
+
+	// update breakpoints
+	debugDataJ["breakpoints"] = {};
+	auto& debugBreakpoints = debugDataJ["breakpoints"];
+	for (const auto& [addr, bp] : m_breakpoints.GetAll())
+	{
+		debugBreakpoints.push_back(bp.GetJson());
+	}
+
+	// update watchpoints
+	debugDataJ["watchpoints"] = {};
+	auto& debugWatchpoints = debugDataJ["watchpoints"];
+	for (const auto& [id, wp] : m_watchpoints.GetAll())
+	{
+		debugWatchpoints.push_back(wp.GetJson());
 	}
 	
 	dev::SaveJson(m_debugPath, debugDataJ);

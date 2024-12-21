@@ -9,6 +9,7 @@
 #include "utils/types.h"
 #include "core/cpu_i8080.h"
 #include "core/memory.h"
+#include "utils/json_utils.h"
 
 namespace dev
 {
@@ -59,6 +60,16 @@ namespace dev
 				:
 				data0(_data0), data1(_data1)
 			{}
+			Data(const nlohmann::json& _wpJ) : 
+				Data(_wpJ["id"], 
+					static_cast<Access>(_wpJ["access"]), 
+					_wpJ["globalAddr"], 
+					static_cast<Condition>(_wpJ["cond"]), 
+					_wpJ["value"], 
+					static_cast<Type>(_wpJ["type"]), 
+					_wpJ["len"], 
+					_wpJ["active"]) 
+			{};
 		};
 #pragma pack(pop)
 
@@ -74,7 +85,20 @@ namespace dev
 		auto GetTypeS() const -> const char*;
 		void Reset();
 		void Print() const;
-		//auto operator=(const dev::Watchpoint& _wp)->Watchpoint;
+		auto GetJson() const -> nlohmann::json
+		{
+			return {
+				{"id", data.id},
+				{"access", static_cast<uint32_t>(data.access)},
+				{"globalAddr", data.globalAddr},
+				{"cond", static_cast<uint32_t>(data.cond)},
+				{"value", data.value},
+				{"type", static_cast<uint32_t>(data.type)},
+				{"len", data.len},
+				{"active", data.active},
+				{"comment", comment}
+			};
+		};
 
 		Data data;
 		std::string comment;

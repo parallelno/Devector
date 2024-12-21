@@ -13,6 +13,7 @@ public:
 		using WpMap = std::unordered_map<dev::Id, Watchpoint>;
 
 		void Add(Watchpoint&& _bp);
+		void Add(const nlohmann::json& _wpJ);
 		void Del(const dev::Id _id);
 		void Check(const Watchpoint::Access _access, const GlobalAddr _globalAddr, const uint8_t _value);
 		auto GetAll() -> const WpMap&;

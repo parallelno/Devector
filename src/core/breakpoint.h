@@ -11,6 +11,7 @@
 #include "utils/types.h"
 #include "core/cpu_i8080.h"
 #include "core/memory.h"
+#include "utils/json_utils.h"
 
 namespace dev
 {
@@ -121,6 +122,17 @@ namespace dev
 				: 
 				data0(_data0), data1(_data1), data2(_data2)
 			{}
+			Data(const nlohmann::json& _bpJ) :
+				structured(
+					_bpJ["addr"], 
+					static_cast<MemPages>(_bpJ["memPages"]), 
+					static_cast<Status>(_bpJ["status"]), 
+					_bpJ["autoDel"], 
+					static_cast<Operand>(_bpJ["operand"]), 
+					static_cast<Condition>(_bpJ["cond"]), 
+					_bpJ["value"]
+				)
+			{};
 		};
 #pragma pack(pop)
 
@@ -136,6 +148,19 @@ namespace dev
 		void Print() const;
 		auto IsActiveS() const -> const char*;
 		void UpdateAddrMappingS();
+		auto GetJson() const -> nlohmann::json
+		{
+			return {
+				{"addr", data.structured.addr},
+				{"memPages", static_cast<uint32_t>(data.structured.memPages.data)},
+				{"status", static_cast<uint32_t>(data.structured.status)},
+				{"autoDel", data.structured.autoDel},
+				{"operand", static_cast<uint32_t>(data.structured.operand)},
+				{"cond", static_cast<uint32_t>(data.structured.cond)},
+				{"value", data.structured.value},
+				{"comment", comment}
+			};
+		};
 
 		Data data;
 		std::string comment;

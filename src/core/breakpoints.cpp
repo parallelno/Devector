@@ -39,6 +39,23 @@ void dev::Breakpoints::Add(Breakpoint&& _bp )
 	m_bps.emplace(static_cast<Addr>(_bp.data.structured.addr), std::move(_bp));
 }
 
+void dev::Breakpoints::Add(const nlohmann::json& _bpJ)
+{
+	m_updates++;
+
+	Breakpoint::Data bpData {_bpJ};
+	Breakpoint bp{ std::move(bpData), _bpJ["comment"] };
+
+	auto bpI = m_bps.find(bp.data.structured.addr);
+	if (bpI != m_bps.end())
+	{
+		bpI->second.Update(std::move(bp));
+		return;
+	}
+
+	m_bps.emplace(static_cast<Addr>(bp.data.structured.addr), std::move(bp));
+}
+
 void dev::Breakpoints::Del(const Addr _addr)
 {
 	m_updates++;

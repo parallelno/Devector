@@ -43,6 +43,8 @@ void dev::DevectorApp::Init(const std::string& _rom_fdd_recPath)
 
 dev::DevectorApp::~DevectorApp()
 {
+	m_debuggerP->GetDebugData().SaveDebugData();
+
 	SettingsUpdate("breakpointsWindowVisisble", m_breakpointsWindowVisisble);
 	SettingsUpdate("hardwareStatsWindowVisible", m_hardwareStatsWindowVisible);
 	SettingsUpdate("disasmWindowVisible", m_disasmWindowVisible);
@@ -231,6 +233,7 @@ void dev::DevectorApp::MainMenuUpdate()
 		{
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
+				m_debuggerP->GetDebugData().SaveDebugData();
 				m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::OPEN_FILE_DIALOG);
 			}
 			if (ImGui::BeginMenu("Recent Files"))
@@ -246,6 +249,7 @@ void dev::DevectorApp::MainMenuUpdate()
 
 					if (ImGui::MenuItem(itemS.c_str()))
 					{
+						m_debuggerP->GetDebugData().SaveDebugData();
 						m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::RECENT, fileType, path, driveIdx, autoBoot);
 					}
 				}

@@ -400,9 +400,9 @@ void dev::WatchpointsWindow::UpdateWatchpoints()
 	{
 		for (const auto& watchpointJ : *watchpointsJ)
 		{
-			Watchpoint::Data bpData{ watchpointJ["data0"], watchpointJ["data1"] };
+			Watchpoint::Data wpData{ watchpointJ["data0"], watchpointJ["data1"] };
 
-			Watchpoint wp{ std::move(bpData), watchpointJ["comment"] };
+			Watchpoint wp{ std::move(wpData), watchpointJ["comment"] };
 			auto id = wp.data.id;
 			m_watchpoints.emplace(id, std::move(wp));
 		}
