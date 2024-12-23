@@ -152,8 +152,11 @@ void dev::DebugData::SaveDebugData()
 	if (m_debugPath.empty()) return;
 
 	nlohmann::json debugDataJ = {};
+
+	bool empty = true;
 	
 	// update labels
+	empty &= m_labels.empty();
 	debugDataJ["labels"] = {};
 	auto& debugLabels = debugDataJ["labels"];
 	for (const auto& [addr, labels] : m_labels)
@@ -164,6 +167,7 @@ void dev::DebugData::SaveDebugData()
 	}
 
 	// update consts
+	empty &= m_consts.empty();
 	debugDataJ["consts"] = {};
 	auto& debugConsts = debugDataJ["consts"];
 	for (const auto& [addr, consts] : m_consts)
@@ -174,6 +178,7 @@ void dev::DebugData::SaveDebugData()
 	}
 
 	// update comments
+	empty &= m_comments.empty();
 	debugDataJ["comments"] = {};
 	auto& debugComments = debugDataJ["comments"];
 	for (const auto& [addr, comment] : m_comments)
@@ -183,6 +188,7 @@ void dev::DebugData::SaveDebugData()
 
 
 	// update breakpoints
+	empty &= m_breakpoints.GetAll().empty();
 	debugDataJ["breakpoints"] = {};
 	auto& debugBreakpoints = debugDataJ["breakpoints"];
 	for (const auto& [addr, bp] : m_breakpoints.GetAll())
@@ -191,6 +197,7 @@ void dev::DebugData::SaveDebugData()
 	}
 
 	// update watchpoints
+	empty &= m_watchpoints.GetAll().empty();
 	debugDataJ["watchpoints"] = {};
 	auto& debugWatchpoints = debugDataJ["watchpoints"];
 	for (const auto& [id, wp] : m_watchpoints.GetAll())
@@ -198,5 +205,6 @@ void dev::DebugData::SaveDebugData()
 		debugWatchpoints.push_back(wp.GetJson());
 	}
 	
-	dev::SaveJson(m_debugPath, debugDataJ);
+	// save if the debug data is not empty or the file exists
+	if (!empty || dev::IsFileExist(m_debugPath)) dev::SaveJson(m_debugPath, debugDataJ);
 }
