@@ -16,21 +16,32 @@ namespace dev
 	class DebugData
 	{
 	public:
-		using AddrLabels = std::vector<std::string>;
-		using Labels = std::unordered_map<GlobalAddr, AddrLabels>;
+		using LabelList = std::vector<std::string>;
+		using Labels = std::unordered_map<GlobalAddr, LabelList>;
 		using Comments = std::unordered_map<GlobalAddr, std::string>;
+
+		using UpdateId = int;
+		
+		using SymbolAddrList = std::vector<std::tuple<std::string, GlobalAddr, std::string>>; // symbol, addr, addrS
 
 		DebugData(Hardware& _hardware);
 
 		auto GetComment(const Addr _addr) const -> const std::string*;
 		void SetComment(const Addr _addr, const std::string& _comment);
 		void DelComment(const Addr _addr);
+		void GetFilteredComments(SymbolAddrList& _out, const std::string& _filter = "") const;
 
-		auto GetLabels(const Addr _addr) const -> const AddrLabels*;
-		void SetLabels(const Addr _addr, const AddrLabels& _labels);
+		auto GetLabels(const Addr _addr) const -> const LabelList*;
+		void SetLabels(const Addr _addr, const LabelList& _labels);
+		void GetFilteredLabels(SymbolAddrList& _out, const std::string& _filter = "") const;
 
-		auto GetConsts(const Addr _addr) const -> const AddrLabels*;
-		void SetConsts(const Addr _addr, const AddrLabels& _labels);
+		auto GetConsts(const Addr _addr) const -> const LabelList*;
+		void SetConsts(const Addr _addr, const LabelList& _labels);
+		void GetFilteredConsts(SymbolAddrList& _out, const std::string& _filter = "") const;
+
+		auto GetCommentsUpdates() const -> UpdateId { return m_commentsUpdates; };
+		auto GetLabelsUpdates() const -> UpdateId { return m_labelsUpdates; };
+		auto GetConstsUpdates() const -> UpdateId { return m_constsUpdates; };
 
 		auto GetBreakpoints() -> Breakpoints* { return &m_breakpoints; };
 		auto GetWatchpoints() -> Watchpoints* { return &m_watchpoints; };
@@ -41,6 +52,7 @@ namespace dev
 		void Reset();
 
 	private:
+
 		Hardware& m_hardware;
 
 		Labels m_labels;	// labels
@@ -51,5 +63,9 @@ namespace dev
 		Watchpoints m_watchpoints;
 
 		std::wstring m_debugPath;
+
+		UpdateId m_labelsUpdates = 0;
+		UpdateId m_constsUpdates = 0;
+		UpdateId m_commentsUpdates = 0;
 	};
 }

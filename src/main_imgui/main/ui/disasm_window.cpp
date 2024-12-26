@@ -654,7 +654,7 @@ void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
 	}
 }
 
-void DeleteByIndex(dev::Disasm::AddrLabels& _labels, char* _label, int& _idx)
+void DeleteByIndex(dev::Disasm::LabelList& _labels, char* _label, int& _idx)
 {
 	if (_labels.size() > 1) {
 		_labels.erase(_labels.begin() + _idx);
@@ -675,7 +675,7 @@ void dev::DisasmWindow::DrawConstEdit(ContextMenu& _contextMenu)
 	bool enterPressed = false;
 	bool selectText = false;
 	auto constsP = m_debugger.GetDebugData().GetConsts(_contextMenu.addr);
-	static Disasm::AddrLabels consts;
+	static Disasm::LabelList consts;
 
 	if (_contextMenu.status == ContextMenu::Status::INIT_CONST_EDIT)
 	{
@@ -801,7 +801,7 @@ void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
 	bool enterPressed = false;
 	bool selectText = false;
 	auto labelsP = m_debugger.GetDebugData().GetLabels(_contextMenu.addr);
-	static Disasm::AddrLabels labels;
+	static Disasm::LabelList labels;
 
 	if (_contextMenu.status == ContextMenu::Status::INIT_LABEL_EDIT)
 	{

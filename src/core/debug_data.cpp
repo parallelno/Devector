@@ -6,6 +6,7 @@ dev::DebugData::DebugData(Hardware& _hardware)
 	: m_hardware(_hardware)
 {}
 
+/*
 void dev::DebugData::Reset()
 {
 	m_debugPath.clear();
@@ -16,6 +17,7 @@ void dev::DebugData::Reset()
 	m_breakpoints.Clear();
 	m_watchpoints.Clear();
 }
+*/
 
 bool IsConstLabel(const char* _s)
 {
@@ -37,24 +39,45 @@ auto dev::DebugData::GetComment(const Addr _addr) const
 	return commentI != m_comments.end() ? &commentI->second : nullptr;
 }
 
+void dev::DebugData::GetFilteredComments(SymbolAddrList& _out, const std::string& _filter) const
+{	
+	_out.clear();
+	for (const auto& [globalAddr, comment] : m_comments) {
+		_out.push_back({ comment, globalAddr, std::format("0x{:06x}", globalAddr) });
+	}
+}
+
 void dev::DebugData::SetComment(const Addr _addr, const std::string& _comment)
 {
 	m_comments[_addr] = _comment;
+	m_commentsUpdates++;
 }
 
 void dev::DebugData::DelComment(const Addr _addr)
 {
 	auto commentI = m_comments.find(_addr);
 	m_comments.erase(commentI);
+	m_commentsUpdates++;
 }
 
-auto dev::DebugData::GetLabels(const Addr _addr) const -> const AddrLabels*
+auto dev::DebugData::GetLabels(const Addr _addr) const -> const LabelList*
 {
 	auto labelsI = m_labels.find(_addr);
 	return labelsI != m_labels.end() ? &labelsI->second : nullptr;
 }
+void dev::DebugData::GetFilteredLabels(SymbolAddrList& _out, const std::string& _filter) const
+{
+	_out.clear();
+	for (const auto& [globalAddr, labels] : m_labels) 
+	{
+		for(const auto& label : labels)
+		{
+			_out.push_back({ label, globalAddr, std::format("0x{:06x}", globalAddr) });
+		}
+	}
+}
 
-void dev::DebugData::SetLabels(const Addr _addr, const AddrLabels& _labels)
+void dev::DebugData::SetLabels(const Addr _addr, const LabelList& _labels)
 {
 	if (_labels.empty()) {
 		auto labelsI = m_labels.find(_addr);
@@ -63,15 +86,29 @@ void dev::DebugData::SetLabels(const Addr _addr, const AddrLabels& _labels)
 	else {
 		m_labels[_addr] = _labels;
 	}
+
+	m_labelsUpdates++;
 }
 
-auto dev::DebugData::GetConsts(const Addr _addr) const -> const AddrLabels*
+auto dev::DebugData::GetConsts(const Addr _addr) const -> const LabelList*
 {
 	auto constsI = m_consts.find(_addr);
 	return constsI != m_consts.end() ? &constsI->second : nullptr;
 }
 
-void dev::DebugData::SetConsts(const Addr _addr, const AddrLabels& _consts)
+void dev::DebugData::GetFilteredConsts(SymbolAddrList& _out, const std::string& _filter) const
+{
+	_out.clear();
+	for (const auto& [globalAddr, consts] : m_consts) 
+	{
+		for(const auto& const_ : consts)
+		{
+			_out.push_back({ const_, globalAddr, std::format("0x{:06x}", globalAddr) });
+		}
+	}
+}
+
+void dev::DebugData::SetConsts(const Addr _addr, const LabelList& _consts)
 {
 	if (_consts.empty()) {
 		auto constsI = m_consts.find(_addr);
@@ -80,11 +117,16 @@ void dev::DebugData::SetConsts(const Addr _addr, const AddrLabels& _consts)
 	else {
 		m_consts[_addr] = _consts;
 	}
-	SaveDebugData();
+
+	m_constsUpdates++;
 }
 
 void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 {
+	m_constsUpdates++;
+	m_labelsUpdates++;
+	m_commentsUpdates++;
+
 	// check if the file exists
 	auto romDir = dev::GetDir(_romPath);
 	m_debugPath = romDir + L"\\" + dev::GetFilename(_romPath) + L".json";
@@ -100,7 +142,7 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 		for (auto& [str, addrS] : debugDataJ["labels"].items())
 		{
 			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
-			m_labels.emplace(addr, AddrLabels{}).first->second.emplace_back(str);
+			m_labels.emplace(addr, LabelList{}).first->second.emplace_back(str);
 		}
 	}
 	// add consts
@@ -109,7 +151,7 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 		for (auto& [str, addrS] : debugDataJ["consts"].items())
 		{
 			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
-			m_consts.emplace(addr, AddrLabels{}).first->second.emplace_back(str);
+			m_consts.emplace(addr, LabelList{}).first->second.emplace_back(str);
 		}
 	}
 	// add comments

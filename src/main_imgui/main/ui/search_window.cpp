@@ -126,6 +126,4 @@ void dev::SearchWindow::UpdateData(const bool _isRunning)
 	m_ccLast = cc;
 
 	// update
-	// m_stateRecorded = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED)->at("states");
-	// m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
 }

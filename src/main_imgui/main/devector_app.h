@@ -20,6 +20,7 @@
 #include "ui/recorder_window.h"
 #include "ui/keyboard_window.h"
 #include "ui/search_window.h"
+#include "ui/symbols_window.h"
 
 #include "core/hardware.h"
 #include "core/debugger.h"
@@ -104,6 +105,7 @@ namespace dev
 		std::unique_ptr <dev::RecorderWindow> m_recorderWindowP;
 		std::unique_ptr <dev::KeyboardWindow> m_keyboardWindowP;
 		std::unique_ptr <dev::SearchWindow> m_searchWindowP;
+		std::unique_ptr <dev::SymbolsWindow> m_symbolsWindowP;
 
 		bool m_displayWindowVisible = false;
 		bool m_disasmWindowVisible = false;
@@ -118,6 +120,7 @@ namespace dev
 		bool m_recorderWindowVisible = false;
 		bool m_keyboardWindowVisible = false;
 		bool m_searchWindowVisible = false;
+		bool m_symbolsWindowVisible = false;
 
 		std::string m_pathImgKeyboard;
 

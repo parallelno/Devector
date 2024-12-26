@@ -51,8 +51,8 @@ namespace dev
 		static constexpr int IMM_LINK_DOWN = INT_MAX; // means the link goes from the immediate below the last visible line
 		static constexpr size_t DISASM_LINES_MAX = 80;
 
-		using AddrLabels = std::vector<std::string>;
-		using Labels = std::unordered_map<GlobalAddr, AddrLabels>;
+		using LabelList = std::vector<std::string>;
+		using Labels = std::unordered_map<GlobalAddr, LabelList>;
 		using Comments = std::unordered_map<GlobalAddr, std::string>;
 		using LineIdx = size_t;
 
@@ -73,8 +73,8 @@ namespace dev
 			uint8_t opcode = 0;
 			uint16_t imm = 0; // immediate operand
 			char statsS[STATS_LEN] = { 0 }; // contains: runs, reads, writes
-			const AddrLabels* labels = nullptr;
-			const AddrLabels* consts = nullptr; // labels used as constants or they point to data
+			const LabelList* labels = nullptr;
+			const LabelList* consts = nullptr; // labels used as constants or they point to data
 			const std::string* comment = nullptr;
 			bool accessed = false; // no runs, reads, writes yet
 			Breakpoint::Status breakpointStatus = Breakpoint::Status::DISABLED;

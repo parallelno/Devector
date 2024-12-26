@@ -56,6 +56,7 @@ dev::DevectorApp::~DevectorApp()
 	SettingsUpdate("recorderWindowVisible", m_recorderWindowVisible);
 	SettingsUpdate("keyboardWindowVisible", m_keyboardWindowVisible);
 	SettingsUpdate("searchWindowVisible", m_searchWindowVisible);
+	SettingsUpdate("symbolsWindowVisible", m_symbolsWindowVisible);
 }
 
 void dev::DevectorApp::HardwareInit()
@@ -85,6 +86,7 @@ void dev::DevectorApp::WindowsInit()
 	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
 	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI, m_pathImgKeyboard);
 	m_searchWindowP = std::make_unique<dev::SearchWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
+	m_symbolsWindowP = std::make_unique<dev::SymbolsWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -103,6 +105,7 @@ void dev::DevectorApp::SettingsInit()
 	m_recorderWindowVisible = GetSettingsBool("recorderWindowVisible", false);
 	m_keyboardWindowVisible = GetSettingsBool("keyboardWindowVisible", false);
 	m_searchWindowVisible = GetSettingsBool("searchWindowVisible", false);
+	m_symbolsWindowVisible = GetSettingsBool("symbolsWindowVisible", false);
 
 	m_pathImgKeyboard = GetSettingsString("pathImgKeyboard", "images//vector_keyboard.jpg");
 
@@ -173,6 +176,7 @@ void dev::DevectorApp::Update()
 	m_recorderWindowP->Update(m_recorderWindowVisible, isRunning);
 	m_keyboardWindowP->Update(m_keyboardWindowVisible, isRunning);
 	m_searchWindowP->Update(m_searchWindowVisible, isRunning);
+	m_symbolsWindowP->Update(m_symbolsWindowVisible, isRunning);
 
 	if (m_status == AppStatus::REQ_PREPARE_FOR_EXIT)
 	{
@@ -278,6 +282,7 @@ void dev::DevectorApp::MainMenuUpdate()
 			ImGui::MenuItem(m_recorderWindowP->m_name.c_str(), NULL, &m_recorderWindowVisible);
 			ImGui::MenuItem(m_keyboardWindowP->m_name.c_str(), NULL, &m_keyboardWindowVisible);
 			ImGui::MenuItem(m_searchWindowP->m_name.c_str(), NULL, &m_searchWindowVisible);
+			ImGui::MenuItem(m_symbolsWindowP->m_name.c_str(), NULL, &m_symbolsWindowVisible);
 			ImGui::EndMenu();
 		}
 
