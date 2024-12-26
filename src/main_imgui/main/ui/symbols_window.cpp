@@ -33,7 +33,7 @@ void dev::SymbolsWindow::Draw(const bool _isRunning)
 	{
 		if (ImGui::BeginTabItem("Labels"))
 		{
-			UpdateAndDrawFilteredSymbols(m_filteredLabels, m_commentsUpdates, 
+			UpdateAndDrawFilteredSymbols(m_filteredLabels, m_labelsUpdates, 
 										m_labelFilter, &DebugData::GetFilteredLabels);
 			ImGui::EndTabItem();
 		}

@@ -42,7 +42,10 @@ auto dev::DebugData::GetComment(const Addr _addr) const
 void dev::DebugData::GetFilteredComments(SymbolAddrList& _out, const std::string& _filter) const
 {	
 	_out.clear();
-	for (const auto& [globalAddr, comment] : m_comments) {
+	for (const auto& [globalAddr, comment] : m_comments) 
+	{
+		if (comment.find(_filter) == std::string::npos) continue;
+
 		_out.push_back({ comment, globalAddr, std::format("0x{:06x}", globalAddr) });
 	}
 }
@@ -72,9 +75,16 @@ void dev::DebugData::GetFilteredLabels(SymbolAddrList& _out, const std::string& 
 	{
 		for(const auto& label : labels)
 		{
+			if (label.find(_filter) == std::string::npos) continue;
+
 			_out.push_back({ label, globalAddr, std::format("0x{:06x}", globalAddr) });
 		}
 	}
+
+	// alphabetical	sort
+	std::sort(_out.begin(), _out.end(), [](const auto& lhs, const auto& rhs) {
+		return std::get<0>(lhs) < std::get<0>(rhs);
+	});
 }
 
 void dev::DebugData::SetLabels(const Addr _addr, const LabelList& _labels)
@@ -103,9 +113,16 @@ void dev::DebugData::GetFilteredConsts(SymbolAddrList& _out, const std::string& 
 	{
 		for(const auto& const_ : consts)
 		{
+			if (const_.find(_filter) == std::string::npos) continue;
+
 			_out.push_back({ const_, globalAddr, std::format("0x{:06x}", globalAddr) });
 		}
 	}
+
+	// alphabetical	sort
+	std::sort(_out.begin(), _out.end(), [](const auto& lhs, const auto& rhs) {
+		return std::get<0>(lhs) < std::get<0>(rhs);
+	});
 }
 
 void dev::DebugData::SetConsts(const Addr _addr, const LabelList& _consts)
