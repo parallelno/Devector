@@ -529,7 +529,7 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Add/Remove Beakpoint"))
 		{
-			Breakpoint::Status bpStatus = static_cast<Breakpoint::Status>(m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS, { {"addr"} })->at("status"));
+			Breakpoint::Status bpStatus = static_cast<Breakpoint::Status>(m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS, { {"addr", m_contextMenu.addr} })->at("status"));
 
 			if (bpStatus == Breakpoint::Status::DELETED) {
 				Breakpoint::Data bpData { m_contextMenu.addr };
