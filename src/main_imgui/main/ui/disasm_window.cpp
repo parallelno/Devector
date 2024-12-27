@@ -96,6 +96,7 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 		m_ccLast = -1;
 		m_reqUI.type = ReqUI::Type::RELOAD_ROM_FDD_REC;
 		m_hardware.Request(Hardware::Req::STOP);
+		m_debugger.GetDebugData().SaveDebugData();
 	}
 
 	ImGui::SameLine();

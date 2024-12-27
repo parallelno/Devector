@@ -70,7 +70,10 @@ void dev::SymbolsWindow::UpdateAndDrawFilteredSymbols(DebugData::SymbolAddrList&
 	// update the data and draw a filter
 	ImGui::Text("Filter"); ImGui::SameLine();
 	bool filterUpdated = ImGui::InputTextWithHint("##filter", "symbol_name", &_filter, ImGuiInputTextFlags_EnterReturnsTrue);
-	ImGui::SameLine(); dev::DrawHelpMarker("Accepts substrings. Case insensitive. \nDouble click to navigate the addr in the Disasm Window. \nIf pressed Ctrl, the Hex Window highlights the addr.");
+	ImGui::SameLine(); dev::DrawHelpMarker(
+		"Accepts substrings. Case insensitive.\n \
+		Double click to navigate the addr in the Disasm Window.\n \
+		Double click + Ctrl to navigate the addr in the Hex Window.");
 
 	auto labelUpdates = m_debugger.GetDebugData().GetLabelsUpdates();
 	if (filterUpdated || _updateId != labelUpdates)
