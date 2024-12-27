@@ -198,26 +198,26 @@ void dev::TraceLogWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _conte
 		if (ImGui::MenuItem("Copy")) {
 			dev::CopyToClipboard(_contextMenu.str);
 		}
-		/*
+		
 		ImGui::SeparatorText("");
-		if (ImGui::MenuItem("Run Back To"))
-		{
-			m_debugger.AddBreakpoint(_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true);
-			m_hardware.Request(Hardware::Req::RUN);
-		}*/
-		/*ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Add/Remove Beakpoint"))
 		{
-			auto bpStatus = m_debugger.GetBreakpointStatus(m_contextMenu.addr);
-
+			Breakpoint::Status bpStatus = static_cast<Breakpoint::Status>(m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS, { {"addr", m_contextMenu.addr} })->at("status"));
+			
 			if (bpStatus == Breakpoint::Status::DELETED) {
-				m_debugger.AddBreakpoint(m_contextMenu.addr);
+				Breakpoint::Data bpData { m_contextMenu.addr };
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
+					{"data0", bpData.data0 },
+					{"data1", bpData.data1 },
+					{"data2", bpData.data2 },
+					{"comment", ""}
+					});
 			}
 			else {
-				m_debugger.DelBreakpoint(m_contextMenu.addr);
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", m_contextMenu.addr} });
 			}
-			m_reqDisasm.type = dev::ReqDisasm::Type::UPDATE;
+			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		}
-		ImGui::EndPopup();*/
+		ImGui::EndPopup();
 	}
 }
