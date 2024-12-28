@@ -105,7 +105,7 @@ void dev::DevectorApp::SettingsInit()
 	m_recorderWindowVisible = GetSettingsBool("recorderWindowVisible", false);
 	m_keyboardWindowVisible = GetSettingsBool("keyboardWindowVisible", false);
 	m_searchWindowVisible = GetSettingsBool("searchWindowVisible", false);
-	m_debugdataWindowVisible = GetSettingsBool("debugDataWindowVisible", false);
+	m_debugdataWindowVisible = GetSettingsBool("debugdataWindowVisible", false);
 
 	m_pathImgKeyboard = GetSettingsString("pathImgKeyboard", "images//vector_keyboard.jpg");
 
