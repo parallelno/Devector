@@ -550,16 +550,20 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL_ALL);
 			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		};
+
 		ImGui::SeparatorText("");
-		if (ImGui::MenuItem("Add/Edit Comment")) {
-			_contextMenu.status = ContextMenu::Status::INIT_COMMENT_EDIT;
-		};
+		
 		if (ImGui::MenuItem("Add/Edit Label")) {
 			_contextMenu.status = ContextMenu::Status::INIT_LABEL_EDIT;
-		};
+		};		
+
 		if (_contextMenu.immHovered && ImGui::MenuItem("Add/Edit Const")) {
 			_contextMenu.status = ContextMenu::Status::INIT_CONST_EDIT;
 		};
+
+		if (ImGui::MenuItem("Add/Edit Comment")) {
+			_contextMenu.status = ContextMenu::Status::INIT_COMMENT_EDIT;
+		};		
 		ImGui::EndPopup();
 	}
 }

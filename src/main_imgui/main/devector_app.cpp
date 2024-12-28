@@ -782,6 +782,7 @@ void dev::DevectorApp::LoadRom(const std::wstring& _path)
 
 	m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", true}}); // has to be called after Hardware loading Rom because it stores the last state of Hardware
 	m_debuggerP->GetDebugData().LoadDebugData(_path);
+	m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 	m_hardwareP->Request(Hardware::Req::RUN);
 
 	Log(L"File loaded: {}", _path);
@@ -818,6 +819,7 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 	{
 		m_hardwareP->Request(Hardware::Req::RESET);
 		m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", true} }); // has to be called after Hardware loading FDD image because it stores the last state of Hardware
+		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		m_hardwareP->Request(Hardware::Req::RUN);
 	}
 
@@ -841,6 +843,7 @@ void dev::DevectorApp::LoadRecording(const std::wstring& _path)
 
 	m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", false} }); // has to be called after Hardware loading Rom because it stores the last state of Hardware
 	m_debuggerP->GetDebugData().LoadDebugData(_path);
+	m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 
 	Log(L"File loaded: {}", _path);
 }
@@ -856,6 +859,7 @@ void dev::DevectorApp::DebugAttach()
 
 		if (requiresDebugger) {
 			m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", true} }); // has to be called before enabling debugging, because Hardware state was changed
+			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		}
 
 		m_hardwareP->Request(Hardware::Req::DEBUG_ATTACH, { { "data", requiresDebugger } });
