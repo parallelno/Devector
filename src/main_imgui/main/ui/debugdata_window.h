@@ -6,7 +6,7 @@
 
 namespace dev
 {
-	class SymbolsWindow : public BaseWindow
+	class DebugDataWindow : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
@@ -42,7 +42,7 @@ namespace dev
 			Addr addr = 0;
 			std::string symbol = "";
 			bool immHovered = false; // the context menu was opened on the immediate operand
-			const char* contextMenuName = "DisasmItemMenu";
+			const char* contextMenuName = "DebugdataMenu";
 
 			void Init(Addr _addr, const std::string& _symbol, const SymbolType _symbolType)
 			{
@@ -69,7 +69,7 @@ namespace dev
 		void DrawContextMenuSymbolAdd(ContextMenu& _contextMenu, int& _newAddr, std::string& _newName);
 
 	public:
-		SymbolsWindow(Hardware& _hardware, Debugger& _debugger, 
+		DebugDataWindow(Hardware& _hardware, Debugger& _debugger, 
 			const float* const _dpiScaleP,
 			ReqUI& _reqUI);
 		void Update(bool& _visible, const bool _isRunning);

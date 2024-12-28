@@ -1,19 +1,19 @@
-﻿#include "ui/symbols_window.h"
+﻿#include "ui/debugdata_window.h"
 
 #include <format>
 #include "utils/str_utils.h"
 #include "imgui_stdlib.h"
 
-dev::SymbolsWindow::SymbolsWindow(Hardware& _hardware, Debugger& _debugger,
+dev::DebugDataWindow::DebugDataWindow(Hardware& _hardware, Debugger& _debugger,
 	const float* const _dpiScaleP,
 	ReqUI& _reqUI)
 	:
-	BaseWindow("Symbols & Comments", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
+	BaseWindow("Debug Data", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), 
 	m_reqUI(_reqUI)
 {}
 
-void dev::SymbolsWindow::Update(bool& _visible, const bool _isRunning)
+void dev::DebugDataWindow::Update(bool& _visible, const bool _isRunning)
 {
 	BaseWindow::Update();
 
@@ -26,7 +26,7 @@ void dev::SymbolsWindow::Update(bool& _visible, const bool _isRunning)
 	}
 }
 
-void dev::SymbolsWindow::Draw(const bool _isRunning)
+void dev::DebugDataWindow::Draw(const bool _isRunning)
 {
 	// three tabs: consts, labels, comments
 	if (ImGui::BeginTabBar("SymbolsTabs"))
@@ -56,7 +56,7 @@ void dev::SymbolsWindow::Draw(const bool _isRunning)
 	}
 }
 
-void dev::SymbolsWindow::UpdateData(const bool _isRunning)
+void dev::DebugDataWindow::UpdateData(const bool _isRunning)
 {
 	// check if the hardware updated its state
 	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
@@ -67,7 +67,7 @@ void dev::SymbolsWindow::UpdateData(const bool _isRunning)
 	// update the data
 }
 
-void dev::SymbolsWindow::UpdateAndDrawFilteredSymbols(
+void dev::DebugDataWindow::UpdateAndDrawFilteredSymbols(
 	DebugData::SymbolAddrList& _filteredSymbols, 
 	DebugData::UpdateId& _filteredUpdateId, const DebugData::UpdateId& _updateId,
 	std::string& _filter, SymbolType _symbolType)
@@ -180,7 +180,7 @@ Double click + Ctrl the symbol to locate the addr in the Hex Window.");
 	DrawContextMenu(m_contextMenu);
 }
 
-void dev::SymbolsWindow::DrawContextMenu(ContextMenu& _contextMenu)
+void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 {
 	static int newAddr = 0;
 	static std::string newSymbol;
@@ -239,7 +239,7 @@ void dev::SymbolsWindow::DrawContextMenu(ContextMenu& _contextMenu)
 }
 
 
-void dev::SymbolsWindow::DrawContextMenuMain(ContextMenu& _contextMenu)
+void dev::DebugDataWindow::DrawContextMenuMain(ContextMenu& _contextMenu)
 {
 	if (ImGui::MenuItem("Copy Symbol Name")) {
 		dev::CopyToClipboard(_contextMenu.symbol);
@@ -315,7 +315,7 @@ void dev::SymbolsWindow::DrawContextMenuMain(ContextMenu& _contextMenu)
 	}
 }
 
-void dev::SymbolsWindow::DrawContextMenuSymbolEdit(ContextMenu& _contextMenu, std::string& _newName)
+void dev::DebugDataWindow::DrawContextMenuSymbolEdit(ContextMenu& _contextMenu, std::string& _newName)
 {
 	int caseFlag = _contextMenu.symbolType == SymbolType::CONST ? ImGuiInputTextFlags_CharsUppercase : 0;
 	bool pressedEnter = ImGui::InputTextWithHint("##SymbolEdit", "", &_newName, ImGuiInputTextFlags_EnterReturnsTrue | caseFlag);
@@ -355,7 +355,7 @@ void dev::SymbolsWindow::DrawContextMenuSymbolEdit(ContextMenu& _contextMenu, st
 	}
 }
 
-void dev::SymbolsWindow::DrawContextMenuAddrEdit(ContextMenu& _contextMenu, int& _newAddr)
+void dev::DebugDataWindow::DrawContextMenuAddrEdit(ContextMenu& _contextMenu, int& _newAddr)
 {
 	ImGui::InputInt("##AddrEdit", &_newAddr, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
 	bool pressedEnter = ImGui::IsKeyPressed(ImGuiKey_Enter);
@@ -398,7 +398,7 @@ void dev::SymbolsWindow::DrawContextMenuAddrEdit(ContextMenu& _contextMenu, int&
 	}	
 }
 
-void dev::SymbolsWindow::DrawContextMenuSymbolAdd(ContextMenu& _contextMenu, int& _newAddr , std::string& _newName)
+void dev::DebugDataWindow::DrawContextMenuSymbolAdd(ContextMenu& _contextMenu, int& _newAddr , std::string& _newName)
 {
 	int caseFlag = _contextMenu.symbolType == SymbolType::CONST ? ImGuiInputTextFlags_CharsUppercase : 0;
 	bool pressedEnter = ImGui::InputTextWithHint("##SymbolAdd", "", &_newName, ImGuiInputTextFlags_EnterReturnsTrue | caseFlag);

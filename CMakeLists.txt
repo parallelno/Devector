@@ -142,8 +142,8 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/ui/keyboard_window.h
 	${DEVECTOR_DIR}/main/ui/search_window.cpp
 	${DEVECTOR_DIR}/main/ui/search_window.h
-	${DEVECTOR_DIR}/main/ui/symbols_window.cpp
-	${DEVECTOR_DIR}/main/ui/symbols_window.h
+	${DEVECTOR_DIR}/main/ui/debugdata_window.cpp
+	${DEVECTOR_DIR}/main/ui/debugdata_window.h
 
 	${DEVECTOR_DIR}/utils/imgui_utils.cpp
 	${DEVECTOR_DIR}/utils/imgui_utils.h
