@@ -32,12 +32,40 @@ namespace dev
 		std::string m_tempFilter;
 
 		int m_selectedLineIdx = 0;
+		
+		enum class SymbolType { LABEL = 0, CONST, COMMENT };
+
+		struct ContextMenu {
+			enum class Status { NONE = 0, INIT_CONTEXT_MENU, CONTEXT_MENU, INIT_SYMBOL_EDIT, SYMBOL_EDIT, INIT_ADDR_EDIT, ADDR_EDIT, INIT_ADD_SYMBOL, ADD_SYMBOL };
+			Status status = Status::NONE;
+			SymbolType symbolType = SymbolType::LABEL;
+			Addr addr = 0;
+			std::string symbol = "";
+			bool immHovered = false; // the context menu was opened on the immediate operand
+			const char* contextMenuName = "DisasmItemMenu";
+
+			void Init(Addr _addr, const std::string& _symbol, const SymbolType _symbolType)
+			{
+				status = Status::INIT_CONTEXT_MENU;
+				symbolType = _symbolType;
+				addr = _addr;
+				symbol = _symbol;
+			}
+		};
+		ContextMenu m_contextMenu;
 
 		void UpdateData(const bool _isRunning);
 
 		void UpdateAndDrawFilteredSymbols(DebugData::SymbolAddrList& _filteredSymbols,
-										DebugData::UpdateId& _updateId, std::string& _filter,
-										void (DebugData::*getFilteredFunc)(DebugData::SymbolAddrList& _out, const std::string& _filter) const);
+										DebugData::UpdateId& _filteredUpdateId, 
+										const DebugData::UpdateId& _updateId,
+										std::string& _filter,
+										SymbolType _symbolType);
+
+		void DrawContextMenu(ContextMenu& _contextMenu);
+		void DrawContextMenuMain(ContextMenu& _contextMenu);
+		void DrawContextMenuSymbolEdit(ContextMenu& _contextMenu, std::string& _newName);
+		void DrawContextMenuAddrEdit(ContextMenu& _contextMenu, int& _newAddr);
 
 	public:
 		SymbolsWindow(Hardware& _hardware, Debugger& _debugger, 

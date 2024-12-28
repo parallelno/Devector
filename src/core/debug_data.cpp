@@ -100,6 +100,45 @@ void dev::DebugData::SetLabels(const Addr _addr, const LabelList& _labels)
 	m_labelsUpdates++;
 }
 
+void dev::DebugData::AddLabel(const Addr _addr, const std::string& _label)
+{
+	auto labelsI = m_labels.find(_addr);
+	if (labelsI == m_labels.end()) {
+		m_labels[_addr] = LabelList{ _label };
+	}
+	else {
+		labelsI->second.push_back(_label);
+	}
+	m_labelsUpdates++;
+}
+
+void dev::DebugData::DelLabel(const Addr _addr, const std::string& _label)
+{
+	auto labelsI = m_labels.find(_addr);
+	if (labelsI != m_labels.end()) {
+		auto labelI = std::find(labelsI->second.begin(), labelsI->second.end(), _label);
+		if (labelI != labelsI->second.end()) {
+			labelsI->second.erase(labelI);
+			if (labelsI->second.empty()) {
+				m_labels.erase(labelsI);
+			}
+			m_labelsUpdates++;
+		}
+	}
+}
+
+void dev::DebugData::RenameLabel(const Addr _addr, const std::string& _oldLabel, const std::string& _newLabel)
+{
+	auto labelsI = m_labels.find(_addr);
+	if (labelsI != m_labels.end()) {
+		auto labelI = std::find(labelsI->second.begin(), labelsI->second.end(), _oldLabel);
+		if (labelI != labelsI->second.end()) {
+			*labelI = _newLabel;
+			m_labelsUpdates++;
+		}
+	}
+}
+
 auto dev::DebugData::GetConsts(const Addr _addr) const -> const LabelList*
 {
 	auto constsI = m_consts.find(_addr);
@@ -136,6 +175,45 @@ void dev::DebugData::SetConsts(const Addr _addr, const LabelList& _consts)
 	}
 
 	m_constsUpdates++;
+}
+
+void dev::DebugData::AddConst(const Addr _addr, const std::string& _const)
+{
+	auto constsI = m_consts.find(_addr);
+	if (constsI == m_consts.end()) {
+		m_consts[_addr] = LabelList{ _const };
+	}
+	else {
+		constsI->second.push_back(_const);
+	}
+	m_constsUpdates++;
+}
+
+void dev::DebugData::DelConst(const Addr _addr, const std::string& _const)
+{
+	auto constsI = m_consts.find(_addr);
+	if (constsI != m_consts.end()) {
+		auto constI = std::find(constsI->second.begin(), constsI->second.end(), _const);
+		if (constI != constsI->second.end()) {
+			constsI->second.erase(constI);
+			if (constsI->second.empty()) {
+				m_consts.erase(constsI);
+			}
+			m_constsUpdates++;
+		}
+	}
+}
+
+void dev::DebugData::RenameConst(const Addr _addr, const std::string& _oldConst, const std::string& _newConst)
+{
+	auto constsI = m_consts.find(_addr);
+	if (constsI != m_consts.end()) {
+		auto constI = std::find(constsI->second.begin(), constsI->second.end(), _oldConst);
+		if (constI != constsI->second.end()) {
+			*constI = _newConst;
+			m_constsUpdates++;
+		}
+	}
 }
 
 void dev::DebugData::LoadDebugData(const std::wstring& _romPath)

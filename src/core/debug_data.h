@@ -33,10 +33,16 @@ namespace dev
 
 		auto GetLabels(const Addr _addr) const -> const LabelList*;
 		void SetLabels(const Addr _addr, const LabelList& _labels);
+		void AddLabel(const Addr _addr, const std::string& _label);
+		void DelLabel(const Addr _addr, const std::string& _label);
+		void RenameLabel(const Addr _addr, const std::string& _oldLabel, const std::string& _newLabel);
 		void GetFilteredLabels(SymbolAddrList& _out, const std::string& _filter = "") const;
 
 		auto GetConsts(const Addr _addr) const -> const LabelList*;
-		void SetConsts(const Addr _addr, const LabelList& _labels);
+		void SetConsts(const Addr _addr, const LabelList& _consts);
+		void AddConst(const Addr _addr, const std::string& _const);
+		void DelConst(const Addr _addr, const std::string& _const);
+		void RenameConst(const Addr _addr, const std::string& _oldConst, const std::string& _newConst);
 		void GetFilteredConsts(SymbolAddrList& _out, const std::string& _filter = "") const;
 
 		auto GetCommentsUpdates() const -> UpdateId { return m_commentsUpdates; };

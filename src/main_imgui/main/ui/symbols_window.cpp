@@ -33,20 +33,23 @@ void dev::SymbolsWindow::Draw(const bool _isRunning)
 	{
 		if (ImGui::BeginTabItem("Labels"))
 		{
-			UpdateAndDrawFilteredSymbols(m_filteredLabels, m_labelsUpdates, 
-										m_labelFilter, &DebugData::GetFilteredLabels);
+			auto updateId = m_debugger.GetDebugData().GetLabelsUpdates();
+			UpdateAndDrawFilteredSymbols(m_filteredLabels, m_labelsUpdates, updateId,
+										m_labelFilter, SymbolType::LABEL);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Consts"))
 		{
-			UpdateAndDrawFilteredSymbols(m_filteredConsts, m_constsUpdates, 
-										m_constFilter, &DebugData::GetFilteredConsts);
+			auto updateId = m_debugger.GetDebugData().GetConstsUpdates();
+			UpdateAndDrawFilteredSymbols(m_filteredConsts, m_constsUpdates, updateId,
+										m_constFilter, SymbolType::CONST);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Comments"))
 		{
-			UpdateAndDrawFilteredSymbols(m_filteredComments, m_commentsUpdates, 
-										m_commentFilter, &DebugData::GetFilteredComments);
+			auto updateId = m_debugger.GetDebugData().GetCommentsUpdates();
+			UpdateAndDrawFilteredSymbols(m_filteredComments, m_commentsUpdates, updateId,
+										m_commentFilter, SymbolType::COMMENT);
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
@@ -64,25 +67,45 @@ void dev::SymbolsWindow::UpdateData(const bool _isRunning)
 	// update the data
 }
 
-void dev::SymbolsWindow::UpdateAndDrawFilteredSymbols(DebugData::SymbolAddrList& _filteredSymbols, DebugData::UpdateId& _updateId, std::string& _filter,
-													void (DebugData::*getFilteredFunc)(DebugData::SymbolAddrList& _out, const std::string& _filter) const)
+void dev::SymbolsWindow::UpdateAndDrawFilteredSymbols(
+	DebugData::SymbolAddrList& _filteredSymbols, 
+	DebugData::UpdateId& _filteredUpdateId, const DebugData::UpdateId& _updateId,
+	std::string& _filter, SymbolType _symbolType)
 {
 	// update the data and draw a filter
 	ImGui::Text("Filter"); ImGui::SameLine();
 	bool filterUpdated = ImGui::InputTextWithHint("##filter", "symbol_name", &_filter, ImGuiInputTextFlags_EnterReturnsTrue);
 	ImGui::SameLine(); dev::DrawHelpMarker(
 		"Accepts substrings. Case insensitive.\n \
-		Double click to navigate the addr in the Disasm Window.\n \
-		Double click + Ctrl to navigate the addr in the Hex Window.");
+Double click to navigate the addr in the Disasm Window.\n \
+Double click + Ctrl to navigate the addr in the Hex Window.");
 
-	auto labelUpdates = m_debugger.GetDebugData().GetLabelsUpdates();
-	if (filterUpdated || _updateId != labelUpdates)
+	if (filterUpdated || _filteredUpdateId != _updateId)
 	{
 		// update filtered labels
-		_updateId = labelUpdates;
-		(m_debugger.GetDebugData().*getFilteredFunc)(_filteredSymbols, _filter);
+		_filteredUpdateId = _updateId;
+
+		switch (_symbolType)
+		{
+		case SymbolType::LABEL:
+			m_debugger.GetDebugData().GetFilteredLabels(_filteredSymbols, _filter);
+			break;
+
+		case SymbolType::CONST:
+			m_debugger.GetDebugData().GetFilteredConsts(_filteredSymbols, _filter);
+			break;
+
+		case SymbolType::COMMENT:
+			m_debugger.GetDebugData().GetFilteredComments(_filteredSymbols, _filter);
+			break;
+		
+		default:
+			break;
+		}
 	}
 
+	int hoveredLineIdx = -1;
+	bool rmbPressed = false;
 
 	// draw a table
 	const int COLUMNS_COUNT = 3;
@@ -114,19 +137,23 @@ void dev::SymbolsWindow::UpdateAndDrawFilteredSymbols(DebugData::SymbolAddrList&
 				{
 					m_selectedLineIdx = lineIdx;
 				}
+				
+				hoveredLineIdx = ImGui::IsItemHovered() ? lineIdx : hoveredLineIdx;
+				rmbPressed |= ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 
 				const auto& [label, addr, addrS] = _filteredSymbols.at(lineIdx);
 
+				// draw the symbol
 				ImGui::TableNextColumn();
 				ImGui::TextColored( label[0] == '@' ? DASM_CLR_LABEL_LOCAL : DASM_CLR_LABEL_GLOBAL, label.c_str());
 
+				// draw the addr
 				ImGui::TableNextColumn();
 				ImGui::TextColored( DASM_CLR_ADDR, addrS.c_str());
 
-
 				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 				{
-					const auto& [selectedLabel, selectedAddr, selectedAddrS] = _filteredSymbols.at(m_selectedLineIdx);
+					const auto& [symbol, selectedAddr, selectedAddrS] = _filteredSymbols.at(m_selectedLineIdx);
 					m_reqUI.globalAddr = selectedAddr;
 
 					if (ImGui::GetIO().KeyCtrl)
@@ -139,8 +166,213 @@ void dev::SymbolsWindow::UpdateAndDrawFilteredSymbols(DebugData::SymbolAddrList&
 					}
 				}
 				
+				if (hoveredLineIdx >= 0 && rmbPressed )
+				{
+					const auto& [symbol, selectedAddr, selectedAddrS] = _filteredSymbols.at(hoveredLineIdx);
+					m_contextMenu.Init(selectedAddr, symbol, _symbolType);
+				}
+				
 			}
 		}
 		ImGui::EndTable();
 	}
+
+	DrawContextMenu(m_contextMenu);
+}
+
+void dev::SymbolsWindow::DrawContextMenu(ContextMenu& _contextMenu)
+{
+	static int newAddr = 0;
+	static std::string newSymbol;
+
+	switch (_contextMenu.status)
+	{
+	case ContextMenu::Status::INIT_CONTEXT_MENU:
+		ImGui::OpenPopup(_contextMenu.contextMenuName);
+		_contextMenu.status = ContextMenu::Status::CONTEXT_MENU;
+		break;
+
+	case ContextMenu::Status::INIT_SYMBOL_EDIT:
+		ImGui::OpenPopup(_contextMenu.contextMenuName);
+		_contextMenu.status = ContextMenu::Status::SYMBOL_EDIT;
+		newSymbol = _contextMenu.symbol;
+		break;
+	
+	case ContextMenu::Status::INIT_ADDR_EDIT:
+		ImGui::OpenPopup(_contextMenu.contextMenuName);
+		_contextMenu.status = ContextMenu::Status::ADDR_EDIT;
+		newAddr = _contextMenu.addr;
+		break;
+
+	case ContextMenu::Status::INIT_ADD_SYMBOL:
+		ImGui::OpenPopup(_contextMenu.contextMenuName);
+		_contextMenu.status = ContextMenu::Status::ADD_SYMBOL;
+		break;
+
+	default:
+		break;
+	}
+
+	if (ImGui::BeginPopup(_contextMenu.contextMenuName))
+	{
+		switch (_contextMenu.status)
+		{
+		case ContextMenu::Status::CONTEXT_MENU:
+			DrawContextMenuMain(_contextMenu);
+			break;
+		
+		case ContextMenu::Status::SYMBOL_EDIT:
+			DrawContextMenuSymbolEdit(_contextMenu, newSymbol);
+			break;
+		
+		case ContextMenu::Status::ADDR_EDIT:
+			DrawContextMenuAddrEdit(_contextMenu, newAddr);
+			break;
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+
+void dev::SymbolsWindow::DrawContextMenuMain(ContextMenu& _contextMenu)
+{
+	if (ImGui::MenuItem("Copy Symbol Name")) {
+		dev::CopyToClipboard(_contextMenu.symbol);
+		_contextMenu.status = ContextMenu::Status::NONE;
+		ImGui::CloseCurrentPopup();
+	}
+
+	if (ImGui::MenuItem("Copy Symbol Addr")) {
+		dev::CopyToClipboard(std::format("0x{:X}", (_contextMenu.addr)));
+		_contextMenu.status = ContextMenu::Status::NONE;
+		ImGui::CloseCurrentPopup();
+	}
+
+	ImGui::SeparatorText("");
+
+	if (ImGui::MenuItem("Add Symbol"))
+	{
+		_contextMenu.status = ContextMenu::Status::INIT_ADD_SYMBOL;
+		ImGui::CloseCurrentPopup();
+	}
+
+	if (ImGui::MenuItem("Delete Symbol"))
+	{
+		switch (_contextMenu.symbolType)
+		{
+		case SymbolType::LABEL:
+			m_debugger.GetDebugData().DelLabel(_contextMenu.addr, _contextMenu.symbol);
+			break;
+
+		case SymbolType::CONST:
+			m_debugger.GetDebugData().DelConst(_contextMenu.addr, _contextMenu.symbol);
+			break;
+
+		case SymbolType::COMMENT:
+			m_debugger.GetDebugData().DelComment(_contextMenu.addr);
+			break;
+		
+		default:
+			break;
+		}
+		m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
+		_contextMenu.status = ContextMenu::Status::NONE;
+		ImGui::CloseCurrentPopup();
+	}
+	
+	ImGui::SeparatorText("");
+
+	if (ImGui::MenuItem("Edit Symbol Name")){
+		_contextMenu.status = ContextMenu::Status::INIT_SYMBOL_EDIT;
+		ImGui::CloseCurrentPopup();
+	}
+
+	if (ImGui::MenuItem("Edit Symbol Addr")) {
+		_contextMenu.status = ContextMenu::Status::INIT_ADDR_EDIT;
+		ImGui::CloseCurrentPopup();
+	}
+}
+
+void dev::SymbolsWindow::DrawContextMenuSymbolEdit(ContextMenu& _contextMenu, std::string& _newName)
+{
+	int caseFlag = _contextMenu.symbolType == SymbolType::CONST ? ImGuiInputTextFlags_CharsUppercase : 0;
+	bool pressedEnter = ImGui::InputTextWithHint("##SymbolEdit", "", &_newName, ImGuiInputTextFlags_EnterReturnsTrue | caseFlag);
+	ImGui::SameLine();
+	bool pressedOk = ImGui::Button("OK");
+	ImGui::SameLine();
+
+	if (ImGui::Button("Cancel"))
+	{
+		ImGui::CloseCurrentPopup();
+		_contextMenu.status = ContextMenu::Status::NONE;
+	}
+
+	if (pressedEnter || pressedOk)
+	{
+		switch (_contextMenu.symbolType)
+		{
+		case SymbolType::LABEL:
+			m_debugger.GetDebugData().RenameLabel(_contextMenu.addr, _contextMenu.symbol, _newName);
+			break;
+
+		case SymbolType::CONST:
+			m_debugger.GetDebugData().RenameConst(_contextMenu.addr, _contextMenu.symbol, _newName);
+			break;
+
+		case SymbolType::COMMENT:
+			m_debugger.GetDebugData().SetComment(_contextMenu.addr, _newName);
+			break;
+		
+		default:
+			break;
+		}
+
+		ImGui::CloseCurrentPopup();
+		_contextMenu.status = ContextMenu::Status::NONE;
+		m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
+	}
+}
+
+void dev::SymbolsWindow::DrawContextMenuAddrEdit(ContextMenu& _contextMenu, int& _newAddr)
+{
+	ImGui::InputInt("##AddrEdit", &_newAddr, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+	bool pressedEnter = ImGui::IsKeyPressed(ImGuiKey_Enter);
+	ImGui::SameLine();
+	bool pressedOk = ImGui::Button("OK");
+	ImGui::SameLine();
+
+	if (ImGui::Button("Cancel"))
+	{
+		ImGui::CloseCurrentPopup();
+		_contextMenu.status = ContextMenu::Status::NONE;
+	}
+
+	if (pressedEnter || pressedOk)
+	{
+		switch (_contextMenu.symbolType)
+		{
+		case SymbolType::LABEL:
+			m_debugger.GetDebugData().DelLabel(_contextMenu.addr, _contextMenu.symbol);
+			m_debugger.GetDebugData().AddLabel(_newAddr, _contextMenu.symbol);
+			break;
+
+		case SymbolType::CONST:
+			m_debugger.GetDebugData().DelConst(_contextMenu.addr, _contextMenu.symbol);
+			m_debugger.GetDebugData().AddConst(_newAddr, _contextMenu.symbol);
+			break;
+
+		case SymbolType::COMMENT:
+			m_debugger.GetDebugData().DelComment(_contextMenu.addr);
+			m_debugger.GetDebugData().SetComment(_newAddr, _contextMenu.symbol);
+			break;
+		
+		default:
+			break;
+		}
+
+		ImGui::CloseCurrentPopup();
+		m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
+		_contextMenu.status = ContextMenu::Status::NONE;
+	}	
 }
