@@ -8,7 +8,7 @@ dev::SymbolsWindow::SymbolsWindow(Hardware& _hardware, Debugger& _debugger,
 	const float* const _dpiScaleP,
 	ReqUI& _reqUI)
 	:
-	BaseWindow("Symbols", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
+	BaseWindow("Symbols & Comments", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), 
 	m_reqUI(_reqUI)
 {}
@@ -74,10 +74,10 @@ void dev::SymbolsWindow::UpdateAndDrawFilteredSymbols(
 {
 	// update the data and draw a filter
 	ImGui::Text("Filter"); ImGui::SameLine();
-	bool filterUpdated = ImGui::InputTextWithHint("##filter", "symbol_name", &_filter, ImGuiInputTextFlags_EnterReturnsTrue);
+	bool filterUpdated = ImGui::InputTextWithHint("##filter", "search name", &_filter, ImGuiInputTextFlags_EnterReturnsTrue);
 	ImGui::SameLine(); dev::DrawHelpMarker(
-		"Accepts substrings. Case insensitive.\n \
-Double click on the symbol to locate the addr in the Disasm Window.\n \
+		"Accepts substrings. Case insensitive.\n\
+Double click on the symbol to locate the addr in the Disasm Window.\n\
 Double click + Ctrl the symbol to locate the addr in the Hex Window.");
 
 	if (filterUpdated || _filteredUpdateId != _updateId)
@@ -255,14 +255,14 @@ void dev::SymbolsWindow::DrawContextMenuMain(ContextMenu& _contextMenu)
 
 	ImGui::SeparatorText("");
 
-	if (ImGui::MenuItem("Locate the Symbol Addr in the Disasm WIndow")) {
+	if (ImGui::MenuItem("Locate in the Disasm WIndow")) {
 		m_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
 		m_reqUI.globalAddr = _contextMenu.addr;
 		_contextMenu.status = ContextMenu::Status::NONE;
 		ImGui::CloseCurrentPopup();
 	}
 
-	if (ImGui::MenuItem("Locate the Symbol Addr in the Hex WIndow")) {
+	if (ImGui::MenuItem("Locate in the Hex WIndow")) {
 		m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
 		m_reqUI.globalAddr = _contextMenu.addr;
 		m_reqUI.len = 1;
