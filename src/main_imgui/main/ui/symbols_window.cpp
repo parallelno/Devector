@@ -77,8 +77,8 @@ void dev::SymbolsWindow::UpdateAndDrawFilteredSymbols(
 	bool filterUpdated = ImGui::InputTextWithHint("##filter", "symbol_name", &_filter, ImGuiInputTextFlags_EnterReturnsTrue);
 	ImGui::SameLine(); dev::DrawHelpMarker(
 		"Accepts substrings. Case insensitive.\n \
-Double click to navigate the addr in the Disasm Window.\n \
-Double click + Ctrl to navigate the addr in the Hex Window.");
+Double click on the symbol to locate the addr in the Disasm Window.\n \
+Double click + Ctrl the symbol to locate the addr in the Hex Window.");
 
 	if (filterUpdated || _filteredUpdateId != _updateId)
 	{
@@ -228,6 +228,10 @@ void dev::SymbolsWindow::DrawContextMenu(ContextMenu& _contextMenu)
 		case ContextMenu::Status::ADDR_EDIT:
 			DrawContextMenuAddrEdit(_contextMenu, newAddr);
 			break;
+
+		case ContextMenu::Status::ADD_SYMBOL:
+			DrawContextMenuSymbolAdd(_contextMenu, newAddr, newSymbol);
+			break;
 		}
 
 		ImGui::EndPopup();
@@ -245,6 +249,23 @@ void dev::SymbolsWindow::DrawContextMenuMain(ContextMenu& _contextMenu)
 
 	if (ImGui::MenuItem("Copy Symbol Addr")) {
 		dev::CopyToClipboard(std::format("0x{:X}", (_contextMenu.addr)));
+		_contextMenu.status = ContextMenu::Status::NONE;
+		ImGui::CloseCurrentPopup();
+	}
+
+	ImGui::SeparatorText("");
+
+	if (ImGui::MenuItem("Locate the Symbol Addr in the Disasm WIndow")) {
+		m_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
+		m_reqUI.globalAddr = _contextMenu.addr;
+		_contextMenu.status = ContextMenu::Status::NONE;
+		ImGui::CloseCurrentPopup();
+	}
+
+	if (ImGui::MenuItem("Locate the Symbol Addr in the Hex WIndow")) {
+		m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+		m_reqUI.globalAddr = _contextMenu.addr;
+		m_reqUI.len = 1;
 		_contextMenu.status = ContextMenu::Status::NONE;
 		ImGui::CloseCurrentPopup();
 	}
@@ -375,4 +396,47 @@ void dev::SymbolsWindow::DrawContextMenuAddrEdit(ContextMenu& _contextMenu, int&
 		m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		_contextMenu.status = ContextMenu::Status::NONE;
 	}	
+}
+
+void dev::SymbolsWindow::DrawContextMenuSymbolAdd(ContextMenu& _contextMenu, int& _newAddr , std::string& _newName)
+{
+	int caseFlag = _contextMenu.symbolType == SymbolType::CONST ? ImGuiInputTextFlags_CharsUppercase : 0;
+	bool pressedEnter = ImGui::InputTextWithHint("##SymbolAdd", "", &_newName, ImGuiInputTextFlags_EnterReturnsTrue | caseFlag);
+	ImGui::SameLine();
+	ImGui::InputInt("##AddrEdit", &_newAddr, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
+	pressedEnter |= ImGui::IsKeyPressed(ImGuiKey_Enter);
+	ImGui::SameLine();
+	bool pressedOk = ImGui::Button("OK");
+	ImGui::SameLine();
+
+	if (ImGui::Button("Cancel"))
+	{
+		ImGui::CloseCurrentPopup();
+		_contextMenu.status = ContextMenu::Status::NONE;
+	}
+
+	if (pressedEnter || pressedOk)
+	{
+		switch (_contextMenu.symbolType)
+		{
+		case SymbolType::LABEL:
+			m_debugger.GetDebugData().AddLabel(_newAddr, _newName);
+			break;
+
+		case SymbolType::CONST:
+			m_debugger.GetDebugData().AddConst(_newAddr, _newName);
+			break;
+
+		case SymbolType::COMMENT:
+			m_debugger.GetDebugData().SetComment(_newAddr, _newName);
+			break;
+		
+		default:
+			break;
+		}
+
+		ImGui::CloseCurrentPopup();
+		_contextMenu.status = ContextMenu::Status::NONE;
+		m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
+	}
 }

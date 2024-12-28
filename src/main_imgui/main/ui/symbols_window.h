@@ -66,6 +66,7 @@ namespace dev
 		void DrawContextMenuMain(ContextMenu& _contextMenu);
 		void DrawContextMenuSymbolEdit(ContextMenu& _contextMenu, std::string& _newName);
 		void DrawContextMenuAddrEdit(ContextMenu& _contextMenu, int& _newAddr);
+		void DrawContextMenuSymbolAdd(ContextMenu& _contextMenu, int& _newAddr, std::string& _newName);
 
 	public:
 		SymbolsWindow(Hardware& _hardware, Debugger& _debugger, 
