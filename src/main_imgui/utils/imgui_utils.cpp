@@ -153,7 +153,7 @@ void dev::TextAligned(const char* _text, const ImVec2& _aligment)
 	if (!ImGui::ItemAdd(bb, id)) return;
 
 
-	ImGui::RenderTextClipped(bb.Min + style.FramePadding, 
+	ImGui::RenderTextClipped(bb.Min + style.FramePadding,
 		bb.Max - style.FramePadding, _text, NULL, &label_size, _aligment, &bb);
 }
 
@@ -175,7 +175,7 @@ void dev::DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir, const floa
 
 	if (!ImGui::ItemAdd(bb, 0))
 		return;
-	
+
 	// Render
 	auto drawPos = bb.Min + ImVec2(style.FramePadding.x, 0.0f);
 	ImGui::RenderArrow(window->DrawList, drawPos, _color, _dir);
@@ -194,7 +194,7 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
 		return false;
 
 	ImGuiContext& g = *GImGui;
-	
+
 	const ImGuiStyle& style = g.Style;
 	const ImGuiID id = window->GetID(label);
 
@@ -220,7 +220,7 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
 		else if (*_statusP == Breakpoint::Status::DISABLED){
 			*_statusP = Breakpoint::Status::ACTIVE;
 		}
-		else if (*_statusP == Breakpoint::Status::ACTIVE) 
+		else if (*_statusP == Breakpoint::Status::ACTIVE)
 		{
 			if (ctrlPressed) {
 				*_statusP = Breakpoint::Status::DISABLED;
@@ -229,8 +229,8 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
 				*_statusP = Breakpoint::Status::DELETED;
 			}
 		}
-			
-		
+
+
 		ImGui::MarkItemEdited(id);
 	}
 
@@ -278,8 +278,8 @@ void dev::DrawSeparator2(const char* _text)
 	ImGui::SeparatorText("");
 }
 
-void dev::DrawProperty2EditableI(const char* _name, const char* _label, int* _value, 
-	const char* _help)
+bool dev::DrawProperty2EditableI(const char* _name, const char* _label, int* _value,
+	const char* _help, const ImGuiInputTextFlags _flags)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
 	ImGui::TableNextColumn();
@@ -289,18 +289,19 @@ void dev::DrawProperty2EditableI(const char* _name, const char* _label, int* _va
 	ImGui::PopStyleColor();
 
 	ImGui::TableNextColumn();
-	ImGui::InputInt(_label, _value);
+	bool valEntered = ImGui::InputInt(_label, _value, 1, 100, _flags);
 	if (_help && *_help != '\0') {
 		ImGui::SameLine();
 		ImGui::Dummy({12,10});
 		ImGui::SameLine();
 		dev::DrawHelpMarker(_help);
 	}
-	*_value = dev::Max(1, *_value);
+
+	return valEntered;
 }
 
-void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
-	const char* _hint, const char* _help, const ImGuiInputTextFlags _flags)
+bool dev::DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value,
+	const char* _hint, const char* _help, const ImGuiInputTextFlags _flags, bool* _delButtonPressed)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
 	ImGui::TableNextColumn();
@@ -310,16 +311,35 @@ void dev::DrawProperty2EditableS(const char* _name, const char* _label, std::str
 	ImGui::PopStyleColor();
 
 	ImGui::TableNextColumn();
-	ImGui::InputTextWithHint(_label, _hint, _value, _flags);
+	auto entered = ImGui::InputTextWithHint(_label, _hint, _value, _flags);
+
+	// Delete button
+	if (_delButtonPressed)
+	{
+		ImGui::SameLine(); ImGui::SameLine();
+		if (ImGui::Button("Delete"))
+		{
+			_value->erase();
+			*_delButtonPressed = true;
+		}
+		else
+		{
+			*_delButtonPressed = false;
+		}
+	}
+
+	// hint
 	if (_help && *_help != '\0') {
 		ImGui::SameLine();
-		ImGui::Dummy({12,10});
+		ImGui::Dummy(UI_LITTLE_SPACE);
 		ImGui::SameLine();
 		dev::DrawHelpMarker(_help);
 	}
+
+	return entered;
 }
 
-void dev::DrawProperty2Combo(const char* _name, const char* _label, 
+void dev::DrawProperty2Combo(const char* _name, const char* _label,
 	int* _currentItem, const char* const _items[], int _itemsCount, const char* _help)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
@@ -339,7 +359,7 @@ void dev::DrawProperty2Combo(const char* _name, const char* _label,
 	}
 }
 
-void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label, 
+void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 	bool* _val, const char* _help)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
@@ -387,7 +407,7 @@ void dev::DrawProperty2EditableCheckBox4(const char* _name,
 }
 
 void dev::DrawProperty2RadioButtons(
-	const char* _name, int* _currentItem, 
+	const char* _name, int* _currentItem,
 	const char* const _items[], int _itemsCount, const float _space,
 	const char* _help)
 {
@@ -400,10 +420,10 @@ void dev::DrawProperty2RadioButtons(
 
 	ImGui::TableNextColumn();
 
-	for (int i = 0; i < _itemsCount; i++) 
+	for (int i = 0; i < _itemsCount; i++)
 	{
 		ImGui::RadioButton(_items[i], _currentItem, i);
-		if (i != _itemsCount - 1) 
+		if (i != _itemsCount - 1)
 		{
 			ImGui::SameLine();
 			ImGui::Dummy(ImVec2{ _space, 5.0f });
@@ -419,8 +439,93 @@ void dev::DrawProperty2RadioButtons(
 	}
 }
 
+auto dev::DrawPropertyMemoryMapping(Breakpoint::MemPages _memPages)
+-> Breakpoint::MemPages
+{
+	// mapping
+	bool ram = _memPages.ram;
+	bool rd00 = _memPages.rdisk0page0;
+	bool rd01 = _memPages.rdisk0page1;
+	bool rd02 = _memPages.rdisk0page2;
+	bool rd03 = _memPages.rdisk0page3;
+	bool rd10 = _memPages.rdisk1page0;
+	bool rd11 = _memPages.rdisk1page1;
+	bool rd12 = _memPages.rdisk1page2;
+	bool rd13 = _memPages.rdisk1page3;
+	bool rd20 = _memPages.rdisk2page0;
+	bool rd21 = _memPages.rdisk2page1;
+	bool rd22 = _memPages.rdisk2page2;
+	bool rd23 = _memPages.rdisk2page3;
+	bool rd30 = _memPages.rdisk3page0;
+	bool rd31 = _memPages.rdisk3page1;
+	bool rd32 = _memPages.rdisk3page2;
+	bool rd33 = _memPages.rdisk3page3;
+	bool rd40 = _memPages.rdisk4page0;
+	bool rd41 = _memPages.rdisk4page1;
+	bool rd42 = _memPages.rdisk4page2;
+	bool rd43 = _memPages.rdisk4page3;
+	bool rd50 = _memPages.rdisk5page0;
+	bool rd51 = _memPages.rdisk5page1;
+	bool rd52 = _memPages.rdisk5page2;
+	bool rd53 = _memPages.rdisk5page3;
+	bool rd60 = _memPages.rdisk6page0;
+	bool rd61 = _memPages.rdisk6page1;
+	bool rd62 = _memPages.rdisk6page2;
+	bool rd63 = _memPages.rdisk6page3;
+	bool rd70 = _memPages.rdisk7page0;
+	bool rd71 = _memPages.rdisk7page1;
+	bool rd72 = _memPages.rdisk7page2;
+	bool rd73 = _memPages.rdisk7page3;
+
+	DrawProperty2EditableCheckBox("Ram", "##BPContextAccessRam", &ram, "To check the main ram");
+	DrawProperty2EditableCheckBox4("Ram Disk 1", "##BPCARD0P0", "##BPCARD0P1", "##BPCARD0P2", "##BPCARD0P3", &rd00, &rd01, &rd02, &rd03, "To check the Ram-Disk1 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 2", "##BPCARD1P0", "##BPCARD1P1", "##BPCARD1P2", "##BPCARD1P3", &rd10, &rd11, &rd12, &rd13, "To check the Ram-Disk2 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 3", "##BPCARD2P0", "##BPCARD2P1", "##BPCARD2P2", "##BPCARD2P3", &rd20, &rd21, &rd22, &rd23, "To check the Ram-Disk3 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 4", "##BPCARD3P0", "##BPCARD3P1", "##BPCARD3P2", "##BPCARD3P3", &rd30, &rd31, &rd32, &rd33, "To check the Ram-Disk4 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 5", "##BPCARD4P0", "##BPCARD4P1", "##BPCARD4P2", "##BPCARD4P3", &rd40, &rd41, &rd42, &rd43, "To check the Ram-Disk5 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 6", "##BPCARD5P0", "##BPCARD5P1", "##BPCARD5P2", "##BPCARD5P3", &rd50, &rd51, &rd52, &rd53, "To check the Ram-Disk6 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 7", "##BPCARD6P0", "##BPCARD6P1", "##BPCARD6P2", "##BPCARD6P3", &rd60, &rd61, &rd62, &rd63, "To check the Ram-Disk7 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 8", "##BPCARD7P0", "##BPCARD7P1", "##BPCARD7P2", "##BPCARD7P3", &rd70, &rd71, &rd72, &rd73, "To check the Ram-Disk8 pages 0,1,2,3");
+
+	_memPages.ram = ram;
+	_memPages.rdisk0page0 = rd00;
+	_memPages.rdisk0page1 = rd01;
+	_memPages.rdisk0page2 = rd02;
+	_memPages.rdisk0page3 = rd03;
+	_memPages.rdisk1page0 = rd10;
+	_memPages.rdisk1page1 = rd11;
+	_memPages.rdisk1page2 = rd12;
+	_memPages.rdisk1page3 = rd13;
+	_memPages.rdisk2page0 = rd20;
+	_memPages.rdisk2page1 = rd21;
+	_memPages.rdisk2page2 = rd22;
+	_memPages.rdisk2page3 = rd23;
+	_memPages.rdisk3page0 = rd30;
+	_memPages.rdisk3page1 = rd31;
+	_memPages.rdisk3page2 = rd32;
+	_memPages.rdisk3page3 = rd33;
+	_memPages.rdisk4page0 = rd40;
+	_memPages.rdisk4page1 = rd41;
+	_memPages.rdisk4page2 = rd42;
+	_memPages.rdisk4page3 = rd43;
+	_memPages.rdisk5page0 = rd50;
+	_memPages.rdisk5page1 = rd51;
+	_memPages.rdisk5page2 = rd52;
+	_memPages.rdisk5page3 = rd53;
+	_memPages.rdisk6page0 = rd60;
+	_memPages.rdisk6page1 = rd61;
+	_memPages.rdisk6page2 = rd62;
+	_memPages.rdisk6page3 = rd63;
+	_memPages.rdisk7page0 = rd70;
+	_memPages.rdisk7page1 = rd71;
+	_memPages.rdisk7page2 = rd72;
+	_memPages.rdisk7page3 = rd73;
+
+	return _memPages;
+}
+
 auto dev::DrawAddr(const bool _isRunning,
-	const char* _operandS, const ImVec4& _color, 
+	const char* _operandS, const ImVec4& _color,
 	const ImVec4& _highlightColor, bool _forceHighlight)
 -> UIItemMouseAction
 {
@@ -435,7 +540,7 @@ auto dev::DrawAddr(const bool _isRunning,
 		textSize = ImGui::CalcTextSize(_operandS);
 
 		if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
-		{	
+		{
 			mouseAction = UIItemMouseAction::HOVERED;
 			_forceHighlight = true;
 
@@ -457,20 +562,20 @@ auto dev::DrawAddr(const bool _isRunning,
 	return mouseAction;
 }
 
-// draws a tooltip during the time = _timer 
+// draws a tooltip during the time = _timer
 // _timer > 0.0f sets the timer, _timer == 0.0 evaluates the timer
 void dev::DrawTooltipTimer(const char* _text, const float _timer)
 {
 	static double timer = 0.0f;
 	static char tooltip[256] = "";
-	
+
 	if (_text && _timer > 0.0f) {
 		timer = _timer;
 #if defined(_WIN32)
 		strcpy_s(tooltip, 256, _text);
 #else
 		strcpy(tooltip, _text);
-#endif		
+#endif
 		return;
 	}
 
@@ -562,7 +667,7 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 		const char* operand = _line.GetFirstConst();
 		const ImVec4* color = &DASM_CLR_CONST;
 
-		if (immType == CMD_IW_OFF1 && _line.labels) 
+		if (immType == CMD_IW_OFF1 && _line.labels)
 		{
 				operand = _line.GetFirstLabel();
 				color = operand[0] == '@' ? &DASM_CLR_LABEL_LOCAL_IMM  : &DASM_CLR_LABEL_GLOBAL_IMM;
@@ -572,7 +677,7 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 		color = operand ? color : &DASM_CLR_NUMBER;
 		operand = operand ? operand : _line.GetImmediateS();
 		uiItemMouseAction = DrawAddr(_isRunning, operand, *color, DASM_CLR_NUMBER_HIGHLIGHT, 0);
-		
+
 		if (immLabel && uiItemMouseAction != UIItemMouseAction::NONE) {
 			ImGui::BeginTooltip();
 			ImGui::Text("Address: 0x%04X\n", _line.imm);
@@ -606,7 +711,7 @@ void dev::DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels
 	}
 }
 
-auto dev::DrawTransparentButtonWithBorder(const char* _label, const ImVec2& _pos, const ImVec2& _size, const char* _hint) 
+auto dev::DrawTransparentButtonWithBorder(const char* _label, const ImVec2& _pos, const ImVec2& _size, const char* _hint)
 -> const ButtonAction
 {
 	ButtonAction out = ButtonAction::NONE;
@@ -647,6 +752,635 @@ auto dev::DrawTransparentButtonWithBorder(const char* _label, const ImVec2& _pos
 			ImGui::EndTooltip();
 		}
 	}
-	
+
 	return out;
+}
+
+static ImVec2 buttonSize = { 65.0f, 25.0f };
+
+void dev::DrawEditMemEditWindow(Hardware& _hardware, const DebugData& _debugData, ReqUI& _reqUI)
+{
+	static const char* popupWindowName = "Memory Edit";
+	static DebugData::MemoryEdit edit;
+	static int globalAddr = 0;
+	static int value = 0;
+	static bool enterPressed = false;
+	static bool setFocus = false;
+
+	// init a window
+	switch (_reqUI.type)
+	{
+	case ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_ADD:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		globalAddr = _reqUI.globalAddr;
+		value = 0;
+		edit.Erase();
+		setFocus = true;
+		break;
+
+	case ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_EDIT:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		globalAddr = _reqUI.globalAddr;
+		auto currentEdit = _debugData.GetMemoryEdit(_reqUI.globalAddr);
+		edit = *currentEdit;
+		value = edit.value;
+		setFocus = true;
+		break;
+	}
+
+	// draw a window
+	ImVec2 winPos = ImGui::GetMousePos();
+	ImGui::SetNextWindowPos(winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(popupWindowName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
+		{
+			ImGui::TableSetupColumn("##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150);
+			ImGui::TableSetupColumn("##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 200);
+
+			// Comment
+			bool delPressed = false;
+			DrawProperty2EditableS("Comment", "##ContextComment", &edit.comment, "comment", "empty string means delete the comment", 0, &delPressed);
+
+			// Global Addr
+			if (setFocus) { ImGui::SetKeyboardFocusHere(); setFocus = false; }
+			DrawProperty2EditableI("Global Address", "##EMContextAddress", &globalAddr,
+				"A hexademical address in the format FF", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+			enterPressed |= ImGui::IsKeyPressed(ImGuiKey_Enter);
+
+			// Value
+			DrawProperty2EditableI("Value", "##ContextValue", &value,
+				"A byte value in a hexademical format FF", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+			enterPressed |= ImGui::IsKeyPressed(ImGuiKey_Enter);
+
+			// readonly
+			DrawProperty2EditableCheckBox("Read-Only", "##ContextReadOnly", &edit.readonly, "When true, the hardware cannot override this value. Otherwise, the hardware can change the stored value.");
+
+			// Active
+			DrawProperty2EditableCheckBox("Active", "##ContextActive", &edit.active, "When true, the memory is edited.");
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// Warnings
+			const char* warning = nullptr;
+
+			if (globalAddr >= Memory::MEMORY_GLOBAL_LEN) {
+				warning = "Too large address";
+			}
+			else if (globalAddr < 0) {
+				warning = "Too low address";
+			}
+			else if (value > 0xFF) {
+				warning = "Too large value";
+			}
+			else if (value < 0) {
+				warning = "Too low value";
+			}
+
+			if (warning) {
+				ImGui::TextColored(DASM_CLR_WARNING, warning);
+			}
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// OK button
+			if (warning) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize) || enterPressed)
+			{
+				auto oldAddr = edit.globalAddr;
+				edit.globalAddr = globalAddr;
+				edit.value = value;
+
+				if (globalAddr != oldAddr) _hardware.Request(Hardware::Req::DEBUG_MEMORY_EDIT_DEL, { {"addr", oldAddr} });
+				_hardware.Request(Hardware::Req::DEBUG_MEMORY_EDIT_ADD, edit.ToJson());
+
+				// inject memory edits
+				if (edit.active) _hardware.Request(Hardware::Req::SET_BYTE_GLOBAL, { {"addr", edit.globalAddr}, {"data", edit.value} });
+
+				_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+				_reqUI.globalAddr = globalAddr;
+				ImGui::CloseCurrentPopup();
+			}
+			if (warning) ImGui::EndDisabled();
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			// ESC pressed
+			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+		ImGui::EndPopup();
+	}
+}
+
+void dev::DrawEditCommentWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI)
+{
+	static const char* popupWindowName = "Comment Edit";
+	static int addr = 0;
+	static int oldAddr = 0;
+	static bool enterPressed = false;
+	static std::string comment = "";
+	static bool setFocus = false;
+
+	// init a window
+	switch (_reqUI.type)
+	{
+	case ReqUI::Type::COMMENT_EDIT_WINDOW_ADD:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		addr = _reqUI.globalAddr;
+		oldAddr = addr;
+		comment = "";
+		setFocus = true;
+		break;
+
+	case ReqUI::Type::COMMENT_EDIT_WINDOW_EDIT:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		addr = _reqUI.globalAddr;
+		oldAddr = addr;
+		auto commentP = _debugData.GetComment(_reqUI.globalAddr);
+		comment = commentP ? *commentP : "";
+		setFocus = true;
+		break;
+	}
+
+	// draw a window
+	ImVec2 winPos = ImGui::GetMousePos();
+	ImGui::SetNextWindowPos(winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(popupWindowName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
+		{
+			ImGui::TableSetupColumn("##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150);
+			ImGui::TableSetupColumn("##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 200);
+
+			// Comment
+			bool delPressed = false;
+			DrawProperty2EditableS("Comment", "##ContextComment", &comment, "comment", "empty string means delete the comment", 0, &delPressed);
+
+			// Global Addr
+			if (setFocus) { ImGui::SetKeyboardFocusHere(); setFocus = false; }
+			DrawProperty2EditableI("Global Address", "##EMContextAddress", &addr,
+				"A hexademical address in the format FF", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+			enterPressed |= ImGui::IsKeyPressed(ImGuiKey_Enter);
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// Warnings
+			const char* warning = nullptr;
+
+			if (addr >= Memory::MEMORY_MAIN_LEN) {
+				warning = "Too large address";
+			}
+			else if (addr < 0) {
+				warning = "Too low address";
+			}
+
+			if (warning) {
+				ImGui::TextColored(DASM_CLR_WARNING, warning);
+			}
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// OK button
+			if (warning) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize) || enterPressed)
+			{
+				// empty string means a req to delete the entity
+				if (comment.empty() || addr != oldAddr)
+				{
+					_debugData.DelComment(oldAddr);
+				}
+				if (!comment.empty()) _debugData.SetComment(addr, comment);
+
+				_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+				ImGui::CloseCurrentPopup();
+			}
+			if (warning) ImGui::EndDisabled();
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			// ESC pressed
+			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+		ImGui::EndPopup();
+	}
+}
+
+void DeleteByIndex(dev::Disasm::LabelList& _labels, int& _idx)
+{
+	// delete by index or clear if only one
+	if (_labels.size() > 1) {
+		_labels.erase(_labels.begin() + _idx);
+	} else {
+		_labels[_idx].clear();
+	}
+
+	_idx = 0;
+}
+
+void dev::DrawEditConstWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI)
+{
+	static const char* popupWindowName = "Const Edit";
+	static int addr = 0;
+	static int oldAddr = 0;
+	static bool enterPressed = false;
+	static DebugData::LabelList labels;
+	static bool setFocus = false;
+	static int selectedItemIdx = 0;
+	static bool editLabel = false;
+
+	// init a window
+	switch (_reqUI.type)
+	{
+	case ReqUI::Type::CONST_EDIT_WINDOW_ADD:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		addr = _reqUI.globalAddr;
+		oldAddr = addr;
+		labels.clear();
+		labels.push_back("");
+		setFocus = true;
+		selectedItemIdx = 0;
+		editLabel = false;
+		break;
+
+	case ReqUI::Type::CONST_EDIT_WINDOW_EDIT:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		addr = _reqUI.globalAddr;
+		oldAddr = addr;
+		auto labelsP = _debugData.GetConsts(_reqUI.globalAddr);
+		if (labelsP) labels = *labelsP;
+		setFocus = true;
+		selectedItemIdx = 0;
+		editLabel = true;
+		break;
+	}
+
+	// draw a window
+	ImVec2 winPos = ImGui::GetMousePos();
+	ImGui::SetNextWindowPos(winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(popupWindowName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
+		{
+			ImGui::TableSetupColumn("##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150);
+			ImGui::TableSetupColumn("##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 200);
+
+			// Comment
+			bool delPressed = false;
+			if (DrawProperty2EditableS("Name", "##ContextComment", &(labels[selectedItemIdx]), "name", "empty string means delete the const", ImGuiInputTextFlags_CharsUppercase, &delPressed))
+			{
+				// replace spaces with '_' in the name
+				std::replace(labels[selectedItemIdx].begin(), labels[selectedItemIdx].end(), ' ', '_');
+			}
+			if (delPressed)
+			{
+				DeleteByIndex(labels, selectedItemIdx);
+			}
+
+			// Global Addr
+			if (setFocus) { ImGui::SetKeyboardFocusHere(); setFocus = false; }
+			DrawProperty2EditableI("Global Address", "##EMContextAddress", &addr,
+				"A hexademical address in the format FF", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+			enterPressed |= ImGui::IsKeyPressed(ImGuiKey_Enter);
+
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::SeparatorText("");
+			ImGui::TableNextColumn();
+			ImGui::SeparatorText("");
+
+			// list all labels
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			if (labels.size() > 1)
+			{
+				if (ImGui::BeginListBox("##LListBox"))
+				{
+					for (int labelIdx = 0; labelIdx < labels.size(); labelIdx++)
+					{
+						auto& label = labels[labelIdx];
+
+						if (label.empty()) continue;
+
+						const bool is_selected = (selectedItemIdx == labelIdx);
+						if (ImGui::Selectable(std::format("{}##{}", label, labelIdx).c_str(), is_selected))
+						{
+							selectedItemIdx = labelIdx;
+						}
+
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if (is_selected) {
+							ImGui::SetItemDefaultFocus();
+						}
+
+					}
+					ImGui::EndListBox();
+				}
+				ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
+				dev::DrawHelpMarker("This list contains all labels with the same value.\n"
+					"Specify which label fits this context best.");
+				ImGui::SeparatorText("");
+			}
+
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// Warnings
+			const char* warning = nullptr;
+
+			if (addr >= Memory::MEMORY_MAIN_LEN) {
+				warning = "Too large address";
+			}
+			else if (addr < 0) {
+				warning = "Too low address";
+			}
+
+			if (warning) {
+				ImGui::TextColored(DASM_CLR_WARNING, warning);
+			}
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// OK button
+			if (warning) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize) || enterPressed)
+			{
+				// remove empty labels
+				labels.erase(std::remove_if(labels.begin(), labels.end(),
+					[](const std::string& label) { return label.empty(); }), labels.end());
+
+				// empty list of strings means a req to delete the entity
+				if (editLabel && (labels.empty() || addr != oldAddr))
+				{
+					_debugData.DelConsts(oldAddr);
+				}
+
+				// merge edited labels with existing labels
+				if (!editLabel || addr != oldAddr)
+				{
+					auto labelsP = _debugData.GetConsts(addr);
+					if (labelsP) {
+						for (auto& label : *labelsP) {
+							if (std::find(labels.begin(), labels.end(), label) == labels.end()) {
+								labels.push_back(label);
+							}
+						}
+					}
+				}
+
+				// store labels
+				if (!labels.empty()) _debugData.SetConsts(addr, labels);
+
+				_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+				ImGui::CloseCurrentPopup();
+			}
+			if (warning) ImGui::EndDisabled();
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			// ESC pressed
+			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+		ImGui::EndPopup();
+	}
+}
+
+void dev::DrawEditLabelWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI)
+{
+	static const char* popupWindowName = "Label Edit";
+	static int addr = 0;
+	static int oldAddr = 0;
+	static bool enterPressed = false;
+	static DebugData::LabelList labels;
+	static bool setFocus = false;
+	static int selectedItemIdx = 0;
+	static bool editLabel = false;
+
+	// init a window
+	switch (_reqUI.type)
+	{
+	case ReqUI::Type::LABEL_EDIT_WINDOW_ADD:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		addr = _reqUI.globalAddr;
+		oldAddr = addr;
+		labels.clear();
+		labels.push_back("");
+		setFocus = true;
+		selectedItemIdx = 0;
+		editLabel = false;
+		break;
+
+	case ReqUI::Type::LABEL_EDIT_WINDOW_EDIT:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		addr = _reqUI.globalAddr;
+		oldAddr = addr;
+		auto labelsP = _debugData.GetLabels(_reqUI.globalAddr);
+		if (labelsP) labels = *labelsP;
+		setFocus = true;
+		selectedItemIdx = 0;
+		editLabel = true;
+		break;
+	}
+
+	// draw a window
+	ImVec2 winPos = ImGui::GetMousePos();
+	ImGui::SetNextWindowPos(winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(popupWindowName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
+		{
+			ImGui::TableSetupColumn("##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150);
+			ImGui::TableSetupColumn("##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 200);
+
+			// Comment
+			bool delPressed = false;
+			if (DrawProperty2EditableS("Name", "##ContextComment", &(labels[selectedItemIdx]), "name", "empty string means delete the label", 0, &delPressed))
+			{
+				// replace spaces with '_' in the name
+				std::replace(labels[selectedItemIdx].begin(), labels[selectedItemIdx].end(), ' ', '_');
+			}
+			if (delPressed)
+			{
+				DeleteByIndex(labels, selectedItemIdx);
+			}
+
+			// Global Addr
+			if (setFocus) { ImGui::SetKeyboardFocusHere(); setFocus = false; }
+			DrawProperty2EditableI("Global Address", "##EMContextAddress", &addr,
+				"A hexademical address in the format FF", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+			enterPressed |= ImGui::IsKeyPressed(ImGuiKey_Enter);
+
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::SeparatorText("");
+			ImGui::TableNextColumn();
+			ImGui::SeparatorText("");
+
+			// list all labels
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			if (labels.size() > 1)
+			{
+				if (ImGui::BeginListBox("##LListBox"))
+				{
+					for (int labelIdx = 0; labelIdx < labels.size(); labelIdx++)
+					{
+						auto& label = labels[labelIdx];
+
+						if (label.empty()) continue;
+
+						const bool is_selected = (selectedItemIdx == labelIdx);
+						if (ImGui::Selectable(std::format("{}##{}", label, labelIdx).c_str(), is_selected))
+						{
+							selectedItemIdx = labelIdx;
+						}
+
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if (is_selected) {
+							ImGui::SetItemDefaultFocus();
+						}
+
+					}
+					ImGui::EndListBox();
+				}
+				ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
+				dev::DrawHelpMarker("This list contains all labels with the same value.\n"
+					"Specify which label fits this context best.");
+				ImGui::SeparatorText("");
+			}
+
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// Warnings
+			const char* warning = nullptr;
+
+			if (addr >= Memory::MEMORY_MAIN_LEN) {
+				warning = "Too large address";
+			}
+			else if (addr < 0) {
+				warning = "Too low address";
+			}
+
+			if (warning) {
+				ImGui::TextColored(DASM_CLR_WARNING, warning);
+			}
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// OK button
+			if (warning) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize) || enterPressed)
+			{
+				// remove empty labels
+				labels.erase(std::remove_if(labels.begin(), labels.end(),
+					[](const std::string& label) { return label.empty(); }), labels.end());
+
+				// empty list of strings means a req to delete the entity
+				if (editLabel && (labels.empty() || addr != oldAddr))
+				{
+					_debugData.DelLabels(oldAddr);
+				}
+
+				// merge edited labels with existing labels
+				if (!editLabel || addr != oldAddr)
+				{
+					auto labelsP = _debugData.GetLabels(addr);
+					if (labelsP) {
+						for (auto& label : *labelsP) {
+							if (std::find(labels.begin(), labels.end(), label) == labels.end()) {
+								labels.push_back(label);
+							}
+						}
+					}
+				}
+
+				// store labels
+				if (!labels.empty()) _debugData.SetLabels(addr, labels);
+
+				_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+				ImGui::CloseCurrentPopup();
+			}
+			if (warning) ImGui::EndDisabled();
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			// ESC pressed
+			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+		ImGui::EndPopup();
+	}
 }

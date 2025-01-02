@@ -178,6 +178,13 @@ void dev::DevectorApp::Update()
 	m_searchWindowP->Update(m_searchWindowVisible, isRunning);
 	m_debugdataWindowP->Update(m_debugdataWindowVisible, isRunning);
 
+	// context menues to edit the debug data
+	DrawEditLabelWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
+	DrawEditConstWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
+	DrawEditCommentWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
+	DrawEditMemEditWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
+
+
 	if (m_status == AppStatus::REQ_PREPARE_FOR_EXIT)
 	{
 		m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::SAVE_THEN_EXIT);

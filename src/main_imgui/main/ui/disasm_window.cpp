@@ -2,7 +2,7 @@
 
 #include "ui/disasm_window.h"
 #include "utils/str_utils.h"
-
+#include "imgui_stdlib.h"
 
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
@@ -26,7 +26,6 @@ void dev::DisasmWindow::Update(bool& _visible, const bool _isRunning)
 	{
 		DrawDebugControls(_isRunning);
 		DrawSearch(_isRunning);
-
 
 		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the bpStatus in DrawDebugControls
 		UpdateData(isRunning);
@@ -198,7 +197,7 @@ void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line
 		_reqUI.globalAddr = _line.addr;
 		break;
 	case UIItemMouseAction::RIGHT:
-		_contextMenu.Init(_line.addr, _line.GetAddrS());
+		_contextMenu.Init(_line.addr, _line.GetAddrS(), m_debugger.GetDebugData());
 		break;
 	}
 }
@@ -218,7 +217,7 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line
 		_reqUI.globalAddr = _line.imm;
 		break;
 	case UIItemMouseAction::RIGHT: // init the immediate value as an addr to let the context menu copy it
-		_contextMenu.Init(_line.imm, _line.GetImmediateS(), true);
+		_contextMenu.Init(_line.imm, _line.GetImmediateS(), m_debugger.GetDebugData(), true);
 		break;
 	}
 
@@ -365,10 +364,10 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			if (!_isRunning)
 			{
 				// line is hovered. check if right-clicked to open the Context menu
-				if (hoveredLineIdx == lineIdx && m_contextMenu.status == ContextMenu::Status::NONE &&
+				if (hoveredLineIdx == lineIdx &&
 					ImGui::IsMouseClicked(ImGuiMouseButton_Right)) 
 				{
-					m_contextMenu.Init(addr, line.GetStr());
+					m_contextMenu.Init(addr, line.GetStr(), m_debugger.GetDebugData());
 				}
 			}
 		}
@@ -377,9 +376,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	}
 
 	DrawContextMenu(regPC, m_contextMenu);
-	DrawCommentEdit(m_contextMenu);
-	DrawLabelEdit(m_contextMenu);
-	DrawConstEdit(m_contextMenu);
+
 	ImGui::PopStyleVar(2);
 
 	/////////////////////////////////////////////////////////	
@@ -499,15 +496,11 @@ void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOf
 
 void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu)
 {
-	if (_contextMenu.status == ContextMenu::Status::INIT_CONTEXT_MENU) {
-		ImGui::OpenPopup(_contextMenu.contextMenuName);
-		_contextMenu.status = ContextMenu::Status::NONE;
-	}
-
-	if (ImGui::BeginPopup(_contextMenu.contextMenuName))
+	// draw a context menu
+	if (_contextMenu.BeginPopup())
 	{
 		if (ImGui::MenuItem("Copy")) {
-				dev::CopyToClipboard(_contextMenu.str);
+			dev::CopyToClipboard(_contextMenu.str);
 		}
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Show Current Break")) {
@@ -544,383 +537,41 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 			else {
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", m_contextMenu.addr} });
 			}
-			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
+			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		}
 		if (ImGui::MenuItem("Remove All Beakpoints")) {
 			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL_ALL);
-			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
+			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		};
 
 		ImGui::SeparatorText("");
 		
 		if (ImGui::MenuItem("Add/Edit Label")) {
-			_contextMenu.status = ContextMenu::Status::INIT_LABEL_EDIT;
+			m_reqUI.type = _contextMenu.labelExists ? ReqUI::Type::LABEL_EDIT_WINDOW_EDIT : ReqUI::Type::LABEL_EDIT_WINDOW_ADD;
+			m_reqUI.globalAddr = _contextMenu.addr;
 		};		
 
 		if (_contextMenu.immHovered && ImGui::MenuItem("Add/Edit Const")) {
-			_contextMenu.status = ContextMenu::Status::INIT_CONST_EDIT;
+			m_reqUI.type = _contextMenu.constExists ? ReqUI::Type::CONST_EDIT_WINDOW_EDIT : ReqUI::Type::CONST_EDIT_WINDOW_ADD;
+			m_reqUI.globalAddr = _contextMenu.addr;
 		};
 
 		if (ImGui::MenuItem("Add/Edit Comment")) {
-			_contextMenu.status = ContextMenu::Status::INIT_COMMENT_EDIT;
-		};		
-		ImGui::EndPopup();
-	}
-}
-
-void dev::DisasmWindow::DrawCommentEdit(ContextMenu& _contextMenu)
-{
-	static ImVec2 buttonSize = { 65.0f, 25.0f };
-	static ImVec2 buttonSizeX = { 45.0f, 25.0f };
-	static char comment[255] = "";
-	bool enterPressed = false;
-	bool selectText = false;
-
-	if (_contextMenu.status == ContextMenu::Status::INIT_COMMENT_EDIT)
-	{
-		ImGui::OpenPopup(_contextMenu.commentEditName);
-		_contextMenu.status = ContextMenu::Status::NONE;
-		auto currentComment = m_debugger.GetDebugData().GetComment(_contextMenu.addr);
-		if (currentComment) {
-			snprintf(comment, sizeof(comment), currentComment->c_str());
-		}
-		else {
-			comment[0] = '\0';
-		}
-		selectText = true;
-	}
-
-	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window
-	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal(_contextMenu.commentEditName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		// edit comment
-		if (selectText) ImGui::SetKeyboardFocusHere();
-		if (ImGui::InputTextWithHint("##comment", "", comment, IM_ARRAYSIZE(comment), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
-			enterPressed = true;
-		}
-		
-		// Delete button
-		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
-		if (ImGui::Button("X", buttonSizeX))
-		{
-			comment[0] = '\0';
-		}
-
-		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
-		dev::DrawHelpMarker("A semicolon is not required.");
+			m_reqUI.type = _contextMenu.commentExists ? ReqUI::Type::COMMENT_EDIT_WINDOW_EDIT : ReqUI::Type::COMMENT_EDIT_WINDOW_ADD;
+			m_reqUI.globalAddr = _contextMenu.addr;
+		};
 
 		ImGui::SeparatorText("");
 
-		// property table
-		static ImGuiTableFlags flags =
-			ImGuiTableFlags_SizingStretchSame |
-			ImGuiTableFlags_ContextMenuInBody;
-
-		if (ImGui::BeginTable("##CETable", 2, flags))
-		{
-			ImGui::TableSetupColumn("##CEContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
-			ImGui::TableSetupColumn("##CEContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 200);		
-
-			// warnings
-			std::string warningS = "";
-
-			// OK/CANCEL/... butons
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::TableNextColumn();
-			// OK button
-			if (!warningS.empty()) ImGui::BeginDisabled();
-			if (ImGui::Button("Ok", buttonSize) || enterPressed)
-			{
-				if (comment[0]){ // non-empty string
-					m_debugger.GetDebugData().SetComment(_contextMenu.addr, comment);
-				}
-				else {
-					m_debugger.GetDebugData().DelComment(_contextMenu.addr);
-				}
-
-				m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
-				ImGui::CloseCurrentPopup();
-			}
-			if (!warningS.empty()) ImGui::EndDisabled();
-
-			// Cancel button
-			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
-			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
-
-			// ESC pressed
-			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
-
-			ImGui::EndTable();
+		if (ImGui::MenuItem("Edit Memory")) {
+			m_reqUI.type = _contextMenu.editMemoryExists ? ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_EDIT : ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_ADD;
+			m_reqUI.globalAddr = _contextMenu.addr;
 		}
 
-		ImGui::EndPopup();
-	}
-}
-
-void DeleteByIndex(dev::Disasm::LabelList& _labels, char* _label, int& _idx)
-{
-	if (_labels.size() > 1) {
-		_labels.erase(_labels.begin() + _idx);
-	}
-	else {
-		_labels[_idx].clear();
-	}
-	_idx = 0;
-	snprintf(_label, sizeof(_label), _labels.at(_idx).c_str());
-}
-
-void dev::DisasmWindow::DrawConstEdit(ContextMenu& _contextMenu)
-{
-	static ImVec2 buttonSize = { 65.0f, 25.0f };
-	static ImVec2 buttonSizeX = { 45.0f, 25.0f };
-	static char const_[255] = "";
-	static int editedConstIdx = 0;
-	bool enterPressed = false;
-	bool selectText = false;
-	auto constsP = m_debugger.GetDebugData().GetConsts(_contextMenu.addr);
-	static Disasm::LabelList consts;
-
-	if (_contextMenu.status == ContextMenu::Status::INIT_CONST_EDIT)
-	{
-		ImGui::OpenPopup(_contextMenu.constEditName);
-		_contextMenu.status = ContextMenu::Status::NONE;
-		selectText = true;
-		editedConstIdx = 0;
-		consts.clear();
-
-		if (constsP) {
-			snprintf(const_, sizeof(const_), constsP->at(editedConstIdx).c_str());
-			for (const auto& str : *constsP) {
-				consts.push_back(str);
-			}
+		if (_contextMenu.editMemoryExists && ImGui::MenuItem("Cancel Edit Memory at This Addr")) {
+			m_hardware.Request(Hardware::Req::DEBUG_MEMORY_EDIT_DEL, { {"addr", _contextMenu.addr} });
+			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		}
-		else {
-			const_[0] = '\0';
-			consts.push_back("");
-		}
-	}
-
-	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window
-	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal(_contextMenu.constEditName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		// edit comment
-		if (selectText) ImGui::SetKeyboardFocusHere();
-		if (ImGui::InputTextWithHint("##const", "", const_, IM_ARRAYSIZE(const_), 
-			ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsUppercase)) {
-			enterPressed = true;
-		}
-		consts[editedConstIdx] = const_;
-
-		// Delete button
-		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
-		if (ImGui::Button("X", buttonSizeX))
-		{
-			DeleteByIndex(consts, const_, editedConstIdx);
-		}
-		ImGui::SeparatorText("");
-
-		// list all consts
-		if (constsP)
-		{
-			if (ImGui::BeginListBox("##CListBox"))
-			{
-				auto constsNum = consts.size();
-				for (int constIdx = 0; constIdx < constsNum; constIdx++)
-				{
-					auto& str = consts.at(constIdx);
-					const bool is_selected = (editedConstIdx == constIdx);
-					if (ImGui::Selectable(std::format("{}##{}", str, constIdx).c_str(), is_selected))
-					{
-						consts[editedConstIdx] = const_;
-						editedConstIdx = constIdx;
-						snprintf(const_, sizeof(const_), consts.at(editedConstIdx).c_str());
-
-					}
-
-					if (is_selected) {// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndListBox();
-			}
-			ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
-			dev::DrawHelpMarker("This list contains all consts with the same value.\n"
-				"Specify which const fits this context best.");
-			ImGui::SeparatorText("");
-		}
-
-		// property table
-		static ImGuiTableFlags flags =
-			ImGuiTableFlags_SizingStretchSame |
-			ImGuiTableFlags_ContextMenuInBody;
-
-		if (ImGui::BeginTable("##CETable", 2, flags))
-		{
-			ImGui::TableSetupColumn("##CEContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
-			ImGui::TableSetupColumn("##CEContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 200);
-
-			// warnings
-			std::string warningS = "";
-
-			// OK/CANCEL/... butons
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::TableNextColumn();
-			// OK button
-			if (!warningS.empty()) ImGui::BeginDisabled();
-			if (ImGui::Button("Ok", buttonSize) || enterPressed)
-			{
-				// remove empty consts
-				consts.erase(std::remove_if(consts.begin(), consts.end(),
-					[](const std::string& _const) { return _const.empty(); }), consts.end());
-				// store consts
-				m_debugger.GetDebugData().SetConsts(_contextMenu.addr, consts);
-				m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
-				ImGui::CloseCurrentPopup();
-			}
-			if (!warningS.empty()) ImGui::EndDisabled();
-
-			// Cancel button
-			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
-			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
-
-			// ESC pressed
-			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
-
-			ImGui::EndTable();
-		}
-
-		ImGui::EndPopup();
-	}
-}
-
-void dev::DisasmWindow::DrawLabelEdit(ContextMenu& _contextMenu)
-{
-	static ImVec2 buttonSize = { 65.0f, 25.0f };
-	static ImVec2 buttonSizeX = { 45.0f, 25.0f };
-	static char label[255] = "";
-	static int editedLabelIdx = 0;
-	bool enterPressed = false;
-	bool selectText = false;
-	auto labelsP = m_debugger.GetDebugData().GetLabels(_contextMenu.addr);
-	static Disasm::LabelList labels;
-
-	if (_contextMenu.status == ContextMenu::Status::INIT_LABEL_EDIT)
-	{
-		ImGui::OpenPopup(_contextMenu.labelEditName);
-		_contextMenu.status = ContextMenu::Status::NONE;
-		selectText = true;
-		editedLabelIdx = 0;
-		labels.clear();
-
-		if (labelsP) {
-			snprintf(label, sizeof(label), labelsP->at(editedLabelIdx).c_str());
-			for (const auto& str : *labelsP) {
-				labels.push_back(str);
-			}
-		}
-		else {
-			label[0] = '\0';
-			labels.push_back("");
-		}
-	}
-
-	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window
-	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal(_contextMenu.labelEditName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		// edit comment
-		if (selectText) ImGui::SetKeyboardFocusHere();
-		if (ImGui::InputTextWithHint("##label", "", label, IM_ARRAYSIZE(label), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
-			enterPressed = true;
-		}
-		labels[editedLabelIdx] = label;
-
-		// Delete button
-		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
-		if (ImGui::Button("X", buttonSizeX))
-		{
-			DeleteByIndex(labels, label, editedLabelIdx);
-		}
-
-		ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
-		dev::DrawHelpMarker("A colon is not required.");
-		ImGui::SeparatorText("");
-
-		// list all labels
-		if (labelsP)
-		{	
-			if (ImGui::BeginListBox("##lListBox"))
-			{
-				auto labelsNum = labels.size();
-				for (int labelIdx = 0; labelIdx < labelsNum; labelIdx++)
-				{
-					auto& str = labels.at(labelIdx);
-					const bool is_selected = (editedLabelIdx == labelIdx);
-					if (ImGui::Selectable(std::format("{}##{}", str, labelIdx).c_str(), is_selected))
-					{
-						labels[editedLabelIdx] = label;
-						editedLabelIdx = labelIdx;
-						snprintf(label, sizeof(label), labels.at(editedLabelIdx).c_str());
-
-					}
-
-					if (is_selected) {// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndListBox();
-			}
-			ImGui::SameLine(); ImGui::Dummy(UI_LITTLE_SPACE); ImGui::SameLine();
-			dev::DrawHelpMarker("This list contains all labels for this address.\n"
-				"Specify which one fits this context best.");
-			ImGui::SeparatorText("");
-		}
-
-		// property table
-		static ImGuiTableFlags flags =
-			ImGuiTableFlags_SizingStretchSame |
-			ImGuiTableFlags_ContextMenuInBody;
-
-		if (ImGui::BeginTable("##CETable", 2, flags))
-		{
-			ImGui::TableSetupColumn("##CEContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
-			ImGui::TableSetupColumn("##CEContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 200);
-
-			// warnings
-			std::string warningS = "";
-
-			// OK/CANCEL/... butons
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::TableNextColumn();
-			// OK button
-			if (!warningS.empty()) ImGui::BeginDisabled();
-			if (ImGui::Button("Ok", buttonSize) || enterPressed)
-			{
-				// remove empty labels
-				labels.erase(std::remove_if(labels.begin(), labels.end(),
-					[](const std::string& label) { return label.empty(); }), labels.end()); 
-				// store labels
-				m_debugger.GetDebugData().SetLabels(_contextMenu.addr, labels);
-				m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
-				ImGui::CloseCurrentPopup();
-			}
-			if (!warningS.empty()) ImGui::EndDisabled();
-
-			// Cancel button
-			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
-			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
-
-			// ESC pressed
-			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
-
-			ImGui::EndTable();
-		}
-
 		ImGui::EndPopup();
 	}
 }

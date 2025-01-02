@@ -35,22 +35,36 @@ namespace dev
 		static constexpr ImU32 DIS_CLR_LINK_HIGHLIGHT = dev::IM_U32(0xD010FFFF);
 
 		struct ContextMenu {
-			enum class Status{ NONE = 0, INIT_CONTEXT_MENU, INIT_COMMENT_EDIT, INIT_LABEL_EDIT, INIT_CONST_EDIT };
-			Status status = Status::NONE;
+			bool openPopup = false;
 			Addr addr = 0;
 			std::string str;
 			bool immHovered = false; // the context menu was opened on the immediate operand
 			const char* contextMenuName = "DisasmItemMenu";
-			const char* commentEditName = "Edit Comment";
-			const char* labelEditName = "Edit Label";
-			const char* constEditName = "Edit Const";
+			bool labelExists = false;
+			bool constExists = false;
+			bool commentExists = false;
+			bool editMemoryExists = false;
 
-			void Init(Addr _addr, const std::string& _lineS, const bool _immHovered = false)
+			void Init(Addr _addr, const std::string& _lineS, const DebugData& _debugData, const bool _immHovered = false)
 			{
+				openPopup = true;
 				immHovered = _immHovered;
-				status = Status::INIT_CONTEXT_MENU;
 				addr = _addr;
 				str = _lineS;
+
+				labelExists = _debugData.GetLabels(addr);
+				constExists = _debugData.GetConsts(addr);
+				commentExists = _debugData.GetComment(addr);
+				editMemoryExists = _debugData.GetMemoryEdit(addr);
+			}
+
+			bool BeginPopup(){
+				if (openPopup) {
+					ImGui::OpenPopup(contextMenuName);
+					openPopup = false;
+				}
+
+				return ImGui::BeginPopup(contextMenuName);
 			}
 		};
 		ContextMenu m_contextMenu;
@@ -101,9 +115,6 @@ namespace dev
 		void DrawDisasmLabels(const Disasm::Line& _line);
 		void DrawDisasmStats(const Disasm::Line& _line);
 		void DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu);
-		void DrawCommentEdit(ContextMenu& _contextMenu);
-		void DrawLabelEdit(ContextMenu& _contextMenu);
-		void DrawConstEdit(ContextMenu& _contextMenu);
 		void DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 			const bool _selected);
 		void UpdateData(const bool _isRunning);

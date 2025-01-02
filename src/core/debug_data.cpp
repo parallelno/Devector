@@ -32,43 +32,12 @@ bool IsConstLabel(const char* _s)
 	return true; // All characters are capital letters or underscores
 }
 
-auto dev::DebugData::GetComment(const Addr _addr) const
--> const std::string*
-{
-	auto commentI = m_comments.find(_addr);
-	return commentI != m_comments.end() ? &commentI->second : nullptr;
-}
-
-void dev::DebugData::GetFilteredComments(SymbolAddrList& _out, const std::string& _filter) const
-{	
-	_out.clear();
-	for (const auto& [globalAddr, comment] : m_comments) 
-	{
-		if (comment.find(_filter) == std::string::npos) continue;
-
-		_out.push_back({ comment, globalAddr, std::format("0x{:06x}", globalAddr) });
-	}
-}
-
-void dev::DebugData::SetComment(const Addr _addr, const std::string& _comment)
-{
-	m_comments[_addr] = _comment;
-	m_commentsUpdates++;
-}
-
-void dev::DebugData::DelComment(const Addr _addr)
-{
-	auto commentI = m_comments.find(_addr);
-	m_comments.erase(commentI);
-	m_commentsUpdates++;
-}
-
 auto dev::DebugData::GetLabels(const Addr _addr) const -> const LabelList*
 {
 	auto labelsI = m_labels.find(_addr);
 	return labelsI != m_labels.end() ? &labelsI->second : nullptr;
 }
-void dev::DebugData::GetFilteredLabels(SymbolAddrList& _out, const std::string& _filter) const
+void dev::DebugData::GetFilteredLabels(FilteredElements& _out, const std::string& _filter) const
 {
 	_out.clear();
 	for (const auto& [globalAddr, labels] : m_labels) 
@@ -91,7 +60,7 @@ void dev::DebugData::SetLabels(const Addr _addr, const LabelList& _labels)
 {
 	if (_labels.empty()) {
 		auto labelsI = m_labels.find(_addr);
-		m_labels.erase(labelsI);
+		if (labelsI != m_labels.end()) m_labels.erase(labelsI);
 	}
 	else {
 		m_labels[_addr] = _labels;
@@ -115,9 +84,11 @@ void dev::DebugData::AddLabel(const Addr _addr, const std::string& _label)
 void dev::DebugData::DelLabel(const Addr _addr, const std::string& _label)
 {
 	auto labelsI = m_labels.find(_addr);
-	if (labelsI != m_labels.end()) {
+	if (labelsI != m_labels.end()) 
+	{
 		auto labelI = std::find(labelsI->second.begin(), labelsI->second.end(), _label);
-		if (labelI != labelsI->second.end()) {
+		if (labelI != labelsI->second.end()) 
+		{
 			labelsI->second.erase(labelI);
 			if (labelsI->second.empty()) {
 				m_labels.erase(labelsI);
@@ -127,12 +98,29 @@ void dev::DebugData::DelLabel(const Addr _addr, const std::string& _label)
 	}
 }
 
+void dev::DebugData::DelLabels(const Addr _addr)
+{
+	auto labelsI = m_labels.find(_addr);
+	if (labelsI == m_labels.end()) return;
+
+	m_labels.erase(labelsI);
+	m_labelsUpdates++;
+}
+
+void dev::DebugData::DelAllLabels()
+{
+	m_labels.clear();
+	m_labelsUpdates++;
+}
+
 void dev::DebugData::RenameLabel(const Addr _addr, const std::string& _oldLabel, const std::string& _newLabel)
 {
 	auto labelsI = m_labels.find(_addr);
-	if (labelsI != m_labels.end()) {
+	if (labelsI != m_labels.end()) 
+	{
 		auto labelI = std::find(labelsI->second.begin(), labelsI->second.end(), _oldLabel);
-		if (labelI != labelsI->second.end()) {
+		if (labelI != labelsI->second.end()) 
+		{
 			*labelI = _newLabel;
 			m_labelsUpdates++;
 		}
@@ -145,7 +133,7 @@ auto dev::DebugData::GetConsts(const Addr _addr) const -> const LabelList*
 	return constsI != m_consts.end() ? &constsI->second : nullptr;
 }
 
-void dev::DebugData::GetFilteredConsts(SymbolAddrList& _out, const std::string& _filter) const
+void dev::DebugData::GetFilteredConsts(FilteredElements& _out, const std::string& _filter) const
 {
 	_out.clear();
 	for (const auto& [globalAddr, consts] : m_consts) 
@@ -167,8 +155,9 @@ void dev::DebugData::GetFilteredConsts(SymbolAddrList& _out, const std::string& 
 void dev::DebugData::SetConsts(const Addr _addr, const LabelList& _consts)
 {
 	if (_consts.empty()) {
+		// del the consts at the addr if the list of consts is empty
 		auto constsI = m_consts.find(_addr);
-		m_consts.erase(constsI);
+		if (constsI != m_consts.end()) m_consts.erase(constsI);
 	}
 	else {
 		m_consts[_addr] = _consts;
@@ -194,7 +183,8 @@ void dev::DebugData::DelConst(const Addr _addr, const std::string& _const)
 	auto constsI = m_consts.find(_addr);
 	if (constsI != m_consts.end()) {
 		auto constI = std::find(constsI->second.begin(), constsI->second.end(), _const);
-		if (constI != constsI->second.end()) {
+		if (constI != constsI->second.end()) 
+		{
 			constsI->second.erase(constI);
 			if (constsI->second.empty()) {
 				m_consts.erase(constsI);
@@ -202,6 +192,21 @@ void dev::DebugData::DelConst(const Addr _addr, const std::string& _const)
 			m_constsUpdates++;
 		}
 	}
+}
+
+void dev::DebugData::DelConsts(const Addr _addr)
+{
+	auto constsI = m_consts.find(_addr);
+	if (constsI == m_consts.end()) return;
+
+	m_consts.erase(constsI);
+	m_constsUpdates++;
+}
+
+void dev::DebugData::DelAllConsts()
+{
+	m_consts.clear();
+	m_constsUpdates++;
 }
 
 void dev::DebugData::RenameConst(const Addr _addr, const std::string& _oldConst, const std::string& _newConst)
@@ -216,12 +221,89 @@ void dev::DebugData::RenameConst(const Addr _addr, const std::string& _oldConst,
 	}
 }
 
+
+auto dev::DebugData::GetComment(const Addr _addr) const
+-> const std::string*
+{
+	auto commentI = m_comments.find(_addr);
+	return commentI != m_comments.end() ? &commentI->second : nullptr;
+}
+
+void dev::DebugData::GetFilteredComments(FilteredElements& _out, const std::string& _filter) const
+{	
+	_out.clear();
+	for (const auto& [globalAddr, comment] : m_comments) 
+	{
+		if (comment.find(_filter) == std::string::npos) continue;
+
+		_out.push_back({ comment, globalAddr, std::format("0x{:06x}", globalAddr) });
+	}
+
+	// sort by addr	
+	std::sort(_out.begin(), _out.end(), [](const auto& lhs, const auto& rhs) {
+		return std::get<1>(lhs) < std::get<1>(rhs);
+	});
+}
+
+void dev::DebugData::SetComment(const Addr _addr, const std::string& _comment)
+{
+	m_comments[_addr] = _comment;
+	m_commentsUpdates++;
+}
+
+void dev::DebugData::DelComment(const Addr _addr)
+{
+	auto commentI = m_comments.find(_addr);
+	if (commentI == m_comments.end()) return;
+	m_comments.erase(commentI);
+	m_commentsUpdates++;
+}
+
+void dev::DebugData::DelAllComments()
+{
+	m_comments.clear();
+	m_commentsUpdates++;
+}
+
+auto dev::DebugData::GetMemoryEdit(const Addr _addr) const 
+-> const MemoryEdit*
+{
+	auto editsI = m_memoryEdits.find(_addr);
+	return editsI != m_memoryEdits.end() ? &editsI->second : nullptr;
+}
+
+void dev::DebugData::SetMemoryEdit(const MemoryEdit& _edit)
+{
+	m_memoryEdits[_edit.globalAddr] = _edit;
+	m_editsUpdates++;
+}
+
+void dev::DebugData::DelMemoryEdit(const Addr _addr)
+{
+	auto editI = m_memoryEdits.find(_addr);
+	if (editI == m_memoryEdits.end()) return;
+	m_memoryEdits.erase(editI);
+	m_editsUpdates++;
+}
+
+void dev::DebugData::DelAllMemoryEdits()
+{
+	m_memoryEdits.clear();
+	m_editsUpdates++;
+}
+
+void dev::DebugData::GetFilteredMemoryEdits(FilteredElements& _out, const std::string& _filter) const
+{
+	_out.clear();
+	for (const auto& [globalAddr, edit] : m_memoryEdits)
+	{
+		if (edit.comment.find(_filter) == std::string::npos) continue;
+		_out.push_back({ edit.comment, globalAddr, edit.AddrToStr() });
+	}
+}
+
 void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 {
-	m_constsUpdates++;
-	m_labelsUpdates++;
-	m_commentsUpdates++;
-
 	// check if the file exists
 	auto romDir = dev::GetDir(_romPath);
 	m_debugPath = romDir + L"\\" + dev::GetFilename(_romPath) + L".json";
@@ -232,6 +314,7 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 	auto debugDataJ = LoadJson(m_debugPath);
 
 	// add labels
+	m_labelsUpdates++;
 	m_labels.clear();
 	if (debugDataJ.contains("labels")) {
 		for (auto& [str, addrS] : debugDataJ["labels"].items())
@@ -241,6 +324,7 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 		}
 	}
 	// add consts
+	m_constsUpdates++;
 	m_consts.clear();
 	if (debugDataJ.contains("consts")) {
 		for (auto& [str, addrS] : debugDataJ["consts"].items())
@@ -250,6 +334,7 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 		}
 	}
 	// add comments
+	m_commentsUpdates++;
 	m_comments.clear();
 	if (debugDataJ.contains("comments")) {
 		for (auto& [addrS, str] : debugDataJ["comments"].items())
@@ -257,8 +342,21 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 			Addr addr = dev::StrHexToInt(addrS.c_str());
 			m_comments.emplace(addr, str);
 		}
-
 	}
+
+	// add memory edits
+	m_editsUpdates++;	
+	m_memoryEdits.clear();
+	if (debugDataJ.contains("memoryEdits")) {
+		for (auto& editJ : debugDataJ["memoryEdits"])
+		{
+			MemoryEdit edit{ editJ };
+			m_memoryEdits.emplace(edit.globalAddr, edit);
+			// inject memory edits
+			if (edit.active) m_hardware.Request(Hardware::Req::SET_BYTE_GLOBAL, { {"addr", edit.globalAddr}, {"data", edit.value} });
+		}
+	}
+
 	// add breakpoints
 	m_breakpoints.Clear();	
 	if (debugDataJ.contains("breakpoints")) {
@@ -323,6 +421,14 @@ void dev::DebugData::SaveDebugData()
 		debugComments[std::format("0x{:04X}", addr)] = comment;
 	}
 
+	// update memory edits
+	empty &= m_memoryEdits.empty();
+	debugDataJ["memoryEdits"] = {};
+	auto& debugMemoryEdits = debugDataJ["memoryEdits"];
+	for (const auto& [addr, memoryEdit] : m_memoryEdits)
+	{
+		debugMemoryEdits.push_back(memoryEdit.ToJson());
+	}
 
 	// update breakpoints
 	empty &= m_breakpoints.GetAll().empty();
@@ -330,7 +436,7 @@ void dev::DebugData::SaveDebugData()
 	auto& debugBreakpoints = debugDataJ["breakpoints"];
 	for (const auto& [addr, bp] : m_breakpoints.GetAll())
 	{
-		debugBreakpoints.push_back(bp.GetJson());
+		debugBreakpoints.push_back(bp.ToJson());
 	}
 
 	// update watchpoints
@@ -339,7 +445,7 @@ void dev::DebugData::SaveDebugData()
 	auto& debugWatchpoints = debugDataJ["watchpoints"];
 	for (const auto& [id, wp] : m_watchpoints.GetAll())
 	{
-		debugWatchpoints.push_back(wp.GetJson());
+		debugWatchpoints.push_back(wp.ToJson());
 	}
 	
 	// save if the debug data is not empty or the file exists

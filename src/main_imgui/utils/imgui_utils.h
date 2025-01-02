@@ -7,9 +7,11 @@
 #include "imgui.h"
 
 #include "utils/types.h"
+#include "core/hardware.h"
 #include "core/breakpoint.h"
 #include "core/debugger.h"
 #include "core/disasm.h"
+#include "core/debug_data.h"
 
 namespace dev 
 {
@@ -75,6 +77,7 @@ namespace dev
 	static constexpr ImVec4 DASM_CLR_NUMBER_HIGHLIGHT = dev::IM_VEC4(0xFFFFFFFF);
 	static constexpr ImVec4 DASM_CLR_REG = dev::IM_VEC4(0x1ECF44FF);
 	static constexpr ImVec4 DASM_CLR_CONST = dev::IM_VEC4(0x8BE0E9FF);
+	static constexpr ImVec4 DASM_CLR_WARNING = dev::IM_VEC4(0xFF2020FF);	
 	static constexpr ImVec4 CLR_NUM_UPDATED = dev::IM_VEC4(0xD0902FFF);
 	static constexpr ImU32 CLR_URL_HOVERED = dev::IM_U32(0x2081FFFF);
 	static constexpr ImU32 CLR_URL = dev::IM_U32(0x1080F0FF);
@@ -131,10 +134,12 @@ namespace dev
 	void DrawProperty2(const char* _name, const char* _value,
 		const char* _hint = nullptr, const ImVec4& _valColor = CLR_WHITE);
 	void DrawSeparator2(const char* _text);
-	void DrawProperty2EditableI(const char* _name, const char* _label, int* _value, const char* _help = nullptr);
-	void DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
+	bool DrawProperty2EditableI(const char* _name, const char* _label, int* _value, 
+		const char* _help = nullptr, const ImGuiInputTextFlags _flags = 0);
+	bool DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
 			const char* _hint = nullptr, const char* _help = nullptr, 
-		const ImGuiInputTextFlags _flags = ImGuiInputTextFlags_EnterReturnsTrue);
+		const ImGuiInputTextFlags _flags = ImGuiInputTextFlags_EnterReturnsTrue,
+		bool* _delButtonPressed = nullptr);
 	void DrawProperty2Combo(const char* _name, const char* _label, int* _currentItem,
 		const char* const _items[], int _itemsCount, const char* _help = nullptr);
 	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, 
@@ -145,6 +150,8 @@ namespace dev
 	void DrawProperty2RadioButtons(const char* _name, int* _currentItem, 
 		const char* const _items[], int _itemsCount, const float _space = 15.0f, 
 		const char* _help = nullptr);
+	auto DrawPropertyMemoryMapping(Breakpoint::MemPages _memPages) -> Breakpoint::MemPages;
+
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 	auto DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab) -> UIItemMouseAction;
 	void DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels = 20);
@@ -153,4 +160,10 @@ namespace dev
 	void DrawTooltipTimer(const char* _text = nullptr, const float _timer = 0.7f);
 	auto DrawTransparentButtonWithBorder(const char* _label, 
 		const ImVec2& _pos, const ImVec2& _size, const char* _hint = nullptr) -> const ButtonAction;
+	
+	void DrawEditLabelWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
+	void DrawEditConstWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
+	void DrawEditCommentWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
+	void DrawEditMemEditWindow(Hardware& _hardware, const DebugData& _debugData, ReqUI& _reqUI);
+	
 }

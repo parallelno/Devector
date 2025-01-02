@@ -92,6 +92,14 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 			GlobalAddr globalAddr = _memStateP->debug.writeGlobalAddr[i];
 			uint8_t val = _memStateP->debug.write[i];
 
+			// check if the memory is read-only
+			auto memEdit = m_debugData.GetMemoryEdit(globalAddr);
+			if (memEdit && memEdit->active && memEdit->readonly) {
+				_memStateP->debug.write[i] = _memStateP->debug.beforeWrite[i];
+				_memStateP->ramP->at(globalAddr) = _memStateP->debug.beforeWrite[i];
+				continue;
+			};
+
 			m_disasm.MemWritesUpdate(globalAddr);
 
 			m_debugData.GetWatchpoints()->Check(Watchpoint::Access::W, globalAddr, val);
@@ -253,8 +261,40 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 				});
 		}
 		break;
+
+	//////////////////
+	// 
+	// Memory Edits
+	//
+	/////////////////
+
+	case Hardware::Req::DEBUG_MEMORY_EDIT_DEL_ALL:
+		m_debugData.DelAllMemoryEdits();
+		break;
+
+	case Hardware::Req::DEBUG_MEMORY_EDIT_DEL:
+		m_debugData.DelMemoryEdit(_reqDataJ["addr"]);
+		break;
+
+	case Hardware::Req::DEBUG_MEMORY_EDIT_ADD:
+		m_debugData.SetMemoryEdit(_reqDataJ);
+		break;
+	
+	case Hardware::Req::DEBUG_MEMORY_EDIT_GET:
+	{
+		auto MemEdit = m_debugData.GetMemoryEdit(_reqDataJ["addr"]);
+		if (MemEdit)
+		{
+			out = { {"data", MemEdit->ToJson()} };
+		}
+		break;
 	}
 
+	case Hardware::Req::DEBUG_MEMORY_EDIT_EXISTS:
+		out = { {"data", m_debugData.GetMemoryEdit(_reqDataJ["addr"]) != nullptr } };
+		break;
+	}
+	
 	return out;
 }
 

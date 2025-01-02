@@ -20,53 +20,69 @@ namespace dev
 		DebugData::UpdateId m_labelsUpdates = 0;
 		DebugData::UpdateId m_constsUpdates = 0;
 		DebugData::UpdateId m_commentsUpdates = 0;
+		DebugData::UpdateId m_editsUpdates = 0;
 
-		DebugData::SymbolAddrList m_filteredLabels;
-		DebugData::SymbolAddrList m_filteredConsts;
-		DebugData::SymbolAddrList m_filteredComments;
+		DebugData::FilteredElements m_filteredLabels;
+		DebugData::FilteredElements m_filteredConsts;
+		DebugData::FilteredElements m_filteredComments;
+		DebugData::FilteredElements m_filteredEdits;
 
 		std::string m_labelFilter;
 		std::string m_constFilter;
 		std::string m_commentFilter;
+		std::string m_editFilter;
 
 		std::string m_tempFilter;
 
 		int m_selectedLineIdx = 0;
 		
-		enum class SymbolType { LABEL = 0, CONST, COMMENT };
+		enum class ElementType { LABEL = 0, CONST, COMMENT, MEMORY_EDIT };
 
 		struct ContextMenu {
-			enum class Status { NONE = 0, INIT_CONTEXT_MENU, CONTEXT_MENU, INIT_SYMBOL_EDIT, SYMBOL_EDIT, INIT_ADDR_EDIT, ADDR_EDIT, INIT_ADD_SYMBOL, ADD_SYMBOL };
-			Status status = Status::NONE;
-			SymbolType symbolType = SymbolType::LABEL;
-			Addr addr = 0;
-			std::string symbol = "";
-			bool immHovered = false; // the context menu was opened on the immediate operand
+			bool openPopup = false;
+			ElementType elementType = ElementType::LABEL;
+			int addr = 0;
+			int oldAddr = 0;
+			std::string elementName = "";
+			std::string oldElementName = "";
+			bool itemHovered = false;
 			const char* contextMenuName = "DebugdataMenu";
 
-			void Init(Addr _addr, const std::string& _symbol, const SymbolType _symbolType)
+			void Init(Addr _addr, const std::string& _elementName, const ElementType _elementType, const bool _itemHovered = true)
 			{
-				status = Status::INIT_CONTEXT_MENU;
-				symbolType = _symbolType;
+				openPopup = true;
+				elementType = _elementType;
 				addr = _addr;
-				symbol = _symbol;
+				oldAddr = _addr;
+				elementName = _elementName;
+				oldElementName = _elementName;
+				itemHovered = _itemHovered;
+			}
+
+			bool BeginPopup(){
+				if (openPopup) {
+					ImGui::OpenPopup(contextMenuName);
+					openPopup = false;
+				}
+
+				return ImGui::BeginPopup(contextMenuName);
 			}
 		};
 		ContextMenu m_contextMenu;
 
 		void UpdateData(const bool _isRunning);
 
-		void UpdateAndDrawFilteredSymbols(DebugData::SymbolAddrList& _filteredSymbols,
+		void UpdateAndDrawFilteredElements(DebugData::FilteredElements& _filteredElements,
 										DebugData::UpdateId& _filteredUpdateId, 
 										const DebugData::UpdateId& _updateId,
 										std::string& _filter,
-										SymbolType _symbolType);
+										ElementType _elementType);
 
 		void DrawContextMenu(ContextMenu& _contextMenu);
-		void DrawContextMenuMain(ContextMenu& _contextMenu);
-		void DrawContextMenuSymbolEdit(ContextMenu& _contextMenu, std::string& _newName);
-		void DrawContextMenuAddrEdit(ContextMenu& _contextMenu, int& _newAddr);
-		void DrawContextMenuSymbolAdd(ContextMenu& _contextMenu, int& _newAddr, std::string& _newName);
+		//void DrawContextMenuMain(ContextMenu& _contextMenu);
+		//void DrawContextMenuElementEdit(ContextMenu& _contextMenu);
+		//void DrawContextMenuAddrEdit(ContextMenu& _contextMenu);
+		//void DrawContextMenuElementAdd(ContextMenu& _contextMenu);
 
 	public:
 		DebugDataWindow(Hardware& _hardware, Debugger& _debugger, 
