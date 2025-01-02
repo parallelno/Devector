@@ -323,14 +323,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	int ramdiskIdx = res->at("ramdiskIdx");
 
 	// update Ram-disk
-	m_mappingRamModeS = "Off";
-	if (mapping.data & Memory::MAPPING_RAM_MODE_MASK)
-	{
-		auto modeA = mapping.modeRamA ? "AC" : "--";
-		auto mode8 = mapping.modeRam8 ? "8" : "-";
-		auto modeE = mapping.modeRamE ? "E" : "-";
-		m_mappingRamModeS = std::format("{}{}{}", mode8, modeA, modeE);
-	}
+	m_mappingRamModeS = mapping.RamModeToStr();
 	m_mappingPageRamS = std::to_string(mapping.pageRam);
 	m_mappingModeStackS = dev::BoolToStrC(mapping.modeStack, 2);
 	m_mappingPageStackS = std::to_string(mapping.pageStack);

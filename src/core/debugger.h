@@ -26,7 +26,7 @@ namespace dev
 		static constexpr int LAST_RW_H = 32;
 		static constexpr int LAST_RW_MAX = LAST_RW_W * LAST_RW_H; // should be squared because it is sent to GPU
 		static constexpr uint32_t LAST_RW_NO_DATA = uint32_t(-1);
-		using MemLastRW = std::array<uint32_t, Memory::GLOBAL_MEMORY_LEN>;
+		using MemLastRW = std::array<uint32_t, Memory::MEMORY_GLOBAL_LEN>;
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
 		Debugger(Hardware& _hardware);

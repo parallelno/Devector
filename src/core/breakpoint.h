@@ -148,7 +148,7 @@ namespace dev
 		void Print() const;
 		auto IsActiveS() const -> const char*;
 		void UpdateAddrMappingS();
-		auto GetJson() const -> nlohmann::json
+		auto ToJson() const -> nlohmann::json
 		{
 			return {
 				{"addr", data.structured.addr},

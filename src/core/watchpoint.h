@@ -85,7 +85,7 @@ namespace dev
 		auto GetTypeS() const -> const char*;
 		void Reset();
 		void Print() const;
-		auto GetJson() const -> nlohmann::json
+		auto ToJson() const -> nlohmann::json
 		{
 			return {
 				{"id", data.id},

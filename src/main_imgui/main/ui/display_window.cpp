@@ -135,7 +135,7 @@ void dev::DisplayWindow::Update(bool& _visible, const bool _isRunning)
 	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
 	{
 /*
-		// TODO: DEBUG test
+		// TODO: DEBUG test to tune the display settings
 		int paletteCommitTime = m_hardware.Request(Hardware::Req::GET_IO_PALETTE_COMMIT_TIME)->at("paletteCommitTime");
 		if (ImGui::InputInt("paletteCommitTime", &paletteCommitTime, 1, 2000) )
 		{

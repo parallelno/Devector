@@ -13,7 +13,6 @@ namespace dev
 	{
 		static constexpr int DEFAULT_WINDOW_W = 600;
 		static constexpr int DEFAULT_WINDOW_H = 300;
-		static constexpr ImVec4 COLOR_WARNING = dev::IM_VEC4(0xFF2020FF);
 
 		Hardware& m_hardware;
 		ReqUI& m_reqUI;

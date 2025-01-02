@@ -184,8 +184,8 @@ void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data,
 	if ((m_version & VERSION_MASK) != VERSION) return;
 
 	// ram
-	std::copy(_data.begin() + dataOffset, _data.begin() + Memory::GLOBAL_MEMORY_LEN, m_ram.begin());
-	dataOffset += Memory::GLOBAL_MEMORY_LEN;
+	std::copy(_data.begin() + dataOffset, _data.begin() + Memory::MEMORY_GLOBAL_LEN, m_ram.begin());
+	dataOffset += Memory::MEMORY_GLOBAL_LEN;
 	*_memStateP->ramP = m_ram;
 
 	// m_stateRecorded

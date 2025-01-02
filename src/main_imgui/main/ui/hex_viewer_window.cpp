@@ -70,7 +70,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 			GlobalAddr globalAddr = (GlobalAddr)dev::StrHexToInt(m_searchAddrS);
 			m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
 			globalAddr = dev::Max(0, globalAddr);
-			globalAddr = dev::Min(globalAddr, Memory::GLOBAL_MEMORY_LEN);
+			globalAddr = dev::Min(globalAddr, Memory::MEMORY_GLOBAL_LEN);
 			m_reqUI.globalAddr = globalAddr;
 			m_reqUI.len = 1;
 		}

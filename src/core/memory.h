@@ -6,6 +6,7 @@
 #include <functional>
 #include <mutex>
 #include <string>
+#include <format>
 
 #include "utils/types.h"
 
@@ -17,7 +18,7 @@ namespace dev
 		#include "core/memory_consts.h"
 
 		using Rom = std::vector<uint8_t>;
-		using Ram = std::array<uint8_t, GLOBAL_MEMORY_LEN>;
+		using Ram = std::array<uint8_t, MEMORY_GLOBAL_LEN>;
 		using RamDiskData = std::vector<uint8_t>;
 
 #pragma pack(push, 1)
@@ -35,6 +36,24 @@ namespace dev
 			};
 			uint8_t data = 0;
 			Mapping(const uint8_t _data = 0) : data(_data) {}
+
+			auto ToStr() const -> std::string
+			{
+				return std::format("mapping: ram mode:{}{}{}, stack mode:{}, ram page:{}, stack page:{}",
+					modeRam8 ? "8" : "-",
+					modeRamA ? "AC" : "--",
+					modeRamE ? "E" : "-",
+					modeStack ? "S" : "-",
+					(int)pageRam, (int)pageStack);
+			}
+			auto RamModeToStr() const -> std::string
+			{
+				auto modeA = modeRamA ? "AC" : "--";
+				auto mode8 = modeRam8 ? "8" : "-";
+				auto modeE = modeRamE ? "E" : "-";
+				return std::format("{}{}{}", mode8, modeA, modeE);
+			}
+
 		};
 #pragma pack(pop)
 
@@ -53,7 +72,7 @@ namespace dev
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-		struct Debug 
+		struct Debug
 		{
 			GlobalAddr instrGlobalAddr;
 			uint8_t instr[3];
@@ -101,9 +120,10 @@ namespace dev
 		void SetRamDiskMode(uint8_t _diskIdx, uint8_t _data);
 		void SetMemType(const MemType _memType);
 		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
+		void SetByteGlobal(const GlobalAddr _addr, const uint8_t _data);
 		bool IsException();
 		bool IsRomEnabled() const;
-		inline void DebugInit() { m_state.debug.Init(); }; 
+		inline void DebugInit() { m_state.debug.Init(); };
 
 	private:
 

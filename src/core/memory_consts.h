@@ -11,7 +11,7 @@ static constexpr size_t MEMORY_RAMDISK_LEN = 4 * MEM_64K;
 static constexpr size_t RAM_DISK_MAX = 8;
 
 static constexpr size_t MEMORY_MAIN_LEN = MEM_64K;
-static constexpr size_t GLOBAL_MEMORY_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAM_DISK_MAX;
+static constexpr size_t MEMORY_GLOBAL_LEN = MEMORY_MAIN_LEN + MEMORY_RAMDISK_LEN * RAM_DISK_MAX;
 
 static constexpr uint8_t MAPPING_RAM_MODE_MASK = 0b11100000;
 static constexpr uint8_t MAPPING_MODE_MASK = 0b11110000;

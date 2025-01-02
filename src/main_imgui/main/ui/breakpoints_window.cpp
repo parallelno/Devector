@@ -72,7 +72,7 @@ void dev::BreakpointsWindow::DrawTable()
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
 		ImGui::TableSetupColumn("##BPActive", ImGuiTableColumnFlags_WidthFixed, 25);
-		ImGui::TableSetupColumn("GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110);
+		ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, 110);
 		ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 180);
 		ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch);
 		
@@ -162,7 +162,7 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGuiPopupFlags_NoOpenOverExistingPopup |
 			ImGuiPopupFlags_MouseButtonRight))
 		{
-			if (ImGui::MenuItem("Add New")) {
+			if (ImGui::MenuItem("Add")) {
 				reqPopup = ReqPopup::INIT_ADD;
 			}
 			else if (ImGui::MenuItem("Disable All")) 
@@ -230,19 +230,19 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 	static bool isActive = true;
 	static bool isAutoDel = false;
 	static Addr addrOld = 0xFF;
-	static std::string addrS = "FF";
+	static int addr = 0xFF;
 	static int selectedOp = 0;
 	static int selectedCond = 0;
-	static std::string valueS = "0";
-	static std::string commentS = "";
+	static int val = 0;
+	static std::string comment = "";
 	static ImVec2 buttonSize = { 65.0f, 25.0f };
 
 	// Init for a new BP
 	if (_reqPopup == ReqPopup::INIT_ADD) {
 		_reqPopup = ReqPopup::ADD;
-		commentS = "";
+		comment = "";
 		addrOld = 0xFF;
-		addrS = "FF";
+		addr = 0xFF;
 	}
 	// Init for editing BP
 	if (_reqPopup == ReqPopup::INIT_EDIT)
@@ -254,10 +254,10 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 		addrOld = bp.data.structured.addr;
 		memPages = bp.data.structured.memPages;
 		isAutoDel = bp.data.structured.autoDel;
-		addrS = std::format("{:04X}", bp.data.structured.addr);
+		addr = bp.data.structured.addr;
 		selectedOp = static_cast<int>(bp.data.structured.operand);
 		selectedCond = static_cast<int>(bp.data.structured.cond);
-		commentS = bp.comment;
+		comment = bp.comment;
 	}
 
 	if (ImGui::BeginPopup("##BpEdit"))
@@ -270,124 +270,57 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 		if (ImGui::BeginTable("##BPContextMenu", 2, flags))
 		{
 			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
-			ImGui::TableSetupColumn("##BPContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 140);
+			ImGui::TableSetupColumn("##BPContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 210);
+			
 			// status
-			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive, "Disable the breakpoint");
+			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive, "Enable or disable the breakpoint");
+			
 			// addr
-			DrawProperty2EditableS("Address", "##BPContextAddress", &addrS, "FFFF",
-				"A hexademical address in the format 0xFF or FF.");
+			DrawProperty2EditableI("Address", "##WpContextAddress", &addr,
+				"A hexademical address in the format FF", 
+				ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);				
+			
 			// mapping
-			bool ram = memPages.ram;
-			bool rd00 = memPages.rdisk0page0;
-			bool rd01 = memPages.rdisk0page1;
-			bool rd02 = memPages.rdisk0page2;
-			bool rd03 = memPages.rdisk0page3;
-			bool rd10 = memPages.rdisk1page0;
-			bool rd11 = memPages.rdisk1page1;
-			bool rd12 = memPages.rdisk1page2;
-			bool rd13 = memPages.rdisk1page3;
-			bool rd20 = memPages.rdisk2page0;
-			bool rd21 = memPages.rdisk2page1;
-			bool rd22 = memPages.rdisk2page2;
-			bool rd23 = memPages.rdisk2page3;
-			bool rd30 = memPages.rdisk3page0;
-			bool rd31 = memPages.rdisk3page1;
-			bool rd32 = memPages.rdisk3page2;
-			bool rd33 = memPages.rdisk3page3;
-			bool rd40 = memPages.rdisk4page0;
-			bool rd41 = memPages.rdisk4page1;
-			bool rd42 = memPages.rdisk4page2;
-			bool rd43 = memPages.rdisk4page3;
-			bool rd50 = memPages.rdisk5page0;
-			bool rd51 = memPages.rdisk5page1;
-			bool rd52 = memPages.rdisk5page2;
-			bool rd53 = memPages.rdisk5page3;
-			bool rd60 = memPages.rdisk6page0;
-			bool rd61 = memPages.rdisk6page1;
-			bool rd62 = memPages.rdisk6page2;
-			bool rd63 = memPages.rdisk6page3;
-			bool rd70 = memPages.rdisk7page0;
-			bool rd71 = memPages.rdisk7page1;
-			bool rd72 = memPages.rdisk7page2;
-			bool rd73 = memPages.rdisk7page3;
-
-			DrawProperty2EditableCheckBox("Ram", "##BPContextAccessRam", &ram, "To check the main ram");
-			DrawProperty2EditableCheckBox4("Ram Disk 1", "##BPCARD0P0", "##BPCARD0P1", "##BPCARD0P2", "##BPCARD0P3", &rd00, &rd01, &rd02, &rd03, "To check the Ram-Disk1 pages 0,1,2,3");
-			DrawProperty2EditableCheckBox4("Ram Disk 2", "##BPCARD1P0", "##BPCARD1P1", "##BPCARD1P2", "##BPCARD1P3", &rd10, &rd11, &rd12, &rd13, "To check the Ram-Disk2 pages 0,1,2,3");
-			DrawProperty2EditableCheckBox4("Ram Disk 3", "##BPCARD2P0", "##BPCARD2P1", "##BPCARD2P2", "##BPCARD2P3", &rd20, &rd21, &rd22, &rd23, "To check the Ram-Disk3 pages 0,1,2,3");
-			DrawProperty2EditableCheckBox4("Ram Disk 4", "##BPCARD3P0", "##BPCARD3P1", "##BPCARD3P2", "##BPCARD3P3", &rd30, &rd31, &rd32, &rd33, "To check the Ram-Disk4 pages 0,1,2,3");
-			DrawProperty2EditableCheckBox4("Ram Disk 5", "##BPCARD4P0", "##BPCARD4P1", "##BPCARD4P2", "##BPCARD4P3", &rd40, &rd41, &rd42, &rd43, "To check the Ram-Disk5 pages 0,1,2,3");
-			DrawProperty2EditableCheckBox4("Ram Disk 6", "##BPCARD5P0", "##BPCARD5P1", "##BPCARD5P2", "##BPCARD5P3", &rd50, &rd51, &rd52, &rd53, "To check the Ram-Disk6 pages 0,1,2,3");
-			DrawProperty2EditableCheckBox4("Ram Disk 7", "##BPCARD6P0", "##BPCARD6P1", "##BPCARD6P2", "##BPCARD6P3", &rd60, &rd61, &rd62, &rd63, "To check the Ram-Disk7 pages 0,1,2,3");
-			DrawProperty2EditableCheckBox4("Ram Disk 8", "##BPCARD7P0", "##BPCARD7P1", "##BPCARD7P2", "##BPCARD7P3", &rd70, &rd71, &rd72, &rd73, "To check the Ram-Disk8 pages 0,1,2,3");
-
-			memPages.ram = ram;
-			memPages.rdisk0page0 = rd00;
-			memPages.rdisk0page1 = rd01;
-			memPages.rdisk0page2 = rd02;
-			memPages.rdisk0page3 = rd03;
-			memPages.rdisk1page0 = rd10;
-			memPages.rdisk1page1 = rd11;
-			memPages.rdisk1page2 = rd12;
-			memPages.rdisk1page3 = rd13;
-			memPages.rdisk2page0 = rd20;
-			memPages.rdisk2page1 = rd21;
-			memPages.rdisk2page2 = rd22;
-			memPages.rdisk2page3 = rd23;
-			memPages.rdisk3page0 = rd30;
-			memPages.rdisk3page1 = rd31;
-			memPages.rdisk3page2 = rd32;
-			memPages.rdisk3page3 = rd33;
-			memPages.rdisk4page0 = rd40;
-			memPages.rdisk4page1 = rd41;
-			memPages.rdisk4page2 = rd42;
-			memPages.rdisk4page3 = rd43;
-			memPages.rdisk5page0 = rd50;
-			memPages.rdisk5page1 = rd51;
-			memPages.rdisk5page2 = rd52;
-			memPages.rdisk5page3 = rd53;
-			memPages.rdisk6page0 = rd60;
-			memPages.rdisk6page1 = rd61;
-			memPages.rdisk6page2 = rd62;
-			memPages.rdisk6page3 = rd63;
-			memPages.rdisk7page0 = rd70;
-			memPages.rdisk7page1 = rd71;
-			memPages.rdisk7page2 = rd72;
-			memPages.rdisk7page3 = rd73;
+			DrawPropertyMemoryMapping(memPages);
 
 			// auto delete
 			DrawProperty2EditableCheckBox("Auto Delete", "##BPContextAutoDel", &isAutoDel, "Removes the breakpoint when execution halts");
+			
 			// Operand
 			DrawProperty2Combo("Operand", "##BPContextOperand", &selectedOp, 
-				dev::bpOperandsS, IM_ARRAYSIZE(dev::bpOperandsS), "CC - CPU Cicles counted from the last reset/reboot/reload");
+				dev::bpOperandsS, IM_ARRAYSIZE(dev::bpOperandsS),
+				"A, B, C, D, E, H, L, BC, DE, HL - CPU registers\n"\
+				"Flags - CPU flags\n"\
+				"SP - CPU Stack Pointer\n"\
+				"CC - CPU Cicles counted from the last reset/reboot/reload");
+			
 			// Condition
 			DrawProperty2Combo("Condition", "##BPContextCondition", &selectedCond, dev::ConditionsS, IM_ARRAYSIZE(dev::ConditionsS), "");
+			
 			// Value
 			if (selectedCond == 0) ImGui::BeginDisabled();
-			DrawProperty2EditableS("Value", "##BPContextValue", &valueS, "FF",
+			DrawProperty2EditableI("Value", "##BPContextValue", &val,
 				"A hexademical value in the format FF",
-				ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+				ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
 			if (selectedCond == 0) ImGui::EndDisabled();
+			
 			// Comment
-			DrawProperty2EditableS("Comment", "##BPContextComment", &commentS, "");
+			DrawProperty2EditableS("Comment", "##BPContextComment", &comment, "");
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
 			// warning
-			int addr = dev::StrHexToInt(addrS.c_str());
 			std::string warningS = "";
 			warningS = addr >= Memory::MEMORY_MAIN_LEN ? 
 				"Too large address" : warningS;
-			int val = dev::StrHexToInt(valueS.c_str());
 			size_t maxVal = selectedOp == static_cast<int>(Breakpoint::Operand::CC) ?
 				UINT64_MAX : selectedOp > static_cast<int>(Breakpoint::Operand::PSW) ?
 				UINT16_MAX : UINT8_MAX;
 			warningS = val < 0 || val > maxVal ?
 				"A value is out of range" : warningS;
 
-			//ImGui::SameLine(); 
-			ImGui::TextColored(COLOR_WARNING, warningS.c_str());
+			ImGui::TextColored(DASM_CLR_WARNING, warningS.c_str());
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
@@ -412,7 +345,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 					{"data0", bpData.data0 },
 					{"data1", bpData.data1 },
 					{"data2", bpData.data2 },
-					{"comment", commentS}
+					{"comment", comment}
 				});
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				ImGui::CloseCurrentPopup();

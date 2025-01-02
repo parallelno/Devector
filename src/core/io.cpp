@@ -3,6 +3,7 @@
 // https://github.com/parallelno/v06x/blob/master/src/vio.h
 
 #include "io.h"
+#include "utils/utils.h"
 
 #define CW			m_state.ports.CW
 #define PORT_A		m_state.ports.portA
@@ -274,7 +275,9 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		break;
 		// Sends data to the emulator
 	case 0xED:
-		_port = _port; // TODO: do something meaningful
+		// TODO: do something meaningful. 
+		// For example: write to a file, breaks the app, or let the emulator execute a custom command depending on the _value
+		dev::Log("Debug Port (0xED) out: {}", _value);
 		break;
 	default:
 		break;

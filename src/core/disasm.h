@@ -135,7 +135,7 @@ namespace dev
 		Hardware& m_hardware;
 		DebugData& m_debugData;
 		
-		using MemStats = std::array<uint64_t, Memory::GLOBAL_MEMORY_LEN>;
+		using MemStats = std::array<uint64_t, Memory::MEMORY_GLOBAL_LEN>;
 		MemStats m_memRuns;
 		MemStats m_memReads;
 		MemStats m_memWrites;

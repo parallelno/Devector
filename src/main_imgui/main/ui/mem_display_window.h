@@ -24,7 +24,7 @@ namespace dev
 		static constexpr float SCALE_MIN = 0.3f;
 		static constexpr float SCALE_INC = 0.2f;
 
-		static constexpr int RAM_TEXTURES = Memory::GLOBAL_MEMORY_LEN / Memory::MEM_64K;
+		static constexpr int RAM_TEXTURES = Memory::MEMORY_GLOBAL_LEN / Memory::MEM_64K;
 		static constexpr int RAM_TEXTURE_W = 256;
 		static constexpr int RAM_TEXTURE_H = Memory::MEMORY_MAIN_LEN / 256;
 

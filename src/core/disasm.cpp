@@ -924,7 +924,7 @@ auto dev::Disasm::Line::GetStr() const
 -> std::string
 {
 	// print an addr
-	std::string out(GetAddrS());
+	std::string out {std::format("{}: ", GetAddrS())};
 
 	switch (type)
 	{
@@ -969,7 +969,7 @@ auto dev::Disasm::Line::GetStr() const
 		return out;
 
 	case Type::COMMENT:
-		out += std::format("; ", *comment);
+		out += std::format("; {}", *comment);
 		return out;
 	}
 

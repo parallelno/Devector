@@ -53,6 +53,11 @@ void dev::Memory::SetRam(const Addr _addr, const std::vector<uint8_t>& _data )
 	std::copy(_data.begin(), _data.end(), m_ram.data() + _addr);
 }
 
+void dev::Memory::SetByteGlobal(const GlobalAddr _addr, const uint8_t _data)
+{
+	m_ram[_addr] = _data;
+}
+
 auto dev::Memory::GetByte(const Addr _addr, const AddrSpace _addrSpace)
 -> uint8_t
 {

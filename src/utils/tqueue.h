@@ -71,7 +71,7 @@ namespace dev {
             if (m_queue.size() > m_maxLegth) {
                 m_queue.pop();
             }
-            m_queue.emplace(_item);
+            m_queue.emplace(std::move(_item));
             mlock.unlock();
             m_condition.notify_one();
         }

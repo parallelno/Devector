@@ -32,13 +32,13 @@ void dev::SearchWindow::Draw(const bool _isRunning)
 	if (ImGui::InputInt("Start Address", &m_searchStartAddr, 1, 100, ImGuiInputTextFlags_CharsHexadecimal))
 	{
 		m_searchStartAddr = dev::Max(0, m_searchStartAddr);
-		m_searchStartAddr = dev::Min(m_searchStartAddr, Memory::GLOBAL_MEMORY_LEN - 1);
+		m_searchStartAddr = dev::Min(m_searchStartAddr, Memory::MEMORY_GLOBAL_LEN - 1);
 	};
 
 	if (ImGui::InputInt("End Address", &m_searchEndAddr, 1, 100, ImGuiInputTextFlags_CharsHexadecimal))
 	{
 		m_searchEndAddr = dev::Max(0, m_searchEndAddr);
-		m_searchEndAddr = dev::Min(m_searchEndAddr, Memory::GLOBAL_MEMORY_LEN - 1);
+		m_searchEndAddr = dev::Min(m_searchEndAddr, Memory::MEMORY_GLOBAL_LEN - 1);
 	}
 
 	if (m_searchEnabled) ImGui::EndDisabled();
