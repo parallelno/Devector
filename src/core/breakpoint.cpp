@@ -116,13 +116,15 @@ bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _cpuState, const Memory
 
 void dev::Breakpoint::Print() const
 {
-	dev::Log("0x{:04x}, status:{}, memPages: {}, autoDel: {}, op: {}, cond: {}, val: {}",
+	dev::Log("0x{:04X}, status:{}, memPages: {}, autoDel: {}, op: {}, cond: {}, val: {}",
 		data.structured.addr, static_cast<int>(data.structured.status), data.structured.memPages.data, data.structured.autoDel,
 		GetOperandS(), GetConditionS(), data.structured.value);
 }
 
 void dev::Breakpoint::UpdateAddrMappingS()
 {
+	addrMappingS = dev::Uint16ToStrC0x(data.structured.addr);
+	/*
 	addrMappingS = std::format(
 		"0x{:04X} {}"
 		" 1:{}{}{}{}"
@@ -168,6 +170,7 @@ void dev::Breakpoint::UpdateAddrMappingS()
 		data.structured.memPages.rdisk7page2 ? "2" : "_",
 		data.structured.memPages.rdisk7page3 ? "3" : "_"
 		);
+		*/
 }
 
 auto dev::Breakpoint::GetAddrMappingS() const
