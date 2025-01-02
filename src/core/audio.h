@@ -18,6 +18,9 @@ namespace dev
         static constexpr int SDL_BUFFER = OUTPUT_RATE / CALLBACKS_PER_SEC; // the estimated SDL stream buff len
         static constexpr int SDL_BUFFERS = 8; // to make sure there is enough available data for audio streaming
         static constexpr int BUFFER_SIZE = SDL_BUFFER * SDL_BUFFERS;
+        static constexpr int TARGET_BUFFERING = SDL_BUFFER * 4;
+        static constexpr int LOW_BUFFERING = TARGET_BUFFERING - SDL_BUFFER * 2;
+        static constexpr int HIGH_BUFFERING = TARGET_BUFFERING + SDL_BUFFER * 2;        
 
         TimerI8253& m_timer;
         AYWrapper& m_aywrapper;

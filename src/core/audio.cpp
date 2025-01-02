@@ -109,10 +109,6 @@ void dev::Audio::Callback(void* _userdata, SDL_AudioStream* _stream, int _additi
 	Audio* audioP = (Audio*)_userdata;
 	if (!audioP->m_inited) return;
 
-	int buffering = audioP->m_writeBuffIdx - audioP->m_readBuffIdx;
-	bool lowBuferring = buffering < SDL_BUFFER * 2;
-	bool tooBuferring = buffering > SDL_BUFFER * 6;
-
 	// malloc the SDL buff
 	Uint8* data = SDL_stack_alloc(Uint8, _additionalAmount);
 	if (!data) return;
@@ -121,16 +117,22 @@ void dev::Audio::Callback(void* _userdata, SDL_AudioStream* _stream, int _additi
 	float* fstream = (float*)data;
 	int fstreamLen = _additionalAmount / sizeof(float);
 
-	if (lowBuferring)
+	
+	int buffering = audioP->m_writeBuffIdx - audioP->m_readBuffIdx;
+	bool underBuferring = buffering < LOW_BUFFERING;
+	bool overBuferring = buffering > HIGH_BUFFERING;
+
+	if (underBuferring)
 	{
 		// fill in with the lastSample when it's low buffering
 		auto lastSample = audioP->m_lastSample.load();
 		std::fill(fstream, fstream + fstreamLen, lastSample);
 
-		auto floatResampleRate = --audioP->m_downsampleRate;
-		dev::Log("SDL buffering is too low: {}. Sample rate is adjusted: {}", buffering, floatResampleRate);
+		// adjust the resample rate
+		int downsampleRate = --audioP->m_downsampleRate;
+		dev::Log("SDL buffering is too low: {}. Sample rate is adjusted: {}", buffering, downsampleRate);
 	}
-	else 
+	else
 	{
 		// copy the samples
 		for (int i = 0; i < fstreamLen; i++)
@@ -138,11 +140,12 @@ void dev::Audio::Callback(void* _userdata, SDL_AudioStream* _stream, int _additi
 			fstream[i] = audioP->m_buffer[(audioP->m_readBuffIdx++) % BUFFER_SIZE];
 		}
 
-		if (tooBuferring)
+		if (overBuferring)
 		{
 			audioP->m_readBuffIdx += fstreamLen;
-			auto floatResampleRate = ++audioP->m_downsampleRate;
-			dev::Log("SDL buffering is too big: {}. Sample rate is adjusted: {}", buffering, floatResampleRate);
+			// adjust the resample rate			
+			int downsampleRate = ++audioP->m_downsampleRate;
+			dev::Log("SDL buffering is too big: {}. Sample rate is adjusted: {}", buffering, downsampleRate);
 		}
 	}
 
