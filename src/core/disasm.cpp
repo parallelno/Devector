@@ -1,5 +1,6 @@
 #include <string>
 #include <format>
+#include <inttypes.h>
 
 #include "core/disasm.h"
 #include "utils/str_utils.h"
@@ -914,7 +915,7 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 		line.consts = m_debugData.GetConsts(line.imm);
 	}
 
-	snprintf(line.statsS, sizeof(line.statsS), "%llu,%llu,%llu", runs, reads, writes);
+	snprintf(line.statsS, sizeof(line.statsS), "%" PRIu64 ",%" PRIu64 ",%" PRIu64, runs, reads, writes);
 
 	m_lineIdx++;
 	return cmdLen;

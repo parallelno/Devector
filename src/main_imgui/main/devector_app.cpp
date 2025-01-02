@@ -704,7 +704,7 @@ void dev::DevectorApp::SaveFile()
 		const char* filename = tinyfd_saveFileDialog(
 			"Save File", "file_name.rec", sizeof(filters)/sizeof(const char*), filters, nullptr);
 	
-		if (!filename)
+		if (filename)
 		{
 			auto result = m_hardwareP->Request(Hardware::Req::DEBUG_RECORDER_SERIALIZE);
 			if (result)
@@ -717,7 +717,7 @@ void dev::DevectorApp::SaveFile()
 
 				if (!data.empty()) dev::SaveFile(path, data, true);
 			}
-		};
+		}
 		break;
 	}
 	}

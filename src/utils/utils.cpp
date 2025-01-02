@@ -19,7 +19,7 @@ void dev::RunApp(const std::wstring& _dir, const std::wstring& _appName)
 		return;
 	}
 	const std::wstring command = L"cd " + _dir + L" && " + _appName;
-	system(dev::StrWToStr(command).c_str());
+	auto suppress_warning = system(dev::StrWToStr(command).c_str());
 }
 
 void dev::OsOpenInShell(const char* path)
@@ -35,7 +35,7 @@ void dev::OsOpenInShell(const char* path)
 #endif
 	char command[256];
 	snprintf(command, 256, "%s \"%s\"", open_executable, path);
-	system(command);
+	auto suppress_warning = system(command);
 #endif
 }
 
@@ -132,7 +132,7 @@ bool dev::SaveFile(const std::wstring& _path, const std::vector<uint8_t>& _data,
 void dev::DeleteFiles(const std::wstring& _dir, const std::wstring& _mask)
 {
 	const std::wstring command = L"del /Q " + _dir + _mask;
-	system(dev::StrWToStr(command).c_str());
+	auto suppress_warning = system(dev::StrWToStr(command).c_str());
 }
 
 size_t dev::GetFileSize(const std::wstring& _path)
