@@ -15,13 +15,8 @@ Devector is a multi-platform emulator of a Soviet personal computer Vector06c. I
 
 ## Usage
 
-To use Devector, follow these steps:
-
-On Windows
-1. Run the emulator: `./Devector.exe`
-
-On Linux
-1. Run the emulator: `./Devector`
+To run the emulator: 
+`./Devector.exe` <-settingsPath settings.json> <-path rom_fdd_rec_file>
 
 ## Build
 
