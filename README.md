@@ -19,6 +19,7 @@ To use Devector, follow these steps:
 
 On Windows
 1. Run the emulator: `./Devector.exe`
+
 On Linux
 1. Run the emulator: `./Devector`
 
