@@ -23,6 +23,7 @@ To run the emulator:
 ImGui frontend:
 
 On Windows
+
 It requires VS 2019+ c++ development environment installed
 1. mkdir build
 2. cd build
