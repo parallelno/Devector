@@ -98,7 +98,7 @@ void dev::SearchWindow::Draw(const bool _isRunning)
 	}
 	else if (m_searchResults.size() > 100)
 	{
-		ImGui::Text("Too many results: %" PRIu64, m_searchResults.size());
+		ImGui::Text("Too many results: %d", (int)m_searchResults.size());
 	}
 	else if (ImGui::BeginListBox("##searchResults", ImVec2(-FLT_MIN, 100)))
 	{
