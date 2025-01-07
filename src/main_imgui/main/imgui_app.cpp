@@ -360,6 +360,21 @@ bool dev::ImGuiApp::GetSettingsBool(const std::string& _fieldName, bool _default
 	return dev::GetJsonBool(m_settingsJ, _fieldName, false, _defaultValue);
 }
 
+#if defined(_WIN32)
+    #if defined(__MINGW32__) || defined(__MINGW64__)
+        #include <VersionHelpers.h>
+        #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((DPI_AWARENESS_CONTEXT)-4)
+        UINT GetDpiForWindowFallback(HWND hwnd) {
+            // Approximation for DPI when `GetDpiForWindow` is unavailable.
+            HDC hdc = GetDC(hwnd);
+            UINT dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+            ReleaseDC(hwnd, hdc);
+            return dpi;
+        }
+        #define GetDpiForWindow(hwnd) GetDpiForWindowFallback(hwnd)
+    #endif
+#endif
+
 float dev::ImGuiApp::GetDpiScale()
 {
 	static constexpr float WINDOW_DPI_DEFAULT = 96.0f;

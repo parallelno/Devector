@@ -22,7 +22,6 @@ public:
 		auto GetUpdates() -> const uint32_t;
 		auto GetStatus(const Addr _addr) -> const Breakpoint::Status;
 		void Clear();
-		void Reset();
 
 private:
 

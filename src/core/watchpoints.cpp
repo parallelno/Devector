@@ -13,12 +13,6 @@ void dev::Watchpoints::Clear()
 }
 
 // Hardware thread
-void dev::Watchpoints::Reset()
-{
-	m_updates = 0;
-}
-
-// Hardware thread
 void dev::Watchpoints::Add(Watchpoint&& _wp)
 {
 	m_updates++;

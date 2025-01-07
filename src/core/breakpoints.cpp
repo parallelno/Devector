@@ -10,11 +10,6 @@ void dev::Breakpoints::Clear()
 	m_updates++;
 }
 
-void dev::Breakpoints::Reset()
-{
-	m_updates = 0;
-}
-
 void dev::Breakpoints::SetStatus(const Addr _addr, const Breakpoint::Status _status)
 {
 	m_updates++;

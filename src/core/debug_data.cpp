@@ -308,14 +308,25 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 	auto romDir = dev::GetDir(_romPath);
 	m_debugPath = romDir + L"\\" + dev::GetFilename(_romPath) + L".json";
 
+	
+	m_labelsUpdates++;
+	m_labels.clear();
+	m_constsUpdates++;
+	m_consts.clear();
+	m_commentsUpdates++;
+	m_comments.clear();	
+	m_editsUpdates++;	
+	m_memoryEdits.clear();
+	
+	m_breakpoints.Clear();
+	m_watchpoints.Clear();	
+
 	// init empty dictionaries when there is no file found
 	if (!dev::IsFileExist(m_debugPath)) return;
 	
-	auto debugDataJ = LoadJson(m_debugPath);
+	auto debugDataJ = LoadJson(dev::StrWToStr(m_debugPath));
 
 	// add labels
-	m_labelsUpdates++;
-	m_labels.clear();
 	if (debugDataJ.contains("labels")) {
 		for (auto& [str, addrS] : debugDataJ["labels"].items())
 		{
@@ -323,9 +334,8 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 			m_labels.emplace(addr, LabelList{}).first->second.emplace_back(str);
 		}
 	}
+	
 	// add consts
-	m_constsUpdates++;
-	m_consts.clear();
 	if (debugDataJ.contains("consts")) {
 		for (auto& [str, addrS] : debugDataJ["consts"].items())
 		{
@@ -333,9 +343,8 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 			m_consts.emplace(addr, LabelList{}).first->second.emplace_back(str);
 		}
 	}
+
 	// add comments
-	m_commentsUpdates++;
-	m_comments.clear();
 	if (debugDataJ.contains("comments")) {
 		for (auto& [addrS, str] : debugDataJ["comments"].items())
 		{
@@ -345,8 +354,6 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 	}
 
 	// add memory edits
-	m_editsUpdates++;	
-	m_memoryEdits.clear();
 	if (debugDataJ.contains("memoryEdits")) {
 		for (auto& editJ : debugDataJ["memoryEdits"])
 		{
@@ -358,7 +365,6 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 	}
 
 	// add breakpoints
-	m_breakpoints.Clear();	
 	if (debugDataJ.contains("breakpoints")) {
 		for (auto& breakpointJ : debugDataJ["breakpoints"])
 		{
@@ -370,7 +376,6 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 		}
 	}
 	// add watchpoints
-	m_watchpoints.Clear();	
 	if (debugDataJ.contains("watchpoints")) {
 		for (auto& watchpointJ : debugDataJ["watchpoints"])
 		{
@@ -449,5 +454,5 @@ void dev::DebugData::SaveDebugData()
 	}
 	
 	// save if the debug data is not empty or the file exists
-	if (!empty || dev::IsFileExist(m_debugPath)) dev::SaveJson(m_debugPath, debugDataJ);
+	if (!empty || dev::IsFileExist(m_debugPath)) dev::SaveJson(dev::StrWToStr(m_debugPath), debugDataJ);
 }

@@ -13,34 +13,9 @@ auto dev::LoadJson(const std::string& _path) -> nlohmann::json
 	return json;
 }
 
-auto dev::LoadJson(const std::wstring& _path) -> nlohmann::json
-{
-#if defined(_WIN32)
-		std::ifstream file(_path);
-#else
-		std::ifstream file(dev::StrWToStr(_path));
-#endif
-
-	nlohmann::json json;
-	file >> json;
-
-	return json;
-}
-
 void dev::SaveJson(const std::string& _path, const nlohmann::json& _json)
 {
 	std::ofstream file(_path);
-	file << std::setw(4) << _json << std::endl;
-}
-
-void dev::SaveJson(const std::wstring& _path, const nlohmann::json& _json)
-{
-#if defined(_WIN32)
-		std::ofstream file(_path);
-#else
-		std::ofstream file(dev::StrWToStr(_path));
-#endif
-
 	file << std::setw(4) << _json << std::endl;
 }
 

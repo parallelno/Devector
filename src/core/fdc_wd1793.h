@@ -85,7 +85,7 @@ namespace dev
 		uint8_t* m_ptr = nullptr; // Pointer to data
 		FDisk* m_disk = nullptr; // current disk images
 
-		auto Seek(int _side, int _track, int _sideID, int _trackID, int _sectorID) -> uint8_t*;
+		auto Seek(int _sideID, int _trackID, int _sectorID) -> uint8_t*;
 		void Reset();
 
 	public:

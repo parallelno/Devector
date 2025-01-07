@@ -25,11 +25,21 @@ ImGui frontend:
 On Windows
 
 It requires VS 2019+ c++ development environment installed
-1. mkdir build
-2. cd build
-3. cmake ..
-4. open Visual Studio solution and build win32 app there
-5. copy the content of the resources folder into the bin folder
+1. Install MSYS2. https://www.msys2.org/
+2. Run MSYS2 terminal
+3. In this terminal, install the MinGW-w64 toolchain: 
+
+pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain. 
+Enter Y when prompted
+
+4. Update Path environment variable adding following paths:
+
+C:\msys64\ucrt64\bin
+
+5. mkdir build
+6. cd build
+7. cmake --build build --target all
+
 
 On Linux
 1. sudo apt update

@@ -19,7 +19,6 @@ public:
 		auto GetAll() -> const WpMap&;
 		auto GetUpdates() -> const uint32_t;
 		void Clear();
-		void Reset();
 		bool CheckBreak();
 
 private:

@@ -95,12 +95,12 @@ dev::Fdc1793::Fdc1793() { Reset(); }
 
 // Seek to given side / track / sector. Returns sector address
 // (data pointer) on success or nulptr on failure.
-uint8_t* dev::Fdc1793::Seek(int _side, int _track, int _sideID, int _trackID, int _sectorID)
+uint8_t* dev::Fdc1793::Seek(int _sideID, int _trackID, int _sectorID)
 {
 	if (!m_disk) return nullptr;
 
 	int sectors = FDD_SECTORS_PER_TRACK * (_trackID * FDD_SIDES + _sideID);
-	int sectorAdjusted = dev::Max(0, _sectorID - 1); // In CHS addressing the sector numbers always start at 1
+	int sectorAdjusted = dev::Max(0, _sectorID - 1); // In CHS addressing the sector numbers always start at 1, but in the data buffer the sector numbers always start at 0.
 	int m_position = (sectors + sectorAdjusted) * FDD_SECTOR_LEN;
 
 	// store a header for each sector
@@ -271,7 +271,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 		case 0x80: [[fallthrough]];
 		case 0x90: // READ-SECTORS
 			// Seek to the requested sector
-			m_ptr = Seek(m_side, m_track,
+			m_ptr = Seek(
 				_val & C_SIDECOMP ? !!(_val & C_SIDE) : m_side, 
 				m_regs[1], m_regs[2]);
 
@@ -294,8 +294,9 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 		case 0xA0: [[fallthrough]];
 		case 0xB0: // WRITE-SECTORS
 			// Seek to the requested sector
-			m_ptr = Seek(m_side, m_track,
-				_val & C_SIDECOMP ? !!(_val & C_SIDE) : m_side, m_regs[1], m_regs[2]
+			m_ptr = Seek(
+				_val & C_SIDECOMP ? !!(_val & C_SIDE) : m_side, 
+				m_regs[1], m_regs[2]
 			);
 			// If seek successful, set up writing operation
 			if (!m_ptr)
@@ -321,7 +322,6 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 				for (J = 0;J < 256;++J)
 				{
 					m_ptr = Seek(
-						m_side, m_track,
 						m_side, m_track, J
 					);
 					if (m_ptr) break;
@@ -348,12 +348,12 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 		case 0xF0: // WRITE-TRACK, i.e., format
 			// the full protocol is not implemented (involves parsing lead-in & lead-out);
 			// it only sets the track data to 0xE5
-			if (m_ptr = Seek(0, m_track, 0, m_regs[1], 1))
+			if (m_ptr = Seek(0, m_regs[1], 1))
 			{
 				memset(m_ptr, 0xE5, FDD_SECTOR_LEN * FDD_SECTORS_PER_TRACK);
 				m_disk->updated = true;
 			}
-			if (FDD_SIDES > 1 && (m_ptr = Seek(1, m_track, 1, m_regs[1], 1)))
+			if (FDD_SIDES > 1 && (m_ptr = Seek(1, m_regs[1], 1)))
 			{
 				memset(m_ptr, 0xE5, FDD_SECTOR_LEN * FDD_SECTORS_PER_TRACK);
 				m_disk->updated = true;

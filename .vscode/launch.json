@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug from bin folder",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/devector.exe",
+        "args": ["-path", "${workspaceFolder}/rom/fdd/out1.fdd"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/bin",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "gdb.exe",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+    }
+    ]
+  }
