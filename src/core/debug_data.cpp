@@ -302,11 +302,11 @@ void dev::DebugData::GetFilteredMemoryEdits(FilteredElements& _out, const std::s
 	}
 }
 
-void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
+void dev::DebugData::LoadDebugData(const std::string& _romPath)
 {
 	// check if the file exists
 	auto romDir = dev::GetDir(_romPath);
-	m_debugPath = romDir + L"\\" + dev::GetFilename(_romPath) + L".json";
+	m_debugPath = romDir + "/" + dev::GetFilename(_romPath) + ".json";
 
 	
 	m_labelsUpdates++;
@@ -324,7 +324,7 @@ void dev::DebugData::LoadDebugData(const std::wstring& _romPath)
 	// init empty dictionaries when there is no file found
 	if (!dev::IsFileExist(m_debugPath)) return;
 	
-	auto debugDataJ = LoadJson(dev::StrWToStr(m_debugPath));
+	auto debugDataJ = LoadJson(m_debugPath);
 
 	// add labels
 	if (debugDataJ.contains("labels")) {
@@ -454,5 +454,5 @@ void dev::DebugData::SaveDebugData()
 	}
 	
 	// save if the debug data is not empty or the file exists
-	if (!empty || dev::IsFileExist(m_debugPath)) dev::SaveJson(dev::StrWToStr(m_debugPath), debugDataJ);
+	if (!empty || dev::IsFileExist(m_debugPath)) dev::SaveJson(m_debugPath, debugDataJ);
 }

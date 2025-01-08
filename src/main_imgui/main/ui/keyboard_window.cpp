@@ -2,6 +2,7 @@
 
 #include <format>
 #include "utils/str_utils.h"
+#include "utils/utils.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
@@ -19,9 +20,11 @@ dev::KeyboardWindow::KeyboardWindow(Hardware& _hardware,
 
 bool dev::KeyboardWindow::Init()
 {
-	auto dataP = stbi_load(m_pathImgKeyboard.c_str(), &m_imgKeyboardW, &m_imgKeyboardH, &m_imgKeyboardCh, 0);
+	auto img_path = dev::GetExecutableDir() + m_pathImgKeyboard;
+
+	auto dataP = stbi_load(img_path.c_str(), &m_imgKeyboardW, &m_imgKeyboardH, &m_imgKeyboardCh, 0);
 	if (!dataP){
-		dev::Log("Keyboard Window: Failed to load keyboard image. Reason: {}\nPath: {}", stbi_failure_reason(), m_pathImgKeyboard);
+		dev::Log("Keyboard Window: Failed to load keyboard image. Reason: {}\nPath: {}", stbi_failure_reason(), img_path);
 		return false;
 	}
 

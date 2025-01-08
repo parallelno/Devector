@@ -20,14 +20,14 @@ namespace dev
 
 		uint8_t header[6];		// current header, result of Seek()
 		bool updated = false;
-		std::wstring path;
+		std::string path;
 		bool mounted = false;
 
 		size_t reads = 0;
 		size_t writes = 0;
 
 		FDisk();
-		void Mount(const std::vector<uint8_t>& _data, const std::wstring& _path);
+		void Mount(const std::vector<uint8_t>& _data, const std::string& _path);
 		auto GetData() -> uint8_t*;
 		auto GetDisk() -> FDisk*;
 	};
@@ -59,7 +59,7 @@ namespace dev
 		};
 
 		struct DiskInfo {
-			std::wstring path;
+			std::string path;
 			bool updated = false;
 			size_t reads;
 			size_t writes;
@@ -90,7 +90,7 @@ namespace dev
 
 	public:
 		Fdc1793();
-		void Mount(const int _driveIdx, const std::vector<uint8_t>& _data, const std::wstring& _path);
+		void Mount(const int _driveIdx, const std::vector<uint8_t>& _data, const std::string& _path);
 		auto Read(const Port _port) -> uint8_t;
 		auto Write(const Port _port, uint8_t _val) -> uint8_t;
 		auto GetFdcInfo() -> Info;

@@ -61,10 +61,10 @@ dev::DevectorApp::~DevectorApp()
 
 void dev::DevectorApp::HardwareInit()
 {
-	std::wstring pathBootData = dev::StrToStrW(GetSettingsString("bootPath", "boot//boot.bin"));
+	std::string pathBootData = GetSettingsString("bootPath", "boot//boot.bin");
 	m_restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", true);
 	m_ramDiskClearAfterRestart = GetSettingsBool("ramDiskClearAfterRestart", false);
-	m_ramDiskDataPath = dev::StrToStrW(GetSettingsString("ramDiskDataPath", "ramDisks.bin"));
+	m_ramDiskDataPath = GetSettingsString("ramDiskDataPath", "ramDisks.bin");
 
 	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData, m_ramDiskDataPath, m_ramDiskClearAfterRestart);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
@@ -123,7 +123,7 @@ void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 	bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 	if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
 
-	auto path = dev::StrToStrW(_rom_fdd_recPath);
+	auto path = _rom_fdd_recPath;
 	auto ext = StrToUpper(dev::GetExt(path));
 
 	if (ext == EXT_ROM)
@@ -139,7 +139,7 @@ void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 		LoadRecording(path);
 	}
 	else {
-		dev::Log(L"Unsupported file type: {}", path);
+		dev::Log("Unsupported file type: {}", path);
 		m_loadingRes.state = LoadingRes::State::NONE;
 		return;
 	}
@@ -251,7 +251,7 @@ void dev::DevectorApp::MainMenuUpdate()
 			{
 				for (const auto& [fileType, path, driveIdx, autoBoot] : m_recentFilePaths)
 				{
-					std::string itemS = dev::StrWToStr(path);
+					std::string itemS = path;
 					if (fileType == FileType::FDD)
 					{
 						itemS += std::format(":{}", driveIdx);
@@ -428,7 +428,7 @@ void dev::DevectorApp::RecentFilesInit()
 	for (const auto& fileType_path_driveIdx_autoBoot : recentFiles)
 	{
 		FileType fileType = static_cast<FileType>(fileType_path_driveIdx_autoBoot[0]);
-		auto path = dev::StrToStrW(fileType_path_driveIdx_autoBoot[1]);
+		auto path = fileType_path_driveIdx_autoBoot[1];
 		int driveIdx = fileType_path_driveIdx_autoBoot[2];
 		bool autoBoot = fileType_path_driveIdx_autoBoot[3];
 
@@ -441,7 +441,7 @@ void dev::DevectorApp::RecentFilesStore()
 	nlohmann::json recentFiles;
 	for (const auto& [fileType, path, driveIdx, autoBoot] : m_recentFilePaths)
 	{
-		nlohmann::json item = { fileType, dev::StrWToStr(path), driveIdx, autoBoot };
+		nlohmann::json item = { fileType, path, driveIdx, autoBoot };
 
 		recentFiles.push_back(item);
 	}
@@ -449,7 +449,7 @@ void dev::DevectorApp::RecentFilesStore()
 	SettingsSave(m_settingsPath);
 }
 
-void dev::DevectorApp::RecentFilesUpdate(const FileType _fileType, const std::wstring& _path, const int _driveIdx, const bool _autoBoot)
+void dev::DevectorApp::RecentFilesUpdate(const FileType _fileType, const std::string& _path, const int _driveIdx, const bool _autoBoot)
 {
 	// remove if it contains
 	m_recentFilePaths.remove_if(
@@ -566,7 +566,7 @@ void dev::DevectorApp::CheckMountedFdd()
 		
 		if (fddInfo["updated"])
 		{
-			m_loadingRes.pathFddUpdated = dev::StrToStrW(fddInfo["path"]);
+			m_loadingRes.pathFddUpdated = fddInfo["path"];
 			m_loadingRes.driveIdxUpdated = driveIdx;
 			m_loadingRes.state = LoadingRes::State::SAVE_DISCARD;
 			break;
@@ -597,7 +597,7 @@ void dev::DevectorApp::DrawSaveDiscardFddPopup()
 		static const char* diskNames[] = { "A", "B", "C", "D" };
 		ImGui::Text("Previously mounted disk %s was updated. Save or discard changes?", 
 			diskNames[m_loadingRes.driveIdxUpdated]);
-		ImGui::Text(dev::StrWToStr(m_loadingRes.pathFddUpdated).c_str());
+		ImGui::Text(m_loadingRes.pathFddUpdated.c_str());
 
 		ImGui::NewLine();
 		static bool doNotAskAgain = false;
@@ -648,10 +648,9 @@ void dev::DevectorApp::OpenFile()
 	
 	if (filename)
 	{
-		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-		std::wstring path = conv.from_bytes(filename);
+		std::string path = std::string(filename);
 
-		auto ext = StrToUpper(dev::GetExt(path));
+		auto ext = dev::StrToUpper(dev::GetExt(path));
 
 		if (ext == EXT_ROM)
 		{
@@ -676,7 +675,7 @@ void dev::DevectorApp::OpenFile()
 			m_loadingRes.state = LoadingRes::State::UPDATE_RECENT;
 		}
 		else {
-			dev::Log(L"Not supported file type: {}", path);
+			dev::Log("Not supported file type: {}", path);
 			m_loadingRes.state = LoadingRes::State::NONE;
 		}
 	}
@@ -712,8 +711,7 @@ void dev::DevectorApp::SaveFile()
 				nlohmann::json::binary_t binaryData = result->at("data").get<nlohmann::json::binary_t>();
 				std::vector<uint8_t> data(binaryData.begin(), binaryData.end());
 
-				std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-				std::wstring path = conv.from_bytes(filename);
+				std::string path = std::string(filename);
 
 				if (!data.empty()) dev::SaveFile(path, data, true);
 			}
@@ -771,11 +769,11 @@ void dev::DevectorApp::ReqUIHandling()
 }
 
 
-void dev::DevectorApp::LoadRom(const std::wstring& _path)
+void dev::DevectorApp::LoadRom(const std::string& _path)
 {
 	auto result = dev::LoadFile(_path);
 	if (!result || result->empty()) {
-		dev::Log(L"Error occurred while loading the file. Path: {}. "
+		dev::Log("Error occurred while loading the file. Path: {}. "
 			"Please ensure the file exists and you have the correct permissions to read it.", _path);
 		return;
 	}
@@ -792,14 +790,14 @@ void dev::DevectorApp::LoadRom(const std::wstring& _path)
 	m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 	m_hardwareP->Request(Hardware::Req::RUN);
 
-	Log(L"File loaded: {}", _path);
+	Log("File loaded: {}", _path);
 }
 
-void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, const bool _autoBoot)
+void dev::DevectorApp::LoadFdd(const std::string& _path, const int _driveIdx, const bool _autoBoot)
 {
 	auto fddResult = dev::LoadFile(_path);
 	if (!fddResult || fddResult->empty()) {
-		dev::Log(L"Fdc1793 Error: loading error. "
+		dev::Log("Fdc1793 Error: loading error. "
 			"Ensure the file exists and its permissions are correct. Path: {}", _path);
 		return;
 	}
@@ -808,7 +806,7 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 	auto fddimg = *fddResult;
 
 	if (fddimg.size() > FDD_SIZE) {
-		dev::Log(L"Fdc1793 Warning: disk image is too big. "
+		dev::Log("Fdc1793 Warning: disk image is too big. "
 			"It size will be concatenated to {}. Original size: {} bytes, path: {}", FDD_SIZE, origSize, _path);
 		fddimg.resize(FDD_SIZE);
 	}
@@ -819,7 +817,7 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 	m_hardwareP->Request(Hardware::Req::LOAD_FDD, {
 		{"data", fddimg },
 		{"driveIdx", _driveIdx},
-		{"path", dev::StrWToStr(_path)}
+		{"path", _path}
 		});
 
 	if (_autoBoot)
@@ -830,14 +828,14 @@ void dev::DevectorApp::LoadFdd(const std::wstring& _path, const int _driveIdx, c
 		m_hardwareP->Request(Hardware::Req::RUN);
 	}
 
-	Log(L"File loaded: {}", _path);
+	Log("File loaded: {}", _path);
 }
 
-void dev::DevectorApp::LoadRecording(const std::wstring& _path)
+void dev::DevectorApp::LoadRecording(const std::string& _path)
 {
 	auto result = dev::LoadFile(_path);
 	if (!result || result->empty()) {
-		dev::Log(L"Error occurred while loading the file. Path: {}. "
+		dev::Log("Error occurred while loading the file. Path: {}. "
 			"Please ensure the file exists and you have the correct permissions to read it.", _path);
 		return;
 	}
@@ -852,7 +850,7 @@ void dev::DevectorApp::LoadRecording(const std::wstring& _path)
 	m_debuggerP->GetDebugData().LoadDebugData(_path);
 	m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 
-	Log(L"File loaded: {}", _path);
+	Log("File loaded: {}", _path);
 }
 
 

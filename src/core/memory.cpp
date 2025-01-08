@@ -1,17 +1,17 @@
 #include "core/memory.h"
 #include "utils/utils.h"
 
-dev::Memory::Memory(const std::wstring& _pathBootData, const std::wstring& _pathRamDiskData, 
+dev::Memory::Memory(const std::string& _pathBootData, const std::string& _pathRamDiskData, 
 	const bool _ramDiskClearAfterRestart)
 	: 
 	m_rom(), m_ram(),
 	m_pathRamDiskData(_pathRamDiskData),
 	m_ramDiskClearAfterRestart(_ramDiskClearAfterRestart)
 {
-	auto res = dev::LoadFile(_pathBootData);
+	auto res = dev::LoadFile(dev::GetExecutableDir() + _pathBootData);
 	if (res) m_rom = *res;
 
-	res = dev::LoadFile(_pathRamDiskData);
+	res = dev::LoadFile(dev::GetExecutableDir() + _pathRamDiskData);
 	if (res) {
 		RamDiskData ramDiskData = *res;
 		ramDiskData.resize(MEMORY_RAMDISK_LEN * RAM_DISK_MAX);

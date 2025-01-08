@@ -14,7 +14,7 @@ int main(int argc, char** argv)
         "This is an emulator of the Soviet personal computer Vector06C. It has built-in debugger functionality.");
     
     auto settingsPath = argsParser.GetString("settingsPath",
-        "The path to the settings.", false, "settings.json");
+        "The path to the settings.", false, dev::GetExecutableDir() + "settings.json");
 
     auto rom_fdd_recPath = argsParser.GetString("path",
         "The path to the rom/fdd/rec file.", false, "");
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     }
 
     nlohmann::json settingsJ;
-    if (dev::IsFileExist(dev::StrToStrW(settingsPath)) == false)
+    if (dev::IsFileExist(settingsPath) == false)
     {
         dev::Log("The settings wasn't found. Created new default settings: {}", settingsPath);
     }

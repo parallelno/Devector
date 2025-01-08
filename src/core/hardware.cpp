@@ -2,8 +2,8 @@
 #include "utils/str_utils.h"
 #include "core/disasm.h"
 
-dev::Hardware::Hardware(const std::wstring& _pathBootData, 
-		const std::wstring& _pathRamDiskData, const bool _ramDiskClearAfterRestart)
+dev::Hardware::Hardware(const std::string& _pathBootData, 
+		const std::string& _pathRamDiskData, const bool _ramDiskClearAfterRestart)
 	:
 	m_status(Status::STOP),
 	m_memory(_pathBootData, _pathRamDiskData, _ramDiskClearAfterRestart),
@@ -345,7 +345,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 		case Req::GET_FDD_INFO: {
 			auto info = m_fdc.GetFddInfo(dataJ["driveIdx"]);
 			out = {
-				{"path", dev::StrWToStr(info.path)},
+				{"path", info.path},
 				{"updated", info.updated},
 				{"reads", info.reads},
 				{"writes", info.writes},
@@ -460,7 +460,7 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 			break;
 
 		case Req::LOAD_FDD:
-			m_fdc.Mount(dataJ["driveIdx"], dataJ["data"], dev::StrToStrW(dataJ["path"]));
+			m_fdc.Mount(dataJ["driveIdx"], dataJ["data"], dataJ["path"]);
 			break;
 
 		case Req::RESET_UPDATE_FDD:

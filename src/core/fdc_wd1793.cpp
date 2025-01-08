@@ -16,7 +16,7 @@ dev::FDisk::FDisk()
 	header[5] = 0;		// CRC2 is not supported
 }
 
-void dev::FDisk::Mount(const std::vector<uint8_t>& _data, const std::wstring& _path)
+void dev::FDisk::Mount(const std::vector<uint8_t>& _data, const std::string& _path)
 {
 	path = _path;
 	memcpy(data, _data.data(), _data.size());
@@ -422,7 +422,7 @@ uint8_t dev::Fdc1793::Write(const Port _reg, uint8_t _val)
 	return(m_irq);
 }
 
-void dev::Fdc1793::Mount(const int _driveIdx, const std::vector<uint8_t>& _data, const std::wstring& _path)
+void dev::Fdc1793::Mount(const int _driveIdx, const std::vector<uint8_t>& _data, const std::string& _path)
 {
 	m_disks[_driveIdx % DRIVES_MAX].Mount(_data, _path);
 	if (_driveIdx == m_drive) Reset();

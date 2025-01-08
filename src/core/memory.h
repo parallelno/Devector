@@ -97,7 +97,7 @@ namespace dev
 		};
 #pragma pack(pop)
 
-		Memory(const std::wstring& _pathBootData, const std::wstring& _pathRamDiskData, const bool _ramDiskClearAfterRestart);
+		Memory(const std::string& _pathBootData, const std::string& _pathRamDiskData, const bool _ramDiskClearAfterRestart);
 		~Memory();
 		void Init();
 		void Restart();
@@ -131,7 +131,7 @@ namespace dev
 		Rom m_rom;
 		State m_state;
 		int m_mappingsEnabled = 0;
-		std::wstring m_pathRamDiskData;
+		std::string m_pathRamDiskData;
 		bool m_ramDiskClearAfterRestart = true;
 	};
 }

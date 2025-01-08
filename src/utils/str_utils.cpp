@@ -114,8 +114,17 @@ auto dev::GetSubstringCount(const std::string& _str, const std::string& _substr)
 	return count;
 }
 
-auto dev::StrToUpper(std::wstring _str)
+auto dev::StrToUpperW(std::wstring _str)
 -> std::wstring
+{
+	for (auto& ch : _str) {
+		ch = std::toupper(ch);
+	}
+	return _str;
+}
+
+auto dev::StrToUpper(std::string _str)
+-> std::string
 {
 	for (auto& ch : _str) {
 		ch = std::toupper(ch);

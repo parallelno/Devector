@@ -117,7 +117,7 @@ namespace dev
 		auto GetBreakpoints() -> Breakpoints* { return &m_breakpoints; };
 		auto GetWatchpoints() -> Watchpoints* { return &m_watchpoints; };
 
-		void LoadDebugData(const std::wstring& _path);
+		void LoadDebugData(const std::string& _path);
 		void SaveDebugData();
 
 		void Reset();
@@ -134,7 +134,7 @@ namespace dev
 		Breakpoints m_breakpoints;
 		Watchpoints m_watchpoints;
 
-		std::wstring m_debugPath;
+		std::string m_debugPath;
 
 		UpdateId m_labelsUpdates = 0;
 		UpdateId m_constsUpdates = 0;

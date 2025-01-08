@@ -211,7 +211,7 @@ int dev::HAL::LoadRom(System::String^ _path)
 
 int dev::HAL::LoadFdd(System::String^ _path, const int _driveIdx, const bool _autoBoot)
 {
-	auto path = msclr::interop::marshal_as<std::wstring>(_path);
+	auto path = msclr::interop::marshal_as<std::string>(_path);
 
 	auto fddResult = dev::LoadFile(path);
 	if (!fddResult || fddResult->empty()) return false;
@@ -234,7 +234,7 @@ int dev::HAL::LoadFdd(System::String^ _path, const int _driveIdx, const bool _au
 	m_hardwareP->Request(Hardware::Req::LOAD_FDD, {
 		{"data", fddimg },
 		{"driveIdx", _driveIdx},
-		{"path", dev::StrWToStr(path)}
+		{"path", path}
 		});
 
 	if (_autoBoot)

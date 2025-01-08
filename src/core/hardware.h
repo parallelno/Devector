@@ -59,7 +59,7 @@ namespace dev
 		enum class ExecSpeed : int { _1PERCENT = 0, _20PERCENT, HALF, NORMAL, X2, MAX, LEN };
 
 
-        Hardware(const std::wstring& _pathBootData, const std::wstring& _pathRamDiskData, 
+        Hardware(const std::string& _pathBootData, const std::string& _pathRamDiskData, 
 			const bool _ramDiskClearAfterRestart);
 		~Hardware();
 		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result <nlohmann::json>;

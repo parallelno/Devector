@@ -81,24 +81,7 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 		logMutex.unlock();
 	}
 
-	template <typename... Args>
-	constexpr void Log(const std::wstring& _fmt, Args&&... args)
-	{
-		logMutex.lock();
-
-		using namespace std::chrono;
-
-		std::wcout << L"Local time " <<
-			floor<seconds>(current_zone()->to_local(system_clock::now())) <<
-			L"  " <<
-			//std::vformat(std::wstring(std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(_fmt)), std::make_format_args(args...)) <<
-			std::vformat(_fmt, std::make_wformat_args(args...)) <<
-			std::endl;
-
-		logMutex.unlock();
-	}
-
-	void RunApp(const std::wstring& dir, const std::wstring& appName);
+	void RunApp(const std::string& dir, const std::string& appName);
 	void OsOpenInShell(const char* path);
 	void ThreadSleep(double seconds);
 
@@ -180,35 +163,34 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 	// FILES
 	//
 	//--------------------------------------------------------------
-	inline bool IsFileExist(const std::wstring& _path)
-	{
-		return std::filesystem::exists(_path);
-	}
 	inline bool IsFileExist(const std::string& _path)
 	{
 		return std::filesystem::exists(_path);
 	}
 
-	auto LoadTextFile(const std::wstring& _path) ->std::string;
+	auto LoadTextFile(const std::string& _path) ->std::string;
 
-	auto LoadFile(const std::wstring& _path)
+	auto LoadFile(const std::string& _path)
 		-> dev::Result<std::vector<uint8_t>>;
 
-	bool SaveFile(const std::wstring& _path, 
+	bool SaveFile(const std::string& _path, 
 		const std::vector<uint8_t>& _data, const bool _override = true);
 
-	void DeleteFiles(const std::wstring& _dir, const std::wstring& _mask = L"*");
+	void DeleteFiles(const std::string& _dir, const std::string& _mask = "*");
 
-	size_t GetFileSize(const std::wstring& _path);
+	size_t GetFileSize(const std::string& _path);
 	
-	auto GetDir(const std::wstring& _path)
-		-> std::wstring;
-	auto GetFilename(const std::wstring& _path)
-		-> std::wstring;
+	auto GetDir(const std::string& _path)
+		-> std::string;
 
-	auto GetExt(const std::wstring& _path)
-		->std::wstring;
+	auto GetFilename(const std::string& _path)
+		-> std::string;
 
-	auto GetDirStemExt(const std::wstring& _path)
-		->std::tuple<std::wstring, std::wstring, std::wstring>;
+	auto GetExt(const std::string& _path)
+		-> std::string;
+
+	auto GetDirStemExt(const std::string& _path)
+		-> std::tuple<std::string, std::string, std::string>;
+
+	auto GetExecutableDir() -> std::string;
 }

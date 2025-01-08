@@ -32,9 +32,9 @@ namespace dev
 	class DevectorApp : public ImGuiApp
 	{
 		static constexpr int RECENT_FILES_MAX = 10;
-		const std::wstring EXT_ROM = L".ROM";
-		const std::wstring EXT_FDD = L".FDD";
-		const std::wstring EXT_REC = L".REC";
+		const std::string EXT_ROM = ".ROM";
+		const std::string EXT_FDD = ".FDD";
+		const std::string EXT_REC = ".REC";
 
 		enum class FileType : int {ROM = 0, FDD, REC, UNDEFINED};
 		
@@ -68,15 +68,15 @@ namespace dev
 			const char* POPUP_SAVE_DISCARD = "Save or Discard?";
 
 			State state = State::NONE;
-			std::wstring path;
+			std::string path;
 			int driveIdx = 0;
 			bool autoBoot = false;
 			Type type = Type::OPEN_FILE_DIALOG;
-			std::wstring pathFddUpdated;
+			std::string pathFddUpdated;
 			int driveIdxUpdated = 0;
 			FileType fileType = FileType::ROM;
 
-			void Init(const State& _state, const Type _type = Type::OPEN_FILE_DIALOG, FileType _fileType = FileType::UNDEFINED, const std::wstring& _path = L"",
+			void Init(const State& _state, const Type _type = Type::OPEN_FILE_DIALOG, FileType _fileType = FileType::UNDEFINED, const std::string& _path = "",
 				const int _driveIdx = INVALID_ID, bool _autoBoot = false) 
 			{
 				if (state == LoadingRes::State::EXIT) return;
@@ -128,13 +128,13 @@ namespace dev
 		bool m_restartOnLoadFdd = false;
 		bool m_ramDiskClearAfterRestart = true;
 		bool m_mountRecentFddImg = true;
-		std::wstring m_ramDiskDataPath = L"";
+		std::string m_ramDiskDataPath = "";
 		int m_rustLatSwitched = 0;
 
 		bool m_debuggerAttached = false;
 
 		// path, file type, driveIdx, autoBoot
-		using RecentFile = std::tuple<FileType, std::wstring, int, bool>;
+		using RecentFile = std::tuple<FileType, std::string, int, bool>;
 		using RecentFiles = std::list<RecentFile>;
 		RecentFiles m_recentFilePaths;
 
@@ -155,13 +155,13 @@ namespace dev
 		void SettingsInit();
 		void RecentFilesInit();
 		void RecentFilesStore();
-		void RecentFilesUpdate(const FileType _fileType, const std::wstring& _path, const int _driveIdx = INVALID_ID, const bool _autoBoot = false);
+		void RecentFilesUpdate(const FileType _fileType, const std::string& _path, const int _driveIdx = INVALID_ID, const bool _autoBoot = false);
 		void AppStyleInit();
 		void MainMenuUpdate();
 		void Load(const std::string& _path);		
-		void LoadRom(const std::wstring& _path);
-		void LoadFdd(const std::wstring& _path, const int _driveIdx, const bool _autoBoot);
-		void LoadRecording(const std::wstring& _path);
+		void LoadRom(const std::string& _path);
+		void LoadFdd(const std::string& _path, const int _driveIdx, const bool _autoBoot);
+		void LoadRecording(const std::string& _path);
 		void Reload();
 		static bool EventFilter(void* _userdata, SDL_Event* _event);
 		void DrawSaveDiscardFddPopup();

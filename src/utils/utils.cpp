@@ -5,6 +5,8 @@
 
 #ifdef _WIN32
 	#include <windows.h>
+#else
+	#include <unistd.h>
 #endif
 
 #include "utils/utils.h"
@@ -12,14 +14,14 @@
 #include "utils/str_utils.h"
 #include "utils/result.h"
 
-void dev::RunApp(const std::wstring& _dir, const std::wstring& _appName) 
+void dev::RunApp(const std::string& _dir, const std::string& _appName) 
 {
 	if ( !IsFileExist(_dir + _appName) )
 	{
 		return;
 	}
-	const std::wstring command = L"cd " + _dir + L" && " + _appName;
-	auto suppress_warning = system(dev::StrWToStr(command).c_str());
+	const std::string command = "cd " + _dir + " && " + _appName;
+	auto suppress_warning = system(command.c_str());
 }
 
 void dev::OsOpenInShell(const char* path)
@@ -62,14 +64,14 @@ void dev::CopyToClipboard(const std::string& _str) {
 #endif
 	}
 
-auto dev::LoadTextFile(const std::wstring& _path)
+auto dev::LoadTextFile(const std::string& _path)
 -> std::string
 {	
 	if (!IsFileExist(_path)) {
 		return {};
 	}
 
-	std::ifstream ifs(dev::StrWToStr(_path));
+	std::ifstream ifs(_path);
 
 	std::string data = std::string(std::istreambuf_iterator<char>(ifs),
 		std::istreambuf_iterator<char>());
@@ -77,7 +79,7 @@ auto dev::LoadTextFile(const std::wstring& _path)
 	return data;
 }
 
-auto dev::LoadFile(const std::wstring& _path)
+auto dev::LoadFile(const std::string& _path)
 -> Result<std::vector<uint8_t>>
 {
 	if (!IsFileExist(_path)) {
@@ -85,11 +87,11 @@ auto dev::LoadFile(const std::wstring& _path)
 	}
 
 	// Open the file in binary mode
-	std::ifstream file(dev::StrWToStr(_path), std::ios::binary);
+	std::ifstream file(_path, std::ios::binary);
 
 	// Check if the file is opened successfully
 	if (!file.is_open()) {
-		std::wcerr << L"Failed to open file: " << _path << std::endl;
+		std::cerr << "Failed to open file: " << _path << std::endl;
 		return {};
 	}
 
@@ -98,18 +100,18 @@ auto dev::LoadFile(const std::wstring& _path)
 	return { std::move(data) };
 }
 
-bool dev::SaveFile(const std::wstring& _path, const std::vector<uint8_t>& _data, const bool _override)
+bool dev::SaveFile(const std::string& _path, const std::vector<uint8_t>& _data, const bool _override)
 {
-	std::ofstream file{dev::StrWToStr(_path), std::ios::binary | std::ios::ate};
+	std::ofstream file{_path, std::ios::binary | std::ios::ate};
 
 	if (!file)
 	{
-		dev::Log(L"Failed to init a file object: {}", _path);
+		dev::Log("Failed to init a file object: {}", _path);
 		return false;	
 	}
 	else if ((!_override && std::filesystem::exists(_path)))
 	{
-		dev::Log(L"Error. Failed to save file. File is already exist: {}", _path);
+		dev::Log("Error. Failed to save file. File is already exist: {}", _path);
 		return false;
 	}
 
@@ -117,42 +119,61 @@ bool dev::SaveFile(const std::wstring& _path, const std::vector<uint8_t>& _data,
 	return true;
 }
 
-void dev::DeleteFiles(const std::wstring& _dir, const std::wstring& _mask)
+void dev::DeleteFiles(const std::string& _dir, const std::string& _mask)
 {
-	const std::wstring command = L"del /Q " + _dir + _mask;
-	auto suppress_warning = system(dev::StrWToStr(command).c_str());
+	const std::string command = "del /Q " + _dir + _mask;
+	auto suppress_warning = system(command.c_str());
 }
 
-size_t dev::GetFileSize(const std::wstring& _path)
+size_t dev::GetFileSize(const std::string& _path)
 {
 	std::filesystem::path p{ _path };
 	return std::filesystem::file_size(p);
 }
 
-auto dev::GetDir(const std::wstring& _path)
-->std::wstring
+auto dev::GetDir(const std::string& _path)
+->std::string
 {
 	std::filesystem::path p{ _path };
-	return p.parent_path().wstring();
+	return p.parent_path().string();
 }
 
-auto dev::GetFilename(const std::wstring& _path)
-->std::wstring
+auto dev::GetFilename(const std::string& _path)
+->std::string
 {
 	std::filesystem::path p{ _path };
-	return p.stem().wstring();
+	return p.stem().string();
 }
 
-auto dev::GetExt(const std::wstring& _path)
-->std::wstring
+auto dev::GetExt(const std::string& _path)
+->std::string
 {
 	std::filesystem::path p{ _path };
-	return p.extension().wstring();
+	return p.extension().string();
 }
 
-auto dev::GetDirStemExt(const std::wstring& _path)
--> std::tuple<std::wstring, std::wstring, std::wstring>
+auto dev::GetDirStemExt(const std::string& _path)
+-> std::tuple<std::string, std::string, std::string>
 {
 	std::filesystem::path p{ _path };
-	return std::make_tuple(p.parent_path().wstring(), p.stem().wstring(), p.extension().wstring());
+	return std::make_tuple(p.parent_path().string(), p.stem().string(), p.extension().string());
+}
+
+auto dev::GetExecutableDir() 
+-> std::string
+{
+	std::string path;
+#ifdef _WIN32
+	char buffer[MAX_PATH];
+    GetModuleFileNameA(NULL, buffer, MAX_PATH);
+    path = buffer;
+#else
+	char buffer[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer)-1);
+    if (len != -1) {
+        buffer[len] = '\0';
+        path = dev::string(buffer);
+    }
+#endif
+	return dev::GetDir(path) + "/";
 }
