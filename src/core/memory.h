@@ -22,17 +22,28 @@ namespace dev
 		using RamDiskData = std::vector<uint8_t>;
 
 #pragma pack(push, 1)
-		// RAM-mapping is applied if the RAM-mapping is enabled, the ram accesssed via non-stack instructions, and the addr falls into the RAM-mapping range associated with that particular RAM mapping
-		// Stack-mapping is applied if the Stack-mapping is enabled, the ram accesssed via the stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
-		// special case: the RAM-mapping applies to a stack operation if the Stack-mapping is disabled, RAM-mapping is enabled, and the addr falls into the RAM-mapping range associated with that particular RAM mapping.
+		// RAM mapping is applied if:
+		// 	- RAM mapping is enabled
+		// 	- The RAM is accessed via non-stack instructions
+		// 	- The address falls within the RAM mapping range associated with the current RAM mapping
+
+		// Stack mapping is applied if:
+		// 	- Stack mapping is enabled
+		// 	- The RAM is accessed via stack-related instructions:
+		// 		Push, Pop, XTHL, Call, Ret, conditional calls/returns, or RST
+
+		// Special case:
+		// 	If stack mapping is disabled but RAM mapping is enabled, RAM mapping applies to stack operations 
+		// 	if the stack address falls within the RAM mapping range.
+
 		union Mapping {
 			struct {
-				uint8_t pageRam : 2;	// Ram-Disk 64k page idx accesssed via non-stack instructions (all instructions except mentioned below)
-				uint8_t pageStack : 2;	// Ram-Disk 64k page idx accesssed via the stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
-				bool modeStack : 1;		// enabling stack mapping
-				bool modeRamA : 1; // enabling ram [0xA000-0xDFFF] mapped into the the Ram-Disk
-				bool modeRam8 : 1; // enabling ram [0x8000-0x9FFF] mapped into the the Ram-Disk
-				bool modeRamE : 1; // enabling ram [0xE000-0xFFFF] mapped into the the Ram-Disk
+				uint8_t pageRam : 2;	// The index of the Ram-Disk 64k page accessed via non-stack instructions (all instructions except mentioned below)
+				uint8_t pageStack : 2;	// The index of the RAM-Disk 64k page accessed via stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
+				bool modeStack : 1;		// Enable stack mapping
+				bool modeRamA : 1; // Enable RAM mapping for range [0xA000-0xDFFF]
+				bool modeRam8 : 1; // Enable RAM mapping for range [0x8000-0x9FFF]
+				bool modeRamE : 1; // Enable RAM mapping for range [0xE000-0xFFFF]
 			};
 			uint8_t data = 0;
 			Mapping(const uint8_t _data = 0) : data(_data) {}
