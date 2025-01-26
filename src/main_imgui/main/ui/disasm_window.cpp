@@ -117,7 +117,7 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 	{
 		Addr addr = (Addr)dev::StrHexToInt(m_searchText);
 		UpdateDisasm(addr);
-		m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
+		m_selectedLineAddr = addr;
 	}
 	if (_isRunning) ImGui::EndDisabled();
 
@@ -330,15 +330,18 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
 		for (int lineIdx = 0; lineIdx < m_disasmLines; lineIdx++)
 		{
+			auto& line = disasm.at(lineIdx);
+			int addr = line.addr;
+
 			ImGui::TableNextRow();
 
 			// the line selection/highlight
 			ImGui::TableNextColumn();
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
-			const bool isSelected = m_selectedLineIdx == lineIdx;
+			const bool isSelected = m_selectedLineAddr == addr;
 			if (ImGui::Selectable(std::format("##disasm{}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				m_selectedLineIdx = lineIdx;
+				m_selectedLineAddr = addr;
 			}
 			if (!_isRunning) 
 			{
@@ -346,9 +349,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				selectionMax.y = ImGui::GetItemRectMax().y;	
 				hoveredLineIdx = ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ? lineIdx : hoveredLineIdx;
 			}
-
-			auto& line = disasm.at(lineIdx);
-			int addr = line.addr;
 
 			switch (line.type)
 			{
@@ -402,22 +402,18 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		// Up/Down scrolling
 		if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
 		{
-			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);
 			UpdateDisasm(disasm[0].addr, 2, false);
 		}
 		else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
 		{
-			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
 			UpdateDisasm(disasm[0].addr, -2, false);
 		}
 		if (ImGui::GetIO().MouseWheel > 0.0f)
 		{
-			m_selectedLineIdx = dev::Min(m_selectedLineIdx + 2, m_disasmLines - 1);
 			UpdateDisasm(disasm[0].addr, 2, false);
 		}
 		else if (ImGui::GetIO().MouseWheel < 0.0f)
 		{
-			m_selectedLineIdx = dev::Max(m_selectedLineIdx - 2, 0);
 			UpdateDisasm(disasm[0].addr, -2, false);
 		}
 
@@ -506,7 +502,7 @@ void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOf
 	m_immLinksP = m_debugger.GetDisasm().GetImmLinks();
 	m_immLinksNum = m_debugger.GetDisasm().GetImmAddrlinkNum();
 
-	if (_updateSelection) m_selectedLineIdx = DISASM_INSTRUCTION_OFFSET;
+	if (_updateSelection) m_selectedLineAddr = _addr;
 }
 
 void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu)

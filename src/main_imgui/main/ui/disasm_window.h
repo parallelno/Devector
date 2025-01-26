@@ -28,6 +28,7 @@ namespace dev
 		static constexpr float PC_ICON_OFFSET_X = 30.0f;
 
 		static constexpr int DISASM_INSTRUCTION_OFFSET = 6;
+
 		static constexpr int MAX_DISASM_LABELS = 20;
 		
 		static constexpr ImU32 DIS_CLR_LINK		= dev::IM_U32(0x808010FF);
@@ -97,7 +98,7 @@ namespace dev
 		size_t m_immLinksNum = 0;
 		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
-		int m_selectedLineIdx = 0;
+		int m_selectedLineAddr = 0;
 		static constexpr int NAVIGATE_ADDRS_LEN = 256;
 		std::array<Addr, NAVIGATE_ADDRS_LEN> m_navigateAddrs; // contains addr where the user navigated to
 		int m_navigateAddrsIdx = 0; // points to the current addr in m_navigateAddrs
