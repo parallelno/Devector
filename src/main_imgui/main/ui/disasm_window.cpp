@@ -150,6 +150,20 @@ int dev::DisasmWindow::GetVisibleLines() const
 	return static_cast<int>(lines);
 }
 
+void dev::DisasmWindow::DrawNextExecutedLineHighlight(const bool _isRunning, const Disasm::Line& _line, const Addr _regPC)
+{
+	if (_isRunning) return;
+	if (_line.addr != _regPC) return;
+
+	ImGui::SameLine();
+
+	auto highlightMin = ImGui::GetItemRectMin();
+	auto highlightMax = ImGui::GetItemRectMax();
+
+	ImGui::GetWindowDrawList()->AddRectFilled(highlightMin, highlightMax, DASM_CLR_PC_LINE_HIGHLIGHT);
+
+}
+
 void dev::DisasmWindow::DrawDisasmIcons(const bool _isRunning, const Disasm::Line& _line, const int _lineIdx, const Addr _regPC)
 {
 	if (_isRunning) return;
@@ -351,6 +365,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				case Disasm::Line::Type::CODE:
 				{
 					DrawAddrLinks(_isRunning, lineIdx, hoveredLineIdx == lineIdx);
+					DrawNextExecutedLineHighlight(_isRunning, line, regPC);
 					DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
 					DrawDisasmAddr(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
 					DrawDisasmCode(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);

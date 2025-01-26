@@ -117,6 +117,7 @@ namespace dev
 		void DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu);
 		void DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 			const bool _selected);
+		void DrawNextExecutedLineHighlight(const bool _isRunning, const Disasm::Line& _line, const Addr _regPC);
 		void UpdateData(const bool _isRunning);
 		void ReqHandling();
 		bool IsDisasmTableOutOfWindow() const;

@@ -82,7 +82,9 @@ namespace dev
 	static constexpr ImU32 CLR_URL_HOVERED = dev::IM_U32(0x2081FFFF);
 	static constexpr ImU32 CLR_URL = dev::IM_U32(0x1080F0FF);
 
-	static constexpr ImU32 DASM_CLR_PC = dev::IM_U32(0x88F038FF);
+	static constexpr ImU32 DASM_CLR_PC = dev::IM_U32(0x88F038FF); // program counter
+	static constexpr ImU32 DASM_CLR_PC_LINE_HIGHLIGHT = dev::IM_U32(0x00F00040); // highlight the next executed code line
+
 	static constexpr ImVec2 UI_LITTLE_SPACE = { 12,10 };
 
 	// Make the UI compact because there are so many fields
