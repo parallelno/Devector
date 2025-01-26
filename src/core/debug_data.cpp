@@ -324,7 +324,16 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 	// init empty dictionaries when there is no file found
 	if (!dev::IsFileExist(m_debugPath)) return;
 	
-	auto debugDataJ = LoadJson(m_debugPath);
+	auto debugDataJ = nlohmann::json::object();
+	try
+	{
+		auto debugDataJ = LoadJson(m_debugPath);	
+	}
+	catch (const std::exception& e)
+	{
+		dev::Log("The debug data file is corrupted: {}", e.what());
+		return;
+	}
 
 	// add labels
 	if (debugDataJ.contains("labels")) {

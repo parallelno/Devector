@@ -53,7 +53,14 @@ int main(int argc, char** argv)
 		dev::Log("The settings wasn't found. Created new default settings: {}", settingsPath);
 	}
 	else {
-		settingsJ = dev::LoadJson(settingsPath);
+		try
+		{
+			settingsJ = dev::LoadJson(settingsPath);
+		}
+		catch (const std::exception& e)
+		{
+			dev::Log("The settings file is corrupted. Created new default settings: {}", settingsPath);
+		}
 	}
 
 	auto app = dev::DevectorApp(settingsPath, settingsJ, rom_fdd_recPath);
