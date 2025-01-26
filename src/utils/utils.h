@@ -119,6 +119,24 @@ constexpr bool is_defined<T, decltype(typeid(T), void())> = true;
 
 	//--------------------------------------------------------------
 	//
+	// MISC
+	//
+	//--------------------------------------------------------------
+	static auto GetCondition(std::string condS)
+		-> Condition
+		{
+			for (size_t i = 0; i < sizeof(dev::ConditionsS) / sizeof(dev::ConditionsS[0]); i++)
+			{
+				if (ConditionsS[i] == condS)
+				{
+					return static_cast<Condition>(i);
+				}
+			}
+			return static_cast<Condition>(0);
+		}
+
+	//--------------------------------------------------------------
+	//
 	// MATH
 	//
 	//--------------------------------------------------------------

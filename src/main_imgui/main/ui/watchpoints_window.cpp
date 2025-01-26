@@ -298,7 +298,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 				ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
 			
 			// Access
-			DrawProperty2RadioButtons("Type", &access, dev::wpAccessS, IM_ARRAYSIZE(dev::wpAccessS), 8.0f,
+			DrawProperty2RadioButtons("Access", &access, dev::wpAccessS, IM_ARRAYSIZE(dev::wpAccessS), 8.0f,
 				"R - read, W - write, RW - read or write");
 
 			// Condition

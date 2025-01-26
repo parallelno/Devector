@@ -22,12 +22,17 @@ void dev::Breakpoint::Update(Breakpoint&& _bp)
 	UpdateAddrMappingS();
 }
 
-auto dev::Breakpoint::GetOperandS() const ->const char* { return bpOperandsS[static_cast<uint8_t>(data.structured.operand)]; }
+auto dev::Breakpoint::GetOperandS() const 
+-> const char* 
+{ 
+	return bpOperandsS[static_cast<uint8_t>(data.structured.operand)]; 
+}
+
 auto dev::Breakpoint::GetConditionS() const 
 -> const std::string
 {	
 	std::string condValS = ConditionsS[static_cast<uint8_t>(data.structured.cond)];
-	condValS += data.structured.cond == Condition::ANY ? "" : std::to_string(data.structured.value);
+	condValS += data.structured.cond == Condition::ANY ? "" : std::format(" 0x{:02X}", data.structured.value);
 
 	std::string out = std::format("{}{}{}", 
 		GetOperandS(),
@@ -36,6 +41,7 @@ auto dev::Breakpoint::GetConditionS() const
 	);
 	return out;
 }
+
 auto dev::Breakpoint::IsActiveS() const -> const char* { return data.structured.status == Status::ACTIVE ? "X" : "-"; }
 
 bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _cpuState, const Memory::State& _memState) const

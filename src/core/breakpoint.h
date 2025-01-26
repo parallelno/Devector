@@ -9,6 +9,9 @@
 #include <bit>
 
 #include "utils/types.h"
+#include "utils/consts.h"
+#include "utils/utils.h"
+#include "utils/str_utils.h"
 #include "core/cpu_i8080.h"
 #include "core/memory.h"
 #include "utils/json_utils.h"
@@ -76,6 +79,19 @@ namespace dev
 		enum class Operand : uint8_t { A = 0, F, B, C, D, E, H, L, PSW, BC, DE, HL, CC, SP, COUNT };
 		static constexpr int OPERAND_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Operand::COUNT) -1);
 
+		static auto GetOperand(std::string operandS) 
+		-> Operand
+		{
+			for (size_t i = 0; i < sizeof(bpOperandsS) / sizeof(bpOperandsS[0]); i++)
+			{
+				if (bpOperandsS[i] == operandS)
+				{
+					return static_cast<Operand>(i);
+				}
+			}
+    		return static_cast<Operand>(0);
+		}
+
 #pragma pack(push, 1)
 		struct DataStruct {
 			MemPages memPages;
@@ -124,13 +140,13 @@ namespace dev
 			{}
 			Data(const nlohmann::json& _bpJ) :
 				structured(
-					_bpJ["addr"], 
-					static_cast<MemPages>(_bpJ["memPages"]), 
-					static_cast<Status>(_bpJ["status"]), 
-					_bpJ["autoDel"], 
-					static_cast<Operand>(_bpJ["operand"]), 
-					static_cast<Condition>(_bpJ["cond"]), 
-					_bpJ["value"]
+					dev::StrHexToInt(_bpJ["addr"].get<std::string>().c_str()),
+					static_cast<MemPages>(_bpJ["memPages"]),
+					static_cast<Status>(_bpJ["status"]),
+					_bpJ["autoDel"],
+					GetOperand(_bpJ["operand"].get<std::string>()),
+					dev::GetCondition(_bpJ["cond"].get<std::string>()),
+					dev::StrHexToInt(_bpJ["value"].get<std::string>().c_str())
 				)
 			{};
 		};
@@ -151,13 +167,13 @@ namespace dev
 		auto ToJson() const -> nlohmann::json
 		{
 			return {
-				{"addr", data.structured.addr},
+				{"addr", std::format("0x{:04X}", data.structured.addr)},
 				{"memPages", static_cast<uint32_t>(data.structured.memPages.data)},
 				{"status", static_cast<uint32_t>(data.structured.status)},
 				{"autoDel", data.structured.autoDel},
-				{"operand", static_cast<uint32_t>(data.structured.operand)},
-				{"cond", static_cast<uint32_t>(data.structured.cond)},
-				{"value", data.structured.value},
+				{"operand", GetOperandS()},
+				{"cond", dev::ConditionsS[static_cast<uint8_t>(data.structured.cond)]},
+				{"value", std::format("0x{:02X}", data.structured.value)},
 				{"comment", comment}
 			};
 		};

@@ -243,6 +243,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 		comment = "";
 		addrOld = 0xFF;
 		addr = 0xFF;
+		val = 0;
 	}
 	// Init for editing BP
 	if (_reqPopup == ReqPopup::INIT_EDIT)
@@ -255,6 +256,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 		memPages = bp.data.structured.memPages;
 		isAutoDel = bp.data.structured.autoDel;
 		addr = bp.data.structured.addr;
+		val = bp.data.structured.value;
 		selectedOp = static_cast<int>(bp.data.structured.operand);
 		selectedCond = static_cast<int>(bp.data.structured.cond);
 		comment = bp.comment;

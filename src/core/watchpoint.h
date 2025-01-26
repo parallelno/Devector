@@ -7,6 +7,8 @@
 #include <format>
 
 #include "utils/types.h"
+#include "utils/str_utils.h"
+#include "utils/utils.h"
 #include "core/cpu_i8080.h"
 #include "core/memory.h"
 #include "utils/json_utils.h"
@@ -25,6 +27,32 @@ namespace dev
 		static constexpr int TYPE_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Type::COUNT) - 1);
 		enum class Access : uint8_t { R = 0, W, RW, COUNT };
 		static constexpr int ACCESS_BIT_WIDTH = std::bit_width<uint8_t>(static_cast<uint8_t>(Access::COUNT) - 1);
+
+		static auto GetAccess(const std::string _accessS) 
+		-> Access
+		{ 
+			for (int i = 0; i < static_cast<int>(Access::COUNT); i++) 
+			{ 
+				if (std::string(wpAccessS[i]) == _accessS) 
+				{ 
+					return static_cast<Access>(i); 
+				} 
+			} 
+			return Access::COUNT;
+		}
+
+		static auto GetType(const std::string _typeS)
+		-> Type 
+		{
+			for (int i = 0; i < static_cast<int>(Type::COUNT); i++) 
+			{ 
+				if (std::string(wpTypesS[i]) == _typeS) 
+				{ 
+					return static_cast<Type>(i); 
+				} 
+			} 
+			return Type::COUNT;
+		}
 
 #pragma pack(push, 1)
 		union Data {
@@ -61,14 +89,14 @@ namespace dev
 				data0(_data0), data1(_data1)
 			{}
 			Data(const nlohmann::json& _wpJ) : 
-				Data(_wpJ["id"], 
-					static_cast<Access>(_wpJ["access"]), 
-					_wpJ["globalAddr"], 
-					static_cast<Condition>(_wpJ["cond"]), 
-					_wpJ["value"], 
-					static_cast<Type>(_wpJ["type"]), 
-					_wpJ["len"], 
-					_wpJ["active"]) 
+				Data(_wpJ["id"],
+					GetAccess(_wpJ["access"].get<std::string>()), 
+					dev::StrHexToInt(_wpJ["globalAddr"].get<std::string>().c_str()), 
+					GetCondition(_wpJ["cond"].get<std::string>()), 
+					dev::StrHexToInt(_wpJ["value"].get<std::string>().c_str()),
+					GetType(_wpJ["type"].get<std::string>()),
+					dev::StrHexToInt(_wpJ["len"].get<std::string>().c_str()),
+					_wpJ["active"])
 			{};
 		};
 #pragma pack(pop)
@@ -89,12 +117,12 @@ namespace dev
 		{
 			return {
 				{"id", data.id},
-				{"access", static_cast<uint32_t>(data.access)},
-				{"globalAddr", data.globalAddr},
-				{"cond", static_cast<uint32_t>(data.cond)},
-				{"value", data.value},
-				{"type", static_cast<uint32_t>(data.type)},
-				{"len", data.len},
+				{"access", GetAccessS()},
+				{"globalAddr", std::format("0x{:06X}", data.globalAddr)},
+				{"cond", GetConditionS()},
+				{"value", std::format("0x{:04X}", data.value)},
+				{"type", GetTypeS()},
+				{"len", std::format("0x{:04X}", data.len)},
 				{"active", data.active},
 				{"comment", comment}
 			};

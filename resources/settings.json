@@ -21,12 +21,6 @@
     "ramDiskClearAfterRestart": false,
     "ramDiskDataPath": "ramDisks.bin",
     "recentFiles": [
-        [
-            1,
-            "build/debug/bin/GJ.fdd",
-            0,
-            true
-        ]
     ],
     "recorderWindowVisible": true,
     "restartOnLoadFdd": true,
