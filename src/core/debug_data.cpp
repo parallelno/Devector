@@ -302,11 +302,11 @@ void dev::DebugData::GetFilteredMemoryEdits(FilteredElements& _out, const std::s
 	}
 }
 
-void dev::DebugData::LoadDebugData(const std::string& _romPath)
+void dev::DebugData::LoadDebugData(const std::string& _path)
 {
 	// check if the file exists
-	auto romDir = dev::GetDir(_romPath);
-	m_debugPath = romDir + "/" + dev::GetFilename(_romPath) + ".json";
+	auto debugDir = dev::GetDir(_path);
+	m_debugPath = debugDir + "/" + dev::GetFilename(_path) + ".json";
 
 	
 	m_labelsUpdates++;

@@ -820,6 +820,8 @@ void dev::DevectorApp::LoadFdd(const std::string& _path, const int _driveIdx, co
 		{"path", _path}
 		});
 
+	m_debuggerP->GetDebugData().LoadDebugData(_path);
+
 	if (_autoBoot)
 	{
 		m_hardwareP->Request(Hardware::Req::RESET);
