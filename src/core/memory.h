@@ -22,6 +22,7 @@ namespace dev
 		using RamDiskData = std::vector<uint8_t>;
 
 #pragma pack(push, 1)
+		// The ram-disk mapping into the RAM memory space
 		// RAM mapping is applied if:
 		// 	- RAM mapping is enabled
 		// 	- The RAM is accessed via non-stack instructions
@@ -35,6 +36,14 @@ namespace dev
 		// Special case:
 		// 	If stack mapping is disabled but RAM mapping is enabled, RAM mapping applies to stack operations 
 		// 	if the stack address falls within the RAM mapping range.
+
+		// The ram-disk activation command is E8ASssMM:
+		// 	MM: The index of the Ram-Disk 64k page accessed via non-stack instructions (all instructions except mentioned below)
+		// 	ss: The index of the RAM-Disk 64k page accessed via stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
+		// 	S : Enable stack mapping
+		// 	A : Enable RAM mapping for range [0xA000-0xDFFF]
+		// 	8 : Enable RAM mapping for range [0x8000-0x9FFF]
+		// 	E : Enable RAM mapping for range [0xE000-0xFFFF]
 
 		union Mapping {
 			struct {

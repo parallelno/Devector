@@ -84,6 +84,10 @@ dev::ImGuiApp::ImGuiApp(
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	m_ioP = &(ImGui::GetIO());
+	
+	static std::string iniPath = dev::GetExecutableDir() + "imgui.ini";
+	m_ioP->IniFilename = iniPath.c_str();
+
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking

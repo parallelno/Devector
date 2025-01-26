@@ -130,7 +130,7 @@ void dev::Audio::Callback(void* _userdata, SDL_AudioStream* _stream, int _additi
 
 		// adjust the resample rate
 		int downsampleRate = --audioP->m_downsampleRate;
-		dev::Log("SDL buffering is too low: {}. Sample rate is adjusted: {}", buffering, downsampleRate);
+		//dev::Log("SDL buffering is too low: {}. Sample rate is adjusted: {}", buffering, downsampleRate);
 	}
 	else
 	{
@@ -145,7 +145,7 @@ void dev::Audio::Callback(void* _userdata, SDL_AudioStream* _stream, int _additi
 			audioP->m_readBuffIdx += fstreamLen;
 			// adjust the resample rate			
 			int downsampleRate = ++audioP->m_downsampleRate;
-			dev::Log("SDL buffering is too big: {}. Sample rate is adjusted: {}", buffering, downsampleRate);
+			//dev::Log("SDL buffering is too big: {}. Sample rate is adjusted: {}", buffering, downsampleRate);
 		}
 	}
 

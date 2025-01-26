@@ -23,7 +23,7 @@ dev::Memory::~Memory()
 {
 	// store RamDisk
 	RamDiskData ramDiskData(m_ram.begin() + MEMORY_MAIN_LEN, m_ram.end());
-	dev::SaveFile(m_pathRamDiskData, ramDiskData, true);
+	dev::SaveFile(dev::GetExecutableDir() + m_pathRamDiskData, ramDiskData, true);
 }
 void dev::Memory::Init()
 {

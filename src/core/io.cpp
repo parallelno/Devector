@@ -228,6 +228,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 	case 0x10:
 		m_memory.SetRamDiskMode(0, _value);
 		break;
+		// Ram Disk 1
 	case 0x11:
 		m_memory.SetRamDiskMode(1, _value);
 		break;
@@ -253,23 +254,28 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 	case 0x1c:
 		m_fdc.Write(Fdc1793::Port::SYSTEM, _value);
 		break;
+		
+		// Ram Disk 2
 	case 0x20:
-
-		// Ram Disk
 		m_memory.SetRamDiskMode(2, _value);
 		break;
+		// Ram Disk 3
 	case 0x21:
 		m_memory.SetRamDiskMode(3, _value);
 		break;
+		// Ram Disk 4
 	case 0x40:
 		m_memory.SetRamDiskMode(4, _value);
 		break;
+		// Ram Disk 5
 	case 0x41:
 		m_memory.SetRamDiskMode(5, _value);
 		break;
+		// Ram Disk 6
 	case 0x80:
 		m_memory.SetRamDiskMode(6, _value);
 		break;
+		// Ram Disk 7
 	case 0x81:
 		m_memory.SetRamDiskMode(7, _value);
 		break;

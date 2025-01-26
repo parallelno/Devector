@@ -159,7 +159,7 @@ auto dev::GetDirStemExt(const std::string& _path)
 	return std::make_tuple(p.parent_path().string(), p.stem().string(), p.extension().string());
 }
 
-auto dev::GetExecutableDir() 
+auto dev::GetExecutableDir()
 -> std::string
 {
 	std::string path;
