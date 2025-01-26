@@ -12,7 +12,6 @@ int main(int argc, char** argv)
 {
 	std::string rom_fdd_recPath = "";
 	auto executableDir = dev::GetExecutableDir();
-	std::string workingDirectory = std::filesystem::current_path().string();
 	auto settingsPath = executableDir + "settings.json";
 
 	// if it's only one valid path as an argument, use it as a path to the rom/fdd/rec file

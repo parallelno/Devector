@@ -327,7 +327,7 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 	auto debugDataJ = nlohmann::json::object();
 	try
 	{
-		auto debugDataJ = LoadJson(m_debugPath);	
+		debugDataJ = LoadJson(m_debugPath);	
 	}
 	catch (const std::exception& e)
 	{
