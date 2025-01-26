@@ -6,7 +6,7 @@
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/../devector/bin/devector.exe",
-        "args": ["build/debug/bin/GJ.fdd"],
+        "args": ["build/bin/GJ.fdd"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}/../guimos_jdundel/",
         "environment": [],
