@@ -54,6 +54,7 @@ namespace dev
 		std::string m_displayModeS;
 
 		CpuI8080::State m_cpuState;
+		int m_cpuRegM = 0;
 		const ImVec4* m_regAFColor = &DASM_CLR_NUMBER;
 		const ImVec4* m_regBCColor = &DASM_CLR_NUMBER;
 		const ImVec4* m_regDEColor = &DASM_CLR_NUMBER;

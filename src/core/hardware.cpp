@@ -510,7 +510,6 @@ auto dev::Hardware::GetRegs() const
 -> nlohmann::json
 {
 	auto& cpuState = m_cpu.GetState();
-
 	nlohmann::json out {
 		{"cc", cpuState.cc },
 		{"pc", cpuState.regs.pc.word },
@@ -520,6 +519,7 @@ auto dev::Hardware::GetRegs() const
 		{"de", cpuState.regs.de.word },
 		{"hl", cpuState.regs.hl.word },
 		{"ints", cpuState.ints.data },
+		{"m", m_memory.GetByte(cpuState.regs.hl.word, Memory::AddrSpace::RAM)}
 	};
 	return out;
 }

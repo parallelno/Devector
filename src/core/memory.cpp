@@ -58,7 +58,7 @@ void dev::Memory::SetByteGlobal(const GlobalAddr _addr, const uint8_t _data)
 	m_ram[_addr] = _data;
 }
 
-auto dev::Memory::GetByte(const Addr _addr, const AddrSpace _addrSpace)
+auto dev::Memory::GetByte(const Addr _addr, const AddrSpace _addrSpace) const
 -> uint8_t
 {
 	auto globalAddr = GetGlobalAddr(_addr, _addrSpace);

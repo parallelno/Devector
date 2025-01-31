@@ -122,7 +122,7 @@ namespace dev
 		void Init();
 		void Restart();
 		auto GetByte(const Addr _addr,
-			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> uint8_t;
+			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const -> uint8_t;
 		auto CpuReadInstr(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM,
 			const uint8_t _byteNum = 0) -> uint8_t;

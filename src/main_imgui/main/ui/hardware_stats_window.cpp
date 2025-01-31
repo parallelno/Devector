@@ -46,6 +46,7 @@ void dev::HardwareStatsWindow::DrawRegs() const
 		DrawProperty2("HL", Uint16ToStrC(m_cpuState.regs.hl.word), nullptr, *m_regHLColor);
 		DrawProperty2("SP", Uint16ToStrC(m_cpuState.regs.sp.word), nullptr, *m_regSPColor);
 		DrawProperty2("PC", Uint16ToStrC(m_cpuState.regs.pc.word), nullptr, *m_regPCColor);
+		DrawProperty2(" M", Uint8ToStrC(m_cpuRegM), nullptr, *m_regPCColor);
 
 		// flags
 		ImGui::Dummy({1,8});
@@ -286,6 +287,8 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 
 	dev::CpuI8080::Int ints{ data["ints"] };
 	m_cpuState.ints = ints;
+
+	m_cpuRegM = data["m"];
 
 	// Stack
 	Addr dataAddrN10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 10 } })->at("data");
