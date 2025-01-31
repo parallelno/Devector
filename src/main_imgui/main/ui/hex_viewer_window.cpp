@@ -251,7 +251,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 					{
 						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, BG_COLOR_BYTE_HOVER);
 						ImGui::BeginTooltip();
-						ImGui::Text("Address: 0x%04X\n", addr);
+						ImGui::Text("Address: 0x%04X, char: %c\n", addr, m_ram[addr]);
 						ImGui::EndTooltip();
 						addrHovered = addr;
 					}

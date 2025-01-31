@@ -128,6 +128,7 @@ void dev::WatchpointsWindow::DrawTable()
 				m_reqUI.globalAddr = selectedAddr;
 				m_reqUI.len = wp.data.len;
 			}
+
 			ImVec2 rowMin = ImGui::GetItemRectMin();
 			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
 			ImGui::PopStyleColor();
@@ -155,6 +156,22 @@ void dev::WatchpointsWindow::DrawTable()
 			// Comment
 			DrawProperty(wp.GetComment());
 			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
+
+			// Show the tooltip if the item is hovered
+			ImVec2 rowMax = ImGui::GetItemRectMax();
+			if (ImGui::IsMouseHoveringRect(rowMin, rowMax, false) &&
+				!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+			{
+				// convert the watchpoint memory data to a string
+				auto addr = wp.data.globalAddr;
+				auto len = wp.data.len;
+				auto dataS = m_hardware.Request(Hardware::Req::GET_MEM_STRING_GLOBAL, { {"addr", addr}, {"len", len} })->at("data").get<std::string>();
+
+				// draw a tooltip
+				ImGui::BeginTooltip();
+				ImGui::Text("char: %s\n", dataS.c_str());
+				ImGui::EndTooltip();
+			}
 		}
 
 		PopStyleCompact();

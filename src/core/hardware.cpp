@@ -290,6 +290,10 @@ void dev::Hardware::ReqHandling(const bool _waitReq)
 			out = Get3Bytes(dataJ, Memory::AddrSpace::RAM);
 			break;
 
+		case Req::GET_MEM_STRING_GLOBAL:
+			out = GetMemString(dataJ, Memory::AddrSpace::RAM);
+			break;
+
 		case Req::GET_WORD_STACK:
 			out = GetWord(dataJ, Memory::AddrSpace::STACK);
 			break;
@@ -552,6 +556,30 @@ auto dev::Hardware::Get3Bytes(const nlohmann::json _addrJ, const Memory::AddrSpa
 	auto data = m_memory.GetByte(addr, _addrSpace) |
 		m_memory.GetByte(addr + 1, _addrSpace) << 8 |
 		m_memory.GetByte(addr + 2, _addrSpace) << 16;
+
+	nlohmann::json out = {
+		{"data", data }
+	};
+	return out;
+}
+
+auto dev::Hardware::GetMemString(const nlohmann::json _dataJ, const Memory::AddrSpace _addrSpace)
+-> nlohmann::json
+{
+	Addr addr = _dataJ["addr"];
+	Addr len = _dataJ["len"];
+	
+	std::string data;
+	for (Addr i = 0; i < len; i++) {
+		auto c = m_memory.GetByte(addr + i, _addrSpace);
+		// exclude non-char symbols
+		if (c > 31 && c < 127) {
+			data += (char)c;
+		}
+		else {
+			data += '.';
+		}
+	}
 
 	nlohmann::json out = {
 		{"data", data }
