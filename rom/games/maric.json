@@ -1,0 +1,31 @@
+{
+    "breakpoints": [
+        {
+            "addr": "0x06DF",
+            "autoDel": false,
+            "comment": "",
+            "cond": "=ANY",
+            "memPages": 4294967295,
+            "operand": "A",
+            "status": 0,
+            "value": "0x00"
+        }
+    ],
+    "comments": null,
+    "consts": null,
+    "labels": null,
+    "memoryEdits": null,
+    "watchpoints": [
+        {
+            "access": "RW",
+            "active": false,
+            "comment": "",
+            "cond": "=ANY",
+            "globalAddr": "0x00AD24",
+            "id": 1,
+            "len": "0x0100",
+            "type": "LEN",
+            "value": "0x0000"
+        }
+    ]
+}

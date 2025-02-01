@@ -165,11 +165,13 @@ void dev::WatchpointsWindow::DrawTable()
 				// convert the watchpoint memory data to a string
 				auto addr = wp.data.globalAddr;
 				auto len = wp.data.len;
-				auto dataS = m_hardware.Request(Hardware::Req::GET_MEM_STRING_GLOBAL, { {"addr", addr}, {"len", len} })->at("data").get<std::string>();
+				auto data = m_hardware.Request(Hardware::Req::GET_MEM_STRING_GLOBAL, { {"addr", addr}, {"len", len} });
+				auto hexS = data->at("data").get<std::string>();
+				
 
 				// draw a tooltip
 				ImGui::BeginTooltip();
-				ImGui::Text("char: %s\n", dataS.c_str());
+				ImGui::Text(hexS.c_str());
 				ImGui::EndTooltip();
 			}
 		}

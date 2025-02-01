@@ -563,26 +563,77 @@ auto dev::Hardware::Get3Bytes(const nlohmann::json _addrJ, const Memory::AddrSpa
 	return out;
 }
 
+static constexpr int BYTES_IN_LINE = 16;
+static constexpr int CHARS_IN_LINE = BYTES_IN_LINE; // 1 char per byte
+static constexpr int HEX_LEN = 3;
+static constexpr int HEX_CHARS_IN_LINE = BYTES_IN_LINE * HEX_LEN; // FF and space
+static constexpr int SPACE_LEN = 1;
+static constexpr int NEWLINE_LEN = 1;
+static constexpr int EOF_LEN = 1;
+static constexpr int LINES_MAX = 16;
+static const int LINE_LEN_MAX = HEX_CHARS_IN_LINE + 1 + CHARS_IN_LINE + NEWLINE_LEN;
+
+static char hex_data[LINE_LEN_MAX * LINES_MAX + EOF_LEN] = { 0 };
+
+static bool init_hex_data() { 
+	for (int i = 0; i < sizeof(hex_data)-1; i++) 
+	{
+		int x = i % LINE_LEN_MAX;
+		int y = i / LINE_LEN_MAX;
+		
+		// end of line
+		hex_data[i] = x == LINE_LEN_MAX - 1 ? '\n' : ' ';
+	}
+	return true;
+}
+
+static bool hex_data_initialized = init_hex_data();
+
 auto dev::Hardware::GetMemString(const nlohmann::json _dataJ, const Memory::AddrSpace _addrSpace)
 -> nlohmann::json
 {
 	Addr addr = _dataJ["addr"];
 	Addr len = _dataJ["len"];
-	
-	std::string data;
-	for (Addr i = 0; i < len; i++) {
+	len = len > 255 ? 255 : len;
+	int char_idx = 0;
+	int line_len = len < BYTES_IN_LINE ? len : BYTES_IN_LINE;
+
+	for (Addr i = 0; i < len; i++)
+	{
 		auto c = m_memory.GetByte(addr + i, _addrSpace);
-		// exclude non-char symbols
-		if (c > 31 && c < 127) {
-			data += (char)c;
+		int x = i % BYTES_IN_LINE;
+		int y = i / BYTES_IN_LINE;
+		
+		// hex
+		int hex_idx = LINE_LEN_MAX * y + x * HEX_LEN;
+		uint8_t l = c & 0x0F;
+		uint8_t h = (c >> 4) & 0x0F;
+		hex_data[hex_idx] = h < 10 ? ('0' + h) : ('A' + h - 10);
+		hex_data[hex_idx + 1] = l < 10 ? ('0' + l) : ('A' + l - 10);
+		hex_data[hex_idx + 2] = ' ';
+		
+		if (x == 0)
+		{
+			// a break between hex and chars
+			hex_data[LINE_LEN_MAX * y + HEX_LEN * line_len] = ' ';
 		}
-		else {
-			data += '.';
+
+		// char
+		char_idx = LINE_LEN_MAX * y + HEX_LEN * line_len + SPACE_LEN + x;
+		hex_data[char_idx] = c > 31 && c < 127 ? (char)c : '.';
+		
+		// newline
+		if (x == LINE_LEN_MAX - 1){
+			int newline_idx = LINE_LEN_MAX * y + HEX_CHARS_IN_LINE + 1 + CHARS_IN_LINE;
+			hex_data[newline_idx] = '\n';
 		}
 	}
 
+	// end of file
+	hex_data[char_idx + 1] = '\0';
+
 	nlohmann::json out = {
-		{"data", data }
+		{"data", hex_data },
 	};
 	return out;
 }
