@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 		auto path = std::string(argv[1]);
 		if (dev::IsFileExist(path))
 		{
-			rom_fdd_recPath = std::move(path);
+			rom_fdd_recPath = path;
 		}
 	}
 	
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 		auto settingsPath = argsParser.GetString("settingsPath",
 			"The path to the settings.", false, executableDir + "settings.json");
 
-		auto rom_fdd_recPath = argsParser.GetString("path",
+		rom_fdd_recPath = argsParser.GetString("path",
 			"The path to the rom/fdd/rec file.", false, "");
 
 		if (!rom_fdd_recPath.empty() && !dev::IsFileExist(rom_fdd_recPath)){
