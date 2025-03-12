@@ -92,7 +92,6 @@ namespace dev
 		ReqUI& m_reqUI;
 		char m_searchText[255] = "";
 		Addr m_disasmAddr = 0;
-		const Disasm::Lines** m_disasmPP = nullptr;
 		int m_disasmLines = Disasm::DISASM_LINES_MAX;
 		const Disasm::ImmAddrLinks* m_immLinksP = nullptr;
 		size_t m_immLinksNum = 0;

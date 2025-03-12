@@ -73,8 +73,8 @@ namespace dev
 			uint8_t opcode = 0;
 			uint16_t imm = 0; // immediate operand
 			char statsS[STATS_LEN] = { 0 }; // contains: runs, reads, writes
-			const LabelList* labels = nullptr;
-			const LabelList* consts = nullptr; // labels used as constants or they point to data
+			LabelList labels;
+			LabelList consts; // labels used as constants or they point to data
 			const std::string* comment = nullptr;
 			bool accessed = false; // no runs, reads, writes yet
 			Breakpoint::Status breakpointStatus = Breakpoint::Status::DISABLED;
@@ -84,9 +84,9 @@ namespace dev
 
 			inline auto GetAddrS() const -> const char* { return Uint16ToStrC0x(addr); };
 			auto GetImmediateS() const -> const char*;
-			inline auto GetFirstLabel() const -> const char* { return labels ? labels->at(0).c_str() : nullptr; };
-			inline auto GetLabelConst() const -> const char* { return labels ? labels->at(0).c_str() : consts ? consts->at(0).c_str() : nullptr; };
-			inline auto GetFirstConst() const -> const char* { return consts ? consts->at(0).c_str() : nullptr; };
+			inline auto GetFirstLabel() const -> const std::string { return labels.empty() ? "" : labels.at(0); };
+			inline auto GetLabelConst() const -> const std::string { return labels.empty() ? "" : consts.empty() ? "" : consts.at(0); };
+			inline auto GetFirstConst() const -> const std::string { return consts.empty() ? "" : consts.at(0); };
 		};
 
 		using Lines = std::array<Line, DISASM_LINES_MAX>;

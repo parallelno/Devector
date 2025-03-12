@@ -73,8 +73,10 @@ void dev::TraceLog::AddCode(const Item& _item, Disasm::Line& _line)
 
 	if (immType != CMD_IM_NONE)
 	{
-		_line.labels = m_debugData.GetLabels(_line.imm);
-		_line.consts = m_debugData.GetConsts(_line.imm);
+		auto labelsP = m_debugData.GetLabels(_line.imm);
+		_line.labels = labelsP ? *labelsP : Disasm::LabelList();
+		auto constsP = m_debugData.GetConsts(_line.imm);
+		_line.consts = constsP ? *constsP : Disasm::LabelList();
 	}
 
 	_line.type = Disasm::Line::Type::CODE;

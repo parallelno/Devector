@@ -824,8 +824,8 @@ void dev::Disasm::Line::Init()
 	opcode = 0;
 	imm = 0; // immediate operand
 	statsS[0] = '\0'; // contains: runs, reads, writes
-	labels = nullptr;
-	consts = nullptr; // labels used as constants only
+	labels.clear();
+	consts.clear(); // labels used as constants only
 	comment = nullptr;
 	accessed = false; // no runs, reads, writes yet
 	breakpointStatus = Breakpoint::Status::DISABLED;
@@ -850,7 +850,8 @@ void dev::Disasm::AddLabes(const Addr _addr)
 
 	line.type = Line::Type::LABELS;
 	line.addr = _addr;
-	line.labels = labelsP;
+	
+	line.labels = labelsP ? *labelsP : LabelList();
 
 	m_lineIdx++;
 }
@@ -911,8 +912,10 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 
 	if (immType != CMD_IM_NONE) 
 	{
-		line.labels = m_debugData.GetLabels(line.imm);
-		line.consts = m_debugData.GetConsts(line.imm);
+		auto labelsP = m_debugData.GetLabels(line.imm); 
+		line.labels = labelsP ? *labelsP : LabelList();
+		auto constsP = m_debugData.GetConsts(line.imm);
+		line.consts = constsP ? *constsP : LabelList();
 	}
 
 	snprintf(line.statsS, sizeof(line.statsS), "%" PRIu64 ",%" PRIu64 ",%" PRIu64, runs, reads, writes);
@@ -963,7 +966,7 @@ auto dev::Disasm::Line::GetStr() const
 		return out;
 	}
 	case Type::LABELS: 
-		for (auto& label : *labels)
+		for (auto& label : labels)
 		{
 			out += std::format("{} ", label);
 		}
@@ -991,11 +994,13 @@ void dev::Disasm::Init(const LineIdx _linesNum)
 
 void dev::Disasm::Reset() 
 {
+	m_linesP = nullptr;
+
 	m_memRuns.fill(0);
 	m_memReads.fill(0);
 	m_memWrites.fill(0);
 
-	m_linesP = nullptr;
+	std::fill(m_lines.begin(), m_lines.end(), Line());
 }
 
 auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks* 

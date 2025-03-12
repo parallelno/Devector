@@ -664,19 +664,19 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 		ImGui::SameLine();
 		ImGui::Text(" "); ImGui::SameLine();
 
-		const char* operand = _line.GetFirstConst();
+		auto operand = _line.GetFirstConst();
 		const ImVec4* color = &DASM_CLR_CONST;
 
-		if (immType == CMD_IW_OFF1 && _line.labels)
+		if (immType == CMD_IW_OFF1 && !_line.labels.empty())
 		{
 				operand = _line.GetFirstLabel();
-				color = operand[0] == '@' ? &DASM_CLR_LABEL_LOCAL_IMM  : &DASM_CLR_LABEL_GLOBAL_IMM;
+				color = operand.size() >= 1 && operand[0] == '@' ? &DASM_CLR_LABEL_LOCAL_IMM  : &DASM_CLR_LABEL_GLOBAL_IMM;
 		}
-		bool immLabel = operand != nullptr;
+		bool immLabel = !operand.empty();
 
-		color = operand ? color : &DASM_CLR_NUMBER;
-		operand = operand ? operand : _line.GetImmediateS();
-		uiItemMouseAction = DrawAddr(_isRunning, operand, *color, DASM_CLR_NUMBER_HIGHLIGHT, 0);
+		color = immLabel ? color : &DASM_CLR_NUMBER;
+		operand = immLabel ? operand : _line.GetImmediateS();
+		uiItemMouseAction = DrawAddr(_isRunning, operand.c_str(), *color, DASM_CLR_NUMBER_HIGHLIGHT, 0);
 
 		if (immLabel && uiItemMouseAction != UIItemMouseAction::NONE) {
 			ImGui::BeginTooltip();
@@ -691,10 +691,9 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 void dev::DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels)
 {
 	ImGui::TableNextColumn();
-	if (!_line.consts) return;
 
 	int i = 0;
-	for (const auto& const_ : *_line.consts)
+	for (const auto& const_ : _line.consts)
 	{
 		if (i) {
 			ImGui::SameLine();

@@ -260,7 +260,7 @@ void dev::DisasmWindow::DrawDisasmLabels(const Disasm::Line& _line)
 	const ImVec4* mainLabelColorP = &DASM_CLR_LABEL_GLOBAL;
 
 	int i = 0;
-	for (const auto& label : *_line.labels) 
+	for (const auto& label : _line.labels) 
 	{
 		if (i == 1) {
 			ImGui::SameLine();
@@ -299,8 +299,9 @@ void dev::DisasmWindow::DrawDisasmStats(const Disasm::Line& _line)
 
 void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 {
-	if (!m_disasmPP || !*m_disasmPP) return;
-	auto& disasm = **m_disasmPP;
+	auto disasmPP = m_debugger.GetDisasm().GetLines();
+	if (!disasmPP || !*disasmPP) return;
+	auto& disasm = **disasmPP;
 
 	Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
 	int hoveredLineIdx = -1;
@@ -481,8 +482,9 @@ void dev::DisasmWindow::ReqHandling()
 		m_reqUI.type = ReqUI::Type::NONE;
 		if (m_navigateAddrsIdx == 0) 
 		{
-			if (!m_disasmPP || !*m_disasmPP) return;
-			m_navigateAddrs[m_navigateAddrsIdx] = (*m_disasmPP)->at(DISASM_INSTRUCTION_OFFSET).addr;
+			auto disasmPP = m_debugger.GetDisasm().GetLines();
+			if (!disasmPP || !*disasmPP) return;
+			m_navigateAddrs[m_navigateAddrsIdx] = (*disasmPP)->at(DISASM_INSTRUCTION_OFFSET).addr;
 			m_navigateAddrsSize++;
 		}
 		if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
@@ -498,7 +500,6 @@ void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOf
 {
 	m_disasmAddr = _addr;
 	m_debugger.UpdateDisasm(_addr, m_disasmLines, -_instructionsOffset);
-	m_disasmPP = m_debugger.GetDisasm().GetLines();
 	m_immLinksP = m_debugger.GetDisasm().GetImmLinks();
 	m_immLinksNum = m_debugger.GetDisasm().GetImmAddrlinkNum();
 
