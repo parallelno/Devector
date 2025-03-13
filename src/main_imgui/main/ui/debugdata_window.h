@@ -21,22 +21,25 @@ namespace dev
 		DebugData::UpdateId m_constsUpdates = 0;
 		DebugData::UpdateId m_commentsUpdates = 0;
 		DebugData::UpdateId m_editsUpdates = 0;
+		DebugData::UpdateId m_codePerfsUpdates = 0;
 
 		DebugData::FilteredElements m_filteredLabels;
 		DebugData::FilteredElements m_filteredConsts;
 		DebugData::FilteredElements m_filteredComments;
 		DebugData::FilteredElements m_filteredEdits;
+		DebugData::FilteredElements m_filteredCodePerfs;
 
 		std::string m_labelFilter;
 		std::string m_constFilter;
 		std::string m_commentFilter;
 		std::string m_editFilter;
+		std::string m_codePerfFilter;
 
 		std::string m_tempFilter;
 
 		int m_selectedLineIdx = 0;
 		
-		enum class ElementType { LABEL = 0, CONST, COMMENT, MEMORY_EDIT };
+		enum class ElementType { LABEL = 0, CONST, COMMENT, MEMORY_EDIT, CODE_PERFS };
 
 		struct ContextMenu {
 			bool openPopup = false;

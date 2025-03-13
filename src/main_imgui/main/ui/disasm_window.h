@@ -45,6 +45,7 @@ namespace dev
 			bool constExists = false;
 			bool commentExists = false;
 			bool editMemoryExists = false;
+			bool codePerfExists = false;
 
 			void Init(Addr _addr, const std::string& _lineS, const DebugData& _debugData, const bool _immHovered = false)
 			{
@@ -57,6 +58,7 @@ namespace dev
 				constExists = _debugData.GetConsts(addr);
 				commentExists = _debugData.GetComment(addr);
 				editMemoryExists = _debugData.GetMemoryEdit(addr);
+				codePerfExists = _debugData.GetCodePerf(addr);
 			}
 
 			bool BeginPopup(){

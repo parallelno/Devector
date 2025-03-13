@@ -22,7 +22,7 @@ namespace dev
 		using Comments = std::unordered_map<GlobalAddr, std::string>;
 
 		using UpdateId = int;
-		
+
 		using FilteredElements = std::vector<std::tuple<std::string, GlobalAddr, std::string>>; // name, addr, addrS
 
 		// injects the value into the memory while loading
@@ -34,7 +34,7 @@ namespace dev
 			bool readonly = true; // if true, memory is not modified
 			bool active = true;
 
-			auto AddrToStr() const -> std::string { return std::format("0x{:06x}: 0x{:02x} {}", globalAddr, value, readonly ? "read-only" : ""); }
+			auto AddrToStr() const -> std::string { return std::format("0x{:06x}: 0x{:02x} {}, {}", globalAddr, value, readonly ? "read-only" : "", active ? "active" : "not active"); }
 			void Erase()
 			{
 				comment.clear();
@@ -48,8 +48,8 @@ namespace dev
 			{
 				return {
 					{"comment", comment},
-					{"addr", globalAddr},
-					{"value", value},
+					{"globalAddr", std::format("0x{:06X}", globalAddr)},
+					{"value", std::format("0x{:02X}", value)},
 					{"readonly", readonly},
 					{"active", active}
 				};
@@ -60,8 +60,8 @@ namespace dev
 			MemoryEdit(const nlohmann::json& _json)
 				:
 				comment(_json["comment"].get<std::string>()),
-				globalAddr(_json["addr"].get<GlobalAddr>()),
-				value(_json["value"].get<uint8_t>()),
+				globalAddr(dev::StrHexToInt(_json["globalAddr"].get<std::string>().c_str())),
+				value(dev::StrHexToInt(_json["value"].get<std::string>().c_str())),
 				readonly(_json["readonly"].get<bool>()),
 				active(_json["active"].get<bool>())
 			{}
@@ -76,6 +76,75 @@ namespace dev
 		};
 
 		using MemoryEdits = std::unordered_map<GlobalAddr, MemoryEdit>;
+
+		struct CodePerf
+		{
+			std::string label;
+			Addr addrStart = 0;
+			Addr addrEnd = 0x100;
+			double averageCcDiff = 0.0f; // average cc (Cpu CLock) difference between it entered the addrStart and exited addrEnd
+			int64_t tests = 0; // how many testes executed
+			int64_t cc = 0; // the current perf test cc
+			bool active = true;
+
+			auto AddrToStr() const -> std::string {
+				return std::format("0x{:06x}-0x{:06x}: {}, average cc: {}, tests: {}",
+					addrStart, addrEnd,
+					active ? "active" : "not active",
+					static_cast<int>(std::round(averageCcDiff)),
+					tests);
+			}
+
+			void Erase()
+			{
+				label.clear();
+				addrStart = 0;
+				addrEnd = 0x100;
+				averageCcDiff = 0;
+				tests = 0;
+				cc = 0;
+				active = true;
+			}
+
+			void CheckPerf(const Addr _addr, const uint64_t _cc)
+			{
+				if (!active || (addrStart != _addr && cc == 0)) return;
+
+				if (addrStart == _addr){
+					cc = _cc;
+				}
+				else
+				if (addrEnd == _addr)
+				{
+						tests++;
+						auto weight = 1.0 / tests;
+						int64_t ccDiff = _cc - cc;
+						averageCcDiff += (ccDiff - averageCcDiff) * weight;
+						cc = 0;
+				}
+			}
+
+			CodePerf() = default;
+
+			CodePerf(const nlohmann::json& _json)
+				:
+				label(_json["label"].get<std::string>()),
+				addrStart(dev::StrHexToInt(_json["addrStart"].get<std::string>().c_str())),
+				addrEnd(dev::StrHexToInt(_json["addrEnd"].get<std::string>().c_str())),
+				active(_json["active"].get<bool>())
+			{}
+
+			auto ToJson() const -> nlohmann::json
+			{
+				return {
+					{"label", label},
+					{"addrStart", std::format("0x{:04X}", addrStart)},
+					{"addrEnd", std::format("0x{:04X}", addrEnd)},
+					{"active", active}
+				};
+			}
+		};
+		using CodePerfs = std::unordered_map<Addr, CodePerf>;
 
 		DebugData(Hardware& _hardware);
 
@@ -109,10 +178,18 @@ namespace dev
 		void DelAllMemoryEdits();
 		void GetFilteredMemoryEdits(FilteredElements& _out, const std::string& _filter = "") const;
 
+		auto GetCodePerf(const Addr _addr) const -> const CodePerf*;
+		void SetCodePerf(const CodePerf& _codePerf);
+		void DelCodePerf(const Addr _addr);
+		void DelAllCodePerfs();
+		void GetFilteredCodePerfs(FilteredElements& _out, const std::string& _filter = "") const;
+		auto CheckCodePerfs(const Addr _addrStart, const uint64_t _cc) -> bool;
+
 		auto GetCommentsUpdates() const -> UpdateId { return m_commentsUpdates; };
 		auto GetLabelsUpdates() const -> UpdateId { return m_labelsUpdates; };
 		auto GetConstsUpdates() const -> UpdateId { return m_constsUpdates; };
 		auto GetEditsUpdates() const -> UpdateId { return m_editsUpdates; };
+		auto GetCodePerfsUpdates() const -> UpdateId { return m_codePerfsUpdates; };
 
 		auto GetBreakpoints() -> Breakpoints* { return &m_breakpoints; };
 		auto GetWatchpoints() -> Watchpoints* { return &m_watchpoints; };
@@ -130,6 +207,7 @@ namespace dev
 		Labels m_consts;	// labels used as constants or they point to data
 		Comments m_comments;
 		MemoryEdits m_memoryEdits; // code/data modifications
+		CodePerfs m_codePerfs;
 
 		Breakpoints m_breakpoints;
 		Watchpoints m_watchpoints;
@@ -140,5 +218,6 @@ namespace dev
 		UpdateId m_constsUpdates = 0;
 		UpdateId m_commentsUpdates = 0;
 		UpdateId m_editsUpdates = 0;
+		UpdateId m_codePerfsUpdates = 0;
 	};
 }

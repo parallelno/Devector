@@ -59,6 +59,13 @@ void dev::DebugDataWindow::Draw(const bool _isRunning)
 										m_editFilter, ElementType::MEMORY_EDIT);
 			ImGui::EndTabItem();
 		}
+		if (ImGui::BeginTabItem("Code Perfs"))
+		{
+			auto updateId = m_debugger.GetDebugData().GetCodePerfsUpdates();
+			UpdateAndDrawFilteredElements(m_filteredCodePerfs, m_codePerfsUpdates, updateId,
+										m_codePerfFilter, ElementType::CODE_PERFS);
+			ImGui::EndTabItem();
+		}
 
 		ImGui::EndTabBar();
 	}
@@ -110,10 +117,19 @@ Double click + Ctrl the element to locate the addr in the Hex Window.");
 		case ElementType::MEMORY_EDIT:
 			m_debugger.GetDebugData().GetFilteredMemoryEdits(_filteredElements, _filter);
 			break;
-		
 		default:
-			break;
+			break;			
 		}
+	}
+	
+	// update the CODE_PERFS tab every second
+	static auto lastTime = std::chrono::steady_clock::now();
+	auto now = std::chrono::steady_clock::now();
+	auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - lastTime).count();
+	bool timeout = diff > 0;
+	if (_elementType == ElementType::CODE_PERFS && timeout ){
+		lastTime = now;
+		m_debugger.GetDebugData().GetFilteredCodePerfs(_filteredElements, _filter);
 	}
 
 	// draw a table
@@ -256,6 +272,9 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 			case ElementType::MEMORY_EDIT:
 				m_reqUI.type = ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_ADD;
 				break;
+			case ElementType::CODE_PERFS:
+				m_reqUI.type = ReqUI::Type::CODE_PERFS_EDIT_WINDOW_ADD;
+				break;
 			}
 			m_reqUI.globalAddr = 0;
 		}
@@ -280,6 +299,9 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 				case ElementType::MEMORY_EDIT:
 					m_reqUI.type = ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_EDIT;
 					break;
+				case ElementType::CODE_PERFS:
+					m_reqUI.type = ReqUI::Type::CODE_PERFS_EDIT_WINDOW_EDIT;
+					break;
 				}
 				m_reqUI.globalAddr = _contextMenu.addr;
 			}
@@ -302,6 +324,10 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 
 				case ElementType::MEMORY_EDIT:
 					m_debugger.GetDebugData().DelMemoryEdit(_contextMenu.addr);
+					break;
+
+				case ElementType::CODE_PERFS:
+					m_debugger.GetDebugData().DelCodePerf(_contextMenu.addr);
 					break;
 				
 				default:
@@ -332,6 +358,10 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 
 			case ElementType::MEMORY_EDIT:
 				m_hardware.Request(Hardware::Req::DEBUG_MEMORY_EDIT_DEL_ALL);
+				break;
+
+			case ElementType::CODE_PERFS:
+				m_hardware.Request(Hardware::Req::DEBUG_CODE_PERF_DEL_ALL);
 				break;
 
 			default:

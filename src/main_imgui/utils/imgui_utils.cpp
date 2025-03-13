@@ -808,7 +808,7 @@ void dev::DrawEditMemEditWindow(Hardware& _hardware, const DebugData& _debugData
 
 			// Comment
 			bool delPressed = false;
-			DrawProperty2EditableS("Comment", "##ContextComment", &edit.comment, "comment", "empty string means delete the comment", 0, &delPressed);
+			DrawProperty2EditableS("Comment", "##ContextComment", &edit.comment, "comment", "empty string means delete the entity", 0, &delPressed);
 
 			// Global Addr
 			if (setFocus) { ImGui::SetKeyboardFocusHere(); setFocus = false; }
@@ -871,6 +871,127 @@ void dev::DrawEditMemEditWindow(Hardware& _hardware, const DebugData& _debugData
 
 				_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				_reqUI.globalAddr = globalAddr;
+				ImGui::CloseCurrentPopup();
+			}
+			if (warning) ImGui::EndDisabled();
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			// ESC pressed
+			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+		ImGui::EndPopup();
+	}
+}
+
+void dev::DrawEditCodePerfWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI)
+{
+	static const char* popupWindowName = "Code Performance";
+	static DebugData::CodePerf codePerf;
+	static int addrStart = 0;
+	static int addrEnd = 0x100;
+	static bool enterPressed = false;
+	static bool setFocus = false;
+
+	// init a window
+	switch (_reqUI.type)
+	{
+	case ReqUI::Type::CODE_PERFS_EDIT_WINDOW_ADD:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		addrStart = _reqUI.globalAddr;
+		addrEnd = addrStart + 0x100;
+		codePerf.Erase();
+		setFocus = true;
+		break;
+
+	case ReqUI::Type::CODE_PERFS_EDIT_WINDOW_EDIT:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		addrStart = _reqUI.globalAddr;
+		auto currentCodePerf = _debugData.GetCodePerf(_reqUI.globalAddr);
+		codePerf = *currentCodePerf;
+		addrEnd = codePerf.addrEnd;
+		setFocus = true;
+		break;
+	}
+
+	// draw a window
+	ImVec2 winPos = ImGui::GetMousePos();
+	ImGui::SetNextWindowPos(winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(popupWindowName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
+		{
+			ImGui::TableSetupColumn("##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150);
+			ImGui::TableSetupColumn("##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 200);
+
+			// Label
+			bool delPressed = false;
+			DrawProperty2EditableS("Label", "##ContextComment", &codePerf.label, "label", "empty string means delete the entity", 0, &delPressed);
+
+			// Global Addr Start
+			if (setFocus) { ImGui::SetKeyboardFocusHere(); setFocus = false; }
+			DrawProperty2EditableI("Global Address Start", "##EMContextAddressStart", &addrStart,
+				"A hexademical address in the format FF", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+			enterPressed |= ImGui::IsKeyPressed(ImGuiKey_Enter);
+
+			// Global Addr Start
+			if (setFocus) { ImGui::SetKeyboardFocusHere(); setFocus = false; }
+			DrawProperty2EditableI("Global Address End", "##EMContextAddressEnd", &addrEnd,
+				"A hexademical address in the format FF", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+			enterPressed |= ImGui::IsKeyPressed(ImGuiKey_Enter);
+
+			// Active
+			DrawProperty2EditableCheckBox("Active", "##ContextActive", &codePerf.active, "When true, the code performance is tested.");
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// Warnings
+			const char* warning = nullptr;
+
+			if (addrStart >= Memory::MEMORY_GLOBAL_LEN || addrEnd >= Memory::MEMORY_GLOBAL_LEN) {
+				warning = "Too large address";
+			}
+			else if (addrStart < 0 || addrEnd < 0) {
+				warning = "Too low address";
+			}
+
+			if (warning) {
+				ImGui::TextColored(DASM_CLR_WARNING, warning);
+			}
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// OK button
+			if (warning) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize) || enterPressed)
+			{
+				// global addr start
+				auto oldAddrStart = codePerf.addrStart;
+				codePerf.addrStart = addrStart;
+				auto oldAddrEnd = codePerf.addrEnd;
+				codePerf.addrEnd = addrEnd;				
+				if (addrStart != oldAddrStart || addrEnd != oldAddrEnd) _hardware.Request(Hardware::Req::DEBUG_CODE_PERF_DEL, { {"addr", oldAddrStart} });
+				_hardware.Request(Hardware::Req::DEBUG_CODE_PERF_ADD, codePerf.ToJson());
+
+				_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+				_reqUI.globalAddr = addrStart;
 				ImGui::CloseCurrentPopup();
 			}
 			if (warning) ImGui::EndDisabled();

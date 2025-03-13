@@ -167,5 +167,5 @@ namespace dev
 	void DrawEditConstWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
 	void DrawEditCommentWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
 	void DrawEditMemEditWindow(Hardware& _hardware, const DebugData& _debugData, ReqUI& _reqUI);
-	
+	void DrawEditCodePerfWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
 }

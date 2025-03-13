@@ -109,7 +109,12 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 		}
 	}
 
+	// code perf
+	m_debugData.CheckCodePerfs(_cpuStateP->regs.pc.word, _cpuStateP->cc);
+
+
 	auto break_ = false;
+	
 	// check watchpoint status
 	break_ |= m_debugData.GetWatchpoints()->CheckBreak();
 
@@ -282,10 +287,10 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	
 	case Hardware::Req::DEBUG_MEMORY_EDIT_GET:
 	{
-		auto MemEdit = m_debugData.GetMemoryEdit(_reqDataJ["addr"]);
-		if (MemEdit)
+		auto memEdit = m_debugData.GetMemoryEdit(_reqDataJ["addr"]);
+		if (memEdit)
 		{
-			out = { {"data", MemEdit->ToJson()} };
+			out = { {"data", memEdit->ToJson()} };
 		}
 		break;
 	}
@@ -293,7 +298,39 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	case Hardware::Req::DEBUG_MEMORY_EDIT_EXISTS:
 		out = { {"data", m_debugData.GetMemoryEdit(_reqDataJ["addr"]) != nullptr } };
 		break;
+
+	//////////////////
+	// 
+	// Code Perfs
+	//
+	/////////////////
+
+	case Hardware::Req::DEBUG_CODE_PERF_DEL_ALL:
+		m_debugData.DelAllCodePerfs();
+		break;
+
+	case Hardware::Req::DEBUG_CODE_PERF_DEL:
+		m_debugData.DelCodePerf(_reqDataJ["addr"]);
+		break;
+
+	case Hardware::Req::DEBUG_CODE_PERF_ADD:
+		m_debugData.SetCodePerf(_reqDataJ);
+		break;
+	
+	case Hardware::Req::DEBUG_CODE_PERF_GET:
+	{
+		auto codePerf = m_debugData.GetCodePerf(_reqDataJ["addr"]);
+		if (codePerf)
+		{
+			out = { {"data", codePerf->ToJson()} };
+		}
+		break;
 	}
+
+	case Hardware::Req::DEBUG_CODE_PERF_EXISTS:
+		out = { {"data", m_debugData.GetCodePerf(_reqDataJ["addr"]) != nullptr } };
+		break;
+	}	
 	
 	return out;
 }

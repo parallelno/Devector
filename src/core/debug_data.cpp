@@ -302,6 +302,54 @@ void dev::DebugData::GetFilteredMemoryEdits(FilteredElements& _out, const std::s
 	}
 }
 
+////////////////////
+
+auto dev::DebugData::GetCodePerf(const Addr _addr) const 
+-> const CodePerf*
+{
+	auto codePerfI = m_codePerfs.find(_addr);
+	return codePerfI != m_codePerfs.end() ? &codePerfI->second : nullptr;
+}
+
+void dev::DebugData::SetCodePerf(const CodePerf& _codePerf)
+{
+	m_codePerfs[_codePerf.addrStart] = _codePerf;
+	m_codePerfsUpdates++;
+}
+
+void dev::DebugData::DelCodePerf(const Addr _addr)
+{
+	auto codePerfI = m_codePerfs.find(_addr);
+	if (codePerfI == m_codePerfs.end()) return;
+	m_codePerfs.erase(codePerfI);
+	m_codePerfsUpdates++;
+}
+
+void dev::DebugData::DelAllCodePerfs()
+{
+	m_codePerfs.clear();
+	m_codePerfsUpdates++;
+}
+
+void dev::DebugData::GetFilteredCodePerfs(FilteredElements& _out, const std::string& _filter) const
+{
+	_out.clear();
+	for (const auto& [globalAddr, codePerf] : m_codePerfs)
+	{
+		if (codePerf.label.find(_filter) == std::string::npos) continue;
+		_out.push_back({ codePerf.label, globalAddr, codePerf.AddrToStr() });
+	}
+}
+
+auto dev::DebugData::CheckCodePerfs(const Addr _addrStart, const uint64_t _cc) -> bool
+{
+	for (auto& [addrStart, codePerf] : m_codePerfs)
+	{
+		codePerf.CheckPerf(_addrStart, _cc);
+	}
+	return false;
+}
+////////////////////
 void dev::DebugData::LoadDebugData(const std::string& _path)
 {
 	// check if the file exists
@@ -315,8 +363,10 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 	m_consts.clear();
 	m_commentsUpdates++;
 	m_comments.clear();	
-	m_editsUpdates++;	
+	m_editsUpdates++;
 	m_memoryEdits.clear();
+	m_codePerfs.clear();
+	m_codePerfsUpdates++;
 	
 	m_breakpoints.Clear();
 	m_watchpoints.Clear();	
@@ -370,6 +420,15 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 			m_memoryEdits.emplace(edit.globalAddr, edit);
 			// inject memory edits
 			if (edit.active) m_hardware.Request(Hardware::Req::SET_BYTE_GLOBAL, { {"addr", edit.globalAddr}, {"data", edit.value} });
+		}
+	}
+
+	// add code perfs
+	if (debugDataJ.contains("codePerfs")) {
+		for (auto& codePerfJ : debugDataJ["codePerfs"])
+		{
+			CodePerf codePerf{ codePerfJ };
+			m_codePerfs.emplace(codePerf.addrStart, codePerf);
 		}
 	}
 
@@ -442,6 +501,15 @@ void dev::DebugData::SaveDebugData()
 	for (const auto& [addr, memoryEdit] : m_memoryEdits)
 	{
 		debugMemoryEdits.push_back(memoryEdit.ToJson());
+	}
+
+	// update code perfs
+	empty &= m_codePerfs.empty();
+	debugDataJ["codePerfs"] = {};
+	auto& debugCodePerfs = debugDataJ["codePerfs"];
+	for (const auto& [addr, codePerf] : m_codePerfs)
+	{
+		debugCodePerfs.push_back(codePerf.ToJson());
 	}
 
 	// update breakpoints

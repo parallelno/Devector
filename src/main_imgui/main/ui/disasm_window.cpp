@@ -584,6 +584,12 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 			m_hardware.Request(Hardware::Req::DEBUG_MEMORY_EDIT_DEL, { {"addr", _contextMenu.addr} });
 			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		}
+
+		if (ImGui::MenuItem("Code Perf")) {
+			m_reqUI.type = _contextMenu.codePerfExists ? ReqUI::Type::CODE_PERFS_EDIT_WINDOW_EDIT : ReqUI::Type::CODE_PERFS_EDIT_WINDOW_ADD;
+			m_reqUI.globalAddr = _contextMenu.addr;
+		}
+
 		ImGui::EndPopup();
 	}
 }

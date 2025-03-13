@@ -183,6 +183,7 @@ void dev::DevectorApp::Update()
 	DrawEditConstWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
 	DrawEditCommentWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
 	DrawEditMemEditWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
+	DrawEditCodePerfWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
 
 
 	if (m_status == AppStatus::REQ_PREPARE_FOR_EXIT)
