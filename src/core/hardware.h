@@ -90,7 +90,7 @@ namespace dev
 		void Execution();
 		bool ExecuteInstruction();
 		void ExecuteFrameNoBreaks();
-		void ReqHandling(const bool _waitReq = false);
+		void ReqHandling(const std::chrono::duration<int64_t, std::nano> _waitTime = -1ns);
 		void Reset();
 		void Restart();
 		void Stop();

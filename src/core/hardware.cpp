@@ -70,7 +70,7 @@ bool dev::Hardware::ExecuteInstruction()
 		return true;
 	}
 
-	ReqHandling();
+	ReqHandling(0ns);
 
 	return false;
 }
@@ -88,7 +88,7 @@ void dev::Hardware::Execution()
 		auto startFrame = m_display.GetFrameNum();
 		auto startTime = std::chrono::system_clock::now();
 
-		auto expectedTime = std::chrono::system_clock::now();
+		auto endFrameTime = std::chrono::system_clock::now();
 
 		while (m_status == Status::RUN)
 		{   
@@ -107,10 +107,11 @@ void dev::Hardware::Execution()
 			// vsync
 			if (m_status == Status::RUN)
 			{
-				expectedTime = expectedTime + m_execDelays[static_cast<int>(m_execSpeed)];
+				endFrameTime += m_execDelays[static_cast<int>(m_execSpeed)];
 
-				if (std::chrono::system_clock::now() < expectedTime){
-					std::this_thread::sleep_until(expectedTime);
+				while (std::chrono::system_clock::now() < endFrameTime)
+				{
+					ReqHandling(1ms);
 				}
 			}
 		}
@@ -126,7 +127,7 @@ void dev::Hardware::Execution()
 
 		while (m_status == Status::STOP)
 		{
-			ReqHandling(true);
+			ReqHandling();
 		}
 	}
 }
@@ -140,347 +141,345 @@ auto dev::Hardware::Request(const Req _req, const nlohmann::json& _dataJ)
 }
 
 // internal thread
-void dev::Hardware::ReqHandling(const bool _waitReq)
+void dev::Hardware::ReqHandling(const std::chrono::duration<int64_t, std::nano> _waitTime)
 {
-	if (!m_reqs.empty() || _waitReq)
-	{        
-		auto result = m_reqs.pop();
+	auto result = m_reqs.pop(_waitTime);
+	if (!result) return;
 
-		const auto& [req, dataJ] = *result;
+	const auto& [req, dataJ] = *result;
 
-		nlohmann::json out;
+	nlohmann::json out;
 
-		switch (req)
-		{
-		case Req::RUN:
-			Run();
-			break;
+	switch (req)
+	{
+	case Req::RUN:
+		Run();
+		break;
 
-		case Req::STOP:
-			Stop();
-			break;
+	case Req::STOP:
+		Stop();
+		break;
 
-		case Req::IS_RUNNING:
-			out = {
-				{"isRunning", m_status == Status::RUN},
-				};
-			break;
+	case Req::IS_RUNNING:
+		out = {
+			{"isRunning", m_status == Status::RUN},
+			};
+		break;
 
-		case Req::EXIT:
-			m_status = Status::EXIT;
-			break;
+	case Req::EXIT:
+		m_status = Status::EXIT;
+		break;
 
-		case Req::RESET:
-			Reset();
-			break;
+	case Req::RESET:
+		Reset();
+		break;
 
-		case Req::RESTART:
-			Restart();
-			break;
+	case Req::RESTART:
+		Restart();
+		break;
 
-		case Req::EXECUTE_INSTR:
-			ExecuteInstruction();
-			break;
+	case Req::EXECUTE_INSTR:
+		ExecuteInstruction();
+		break;
 
-		case Req::EXECUTE_FRAME_NO_BREAKS:
-		{
-			ExecuteFrameNoBreaks();
-			break;
-		}
-		case Req::GET_CC:
-			out = {
-				{"cc", m_cpu.GetCC() },
-				};
-			break;
-
-		case Req::GET_REGS:
-			out = GetRegs();
-			break;
-
-		case Req::GET_REG_PC:
-			out = {
-				{"pc", m_cpu.GetPC() },
-				};
-			break;
-
-		case Req::GET_RUSLAT_HISTORY:
-			out = {
-				{"data", m_io.GetRusLatHistory()},
-				};
-			break;
-
-		case Req::GET_IO_PALETTE:
-		{
-			auto data = m_io.GetPalette();
-			out = {
-				{"low", data->low},
-				{"hi", data->hi},
-				};
-			break;
-		}
-		case Req::GET_IO_PORTS:
-		{
-			auto data = m_io.GetPorts();
-			out = {
-				{"data", data->data},
-				};
-			break;
-		}
-
-		case Req::GET_IO_PALETTE_COMMIT_TIME:
-		{
-			auto data = m_io.GetPaletteCommitTime();
-			out = {
-				{"paletteCommitTime", data},
-				};
-			break;
-		}
-
-		case Req::SET_IO_PALETTE_COMMIT_TIME:
-		{
-			m_io.SetPaletteCommitTime(dataJ["paletteCommitTime"]);
-			break;
-		}
-
-		case Req::GET_DISPLAY_BORDER_LEFT:
-		{
-			auto data = m_display.GetBorderLeft();
-			out = {
-				{"borderLeft", data},
-				};
-			break;
-		}
-
-		case Req::SET_DISPLAY_BORDER_LEFT:
-		{
-			m_display.SetBorderLeft(dataJ["borderLeft"]);
-			break;
-		}
-
-		case Req::GET_DISPLAY_IRQ_COMMIT_PXL:
-		{
-			auto data = m_display.GetIrqCommitPxl();
-			out = {
-				{"irqCommitPxl", data},
-				};
-			break;
-		}
-
-		case Req::SET_DISPLAY_IRQ_COMMIT_PXL:
-		{
-			m_display.SetIrqCommitPxl(dataJ["irqCommitPxl"]);
-			break;
-		}
-
-		case Req::GET_IO_DISPLAY_MODE:
-			out = {
-				{"data", m_io.GetDisplayMode()},
-				};
-			break;
-
-		case Req::GET_BYTE_GLOBAL:
-			out = GetByteGlobal(dataJ);
-			break;
-
-		case Req::GET_BYTE_RAM:
-			out = GetByte(dataJ, Memory::AddrSpace::RAM);
-			break;
-
-		case Req::GET_THREE_BYTES_RAM:
-			out = Get3Bytes(dataJ, Memory::AddrSpace::RAM);
-			break;
-
-		case Req::GET_MEM_STRING_GLOBAL:
-			out = GetMemString(dataJ, Memory::AddrSpace::RAM);
-			break;
-
-		case Req::GET_WORD_STACK:
-			out = GetWord(dataJ, Memory::AddrSpace::STACK);
-			break;
-
-		case Req::GET_STACK_SAMPLE:
-			out = GetStackSample(dataJ);
-			break;
-
-		case Req::GET_DISPLAY_DATA:
-			out = {
-				{"rasterLine", m_display.GetRasterLine()},
-				{"rasterPixel", m_display.GetRasterPixel()},
-				{"frameNum", m_display.GetFrameNum()},
-				};
-			break;
-
-		case Req::GET_MEMORY_MAPPING:
-			out = {
-				{"mapping", m_memory.GetState().update.mapping.data},
-				{"ramdiskIdx", m_memory.GetState().update.ramdiskIdx},
-				};
-			break;
-
-		case Req::GET_MEMORY_MAPPINGS:{
-			auto mappingsP = m_memory.GetMappingsP();
-			out = {{"ramdiskIdx", m_memory.GetState().update.ramdiskIdx}};
-			for (auto i=0; i < Memory::RAM_DISK_MAX; i++) {
-				out["mapping"+std::to_string(i)] = mappingsP[i].data;
-			}
-			break;
-		}
-		case Req::GET_GLOBAL_ADDR_RAM:
-			out = {
-				{"data", m_memory.GetGlobalAddr(dataJ["addr"], Memory::AddrSpace::RAM)}
-				};
-			break;
-
-		case Req::GET_FDC_INFO: {
-			auto info = m_fdc.GetFdcInfo();
-			out = {
-				{"drive", info.drive},
-				{"side", info.side},
-				{"track", info.track},
-				{"lastS", info.lastS},
-				{"wait", info.irq},
-				{"cmd", info.cmd},
-				{"rwLen", info.rwLen},
-				{"position", info.position},
-				};
-			break;
-		}
-
-		case Req::GET_FDD_INFO: {
-			auto info = m_fdc.GetFddInfo(dataJ["driveIdx"]);
-			out = {
-				{"path", info.path},
-				{"updated", info.updated},
-				{"reads", info.reads},
-				{"writes", info.writes},
-				{"mounted", info.mounted},
-				};
-			break;
-		}
-		
-		case Req::GET_FDD_IMAGE:
-			out = {
-				{"data", m_fdc.GetFddImage(dataJ["driveIdx"])},
-				};
-			break;
-
-		case Req::GET_STEP_OVER_ADDR:
-			out = {
-				{"data", GetStepOverAddr()},
-				};
-			break;
-
-		case Req::GET_IO_PORTS_IN_DATA:
-		{
-			auto portsData = m_io.GetPortsInData();
-			out = {
-				{"data0", portsData->data0},
-				{"data1", portsData->data1},
-				{"data2", portsData->data2},
-				{"data3", portsData->data3},
-				{"data4", portsData->data4},
-				{"data5", portsData->data5},
-				{"data6", portsData->data6},
-				{"data7", portsData->data7},
-				};
-			break;
-		}
-		case Req::GET_IO_PORTS_OUT_DATA:
-		{
-			auto portsData = m_io.GetPortsOutData();
-			out = {
-				{"data0", portsData->data0},
-				{"data1", portsData->data1},
-				{"data2", portsData->data2},
-				{"data3", portsData->data3},
-				{"data4", portsData->data4},
-				{"data5", portsData->data5},
-				{"data6", portsData->data6},
-				{"data7", portsData->data7},
-				};
-			break;
-		}
-		case Req::SET_MEM:
-			m_memory.SetRam(dataJ["addr"], dataJ["data"]);
-			break;
-
-		case Req::SET_BYTE_GLOBAL:
-			m_memory.SetByteGlobal(dataJ["addr"], dataJ["data"]);
-			break;
-
-		case Req::SET_CPU_SPEED:
-		{
-			int speed = dataJ["speed"];
-			speed = std::clamp(speed, 0, int(sizeof(m_execDelays) - 1));
-			m_execSpeed = static_cast<ExecSpeed>(speed);
-			if (m_execSpeed == ExecSpeed::_20PERCENT) { m_audio.Mute(true); }
-			else { m_audio.Mute(false); }
-			break;
-		}
-
-		case Req::GET_HW_MAIN_STATS:
-		{
-			auto paletteP = m_io.GetPalette();
-
-			out = {{"cc", m_cpu.GetCC()},
-				{"rasterLine", m_display.GetRasterLine()},
-				{"rasterPixel", m_display.GetRasterPixel()},
-				{"frameCc", (m_display.GetRasterPixel() + m_display.GetRasterLine() * Display::FRAME_W) / 4},
-				{"frameNum", m_display.GetFrameNum()},
-				{"displayMode", m_io.GetDisplayMode()},
-				{"scrollVert", m_display.GetScrollVert()},
-				{"rusLat", (m_io.GetRusLatHistory() & 0b1000) != 0},
-				{"inte", m_cpu.GetState().ints.inte},
-				{"iff", m_cpu.GetState().ints.iff},
-				{"hlta", m_cpu.GetState().ints.hlta},
-				};
-				for (int i=0; i < IO::PALETTE_LEN; i++ ){
-					out["palette"+std::to_string(i)] = Display::VectorColorToArgb(paletteP->bytes[i]);
-				}
-			break;
-		}
-		case Req::IS_MEMROM_ENABLED:
-			out = {
-				{"data", m_memory.IsRomEnabled() },
-				};
-			break;             
-
-		case Req::KEY_HANDLING:
-		{
-			auto op = m_io.GetKeyboard().KeyHandling(dataJ["scancode"], dataJ["action"]);
-			if (op == Keyboard::Operation::RESET) {
-				Reset();
-			}
-			else if (op == Keyboard::Operation::RESTART) {
-				Restart();
-			}
-		}
-			break;
-
-		case Req::GET_SCROLL_VERT:
-			out = {
-				{"scrollVert", m_display.GetScrollVert()}
-				};
-			break;
-
-		case Req::LOAD_FDD:
-			m_fdc.Mount(dataJ["driveIdx"], dataJ["data"], dataJ["path"]);
-			break;
-
-		case Req::RESET_UPDATE_FDD:
-			m_fdc.ResetUpdate(dataJ["driveIdx"]);
-			break;
-
-		case Req::DEBUG_ATTACH:
-			m_debugAttached = dataJ["data"];
-			break;
-
-		default:
-			out = DebugReqHandling(req, dataJ, m_cpu.GetStateP(), m_memory.GetStateP(), m_io.GetStateP(), m_display.GetStateP());
-		}
-
-		m_reqRes.emplace(std::move(out));
+	case Req::EXECUTE_FRAME_NO_BREAKS:
+	{
+		ExecuteFrameNoBreaks();
+		break;
 	}
+	case Req::GET_CC:
+		out = {
+			{"cc", m_cpu.GetCC() },
+			};
+		break;
+
+	case Req::GET_REGS:
+		out = GetRegs();
+		break;
+
+	case Req::GET_REG_PC:
+		out = {
+			{"pc", m_cpu.GetPC() },
+			};
+		break;
+
+	case Req::GET_RUSLAT_HISTORY:
+		out = {
+			{"data", m_io.GetRusLatHistory()},
+			};
+		break;
+
+	case Req::GET_IO_PALETTE:
+	{
+		auto data = m_io.GetPalette();
+		out = {
+			{"low", data->low},
+			{"hi", data->hi},
+			};
+		break;
+	}
+	case Req::GET_IO_PORTS:
+	{
+		auto data = m_io.GetPorts();
+		out = {
+			{"data", data->data},
+			};
+		break;
+	}
+
+	case Req::GET_IO_PALETTE_COMMIT_TIME:
+	{
+		auto data = m_io.GetPaletteCommitTime();
+		out = {
+			{"paletteCommitTime", data},
+			};
+		break;
+	}
+
+	case Req::SET_IO_PALETTE_COMMIT_TIME:
+	{
+		m_io.SetPaletteCommitTime(dataJ["paletteCommitTime"]);
+		break;
+	}
+
+	case Req::GET_DISPLAY_BORDER_LEFT:
+	{
+		auto data = m_display.GetBorderLeft();
+		out = {
+			{"borderLeft", data},
+			};
+		break;
+	}
+
+	case Req::SET_DISPLAY_BORDER_LEFT:
+	{
+		m_display.SetBorderLeft(dataJ["borderLeft"]);
+		break;
+	}
+
+	case Req::GET_DISPLAY_IRQ_COMMIT_PXL:
+	{
+		auto data = m_display.GetIrqCommitPxl();
+		out = {
+			{"irqCommitPxl", data},
+			};
+		break;
+	}
+
+	case Req::SET_DISPLAY_IRQ_COMMIT_PXL:
+	{
+		m_display.SetIrqCommitPxl(dataJ["irqCommitPxl"]);
+		break;
+	}
+
+	case Req::GET_IO_DISPLAY_MODE:
+		out = {
+			{"data", m_io.GetDisplayMode()},
+			};
+		break;
+
+	case Req::GET_BYTE_GLOBAL:
+		out = GetByteGlobal(dataJ);
+		break;
+
+	case Req::GET_BYTE_RAM:
+		out = GetByte(dataJ, Memory::AddrSpace::RAM);
+		break;
+
+	case Req::GET_THREE_BYTES_RAM:
+		out = Get3Bytes(dataJ, Memory::AddrSpace::RAM);
+		break;
+
+	case Req::GET_MEM_STRING_GLOBAL:
+		out = GetMemString(dataJ, Memory::AddrSpace::RAM);
+		break;
+
+	case Req::GET_WORD_STACK:
+		out = GetWord(dataJ, Memory::AddrSpace::STACK);
+		break;
+
+	case Req::GET_STACK_SAMPLE:
+		out = GetStackSample(dataJ);
+		break;
+
+	case Req::GET_DISPLAY_DATA:
+		out = {
+			{"rasterLine", m_display.GetRasterLine()},
+			{"rasterPixel", m_display.GetRasterPixel()},
+			{"frameNum", m_display.GetFrameNum()},
+			};
+		break;
+
+	case Req::GET_MEMORY_MAPPING:
+		out = {
+			{"mapping", m_memory.GetState().update.mapping.data},
+			{"ramdiskIdx", m_memory.GetState().update.ramdiskIdx},
+			};
+		break;
+
+	case Req::GET_MEMORY_MAPPINGS:{
+		auto mappingsP = m_memory.GetMappingsP();
+		out = {{"ramdiskIdx", m_memory.GetState().update.ramdiskIdx}};
+		for (auto i=0; i < Memory::RAM_DISK_MAX; i++) {
+			out["mapping"+std::to_string(i)] = mappingsP[i].data;
+		}
+		break;
+	}
+	case Req::GET_GLOBAL_ADDR_RAM:
+		out = {
+			{"data", m_memory.GetGlobalAddr(dataJ["addr"], Memory::AddrSpace::RAM)}
+			};
+		break;
+
+	case Req::GET_FDC_INFO: {
+		auto info = m_fdc.GetFdcInfo();
+		out = {
+			{"drive", info.drive},
+			{"side", info.side},
+			{"track", info.track},
+			{"lastS", info.lastS},
+			{"wait", info.irq},
+			{"cmd", info.cmd},
+			{"rwLen", info.rwLen},
+			{"position", info.position},
+			};
+		break;
+	}
+
+	case Req::GET_FDD_INFO: {
+		auto info = m_fdc.GetFddInfo(dataJ["driveIdx"]);
+		out = {
+			{"path", info.path},
+			{"updated", info.updated},
+			{"reads", info.reads},
+			{"writes", info.writes},
+			{"mounted", info.mounted},
+			};
+		break;
+	}
+	
+	case Req::GET_FDD_IMAGE:
+		out = {
+			{"data", m_fdc.GetFddImage(dataJ["driveIdx"])},
+			};
+		break;
+
+	case Req::GET_STEP_OVER_ADDR:
+		out = {
+			{"data", GetStepOverAddr()},
+			};
+		break;
+
+	case Req::GET_IO_PORTS_IN_DATA:
+	{
+		auto portsData = m_io.GetPortsInData();
+		out = {
+			{"data0", portsData->data0},
+			{"data1", portsData->data1},
+			{"data2", portsData->data2},
+			{"data3", portsData->data3},
+			{"data4", portsData->data4},
+			{"data5", portsData->data5},
+			{"data6", portsData->data6},
+			{"data7", portsData->data7},
+			};
+		break;
+	}
+	case Req::GET_IO_PORTS_OUT_DATA:
+	{
+		auto portsData = m_io.GetPortsOutData();
+		out = {
+			{"data0", portsData->data0},
+			{"data1", portsData->data1},
+			{"data2", portsData->data2},
+			{"data3", portsData->data3},
+			{"data4", portsData->data4},
+			{"data5", portsData->data5},
+			{"data6", portsData->data6},
+			{"data7", portsData->data7},
+			};
+		break;
+	}
+	case Req::SET_MEM:
+		m_memory.SetRam(dataJ["addr"], dataJ["data"]);
+		break;
+
+	case Req::SET_BYTE_GLOBAL:
+		m_memory.SetByteGlobal(dataJ["addr"], dataJ["data"]);
+		break;
+
+	case Req::SET_CPU_SPEED:
+	{
+		int speed = dataJ["speed"];
+		speed = std::clamp(speed, 0, int(sizeof(m_execDelays) - 1));
+		m_execSpeed = static_cast<ExecSpeed>(speed);
+		if (m_execSpeed == ExecSpeed::_20PERCENT) { m_audio.Mute(true); }
+		else { m_audio.Mute(false); }
+		break;
+	}
+
+	case Req::GET_HW_MAIN_STATS:
+	{
+		auto paletteP = m_io.GetPalette();
+
+		out = {{"cc", m_cpu.GetCC()},
+			{"rasterLine", m_display.GetRasterLine()},
+			{"rasterPixel", m_display.GetRasterPixel()},
+			{"frameCc", (m_display.GetRasterPixel() + m_display.GetRasterLine() * Display::FRAME_W) / 4},
+			{"frameNum", m_display.GetFrameNum()},
+			{"displayMode", m_io.GetDisplayMode()},
+			{"scrollVert", m_display.GetScrollVert()},
+			{"rusLat", (m_io.GetRusLatHistory() & 0b1000) != 0},
+			{"inte", m_cpu.GetState().ints.inte},
+			{"iff", m_cpu.GetState().ints.iff},
+			{"hlta", m_cpu.GetState().ints.hlta},
+			};
+			for (int i=0; i < IO::PALETTE_LEN; i++ ){
+				out["palette"+std::to_string(i)] = Display::VectorColorToArgb(paletteP->bytes[i]);
+			}
+		break;
+	}
+	case Req::IS_MEMROM_ENABLED:
+		out = {
+			{"data", m_memory.IsRomEnabled() },
+			};
+		break;             
+
+	case Req::KEY_HANDLING:
+	{
+		auto op = m_io.GetKeyboard().KeyHandling(dataJ["scancode"], dataJ["action"]);
+		if (op == Keyboard::Operation::RESET) {
+			Reset();
+		}
+		else if (op == Keyboard::Operation::RESTART) {
+			Restart();
+		}
+	}
+		break;
+
+	case Req::GET_SCROLL_VERT:
+		out = {
+			{"scrollVert", m_display.GetScrollVert()}
+			};
+		break;
+
+	case Req::LOAD_FDD:
+		m_fdc.Mount(dataJ["driveIdx"], dataJ["data"], dataJ["path"]);
+		break;
+
+	case Req::RESET_UPDATE_FDD:
+		m_fdc.ResetUpdate(dataJ["driveIdx"]);
+		break;
+
+	case Req::DEBUG_ATTACH:
+		m_debugAttached = dataJ["data"];
+		break;
+
+	default:
+		out = DebugReqHandling(req, dataJ, m_cpu.GetStateP(), m_memory.GetStateP(), m_io.GetStateP(), m_display.GetStateP());
+	}
+
+	m_reqRes.emplace(std::move(out));
 }
 
 void dev::Hardware::Reset()

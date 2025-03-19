@@ -27,18 +27,19 @@ namespace dev {
         TQueue(const TQueue&) = delete;            // disable copying
         TQueue& operator=(const TQueue&) = delete; // disable assignment
 
-        // _waitTime = -1.0 : wait until data received
-        // _waitTime = 0.0  : no wait
-        // _waitTime > 0.0  : wait until data received or time is over
-        Result<T> pop(const double _waitTime = -1.0)
+        // _waitTime is in nanoseconds
+        // _waitTime < 0 : wait until data received
+        // _waitTime = 0  : no wait
+        // _waitTime > 0  : wait until data received or time is over
+        Result<T> pop(const std::chrono::duration<int64_t, std::nano> _waitTime = -1ns)
         {
             std::unique_lock<std::mutex> mlock(m_mutex);
 
-            if (_waitTime == 0.0)  //-V550
+            if (_waitTime == 0ns)  //-V550
             {    
                 if (m_queue.empty()) return {};
             }
-            else if (_waitTime < 0) {
+            else if (_waitTime < 0ns) {
                 while (m_queue.empty())
                 {
                     m_condition.wait(mlock);
@@ -46,7 +47,7 @@ namespace dev {
             }
             else if (m_queue.empty())
             {
-                m_condition.wait_for(mlock, (_waitTime * 1000.0) * 1ms);
+                m_condition.wait_for(mlock, _waitTime);
                 if (m_queue.empty()) return {};
             }
             auto value = m_queue.front();

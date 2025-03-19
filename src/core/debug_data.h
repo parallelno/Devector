@@ -79,6 +79,7 @@ namespace dev
 
 		struct CodePerf
 		{
+			static constexpr int TESTS_MAX = 20000;
 			std::string label;
 			Addr addrStart = 0;
 			Addr addrEnd = 0x100;
@@ -116,7 +117,7 @@ namespace dev
 				else
 				if (addrEnd == _addr)
 				{
-						tests++;
+						tests += tests >= TESTS_MAX ? 0 : 1;
 						auto weight = 1.0 / tests;
 						int64_t ccDiff = _cc - cc;
 						averageCcDiff += (ccDiff - averageCcDiff) * weight;
