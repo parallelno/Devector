@@ -41,6 +41,14 @@ void dev::Memory::Init()
 	m_state.ramP = &m_ram;
 }
 
+void dev::Memory::InitRamDiskMapping()
+{
+	*((uint64_t*) &m_mappings[0].data) = 0;
+	m_state.update.mapping.data = 0;
+	m_state.update.ramdiskIdx = 0;
+	m_mappingsEnabled = 0;
+}
+
 void dev::Memory::Restart() { m_state.update.memType = MemType::RAM; }
 
 

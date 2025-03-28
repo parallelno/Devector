@@ -138,6 +138,7 @@ namespace dev
 		auto GetStateP() -> State* { return &m_state; };
 		auto GetMappingsP() const -> const Mapping* { return m_mappings; };
 		void SetRamDiskMode(uint8_t _diskIdx, uint8_t _data);
+		void InitRamDiskMapping();
 		void SetMemType(const MemType _memType);
 		void SetRam(const Addr _addr, const std::vector<uint8_t>& _data);
 		void SetByteGlobal(const GlobalAddr _addr, const uint8_t _data);

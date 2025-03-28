@@ -15,7 +15,7 @@ namespace dev
 	class TraceLog
 	{
 	public:
-		static const constexpr size_t TRACE_LOG_SIZE = 100000;
+		static const constexpr size_t TRACE_LOG_SIZE = 300000;
 		static const constexpr int32_t EMPTY_ITEM = -1;
 
 		struct Item

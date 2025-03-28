@@ -15,7 +15,7 @@ namespace dev
 	{
 	public:
 		static constexpr int FRAMES_PER_SEC = 50;
-		static constexpr int STATES_LEN = FRAMES_PER_SEC * 60;
+		static constexpr int STATES_LEN = FRAMES_PER_SEC * 600;
 		using MemUpdates = std::vector<uint8_t>;
 		using GlobalAddrs = std::vector<GlobalAddr>;
 

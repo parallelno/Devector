@@ -1356,9 +1356,9 @@ void dev::CpuI8080::OUT_()
 	case 1:
 		W = 0;
 		Z = ReadInstrMovePC(1);
+		Output(Z, A);
 		return;
 	case 2:
-		Output(Z, A);
 		return;
 	}
 }
