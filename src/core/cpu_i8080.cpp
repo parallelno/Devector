@@ -93,6 +93,7 @@ void dev::CpuI8080::ExecuteMachineCycle(bool _irq)
 			IFF = false;
 			HLTA = false;
 			IR = OPCODE_RST7;
+			m_memory.CpuInvokesRst7();
 		}
 		// normal instruction execution
 		else

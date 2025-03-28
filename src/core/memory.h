@@ -126,6 +126,7 @@ namespace dev
 		auto CpuReadInstr(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM,
 			const uint8_t _byteNum = 0) -> uint8_t;
+		void CpuInvokesRst7();
 		auto CpuRead(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM,
 			const uint8_t _byteNum = 0) -> uint8_t;

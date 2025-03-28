@@ -89,6 +89,11 @@ auto dev::Memory::CpuReadInstr(const Addr _addr, const AddrSpace _addrSpace,
 	return val;
 }
 
+void dev::Memory::CpuInvokesRst7()
+{
+	m_state.debug.instr[0] = 0xFF; // OPCODE_RST7
+}
+
 auto dev::Memory::CpuRead(const Addr _addr, const AddrSpace _addrSpace,
 	const uint8_t _byteNum)
 -> uint8_t
