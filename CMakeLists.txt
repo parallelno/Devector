@@ -93,7 +93,7 @@ set(TINY_DIALOGS_SRC
 	${TINY_DIALOGS_DIR}/tinyfiledialogs.c
 )
 
-# libtinyfiledialogs source
+# stb_image source
 set(STB_IMAGE_SRC
 	${STB_IMAGE_DIR}/stb_image.h
 )
@@ -111,7 +111,7 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/devector_app.h
 	${DEVECTOR_DIR}/main/devector_app.cpp
 	
-	${DEVECTOR_DIR}/main/imgui_app.cpp
+	${DEVECTOR_DIR}/main/imgui_app.h
 	${DEVECTOR_DIR}/main/imgui_app.cpp
 
 	${DEVECTOR_DIR}/main/ui/about_window.cpp
