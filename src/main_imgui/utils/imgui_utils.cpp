@@ -2,6 +2,8 @@
 
 #include "utils/utils.h"
 #include "utils/str_utils.h"
+#include "core/memory_edit.h"
+#include "core/code_perf.h"
 #include "core/disasm.h"
 #include "imgui_stdlib.h"
 
@@ -760,7 +762,7 @@ static ImVec2 buttonSize = { 65.0f, 25.0f };
 void dev::DrawEditMemEditWindow(Hardware& _hardware, const DebugData& _debugData, ReqUI& _reqUI)
 {
 	static const char* popupWindowName = "Memory Edit";
-	static DebugData::MemoryEdit edit;
+	static MemoryEdit edit;
 	static int globalAddr = 0;
 	static int value = 0;
 	static bool enterPressed = false;
@@ -891,7 +893,7 @@ void dev::DrawEditMemEditWindow(Hardware& _hardware, const DebugData& _debugData
 void dev::DrawEditCodePerfWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI)
 {
 	static const char* popupWindowName = "Code Performance";
-	static DebugData::CodePerf codePerf;
+	static CodePerf codePerf;
 	static int addrStart = 0;
 	static int addrEnd = 0x100;
 	static bool enterPressed = false;

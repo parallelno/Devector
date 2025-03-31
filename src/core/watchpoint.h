@@ -103,7 +103,7 @@ namespace dev
 
 		Watchpoint(Data&& _data, const std::string& _comment = "");
 
-		void Update(Watchpoint&& _bp);
+		void Update(Watchpoint&& _wp);
 
 		auto Check(const Access _access, const GlobalAddr _globalAddr, const uint8_t _value) -> const bool;
 		auto GetAccessI() const -> int;

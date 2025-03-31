@@ -10,7 +10,7 @@ namespace dev
 {
 	struct Breakpoints
 	{
-public:
+	public:
 		using BpMap = std::unordered_map<GlobalAddr, Breakpoint>;
 
 		void SetStatus(const Addr _addr, const Breakpoint::Status _status);
@@ -23,11 +23,9 @@ public:
 		auto GetStatus(const Addr _addr) -> const Breakpoint::Status;
 		void Clear();
 
-private:
+	private:
 
 		BpMap m_bps;
 		uint32_t m_updates; // counts number of updates
-
-		std::string addrMappingS;
 	};
 }

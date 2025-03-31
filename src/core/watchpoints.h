@@ -9,7 +9,7 @@ namespace dev
 {
 	struct Watchpoints
 	{
-public:
+	public:
 		using WpMap = std::unordered_map<dev::Id, Watchpoint>;
 
 		void Add(Watchpoint&& _bp);
@@ -21,11 +21,10 @@ public:
 		void Clear();
 		bool CheckBreak();
 
-private:
+	private:
 
 		WpMap m_wps;
 		uint32_t m_updates = 0; // counts number of updates
 		bool m_wpBreak = false;
-		std::string addrMappingS;
 	};
 }

@@ -94,6 +94,15 @@
         "string_view": "cpp",
         "numbers": "cpp",
         "semaphore": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "bitset": "cpp",
+        "complex": "cpp",
+        "regex": "cpp",
+        "set": "cpp",
+        "source_location": "cpp",
+        "stack": "cpp",
+        "stdfloat": "cpp",
+        "typeindex": "cpp",
+        "unordered_set": "cpp"
     }
 }

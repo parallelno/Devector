@@ -130,53 +130,6 @@ void dev::Breakpoint::Print() const
 void dev::Breakpoint::UpdateAddrMappingS()
 {
 	addrMappingS = dev::Uint16ToStrC0x(data.structured.addr);
-	/*
-	addrMappingS = std::format(
-		"0x{:04X} {}"
-		" 1:{}{}{}{}"
-		" 2:{}{}{}{}"
-		" 3:{}{}{}{}"
-		" 4:{}{}{}{}"
-		" 5:{}{}{}{}"
-		" 6:{}{}{}{}"
-		" 7:{}{}{}{}"
-		" 8:{}{}{}{}",
-		static_cast<int>(data.structured.addr),
-		data.structured.memPages.ram ? "M" : "_",
-		data.structured.memPages.rdisk0page0 ? "0" : "_",
-		data.structured.memPages.rdisk0page1 ? "1" : "_",
-		data.structured.memPages.rdisk0page2 ? "2" : "_",
-		data.structured.memPages.rdisk0page3 ? "3" : "_",
-		data.structured.memPages.rdisk1page0 ? "0" : "_",
-		data.structured.memPages.rdisk1page1 ? "1" : "_",
-		data.structured.memPages.rdisk1page2 ? "2" : "_",
-		data.structured.memPages.rdisk1page3 ? "3" : "_",
-		data.structured.memPages.rdisk2page0 ? "0" : "_",
-		data.structured.memPages.rdisk2page1 ? "1" : "_",
-		data.structured.memPages.rdisk2page2 ? "2" : "_",
-		data.structured.memPages.rdisk2page3 ? "3" : "_",
-		data.structured.memPages.rdisk3page0 ? "0" : "_",
-		data.structured.memPages.rdisk3page1 ? "1" : "_",
-		data.structured.memPages.rdisk3page2 ? "2" : "_",
-		data.structured.memPages.rdisk3page3 ? "3" : "_",
-		data.structured.memPages.rdisk4page0 ? "0" : "_",
-		data.structured.memPages.rdisk4page1 ? "1" : "_",
-		data.structured.memPages.rdisk4page2 ? "2" : "_",
-		data.structured.memPages.rdisk4page3 ? "3" : "_",
-		data.structured.memPages.rdisk5page0 ? "0" : "_",
-		data.structured.memPages.rdisk5page1 ? "1" : "_",
-		data.structured.memPages.rdisk5page2 ? "2" : "_",
-		data.structured.memPages.rdisk5page3 ? "3" : "_",
-		data.structured.memPages.rdisk6page0 ? "0" : "_",
-		data.structured.memPages.rdisk6page1 ? "1" : "_",
-		data.structured.memPages.rdisk6page2 ? "2" : "_",
-		data.structured.memPages.rdisk6page3 ? "3" : "_",
-		data.structured.memPages.rdisk7page0 ? "0" : "_",
-		data.structured.memPages.rdisk7page1 ? "1" : "_",
-		data.structured.memPages.rdisk7page2 ? "2" : "_",
-		data.structured.memPages.rdisk7page3 ? "3" : "_"
-		);
-		*/
 }
 
 auto dev::Breakpoint::GetAddrMappingS() const

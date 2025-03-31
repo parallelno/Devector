@@ -16,6 +16,7 @@ void dev::DebugData::Reset()
 	
 	m_breakpoints.Clear();
 	m_watchpoints.Clear();
+	m_scripts.Clear();
 }
 */
 
@@ -369,7 +370,8 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 	m_codePerfsUpdates++;
 	
 	m_breakpoints.Clear();
-	m_watchpoints.Clear();	
+	m_watchpoints.Clear();
+	m_scripts.Clear();
 
 	// init empty dictionaries when there is no file found
 	if (!dev::IsFileExist(m_debugPath)) return;
@@ -453,6 +455,16 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 			m_watchpoints.Add(std::move(wp));
 		}
 	}
+	// add scripts
+	if (debugDataJ.contains("scripts")) {
+		for (auto& scriptJ : debugDataJ["scripts"])
+		{
+			Script::Data scriptData{ scriptJ };
+
+			Script script{ std::move(scriptData), scriptJ["code"], scriptJ["comment"] };
+			m_scripts.Add(std::move(script));
+		}
+	}
 }
 
 void dev::DebugData::SaveDebugData()
@@ -528,6 +540,15 @@ void dev::DebugData::SaveDebugData()
 	for (const auto& [id, wp] : m_watchpoints.GetAll())
 	{
 		debugWatchpoints.push_back(wp.ToJson());
+	}
+
+	// update scripts
+	empty &= m_scripts.GetAll().empty();
+	debugDataJ["scripts"] = {};
+	auto& debugScripts = debugDataJ["scripts"];
+	for (const auto& [id, script] : m_scripts.GetAll())
+	{
+		debugWatchpoints.push_back(script.ToJson());
 	}
 	
 	// save if the debug data is not empty or the file exists

@@ -11,15 +11,12 @@
 dev::Watchpoint::Watchpoint(Data&& _data, const std::string& _comment)
 	:
 	data(std::move(_data)), comment(_comment)
-{
-	//UpdateAddrMappingS();
-}
+{}
 
-void dev::Watchpoint::Update(Watchpoint&& _bp)
+void dev::Watchpoint::Update(Watchpoint&& _wp)
 {
-	data = std::move(_bp.data);
-	comment = std::move(_bp.comment);
-	//UpdateAddrMappingS();
+	data = std::move(_wp.data);
+	comment = std::move(_wp.comment);
 }
 
 auto dev::Watchpoint::Check(const Access _access, const GlobalAddr _globalAddr, const uint8_t _value)

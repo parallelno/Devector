@@ -28,6 +28,7 @@ set(CORE_DIR ${SRC_DIR}/core)
 set(UTILS_DIR ${SRC_DIR}/utils)
 set(BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 set(RES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
+set(LUAJIT_DIR ${3RD_PARTY_DIR}/luajit)
 
 # Create 3rd_party folder
 file(MAKE_DIRECTORY ${3RD_PARTY_DIR})
@@ -68,6 +69,65 @@ if(NOT EXISTS ${TINY_DIALOGS_DIR})
 	)
 	FetchContent_MakeAvailable(libtinyfiledialogs)
 endif()
+
+# Fetch LuaJIT if not already in 3rd_party
+if(NOT EXISTS ${LUAJIT_DIR})
+	message(STATUS "Cloning LuaJIT into ${LUAJIT_DIR}")
+	FetchContent_Declare(
+		LuaJIT
+		GIT_REPOSITORY https://github.com/LuaJIT/LuaJIT.git
+		GIT_TAG v2.1.0-beta3  # Stable version
+		SOURCE_DIR ${LUAJIT_DIR}
+	)
+	FetchContent_MakeAvailable(LuaJIT)
+endif()
+
+# Build LuaJIT statically as an external project
+include(ExternalProject)
+if(WIN32)
+	if(MINGW)
+		# MinGW on Windows: Use Makefile with static build
+		ExternalProject_Add(
+			luajit_build
+			SOURCE_DIR ${LUAJIT_DIR}
+			CONFIGURE_COMMAND ""  # LuaJIT uses its own build system
+			BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${LUAJIT_DIR} mingw32-make BUILDMODE=static "TARGET_CFLAGS=-m64"
+			INSTALL_COMMAND ""    # No install step; we use the output directly
+			BUILD_IN_SOURCE 1     # LuaJIT builds in its source dir
+		)
+		set(LUAJIT_STATIC_LIB "${LUAJIT_DIR}/src/libluajit.a")
+	else()
+		# MSVC on Windows: Use msvcbuild.bat
+		ExternalProject_Add(
+			luajit_build
+			SOURCE_DIR ${LUAJIT_DIR}
+			CONFIGURE_COMMAND ""  # LuaJIT uses its own build system
+			BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${LUAJIT_DIR}/src msvcbuild.bat static "TARGET_CFLAGS=-m64" 
+			INSTALL_COMMAND ""    # No install step; we use the output directly
+			BUILD_IN_SOURCE 1     # LuaJIT builds in its source dir
+		)
+		set(LUAJIT_STATIC_LIB ${LUAJIT_DIR}/src/libluajit.lib)
+	endif()
+else()
+	# Unix-like: Use Makefile with static build
+	ExternalProject_Add(
+		luajit_build
+		SOURCE_DIR ${LUAJIT_DIR}
+		CONFIGURE_COMMAND ""  # LuaJIT uses its own build system
+		BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${LUAJIT_DIR} make BUILDMODE=static "TARGET_CFLAGS=-m64"
+		INSTALL_COMMAND ""    # No install step; we use the output directly
+		BUILD_IN_SOURCE 1     # LuaJIT builds in its source dir
+	)
+	set(LUAJIT_STATIC_LIB "${LUAJIT_DIR}/src/libluajit.a")
+endif()
+
+# Define LuaJIT as an imported static library
+add_library(luajit STATIC IMPORTED)
+set_target_properties(luajit PROPERTIES
+	IMPORTED_LOCATION ${LUAJIT_STATIC_LIB}
+	INTERFACE_INCLUDE_DIRECTORIES ${LUAJIT_DIR}/src
+)
+add_dependencies(luajit luajit_build)
 
 # Add GLAD
 add_library(glad ${GLAD_DIR}/src/glad.c)
@@ -172,6 +232,11 @@ else()
 	target_link_libraries(${PROJECT_NAME} PRIVATE X11::X11)
 endif()
 
+target_link_libraries(${PROJECT_NAME} PRIVATE luajit)
+if (WIN32)
+	target_link_libraries(${PROJECT_NAME} PRIVATE user32)  # LuaJIT may require this on Windows
+endif()
+
 # Include dirs
 target_include_directories(${PROJECT_NAME} PRIVATE
 	${IMGUI_DIR}
@@ -180,7 +245,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	${3RD_PARTY_DIR}
 	${GLAD_DIR}/include
 	${GLAD_DIR}/src
-	${IMGUI_DIR}/misc/cpp/
+	${IMGUI_DIR}/misc/cpp
+	${LUAJIT_DIR}/src
+	${LUAJIT_DIR}/src/host
+	${LUAJIT_DIR}/src/jit
 	${DEVECTOR_DIR}	
 	${DEVECTOR_DIR}/main
 	${DEVECTOR_DIR}/main/ui
@@ -188,8 +256,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 if(UNIX AND NOT APPLE)
 	# Include GTK and GLib headers
 	target_include_directories(${PROJECT_NAME} PRIVATE 
-    	${GTK_DIR}/include
-    	${GLIB_DIR}/include
+		${GTK_DIR}/include
+		${GLIB_DIR}/include
 	)
 endif()
 

@@ -112,8 +112,10 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	// code perf
 	m_debugData.CheckCodePerfs(_cpuStateP->regs.pc.word, _cpuStateP->cc);
 
-
 	auto break_ = false;
+
+	// check scripts
+	break_ |= m_debugData.GetScripts()->Check(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP);
 	
 	// check watchpoint status
 	break_ |= m_debugData.GetWatchpoints()->CheckBreak();
@@ -330,8 +332,45 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	case Hardware::Req::DEBUG_CODE_PERF_EXISTS:
 		out = { {"data", m_debugData.GetCodePerf(_reqDataJ["addr"]) != nullptr } };
 		break;
-	}	
+
+	//////////////////
+	// 
+	// Scripts
+	//
+	/////////////////
+
+	case Hardware::Req::DEBUG_SCRIPT_DEL_ALL:
+		m_debugData.GetScripts()->Clear();
+		break;
+
+	case Hardware::Req::DEBUG_SCRIPT_DEL:
+		m_debugData.GetScripts()->Del(_reqDataJ["id"]);
+		break;
+
+	case Hardware::Req::DEBUG_SCRIPT_ADD: {
+		Script::Data scriptData{ _reqDataJ["data0"]};
+		m_debugData.GetScripts()->Add({ std::move(scriptData), _reqDataJ["code"], _reqDataJ["comment"] });
+		break;
+	}
+	case Hardware::Req::DEBUG_SCRIPT_GET_UPDATES:
+		out = nlohmann::json{ {"updates", static_cast<uint64_t>(m_debugData.GetScripts()->GetUpdates()) } };
+		break;
+
+	case Hardware::Req::DEBUG_SCRIPT_GET_ALL:
+		for (const auto& [id, script] : m_debugData.GetScripts()->GetAll())
+		{
+			out.push_back({
+					{"data0", script.data.data0},
+					{"code", script.code},
+					{"comment", script.comment}
+				});
+		}
+		break;
 	
+	default:
+		break;
+	}
+
 	return out;
 }
 

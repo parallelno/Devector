@@ -11,6 +11,10 @@
 
 #include "core/breakpoints.h"
 #include "core/watchpoints.h"
+#include "core/code_perf.h"
+#include "core/memory_edit.h"
+#include "core/scripts.h"
+#include "utils/json_utils.h"
 
 namespace dev
 {
@@ -26,125 +30,8 @@ namespace dev
 		using FilteredElements = std::vector<std::tuple<std::string, GlobalAddr, std::string>>; // name, addr, addrS
 
 		// injects the value into the memory while loading
-		struct MemoryEdit
-		{
-			std::string comment;
-			GlobalAddr globalAddr = 0;
-			uint8_t value = 0;
-			bool readonly = true; // if true, memory is not modified
-			bool active = true;
-
-			auto AddrToStr() const -> std::string { return std::format("0x{:06x}: 0x{:02x} {}, {}", globalAddr, value, readonly ? "read-only" : "", active ? "active" : "not active"); }
-			void Erase()
-			{
-				comment.clear();
-				globalAddr = 0;
-				value = 0;
-				readonly = true;
-				active = true;
-			}
-
-			auto ToJson() const -> nlohmann::json
-			{
-				return {
-					{"comment", comment},
-					{"globalAddr", std::format("0x{:06X}", globalAddr)},
-					{"value", std::format("0x{:02X}", value)},
-					{"readonly", readonly},
-					{"active", active}
-				};
-			}
-
-			MemoryEdit() = default;
-
-			MemoryEdit(const nlohmann::json& _json)
-				:
-				comment(_json["comment"].get<std::string>()),
-				globalAddr(dev::StrHexToInt(_json["globalAddr"].get<std::string>().c_str())),
-				value(dev::StrHexToInt(_json["value"].get<std::string>().c_str())),
-				readonly(_json["readonly"].get<bool>()),
-				active(_json["active"].get<bool>())
-			{}
-
-			MemoryEdit(GlobalAddr _globalAddr, uint8_t _value, const std::string& _comment = "", bool _readonly = true, bool _active = true)
-				:
-				comment(_comment),
-				globalAddr(_globalAddr),
-				value(_value),
-				readonly(_readonly),
-				active(_active) {}
-		};
-
+		
 		using MemoryEdits = std::unordered_map<GlobalAddr, MemoryEdit>;
-
-		struct CodePerf
-		{
-			static constexpr int TESTS_MAX = 20000;
-			std::string label;
-			Addr addrStart = 0;
-			Addr addrEnd = 0x100;
-			double averageCcDiff = 0.0f; // average cc (Cpu CLock) difference between it entered the addrStart and exited addrEnd
-			int64_t tests = 0; // how many testes executed
-			int64_t cc = 0; // the current perf test cc
-			bool active = true;
-
-			auto AddrToStr() const -> std::string {
-				return std::format("0x{:06x}-0x{:06x}: {}, average cc: {}, tests: {}",
-					addrStart, addrEnd,
-					active ? "active" : "not active",
-					static_cast<int>(std::round(averageCcDiff)),
-					tests);
-			}
-
-			void Erase()
-			{
-				label.clear();
-				addrStart = 0;
-				addrEnd = 0x100;
-				averageCcDiff = 0;
-				tests = 0;
-				cc = 0;
-				active = true;
-			}
-
-			void CheckPerf(const Addr _addr, const uint64_t _cc)
-			{
-				if (!active || (addrStart != _addr && cc == 0)) return;
-
-				if (addrStart == _addr){
-					cc = _cc;
-				}
-				else
-				if (addrEnd == _addr)
-				{
-						tests += tests >= TESTS_MAX ? 0 : 1;
-						auto weight = 1.0 / tests;
-						int64_t ccDiff = _cc - cc;
-						averageCcDiff += (ccDiff - averageCcDiff) * weight;
-						cc = 0;
-				}
-			}
-
-			CodePerf() = default;
-
-			CodePerf(const nlohmann::json& _json)
-				:
-				label(_json["label"].get<std::string>()),
-				addrStart(dev::StrHexToInt(_json["addrStart"].get<std::string>().c_str())),
-				addrEnd(dev::StrHexToInt(_json["addrEnd"].get<std::string>().c_str())),
-				active(_json["active"].get<bool>())
-			{}
-
-			auto ToJson() const -> nlohmann::json
-			{
-				return {
-					{"label", label},
-					{"addrStart", std::format("0x{:04X}", addrStart)},
-					{"addrEnd", std::format("0x{:04X}", addrEnd)},
-					{"active", active}
-				};
-			}
-		};
 		using CodePerfs = std::unordered_map<Addr, CodePerf>;
 
 		DebugData(Hardware& _hardware);
@@ -194,6 +81,7 @@ namespace dev
 
 		auto GetBreakpoints() -> Breakpoints* { return &m_breakpoints; };
 		auto GetWatchpoints() -> Watchpoints* { return &m_watchpoints; };
+		auto GetScripts() -> Scripts* { return &m_scripts; };
 
 		void LoadDebugData(const std::string& _path);
 		void SaveDebugData();
@@ -209,9 +97,9 @@ namespace dev
 		Comments m_comments;
 		MemoryEdits m_memoryEdits; // code/data modifications
 		CodePerfs m_codePerfs;
-
 		Breakpoints m_breakpoints;
 		Watchpoints m_watchpoints;
+		Scripts m_scripts;
 
 		std::string m_debugPath;
 
