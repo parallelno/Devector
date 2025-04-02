@@ -1,5 +1,7 @@
 #include <string>
 
+#include <type_traits>
+
 #include "core/scripts.h"
 #include "utils/str_utils.h"
 #include "utils/utils.h"
@@ -8,83 +10,137 @@ dev::Scripts::Scripts()
 {
 	m_luaState = luaL_newstate();
 	if (!m_luaState) {
-		dev::Log("Failed to create lua state. Script support is disabled.");
+		dev::Log("Scripts: Failed to create lua state. Script support is disabled.");
 		return;
 	}
 
 	luaL_openlibs(m_luaState);  // Load standard Lua libraries
 	RegisterCppFunctions();
 
-	// TODO: test
-	std::string script = "print(\"Script 1: Adding 5 + 3 = \" .. add(5, 3))\n"
-						"print(\"Script 1: Counter = \" .. getCounter())\n"
-						"setCounter(100)\n";
-
-	RunScript(script);
-
 	m_enabled = true;
 }
 
 dev::Scripts::~Scripts()
 {
+	Clear();
 	if (m_luaState){
 		lua_close(m_luaState);
 	}
 }
 
-void dev::Scripts::RegisterCppFunctions()
-{
-	// Register a function to add two numbers
-	lua_pushcfunction(m_luaState, [](lua_State* m_luaState) -> int {
-		double a = luaL_checknumber(m_luaState, 1);
-		double b = luaL_checknumber(m_luaState, 2);
-		lua_pushnumber(m_luaState, a + b);
-		return 1;
-	});
-	lua_setglobal(m_luaState, "add");
-
-	// Register a function to get shared data (e.g., counter)
-	lua_pushcfunction(m_luaState, [](lua_State* m_luaState) -> int {
-		Scripts* scripts = static_cast<Scripts*>(lua_touserdata(m_luaState, lua_upvalueindex(1)));
-		lua_pushinteger(m_luaState, scripts->sharedCounter);
-		return 1;
-	});
-	lua_pushlightuserdata(m_luaState, this);  // Pass 'this' as upvalue
-	lua_pushcclosure(m_luaState, lua_tocfunction(m_luaState, -2), 1);
-	lua_setglobal(m_luaState, "getCounter");
-
-	// Register a function to set shared data
-	lua_pushcfunction(m_luaState, [](lua_State* m_luaState) -> int {
-		Scripts* scripts = static_cast<Scripts*>(lua_touserdata(m_luaState, lua_upvalueindex(1)));
-		scripts->sharedCounter = luaL_checkinteger(m_luaState, 1);
+// Helper struct with template specializations for type handling
+struct LuaGetter {
+	template<typename T>
+	static int pushValue(lua_State* state, T value) {
 		return 0;
-	});
-	lua_pushlightuserdata(m_luaState, this);
-	lua_pushcclosure(m_luaState, lua_tocfunction(m_luaState, -2), 1);
-	lua_setglobal(m_luaState, "setCounter");
+	}
+};
+
+// Specializations for supported types
+template<> inline int LuaGetter::pushValue<bool>(lua_State* state, bool value) {
+	lua_pushboolean(state, value);
+	return 1;
+}
+template<> inline int LuaGetter::pushValue<uint8_t>(lua_State* state, uint8_t value) {
+	lua_pushinteger(state, static_cast<lua_Integer>(value));
+	return 1;
+}
+template<> inline int LuaGetter::pushValue<uint16_t>(lua_State* state, uint16_t value) {
+	lua_pushinteger(state, static_cast<lua_Integer>(value));
+	return 1;
+}
+template<> inline int LuaGetter::pushValue<int>(lua_State* state, int value) {
+	lua_pushinteger(state, static_cast<lua_Integer>(value));
+	return 1;
+}
+template<> inline int LuaGetter::pushValue<uint64_t>(lua_State* state, uint64_t value) {
+	lua_pushinteger(state, static_cast<lua_Integer>(value));
+	return 1;
+}
+template<> inline int LuaGetter::pushValue<double>(lua_State* state, double value) {
+	lua_pushnumber(state, value);
+	return 1;
+}
+template<> inline int LuaGetter::pushValue<const char*>(lua_State* state, const char* value) {
+	lua_pushstring(state, value);
+	return 1;
 }
 
-bool dev::Scripts::RunScript(const std::string& script)
-{
-    int status = luaL_loadstring(m_luaState, script.c_str());
-    if (status != LUA_OK) {
-        std::cerr << "Lua load error: " << lua_tostring(m_luaState, -1) << std::endl;
-        lua_pop(m_luaState, 1);
-        return false;
-    }
+#define REGISTER_STRUCT_FIELD_GETTER(LUA_STATE, STRUCT_PTR, FIELD_PATH, FUNC_NAME) \
+	do { \
+		lua_CFunction getterFunc = [](lua_State* state) -> int { \
+			using StructType = std::remove_pointer_t<decltype(STRUCT_PTR)>; \
+			auto* structPtr = static_cast<StructType**>(lua_touserdata(state, lua_upvalueindex(1))); \
+			LuaGetter::pushValue(state, (*structPtr)->FIELD_PATH); \
+			return 1; \
+		}; \
+		lua_pushlightuserdata(LUA_STATE, (void*)(&STRUCT_PTR)); \
+		lua_pushcclosure(LUA_STATE, getterFunc, 1); \
+		lua_setglobal(LUA_STATE, #FUNC_NAME); \
+	} while(0)
 
-    status = lua_pcall(m_luaState, 0, LUA_MULTRET, 0);
-    if (status != LUA_OK) {
-        std::cerr << "Lua execution error: " << lua_tostring(m_luaState, -1) << std::endl;
-        lua_pop(m_luaState, 1);
-        return false;
-    }
-    return true;
+void dev::Scripts::RegisterCppFunctions()
+{
+	// Register a Break function
+	lua_CFunction breakFunc = [](lua_State* _luaState) -> int {
+		Scripts* scripts = static_cast<Scripts*>(lua_touserdata(_luaState, lua_upvalueindex(1)));
+		scripts->m_break = true;
+		return 0;
+	};
+	lua_pushcfunction(m_luaState, breakFunc);
+	lua_pushlightuserdata(m_luaState, this);
+	lua_pushcclosure(m_luaState, breakFunc, 1);
+	lua_setglobal(m_luaState, "Break");
+
+	// Register CPU state getters
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, cc, GetCC);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.pc.word, GetPC);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.sp.word, GetSP);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.af.word, GetPSW);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.bc.word, GetBC);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.de.word, GetDE);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.hl.word, GetHL);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.a, GetA);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.af.l, GetF);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.bc.h, GetB);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.bc.l, GetC);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.de.h, GetD);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.de.l, GetE);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.hl.h, GetH);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.hl.l, GetL);
+
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.s, GetFlagS);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.z, GetFlagZ);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.ac, GetFlagAC);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.p, GetFlagP);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.c, GetFlagC);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.inte, GetINTE);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.iff, GetIFF);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.hlta, GetHLTA);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.mc, GetMachineCycles);
+
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_memStateP, debug.instr[0], GetOpcode);
+
+	lua_CFunction getterByteGlobal = [](lua_State* state) -> int {
+		using StructType = std::remove_pointer_t<decltype(m_memStateP)>;
+		auto* structPtr = static_cast<StructType**>(lua_touserdata(state, lua_upvalueindex(1)));
+		int globalAddr = luaL_checkinteger(state, 1);
+		int val = (*structPtr)->ramP->at(globalAddr);
+		lua_pushinteger(state, val);
+		return 1;
+	};
+	lua_pushlightuserdata(m_luaState, (void*)(&m_memStateP));
+	lua_pushcclosure(m_luaState, getterByteGlobal, 1);
+	lua_setglobal(m_luaState, "GetByteGlobal");
 }
 
 // Hardware thread
 void dev::Scripts::Clear()
 {
+	for (auto& [id, script] : m_scripts)
+	{
+		luaL_unref(m_luaState, LUA_REGISTRYINDEX, script.ref);
+	}
 	m_scripts.clear();
 	m_updates++;
 }
@@ -102,7 +158,8 @@ void dev::Scripts::Add(Script&& _script)
 		scriptI->second.Update(std::move(_script));
 		return;
 	}
-	
+
+	_script.CompileScript(m_luaState);
 	m_scripts.emplace(_script.data.id, std::move(_script));
 }
 
@@ -113,7 +170,7 @@ void dev::Scripts::Add(const nlohmann::json& _scriptJ)
 	m_updates++;
 
 	Script::Data scriptData {_scriptJ};
-	Script script{ std::move(scriptData), _scriptJ["comment"] };
+	Script script{ std::move(scriptData), _scriptJ["code"], _scriptJ["comment"] };
 
 	auto scriptI = m_scripts.find(script.data.id);
 	if (scriptI != m_scripts.end())
@@ -121,7 +178,8 @@ void dev::Scripts::Add(const nlohmann::json& _scriptJ)
 		scriptI->second.Update(std::move(script));
 		return;
 	}
-	
+
+	script.CompileScript(m_luaState);
 	m_scripts.emplace(script.data.id, std::move(script));
 }
 
@@ -131,26 +189,42 @@ void dev::Scripts::Del(const dev::Id _id)
 	if (!m_enabled) return;
 
 	m_updates++;
-	auto bpI = m_scripts.find(_id);
-	if (bpI != m_scripts.end())
+	auto scriptI = m_scripts.find(_id);
+	if (scriptI != m_scripts.end())
 	{
-		m_scripts.erase(bpI);
+		luaL_unref(m_luaState, LUA_REGISTRYINDEX, scriptI->second.ref);
+		m_scripts.erase(scriptI);
 	}
 }
 
 // Hardware thread
-bool dev::Scripts::Check(const CpuI8080::State& _cpuState, const Memory::State& _memState,
-	const IO::State& _ioState, const Display::State& _displayState)
+bool dev::Scripts::Check(const CpuI8080::State* _cpuStateP, const Memory::State* _memStateP,
+	const IO::State* _ioStateP, const Display::State* _displayStateP)
 {
 	if (!m_enabled) return false;
 
-	auto scriptI = std::find_if(m_scripts.begin(), m_scripts.end(),
-		[_cpuState, _memState, _ioState, _displayState](ScriptMap::value_type& pair)
-		{
-			return pair.second.Check(_cpuState, _memState, _ioState, _displayState);
-		});
-	
-	return scriptI != m_scripts.end();
+	// TODO: rework it to not assign every cpu tick
+	m_cpuStateP = _cpuStateP;
+	m_memStateP = _memStateP;
+	m_ioStateP = _ioStateP;
+	m_displayStateP = _displayStateP;
+	// TODO: end of rework
+
+
+	bool total_break = false;
+	for (auto& [id, script] : m_scripts)
+	{
+		m_break = false;
+		script.Check(m_luaState);
+		total_break |= m_break;
+
+		if (m_break) {
+			dev::Log("Script break");
+			script.Print();
+		}
+	}
+
+	return total_break;
 }
 
 // Hardware thread

@@ -548,7 +548,7 @@ void dev::DebugData::SaveDebugData()
 	auto& debugScripts = debugDataJ["scripts"];
 	for (const auto& [id, script] : m_scripts.GetAll())
 	{
-		debugWatchpoints.push_back(script.ToJson());
+		debugScripts.push_back(script.ToJson());
 	}
 	
 	// save if the debug data is not empty or the file exists

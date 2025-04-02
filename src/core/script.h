@@ -6,6 +6,8 @@
 #include <vector>
 #include <format>
 
+#include <lua.hpp>
+
 #include "utils/types.h"
 #include "utils/str_utils.h"
 #include "utils/utils.h"
@@ -39,7 +41,7 @@ namespace dev
 				:
 				data0(_data0)
 			{}
-			Data(const nlohmann::json& _scriptJ) : 
+			Data(const nlohmann::json& _scriptJ) :
 				Data(_scriptJ["id"],
 					_scriptJ["active"])
 			{};
@@ -47,14 +49,13 @@ namespace dev
 #pragma pack(pop)
 
 		Script(Data&& _data, const std::string& _code, const std::string& _comment = "");
-
+		void CompileScript(lua_State* _luaState);
+		void RunScript(lua_State* _luaState);
 		void Update(Script&& _script);
-
-		auto Check(const CpuI8080::State& _cpuState, const Memory::State& _memState,
-			const IO::State& _ioState, const Display::State& _displayState) -> const bool;
+		void Check(lua_State* _luaState);
 		auto GetComment() const -> const std::string& { return comment;  };
 		void Reset();
-		void Print() const;
+		void Print(bool _printCode = false) const;
 		auto ToJson() const -> nlohmann::json
 		{
 			return {
@@ -68,5 +69,6 @@ namespace dev
 		Data data;
 		std::string code;
 		std::string comment;
+		int ref = LUA_NOREF;
 	};
 }

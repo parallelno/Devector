@@ -23,24 +23,29 @@ namespace dev
 
 		Scripts();
 		~Scripts();
-		void Add(Script&& _bp);
-		void Add(const nlohmann::json& _wpJ);
+		void Add(Script&& _script);
+		void Add(const nlohmann::json& _scriptJ);
 		void Del(const dev::Id _id);
-		bool Check(const CpuI8080::State& _cpuState, const Memory::State& _memState,
-			const IO::State& _ioState, const Display::State& _displayState);
+		bool Check(const CpuI8080::State* _cpuStateP, const Memory::State* _memStateP,
+			const IO::State* _ioStateP, const Display::State* _displayStateP);
 		auto GetAll() -> const ScriptMap&;
 		auto GetUpdates() -> const uint32_t;
 		void Clear();
 
 	private:
 		void RegisterCppFunctions();
-		bool RunScript(const std::string& script);
+		void CompileScript(Script& _script);
+		void RunScript(int _scriptRef);
 
 		ScriptMap m_scripts;
 		uint32_t m_updates = 0; // counts number of updates
 		lua_State* m_luaState;
 		bool m_enabled = false;
 
-		int sharedCounter = 42; // Example shared data in lua scripts (e.g., a counter)
+		const CpuI8080::State* m_cpuStateP = nullptr;
+		const Memory::State* m_memStateP = nullptr;
+		const IO::State* m_ioStateP = nullptr;
+		const Display::State* m_displayStateP = nullptr;
+		bool m_break = false;
 	};
 }

@@ -115,7 +115,7 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	auto break_ = false;
 
 	// check scripts
-	break_ |= m_debugData.GetScripts()->Check(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP);
+	break_ |= m_debugData.GetScripts()->Check(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 	
 	// check watchpoint status
 	break_ |= m_debugData.GetWatchpoints()->CheckBreak();
