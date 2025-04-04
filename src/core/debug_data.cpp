@@ -351,6 +351,21 @@ auto dev::DebugData::CheckCodePerfs(const Addr _addrStart, const uint64_t _cc) -
 	return false;
 }
 ////////////////////
+
+void dev::DebugData::GetFilteredScripts(FilteredElements& _out, const std::string& _filter)
+{
+	_out.clear();
+	auto scripts = m_scripts.GetAll();
+
+	for (const auto& [id, script] : scripts)
+	{
+		if (script.comment.find(_filter) == std::string::npos) continue;
+		_out.push_back({ script.comment, id, script.active ? "On" : "Off" });
+	}
+}
+
+////////////////////
+
 void dev::DebugData::LoadDebugData(const std::string& _path)
 {
 	// check if the file exists
@@ -459,10 +474,7 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 	if (debugDataJ.contains("scripts")) {
 		for (auto& scriptJ : debugDataJ["scripts"])
 		{
-			Script::Data scriptData{ scriptJ };
-
-			Script script{ std::move(scriptData), scriptJ["code"], scriptJ["comment"] };
-			m_scripts.Add(std::move(script));
+			m_scripts.Add(std::move(scriptJ));
 		}
 	}
 }

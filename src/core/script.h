@@ -23,32 +23,9 @@ namespace dev
 
 	struct Script
 	{
-
-#pragma pack(push, 1)
-		union Data {
-			struct {
-				Id id;
-				bool active		: 1;
-			};
-			struct {
-				uint64_t data0;
-			};
-
-			Data(const Id _id, const bool _active = true):
-				id(_id == -1 ? scriptId++ : _id), active(_active)
-			{};
-			Data(const uint64_t _data0)
-				:
-				data0(_data0)
-			{}
-			Data(const nlohmann::json& _scriptJ) :
-				Data(_scriptJ["id"],
-					_scriptJ["active"])
-			{};
-		};
-#pragma pack(pop)
-
-		Script(Data&& _data, const std::string& _code, const std::string& _comment = "");
+		Script(const Id _id, const bool _active, const std::string& _code, const std::string& _comment = "");
+		Script() : Script(scriptId++, true, "", "") {}
+		Script(const nlohmann::json& _scriptJ);
 		void CompileScript(lua_State* _luaState);
 		void RunScript(lua_State* _luaState);
 		void Update(Script&& _script);
@@ -56,17 +33,20 @@ namespace dev
 		auto GetComment() const -> const std::string& { return comment;  };
 		void Reset();
 		void Print(bool _printCode = false) const;
+		auto ToStr(bool _printId, bool _printComment) const -> const std::string;
+		auto GetCode(const int _lines) const -> const std::string;
 		auto ToJson() const -> nlohmann::json
 		{
 			return {
-				{"id", data.id},
-				{"active", data.active},
+				{"id", id},
+				{"active", active},
 				{"code", code},
 				{"comment", comment},
 			};
 		};
 
-		Data data;
+		Id id;
+		bool active;
 		std::string code;
 		std::string comment;
 		int ref = LUA_NOREF;

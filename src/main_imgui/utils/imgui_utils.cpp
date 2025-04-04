@@ -319,7 +319,7 @@ bool dev::DrawProperty2EditableS(const char* _name, const char* _label, std::str
 	if (_delButtonPressed)
 	{
 		ImGui::SameLine(); ImGui::SameLine();
-		if (ImGui::Button("Delete"))
+		if (ImGui::Button(std::format("Delete##{}", _name).c_str()))
 		{
 			_value->erase();
 			*_delButtonPressed = true;
@@ -988,12 +988,139 @@ void dev::DrawEditCodePerfWindow(Hardware& _hardware, DebugData& _debugData, Req
 				auto oldAddrStart = codePerf.addrStart;
 				codePerf.addrStart = addrStart;
 				auto oldAddrEnd = codePerf.addrEnd;
-				codePerf.addrEnd = addrEnd;				
+				codePerf.addrEnd = addrEnd;
 				if (addrStart != oldAddrStart || addrEnd != oldAddrEnd) _hardware.Request(Hardware::Req::DEBUG_CODE_PERF_DEL, { {"addr", oldAddrStart} });
 				_hardware.Request(Hardware::Req::DEBUG_CODE_PERF_ADD, codePerf.ToJson());
 
 				_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				_reqUI.globalAddr = addrStart;
+				ImGui::CloseCurrentPopup();
+			}
+			if (warning) ImGui::EndDisabled();
+
+			// Cancel button
+			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
+			if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+
+			// ESC pressed
+			if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+
+			ImGui::EndTable();
+		}
+		ImGui::EndPopup();
+	}
+}
+
+void dev::DrawEditScriptWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI)
+{
+	static constexpr int CODE_LEN_MAX = 10240;
+	static const char* popupWindowName = "Script Edit";
+	static Script script;
+	static char code[CODE_LEN_MAX];
+	static bool enterPressed = false;
+	static bool setFocus = false;
+
+	// init a window
+	switch (_reqUI.type)
+	{
+	case ReqUI::Type::SCRIPTS_EDIT_WINDOW_ADD:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		script = Script();
+		setFocus = true;
+		code[0] = '\0';
+		break;
+
+	case ReqUI::Type::SCRIPTS_EDIT_WINDOW_EDIT:
+		_reqUI.type = ReqUI::Type::NONE;
+		ImGui::OpenPopup(popupWindowName);
+		enterPressed = false;
+		auto currentScript = _debugData.GetScripts()->Find(_reqUI.globalAddr);
+		if (!currentScript){
+			int err = 0;
+		}
+		script = *currentScript;
+		strcpy(code, script.code.c_str());
+		setFocus = true;
+		break;
+	}
+
+	// draw a window
+	ImVec2 winPos = ImGui::GetMousePos();
+	ImGui::SetNextWindowPos(winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal(popupWindowName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static ImGuiTableFlags flags =
+			ImGuiTableFlags_ScrollY |
+			ImGuiTableFlags_SizingStretchSame |
+			ImGuiTableFlags_ContextMenuInBody;
+
+		if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
+		{
+			ImGui::TableSetupColumn("##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 80);
+			ImGui::TableSetupColumn("##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 800);
+
+			// Active
+			DrawProperty2EditableCheckBox("Active", "##ContextActive", &script.active, "When true, the code performance is tested.");
+
+			// comment
+			bool delPressed = false;
+			DrawProperty2EditableS("Comment", "##ContextComment", &script.comment, "comment", "empty string means delete the entity", 0, &delPressed);
+
+			// code ====================
+			ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+			ImGui::TableNextColumn();
+
+			ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+			TextAligned("code", { 1.0f, 0.5f });
+			ImGui::PopStyleColor();
+
+			ImGui::TableNextColumn();
+			ImVec2 codeSize = ImGui::CalcTextSize(script.code.c_str(), nullptr);
+			codeSize.x = -FLT_MIN; // fill width (suppresses label)
+			codeSize.y += ImGui::GetStyle().FramePadding.y; // single pad
+
+			auto entered = ImGui::InputTextMultiline(
+				"##ContextCode",
+				code,
+				CODE_LEN_MAX,
+				codeSize,
+				ImGuiInputTextFlags_AllowTabInput
+			);
+			//==========================
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// Warnings
+			const char* warning = nullptr;
+
+			// if (addrStart >= Memory::MEMORY_GLOBAL_LEN || addrEnd >= Memory::MEMORY_GLOBAL_LEN) {
+			// 	warning = "Too large address";
+			// }
+			// else if (addrStart < 0 || addrEnd < 0) {
+			// 	warning = "Too low address";
+			// }
+
+			if (warning) {
+				ImGui::TextColored(DASM_CLR_WARNING, warning);
+			}
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableNextColumn();
+
+			// OK button
+			if (warning) ImGui::BeginDisabled();
+			if (ImGui::Button("Ok", buttonSize) || enterPressed)
+			{
+				script.code = std::string(code);
+				_hardware.Request(Hardware::Req::DEBUG_SCRIPT_ADD, script.ToJson());
+
+				_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+				_reqUI.globalAddr = script.id;
 				ImGui::CloseCurrentPopup();
 			}
 			if (warning) ImGui::EndDisabled();

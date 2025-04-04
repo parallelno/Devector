@@ -25,6 +25,7 @@ namespace dev
 		~Scripts();
 		void Add(Script&& _script);
 		void Add(const nlohmann::json& _scriptJ);
+		auto Find(const dev::Id _id) -> const Script*;
 		void Del(const dev::Id _id);
 		bool Check(const CpuI8080::State* _cpuStateP, const Memory::State* _memStateP,
 			const IO::State* _ioStateP, const Display::State* _displayStateP);

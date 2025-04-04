@@ -73,6 +73,8 @@ namespace dev
 		void GetFilteredCodePerfs(FilteredElements& _out, const std::string& _filter = "") const;
 		auto CheckCodePerfs(const Addr _addrStart, const uint64_t _cc) -> bool;
 
+		void GetFilteredScripts(FilteredElements& _out, const std::string& _filter = "");
+
 		auto GetCommentsUpdates() const -> UpdateId { return m_commentsUpdates; };
 		auto GetLabelsUpdates() const -> UpdateId { return m_labelsUpdates; };
 		auto GetConstsUpdates() const -> UpdateId { return m_constsUpdates; };

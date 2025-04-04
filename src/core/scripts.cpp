@@ -152,15 +152,16 @@ void dev::Scripts::Add(Script&& _script)
 
 	m_updates++;
 
-	auto scriptI = m_scripts.find(_script.data.id);
+	auto scriptI = m_scripts.find(_script.id);
 	if (scriptI != m_scripts.end())
 	{
 		scriptI->second.Update(std::move(_script));
+		_script.CompileScript(m_luaState);
 		return;
 	}
 
 	_script.CompileScript(m_luaState);
-	m_scripts.emplace(_script.data.id, std::move(_script));
+	m_scripts.emplace(_script.id, std::move(_script));
 }
 
 void dev::Scripts::Add(const nlohmann::json& _scriptJ)
@@ -169,18 +170,17 @@ void dev::Scripts::Add(const nlohmann::json& _scriptJ)
 
 	m_updates++;
 
-	Script::Data scriptData {_scriptJ};
-	Script script{ std::move(scriptData), _scriptJ["code"], _scriptJ["comment"] };
+	auto id = _scriptJ["id"].get<Id>();
+	auto scriptI = m_scripts.emplace(id, Script{}).first;
+	scriptI->second.Update(_scriptJ);
+	scriptI->second.CompileScript(m_luaState);
+}
 
-	auto scriptI = m_scripts.find(script.data.id);
-	if (scriptI != m_scripts.end())
-	{
-		scriptI->second.Update(std::move(script));
-		return;
-	}
-
-	script.CompileScript(m_luaState);
-	m_scripts.emplace(script.data.id, std::move(script));
+auto dev::Scripts::Find(const dev::Id _id) 
+-> const Script*
+{
+	auto scriptI = m_scripts.find(_id);
+	return scriptI != m_scripts.end() ? &scriptI->second : nullptr;
 }
 
 // Hardware thread

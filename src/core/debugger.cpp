@@ -348,8 +348,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		break;
 
 	case Hardware::Req::DEBUG_SCRIPT_ADD: {
-		Script::Data scriptData{ _reqDataJ["data0"]};
-		m_debugData.GetScripts()->Add({ std::move(scriptData), _reqDataJ["code"], _reqDataJ["comment"] });
+		m_debugData.GetScripts()->Add(_reqDataJ);
 		break;
 	}
 	case Hardware::Req::DEBUG_SCRIPT_GET_UPDATES:
@@ -359,11 +358,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	case Hardware::Req::DEBUG_SCRIPT_GET_ALL:
 		for (const auto& [id, script] : m_debugData.GetScripts()->GetAll())
 		{
-			out.push_back({
-					{"data0", script.data.data0},
-					{"code", script.code},
-					{"comment", script.comment}
-				});
+			out.push_back(script.ToJson());
 		}
 		break;
 	

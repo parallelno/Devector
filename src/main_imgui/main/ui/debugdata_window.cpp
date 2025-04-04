@@ -66,6 +66,13 @@ void dev::DebugDataWindow::Draw(const bool _isRunning)
 										m_codePerfFilter, ElementType::CODE_PERFS);
 			ImGui::EndTabItem();
 		}
+		if (ImGui::BeginTabItem("Scripts"))
+		{
+			auto updateId = m_debugger.GetDebugData().GetScripts()->GetUpdates();
+			UpdateAndDrawFilteredElements(m_filteredScripts, m_scriptsUpdates, updateId,
+										m_scriptFilter, ElementType::SCRIPTS);
+			ImGui::EndTabItem();
+		}
 
 		ImGui::EndTabBar();
 	}
@@ -73,6 +80,7 @@ void dev::DebugDataWindow::Draw(const bool _isRunning)
 
 void dev::DebugDataWindow::UpdateData(const bool _isRunning)
 {
+	/*
 	// check if the hardware updated its state
 	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
 	auto ccDiff = cc - m_ccLast;
@@ -80,6 +88,7 @@ void dev::DebugDataWindow::UpdateData(const bool _isRunning)
 	m_ccLast = cc;
 
 	// update the data
+	*/
 }
 
 void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
@@ -116,6 +125,9 @@ Double click + Ctrl the element to locate the addr in the Hex Window.");
 
 		case ElementType::MEMORY_EDIT:
 			m_debugger.GetDebugData().GetFilteredMemoryEdits(_filteredElements, _filter);
+			break;
+		case ElementType::SCRIPTS:
+			m_debugger.GetDebugData().GetFilteredScripts(_filteredElements, _filter);
 			break;
 		default:
 			break;			
@@ -275,6 +287,9 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 			case ElementType::CODE_PERFS:
 				m_reqUI.type = ReqUI::Type::CODE_PERFS_EDIT_WINDOW_ADD;
 				break;
+			case ElementType::SCRIPTS:
+				m_reqUI.type = ReqUI::Type::SCRIPTS_EDIT_WINDOW_ADD;
+				break;			
 			}
 			m_reqUI.globalAddr = 0;
 		}
@@ -302,6 +317,9 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 				case ElementType::CODE_PERFS:
 					m_reqUI.type = ReqUI::Type::CODE_PERFS_EDIT_WINDOW_EDIT;
 					break;
+				case ElementType::SCRIPTS:
+					m_reqUI.type = ReqUI::Type::SCRIPTS_EDIT_WINDOW_EDIT;
+					break;					
 				}
 				m_reqUI.globalAddr = _contextMenu.addr;
 			}
@@ -328,6 +346,9 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 
 				case ElementType::CODE_PERFS:
 					m_debugger.GetDebugData().DelCodePerf(_contextMenu.addr);
+					break;
+				case ElementType::SCRIPTS:
+					m_debugger.GetDebugData().GetScripts()->Del(_contextMenu.addr);
 					break;
 				
 				default:
@@ -363,6 +384,9 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 			case ElementType::CODE_PERFS:
 				m_hardware.Request(Hardware::Req::DEBUG_CODE_PERF_DEL_ALL);
 				break;
+			case ElementType::SCRIPTS:
+				m_hardware.Request(Hardware::Req::DEBUG_SCRIPT_DEL_ALL);
+				break;
 
 			default:
 				break;
@@ -375,129 +399,3 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 		ImGui::EndPopup();
 	}
 }
-
-// void dev::DebugDataWindow::DrawContextMenuElementEdit(ContextMenu& _contextMenu)
-// {
-// 	int caseFlag = _contextMenu.elementType == ElementType::CONST ? ImGuiInputTextFlags_CharsUppercase : 0;
-// 	bool pressedEnter = ImGui::InputTextWithHint("##ElementEdit", "", &_contextMenu.elementName, ImGuiInputTextFlags_EnterReturnsTrue | caseFlag);
-// 	ImGui::SameLine();
-// 	bool pressedOk = ImGui::Button("OK");
-// 	ImGui::SameLine();
-
-// 	if (ImGui::Button("Cancel"))
-// 	{
-// 		ImGui::CloseCurrentPopup();
-// 		_contextMenu.status = ContextMenu::Status::NONE;
-// 	}
-
-// 	if (pressedEnter || pressedOk)
-// 	{
-// 		switch (_contextMenu.elementType)
-// 		{
-// 		case ElementType::LABEL:
-// 			m_debugger.GetDebugData().RenameLabel(_contextMenu.addr, _contextMenu.oldElementName, _contextMenu.elementName);
-// 			break;
-
-// 		case ElementType::CONST:
-// 			m_debugger.GetDebugData().RenameConst(_contextMenu.addr, _contextMenu.oldElementName, _contextMenu.elementName);
-// 			break;
-
-// 		case ElementType::COMMENT:
-// 			m_debugger.GetDebugData().SetComment(_contextMenu.addr, _contextMenu.elementName);
-// 			break;
-		
-// 		default:
-// 			break;
-// 		}
-
-// 		ImGui::CloseCurrentPopup();
-// 		_contextMenu.status = ContextMenu::Status::NONE;
-// 		m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
-// 	}
-// }
-
-// void dev::DebugDataWindow::DrawContextMenuAddrEdit(ContextMenu& _contextMenu)
-// {
-// 	ImGui::InputInt("##AddrEdit", &_contextMenu.addr, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
-// 	bool pressedEnter = ImGui::IsKeyPressed(ImGuiKey_Enter);
-// 	ImGui::SameLine();
-// 	bool pressedOk = ImGui::Button("OK");
-// 	ImGui::SameLine();
-
-// 	if (ImGui::Button("Cancel"))
-// 	{
-// 		ImGui::CloseCurrentPopup();
-// 		_contextMenu.status = ContextMenu::Status::NONE;
-// 	}
-
-// 	if (pressedEnter || pressedOk)
-// 	{
-// 		switch (_contextMenu.elementType)
-// 		{
-// 		case ElementType::LABEL:
-// 			m_debugger.GetDebugData().DelLabel(_contextMenu.oldAddr, _contextMenu.elementName);
-// 			m_debugger.GetDebugData().AddLabel(_contextMenu.addr, _contextMenu.elementName);
-// 			break;
-
-// 		case ElementType::CONST:
-// 			m_debugger.GetDebugData().DelConst(_contextMenu.oldAddr, _contextMenu.elementName);
-// 			m_debugger.GetDebugData().AddConst(_contextMenu.addr, _contextMenu.elementName);
-// 			break;
-
-// 		case ElementType::COMMENT:
-// 			m_debugger.GetDebugData().DelComment(_contextMenu.oldAddr);
-// 			m_debugger.GetDebugData().SetComment(_contextMenu.addr, _contextMenu.elementName);
-// 			break;
-		
-// 		default:
-// 			break;
-// 		}
-
-// 		ImGui::CloseCurrentPopup();
-// 		m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
-// 		_contextMenu.status = ContextMenu::Status::NONE;
-// 	}	
-// }
-
-// void dev::DebugDataWindow::DrawContextMenuElementAdd(ContextMenu& _contextMenu)
-// {
-// 	int caseFlag = _contextMenu.elementType == ElementType::CONST ? ImGuiInputTextFlags_CharsUppercase : 0;
-// 	bool pressedEnter = ImGui::InputTextWithHint("Name", "", &_contextMenu.elementName, ImGuiInputTextFlags_EnterReturnsTrue | caseFlag);
-	
-// 	ImGui::InputInt("Addr", &_contextMenu.addr, 1, 100, ImGuiInputTextFlags_CharsHexadecimal);
-// 	pressedEnter |= ImGui::IsKeyPressed(ImGuiKey_Enter);
-
-// 	bool pressedOk = ImGui::Button("OK");
-// 	ImGui::SameLine();
-
-// 	if (ImGui::Button("Cancel"))
-// 	{
-// 		ImGui::CloseCurrentPopup();
-// 		_contextMenu.status = ContextMenu::Status::NONE;
-// 	}
-
-// 	if (pressedEnter || pressedOk)
-// 	{
-// 		switch (_contextMenu.elementType)
-// 		{
-// 		case ElementType::LABEL:
-// 			m_debugger.GetDebugData().AddLabel(_contextMenu.addr, _contextMenu.elementName);
-// 			break;
-
-// 		case ElementType::CONST:
-// 			m_debugger.GetDebugData().AddConst(_contextMenu.addr, _contextMenu.elementName);
-// 			break;
-
-// 		case ElementType::COMMENT:
-// 			m_debugger.GetDebugData().SetComment(_contextMenu.addr, _contextMenu.elementName);
-// 			break;
-
-// 		default:
-// 			break;
-// 		}
-
-// 		ImGui::CloseCurrentPopup();
-// 		_contextMenu.status = ContextMenu::Status::NONE;
-// 		m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
-// 	}
-// }
