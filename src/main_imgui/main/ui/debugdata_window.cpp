@@ -68,7 +68,7 @@ void dev::DebugDataWindow::Draw(const bool _isRunning)
 		}
 		if (ImGui::BeginTabItem("Scripts"))
 		{
-			auto updateId = m_debugger.GetDebugData().GetScripts()->GetUpdates();
+			auto updateId = m_debugger.GetDebugData().GetScripts().GetUpdates();
 			UpdateAndDrawFilteredElements(m_filteredScripts, m_scriptsUpdates, updateId,
 										m_scriptFilter, ElementType::SCRIPTS);
 			ImGui::EndTabItem();
@@ -348,7 +348,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 					m_debugger.GetDebugData().DelCodePerf(_contextMenu.addr);
 					break;
 				case ElementType::SCRIPTS:
-					m_debugger.GetDebugData().GetScripts()->Del(_contextMenu.addr);
+					m_debugger.GetDebugData().GetScripts().Del(_contextMenu.addr);
 					break;
 				
 				default:

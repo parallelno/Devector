@@ -1036,7 +1036,7 @@ void dev::DrawEditScriptWindow(Hardware& _hardware, DebugData& _debugData, ReqUI
 		_reqUI.type = ReqUI::Type::NONE;
 		ImGui::OpenPopup(popupWindowName);
 		enterPressed = false;
-		auto currentScript = _debugData.GetScripts()->Find(_reqUI.globalAddr);
+		auto currentScript = _debugData.GetScripts().Find(_reqUI.globalAddr);
 		if (!currentScript){
 			int err = 0;
 		}
@@ -1048,8 +1048,9 @@ void dev::DrawEditScriptWindow(Hardware& _hardware, DebugData& _debugData, ReqUI
 
 	// draw a window
 	ImVec2 winPos = ImGui::GetMousePos();
-	ImGui::SetNextWindowPos(winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal(popupWindowName, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    ImGui::SetNextWindowPos(winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSizeConstraints(ImVec2(300, 200), ImVec2(FLT_MAX, FLT_MAX));
+    if (ImGui::BeginPopupModal(popupWindowName, NULL, ImGuiWindowFlags_None))
 	{
 		static ImGuiTableFlags flags =
 			ImGuiTableFlags_ScrollY |
@@ -1077,16 +1078,16 @@ void dev::DrawEditScriptWindow(Hardware& _hardware, DebugData& _debugData, ReqUI
 			ImGui::PopStyleColor();
 
 			ImGui::TableNextColumn();
-			ImVec2 codeSize = ImGui::CalcTextSize(script.code.c_str(), nullptr);
-			codeSize.x = -FLT_MIN; // fill width (suppresses label)
-			codeSize.y += ImGui::GetStyle().FramePadding.y; // single pad
+			ImVec2 codeSize = ImGui::GetContentRegionAvail();
+			codeSize.y -= ImGui::GetStyle().FramePadding.y * 2.0f;
+			codeSize.y -= ImGui::GetFrameHeightWithSpacing();
 
 			auto entered = ImGui::InputTextMultiline(
 				"##ContextCode",
 				code,
 				CODE_LEN_MAX,
 				codeSize,
-				ImGuiInputTextFlags_AllowTabInput
+				ImGuiInputTextFlags_AllowTabInput | ImGuiInputTextFlags_AutoSelectAll
 			);
 			//==========================
 

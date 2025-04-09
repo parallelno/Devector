@@ -81,9 +81,9 @@ namespace dev
 		auto GetEditsUpdates() const -> UpdateId { return m_editsUpdates; };
 		auto GetCodePerfsUpdates() const -> UpdateId { return m_codePerfsUpdates; };
 
-		auto GetBreakpoints() -> Breakpoints* { return &m_breakpoints; };
-		auto GetWatchpoints() -> Watchpoints* { return &m_watchpoints; };
-		auto GetScripts() -> Scripts* { return &m_scripts; };
+		auto GetBreakpoints() -> Breakpoints& { return m_breakpoints; };
+		auto GetWatchpoints() -> Watchpoints& { return m_watchpoints; };
+		auto GetScripts() -> Scripts& { return m_scripts; };
 
 		void LoadDebugData(const std::string& _path);
 		void SaveDebugData();

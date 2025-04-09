@@ -119,8 +119,9 @@ void dev::Scripts::RegisterCppFunctions()
 	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.hlta, GetHLTA);
 	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.mc, GetMachineCycles);
 
+	// Register Memory state getters
 	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_memStateP, debug.instr[0], GetOpcode);
-
+	
 	lua_CFunction getterByteGlobal = [](lua_State* state) -> int {
 		using StructType = std::remove_pointer_t<decltype(m_memStateP)>;
 		auto* structPtr = static_cast<StructType**>(lua_touserdata(state, lua_upvalueindex(1)));
@@ -132,6 +133,79 @@ void dev::Scripts::RegisterCppFunctions()
 	lua_pushlightuserdata(m_luaState, (void*)(&m_memStateP));
 	lua_pushcclosure(m_luaState, getterByteGlobal, 1);
 	lua_setglobal(m_luaState, "GetByteGlobal");
+
+	// DrawText
+	lua_CFunction drawTextFunc = [](lua_State* state) -> int 
+	{
+		auto paramNum = lua_gettop(state);
+		uint32_t color = 0xFFFFFFFF;
+
+		if (paramNum < 4 || paramNum > 5) {
+			luaL_error(state, "DrawText: wrong number of parameters: (id, text, x, y, <color=0xFFFFFFFF>)");
+			return 0;
+		}
+
+		int id = luaL_checkinteger(state, 1);
+		const char* textCStr = luaL_checkstring(state, 2);
+		float x = luaL_checknumber(state, 3);
+		float y = luaL_checknumber(state, 4);
+		if (paramNum == 5) {
+			color = static_cast<uint32_t>(luaL_checkinteger(state, 5));
+		}		
+
+		if (!textCStr) {
+			luaL_error(state, "DrawText: text argument must be a string");
+		}
+		
+		auto* scriptsP = static_cast<Scripts*>(lua_touserdata(state, lua_upvalueindex(1)));		
+		if (scriptsP) {
+			auto& uiReqs = scriptsP->m_uiReqs;
+			auto& lock = scriptsP->m_uiReqsMutex;
+			
+			std::lock_guard<std::mutex> lockGuard(lock);
+			uiReqs[id] = UIItem{Scripts::UIType::TEXT, x, y, 0, 0, textCStr, color};
+		}
+		return 0;
+	};
+	lua_pushlightuserdata(m_luaState, (void*)(this));
+	lua_pushcclosure(m_luaState, drawTextFunc, 1);
+	lua_setglobal(m_luaState, "DrawText");
+
+	// DrawRect
+	lua_CFunction drawRectFunc = [](lua_State* state) -> int 
+	{
+		auto paramNum = lua_gettop(state);
+		uint32_t color = 0xFFFFFFFF;
+
+		if (paramNum < 5 || paramNum > 6) {
+			luaL_error(state, "DrawRect: wrong number of parameters: (id, x, y, width, height, <color=0xFFFFFFFF>)");
+			return 0;
+		}
+
+		int id = luaL_checkinteger(state, 1);
+		float x = luaL_checknumber(state, 2);
+		float y = luaL_checknumber(state, 3);
+		float width = luaL_checknumber(state, 4);
+		float height = luaL_checknumber(state, 5);
+		if (paramNum == 6) {
+			color = static_cast<uint32_t>(luaL_checkinteger(state, 6));
+		}
+
+		auto* scriptsP = static_cast<Scripts*>(lua_touserdata(state, lua_upvalueindex(1)));		
+		if (scriptsP) {
+			auto& uiReqs = scriptsP->m_uiReqs;
+			auto& lock = scriptsP->m_uiReqsMutex;
+			
+			std::lock_guard<std::mutex> lockGuard(lock);
+			uiReqs[id] = UIItem{Scripts::UIType::RECT, x, y, width, height, "", color};
+		}
+		return 0;
+	};
+	lua_pushlightuserdata(m_luaState, (void*)(this));
+	lua_pushcclosure(m_luaState, drawRectFunc, 1);
+	lua_setglobal(m_luaState, "DrawRect");
+
+
 }
 
 // Hardware thread

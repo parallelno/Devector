@@ -9,7 +9,9 @@
 #include "ui/base_window.h"
 #include "utils/result.h"
 #include "core/hardware.h"
+#include "core/scripts.h"
 #include "utils/gl_utils.h"
+#include "imgui_app.h"
 
 namespace dev
 {
@@ -60,17 +62,19 @@ namespace dev
 		bool m_displayIsHovered = false;
 		const char* m_contextMenuName = "##displayCMenu";
 		ReqUI& m_reqUI;
+		Scripts& m_scripts;
 
 		void DrawDisplay();
 		void DrawContextMenu();
 		void CreateTexture(const bool _vsync);
 		void UpdateData(const bool _isRunning);
 		bool Init();
-		//void ReqHandling();
+		void DrawScriptsUIItems(ImVec2 _pos);
 
 	public:
 		DisplayWindow(Hardware& _hardware,
-			const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI);
+			const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI,
+			Scripts& _scripts);
 		void Update(bool& _visible, const bool _isRunning);
 		bool IsFocused() const;
 	};
