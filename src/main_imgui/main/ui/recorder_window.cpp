@@ -57,6 +57,7 @@ void dev::RecorderWindow::Draw(const bool _isRunning)
 	// Frame slider
 	dev::PushStyleCompact(0.5f);
 	int stateCurrentOld = m_stateCurrent;
+	ImGui::SetNextItemWidth(-70.0f);
 	if (ImGui::SliderInt("##recTimeline", &m_stateCurrent, 1, m_stateRecorded, "%d", ImGuiSliderFlags_AlwaysClamp))
 	{
 		int diff = m_stateCurrent - stateCurrentOld;
