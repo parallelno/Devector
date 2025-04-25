@@ -361,6 +361,10 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 			}
 			if (len > 0xFFFF) {
 				warningS = "Too large length";
+			} else{
+				if (len <= 0) {
+					warningS = "Too small length";
+				}
 			}
 			if (val > 0xFFFF || (type != static_cast<int>(Watchpoint::Type::WORD) && val > 0xFF)) {
 				warningS = "Too large value";
