@@ -83,8 +83,9 @@ namespace dev
 		TQueue <std::pair<Req, nlohmann::json>> m_reqs; // request
 		TQueue <nlohmann::json> m_reqRes;				// request's result sent back 
 
+		static constexpr std::chrono::microseconds m_reqHandlingTime = 1ms;
 		ExecSpeed m_execSpeed = ExecSpeed::NORMAL;
-		std::chrono::microseconds m_execDelays[static_cast<int>(ExecSpeed::LEN)] = { 1996800us, 99840us, 39936us, 19968us, 9984us, 10us };
+		std::chrono::microseconds m_execDelays[static_cast<int>(ExecSpeed::LEN)] = { 1996800us/*1%*/, 99840us/*20%*/, 39936us/*HALF*/, 19968us/*NORMAL*/, 9984us/*X2*/, 0us/*MAX*/ };
 
 		void Init();
 		void Execution();

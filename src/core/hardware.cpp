@@ -93,6 +93,8 @@ void dev::Hardware::Execution()
 
 		while (m_status == Status::RUN)
 		{   
+			auto startFrameTime = std::chrono::system_clock::now();
+
 			auto frameNum = m_display.GetFrameNum();
 			
 			do // rasterizes a frame
@@ -108,11 +110,23 @@ void dev::Hardware::Execution()
 			// vsync
 			if (m_status == Status::RUN)
 			{
-				endFrameTime += m_execDelays[static_cast<int>(m_execSpeed)];
+				auto currentTime = std::chrono::system_clock::now();
+    			auto frameExecutionDuration = currentTime - startFrameTime;
+				
+				auto targetFrameDuration = m_execDelays[static_cast<size_t>(m_execSpeed)];
 
+				using DurationType = decltype(frameExecutionDuration);
+				auto frameDuration = std::max<DurationType>(
+					frameExecutionDuration + m_reqHandlingTime,
+					targetFrameDuration
+				);				
+			
+				endFrameTime += frameDuration;
+			
 				while (std::chrono::system_clock::now() < endFrameTime)
 				{
-					ReqHandling(1ms);
+					// Use smaller time slice for request handling
+					ReqHandling(m_reqHandlingTime / 10);
 				}
 			}
 		}
@@ -121,7 +135,7 @@ void dev::Hardware::Execution()
 		auto elapsedCC = m_cpu.GetCC() - startCC;
 		if (elapsedCC) {
 			auto elapsedFrames = m_display.GetFrameNum() - startFrame;
-			std::chrono::duration<int64_t, std::nano> elapsedTime = std::chrono::system_clock::now() - startTime;
+			auto elapsedTime = (std::chrono::duration<int64_t, std::nano>)(std::chrono::system_clock::now() - startTime);
 			double timeDurationSec = elapsedTime.count() / 1000000000.0;
 			dev::Log("Break: elapsed cpu cycles: {}, elapsed frames: {}, elapsed seconds: {}", elapsedCC, elapsedFrames, timeDurationSec);
 		}
