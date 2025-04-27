@@ -57,6 +57,7 @@ dev::DevectorApp::~DevectorApp()
 	SettingsUpdate("keyboardWindowVisible", m_keyboardWindowVisible);
 	SettingsUpdate("searchWindowVisible", m_searchWindowVisible);
 	SettingsUpdate("debugdataWindowVisible", m_debugdataWindowVisible);
+	SettingsUpdate("executionSpeed", static_cast<int>(m_displayWindowP->GetExecutionSpeed()));
 }
 
 void dev::DevectorApp::HardwareInit()
@@ -72,10 +73,12 @@ void dev::DevectorApp::HardwareInit()
 
 void dev::DevectorApp::WindowsInit()
 {
+	auto executionSpeed = static_cast<Hardware::ExecSpeed>(GetSettingsInt("executionSpeed", static_cast<int>(Hardware::ExecSpeed::NORMAL)));
+	
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_dpiScale, m_ruslat);
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
 		m_fontItalic, &m_dpiScale, m_reqUI);
-	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI, m_debuggerP->GetDebugData().GetScripts());
+	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI, m_debuggerP->GetDebugData().GetScripts(), executionSpeed);
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_hardwareP, &m_dpiScale, m_reqUI);
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_hardwareP, &m_dpiScale, m_reqUI);
 	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_glUtils, m_reqUI);

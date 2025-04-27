@@ -83,12 +83,14 @@ const char* fragShaderS = R"#(
 
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 	const float* const _dpiScaleP, GLUtils& _glUtils, 
-	ReqUI& _reqUI, Scripts& _scripts)
+	ReqUI& _reqUI, Scripts& _scripts,
+	const Hardware::ExecSpeed _execSpeed)
 	:
 	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
 	m_hardware(_hardware), m_glUtils(_glUtils), m_reqUI(_reqUI), m_scripts(_scripts)
 {
 	m_isGLInited = Init();
+	SetExecutionSpeed(_execSpeed);
 }
 
 bool dev::DisplayWindow::Init()
@@ -347,7 +349,7 @@ void dev::DisplayWindow::DrawContextMenu()
 		{
 			if (ImGui::Combo("Cpu Speed", (int*)(&m_execSpeed), m_execSpeedsS)) 
 			{
-				m_hardware.Request(Hardware::Req::SET_CPU_SPEED, { {"speed", int(m_execSpeed)} });
+				SetExecutionSpeed(m_execSpeed);
 			};
 			ImGui::EndMenu();
 		}
@@ -376,3 +378,9 @@ void dev::DisplayWindow::ReqHandling()
 	}
 }
 */
+
+void dev::DisplayWindow::SetExecutionSpeed(const Hardware::ExecSpeed _execSpeed)
+{ 
+	m_execSpeed = _execSpeed;
+	m_hardware.Request(Hardware::Req::SET_CPU_SPEED, { {"speed", int(m_execSpeed)} }); 
+};

@@ -74,9 +74,11 @@ namespace dev
 	public:
 		DisplayWindow(Hardware& _hardware,
 			const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI,
-			Scripts& _scripts);
+			Scripts& _scripts, const Hardware::ExecSpeed _execSpeed);
 		void Update(bool& _visible, const bool _isRunning);
 		bool IsFocused() const;
+		auto GetExecutionSpeed() const { return m_execSpeed; };
+		void SetExecutionSpeed(const Hardware::ExecSpeed _execSpeed);
 	};
 
 };
