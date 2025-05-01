@@ -175,38 +175,11 @@ void dev::DisplayWindow::Update(bool& _visible, const bool _isRunning)
 		}
 
 		UpdateData(_isRunning);
-		// TODO: get the current pos
-		auto pos = ImGui::GetCursorPos();
 		DrawContextMenu();
 		DrawDisplay();
 		DrawTooltipTimer();
-		DrawScriptsUIItems(pos);
 
 		ImGui::End();
-	}
-}
-
-void dev::DisplayWindow::DrawScriptsUIItems(ImVec2 _pos)
-{
-	for (auto const& [id, uiItem] : m_scripts.GetUIItems())
-	{
-		auto dpiScale = (*m_dpiScaleP);
-		if (uiItem.type == Scripts::UIType::TEXT)
-		{
-			ImGui::SetCursorPos({ _pos.x + uiItem.x * dpiScale, _pos.y + uiItem.y * dpiScale});
-			ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(uiItem.color));
-			ImGui::Text(uiItem.text.c_str());
-			ImGui::PopStyleColor();
-		}
-		else if (uiItem.type == Scripts::UIType::RECT)
-		{
-			ImGui::SetCursorPos({ _pos.x + uiItem.x * dpiScale, _pos.y + uiItem.y * dpiScale});
-			ImGui::GetWindowDrawList()->AddRectFilled(
-				ImGui::GetCursorScreenPos(),
-				ImVec2(ImGui::GetCursorScreenPos().x + uiItem.width * dpiScale,
-				ImGui::GetCursorScreenPos().y + uiItem.height * dpiScale),
-				dev::IM_U32(uiItem.color));
-		}
 	}
 }
 
@@ -324,6 +297,9 @@ void dev::DisplayWindow::DrawDisplay()
 		}
 		}
 
+		
+		auto pos = ImGui::GetCursorPos();
+
 		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
 		ImGui::Image(framebufferTex, displaySize, borderMin, borderMax);
 		m_displayIsHovered = ImGui::IsItemHovered();
@@ -332,8 +308,112 @@ void dev::DisplayWindow::DrawDisplay()
 		{
 			ImGui::OpenPopup(m_contextMenuName);
 		}
+
+		// Draw script objects
+		DrawScriptsUIItems(pos, displaySize);
+				
 	}
 }
+
+void dev::DisplayWindow::DrawScriptsUIItems(
+	const ImVec2& _pos, const ImVec2& _displaySize)
+{
+	float v6visibleBorderL = 0; // in Vector pixels
+	float v6visibleBorderR = 0;
+	float v6visibleBorderT = 0;
+	float v6visibleBorderB = 0;
+	
+	switch (m_borderType)
+	{
+		case dev::DisplayWindow::BorderType::FULL:
+			v6visibleBorderL = Display::BORDER_LEFT / 2.0f;
+			v6visibleBorderR = Display::BORDER_RIGHT / 2.0f;
+			v6visibleBorderT = Display::BORDER_TOP;
+			v6visibleBorderB = Display::BORDER_BOTTOM;
+			break;
+
+		case dev::DisplayWindow::BorderType::NORMAL:
+			v6visibleBorderL = v6visibleBorderR = v6visibleBorderT = v6visibleBorderB = Display::BORDER_VISIBLE;
+			break;
+	}
+	float v6activeAreaW = Display::ACTIVE_AREA_W / 2.0f + v6visibleBorderL + v6visibleBorderR;
+	float v6activeAreaH = Display::ACTIVE_AREA_H + v6visibleBorderT + v6visibleBorderB;
+
+	// convert Vector pixels to ImGui pixels
+	float v6pixelSizeX = _displaySize.x / v6activeAreaW;
+	float v6pixelSizeY = _displaySize.y / v6activeAreaH;
+
+	float posLeftTopX = _pos.x + v6visibleBorderL * v6pixelSizeX;
+	float posLeftTopY = _pos.y + v6visibleBorderT * v6pixelSizeY;
+
+	float posRightBottomX = _pos.x + _displaySize.x - v6visibleBorderR * v6pixelSizeX;
+	float posRightBottomY = _pos.y + _displaySize.y - v6visibleBorderB * v6pixelSizeY;
+
+	
+
+	for (auto const& [id, uiItem] : m_scripts.GetUIItems())
+	{
+		float posX = 0;
+		float posY = 0;
+		float sizeX = 0;
+		float sizeY = 0;
+		if (uiItem.vectorScreenCoords)
+		{	
+			posX = uiItem.x * v6pixelSizeX;
+			posY = -uiItem.y * v6pixelSizeY;
+	
+			posX += uiItem.x >= 0 ? posLeftTopX : posRightBottomX;
+			posY += uiItem.y < 0 ? posLeftTopY : posRightBottomY;
+	
+			sizeX = uiItem.width * v6pixelSizeX;
+			sizeY = -uiItem.height * v6pixelSizeY;
+		}
+		else {
+			posX = uiItem.x;
+			posY = uiItem.y;
+
+			posX += uiItem.x >= 0 ? _pos.x : _pos.x + _displaySize.x;
+			posY += uiItem.x >= 0 ? _pos.y : _pos.y + _displaySize.y;
+
+			sizeX = uiItem.width;
+			sizeY = uiItem.height;
+		}
+
+		ImVec2 pos = { posX, posY };
+
+		switch (uiItem.type)
+		{
+			case dev::Scripts::UIType::TEXT:
+			{
+				ImGui::SetCursorPos( pos );
+				ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(uiItem.color));
+				ImGui::Text(uiItem.text.c_str());
+				ImGui::PopStyleColor();		
+				break;
+			}
+			case dev::Scripts::UIType::RECT:
+			{	
+				ImVec2 screenPos = dev::CursorPosToScreenPos(pos);
+				ImGui::GetWindowDrawList()->AddRect(
+					screenPos,
+					{screenPos.x + sizeX, screenPos.y + sizeY},
+					dev::IM_U32(uiItem.color));
+				break;
+			}
+			
+			case dev::Scripts::UIType::RECT_FILLED:
+			{
+				ImVec2 screenPos = dev::CursorPosToScreenPos(pos);
+				ImGui::GetWindowDrawList()->AddRectFilled(
+					screenPos,
+					{screenPos.x + sizeX, screenPos.y + sizeY},
+					dev::IM_U32(uiItem.color));	
+				break;
+			}
+		}
+	}
+}
+
 
 void dev::DisplayWindow::DrawContextMenu()
 {

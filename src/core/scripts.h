@@ -24,6 +24,7 @@ namespace dev
 			NONE = 0,
 			TEXT,
 			RECT,
+			RECT_FILLED,
 		};
 		struct UIItem{
 			UIType type = NONE;
@@ -33,6 +34,7 @@ namespace dev
 			float height = 0;
 			std::string text = "";
 			uint32_t color = 0xFFFFFFFF;
+			bool vectorScreenCoords = true;
 		};
 		using UIReqs = std::unordered_map<dev::Id, UIItem>; // for UI rendering, this is used by Lua to request a render UI items in the UI thread
 		using ScriptMap = std::unordered_map<dev::Id, Script>;

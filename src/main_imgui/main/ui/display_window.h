@@ -69,7 +69,7 @@ namespace dev
 		void CreateTexture(const bool _vsync);
 		void UpdateData(const bool _isRunning);
 		bool Init();
-		void DrawScriptsUIItems(ImVec2 _pos);
+		void DrawScriptsUIItems(const ImVec2& _pos, const ImVec2& _displaySize);
 
 	public:
 		DisplayWindow(Hardware& _hardware,

@@ -169,4 +169,12 @@ namespace dev
 	void DrawEditMemEditWindow(Hardware& _hardware, const DebugData& _debugData, ReqUI& _reqUI);
 	void DrawEditCodePerfWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
 	void DrawEditScriptWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
+
+	inline auto CursorPosToScreenPos(const ImVec2& _cursorPos)	
+	-> ImVec2
+	{
+		auto winPos = ImGui::GetWindowPos();
+		ImVec2 screenPos = {_cursorPos.x + winPos.x - ImGui::GetScrollX(), _cursorPos.y + winPos.y - ImGui::GetScrollY()};
+		return screenPos;
+	}
 }

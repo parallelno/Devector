@@ -47,7 +47,10 @@ namespace dev
 		static constexpr int SCAN_ACTIVE_AREA_TOP = SCAN_VSYNC + SCAN_VBLANK_TOP;
 		static constexpr int ACTIVE_AREA_W = 512;			// horizontal screen resolution in MODE_512
 		static constexpr int ACTIVE_AREA_H = 256;			// vertical screen resolution
-		static constexpr int BORDER_LEFT = 128;				// left border in pxls in MODE_512		
+		static constexpr int BORDER_LEFT = 128;				// horizontal screen resolution in MODE_512
+		static constexpr int BORDER_RIGHT = BORDER_LEFT;	// horizontal screen resolution in MODE_512
+		static constexpr int BORDER_TOP = SCAN_ACTIVE_AREA_TOP;
+		static constexpr int BORDER_BOTTOM = SCAN_VBLANK_BOTTOM;
 		static constexpr int BORDER_VISIBLE = 16; // border visible on the screen in pxls in 256 mode
 		static constexpr int RASTERIZED_PXLS_MAX = 16;	// the amount of rasterized pxls every 4 cpu cycles in MODE_512
 		static constexpr int COLORS_POLUTED_DELAY = 4; // this timer in pixels. if the palette is set inside the active area, the fourth and the fifth pixels get corrupted colors
