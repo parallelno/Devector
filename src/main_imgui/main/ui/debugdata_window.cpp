@@ -98,7 +98,7 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 {
 	// update the data and draw a filter
 	ImGui::Text("Filter"); ImGui::SameLine();
-	bool filterUpdated = ImGui::InputTextWithHint("##filter", "search name", &_filter, ImGuiInputTextFlags_EnterReturnsTrue);
+	bool filterUpdated = ImGui::InputTextWithHint("##filter", "search name", &_filter);
 	ImGui::SameLine(); dev::DrawHelpMarker(
 		"Accepts substrings. Case insensitive.\n\
 Double click on the element to locate the addr in the Disasm Window.\n\
