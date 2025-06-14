@@ -29,6 +29,14 @@ namespace dev
 		static const constexpr uint8_t OPCODE_RST7 = 0xFF;
 		static const constexpr uint8_t OPCODE_HLT = 0x76;
 		static const constexpr uint8_t OPCODE_PCHL = 0xE9;
+		static const constexpr uint8_t OPCODE_JNZ = 0xC2;
+		static const constexpr uint8_t OPCODE_JZ = 0xCA;
+		static const constexpr uint8_t OPCODE_JNC = 0xD2;
+		static const constexpr uint8_t OPCODE_JC = 0xDA;
+		static const constexpr uint8_t OPCODE_JPO = 0xE2;
+		static const constexpr uint8_t OPCODE_JPE = 0xEA;
+		static const constexpr uint8_t OPCODE_JP = 0xF2;
+		static const constexpr uint8_t OPCODE_JM = 0xFA;
 
 		static const constexpr int CLOCK = 3000000;
 

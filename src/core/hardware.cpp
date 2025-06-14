@@ -724,16 +724,41 @@ auto dev::Hardware::GetStepOverAddr()
 	auto sp = m_cpu.GetSP();
 	auto opcode = m_memory.GetByte(pc);
 
+	auto im_addr = m_memory.GetByte(pc + 2) << 8 | m_memory.GetByte(pc + 1);
+	auto next_pc = pc + dev::GetCmdLen(opcode);
+
 	switch (dev::GetOpcodeType(opcode)) 
 	{
 	case OPTYPE_JMP:
-		return m_memory.GetByte(pc + 2) << 8 | m_memory.GetByte(pc + 1);
+		return im_addr;
 	case OPTYPE_RET:
 		return m_memory.GetByte(sp + 1, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(sp, Memory::AddrSpace::STACK);
 	case OPTYPE_PCH:
 		return m_cpu.GetHL();
 	case OPTYPE_RST:
 		return opcode - CpuI8080::OPCODE_RST0;
+	default:
+		switch (opcode)
+		{
+		case CpuI8080::OPCODE_JNZ:
+			return m_cpu.GetFlagZ() ? next_pc : im_addr;
+		case CpuI8080::OPCODE_JZ:
+			return m_cpu.GetFlagZ() ? im_addr : next_pc;
+		case CpuI8080::OPCODE_JNC:
+			return m_cpu.GetFlagC() ? next_pc : im_addr;
+		case CpuI8080::OPCODE_JC:
+			return m_cpu.GetFlagC() ? im_addr : next_pc;
+		case CpuI8080::OPCODE_JPO:
+			return m_cpu.GetFlagP() ? next_pc : im_addr;
+		case CpuI8080::OPCODE_JPE:
+			return m_cpu.GetFlagP() ? im_addr : next_pc;			
+		case CpuI8080::OPCODE_JP:
+			return m_cpu.GetFlagS() ? next_pc : im_addr;
+		case CpuI8080::OPCODE_JM:
+			return m_cpu.GetFlagS() ? im_addr : next_pc;
+		default:
+			break;
+		}
 	}
-	return pc + dev::GetCmdLen(opcode);
+	return next_pc;
 }
