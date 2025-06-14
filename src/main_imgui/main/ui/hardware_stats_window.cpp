@@ -40,10 +40,10 @@ void dev::HardwareStatsWindow::DrawRegs() const
 		ImGui::TableSetupColumn("regsNames", ImGuiTableColumnFlags_WidthFixed, 30);
 
 		// regs
-		DrawProperty2("AF", Uint16ToStrC(m_cpuState.regs.psw.af.word), nullptr, *m_regAFColor);
-		DrawProperty2("BC", Uint16ToStrC(m_cpuState.regs.bc.word), nullptr, *m_regBCColor);
-		DrawProperty2("DE", Uint16ToStrC(m_cpuState.regs.de.word), nullptr, *m_regDEColor);
-		DrawProperty2("HL", Uint16ToStrC(m_cpuState.regs.hl.word), nullptr, *m_regHLColor);
+		DrawProperty2RegPair("AF", Uint8ToStrC(m_cpuState.regs.psw.af.h), Uint8ToStrC(m_cpuState.regs.psw.af.l), nullptr, *m_regAColor, *m_regFColor);
+		DrawProperty2RegPair("BC", Uint8ToStrC(m_cpuState.regs.bc.h), Uint8ToStrC(m_cpuState.regs.bc.l), nullptr, *m_regBColor, *m_regCColor);
+		DrawProperty2RegPair("DE", Uint8ToStrC(m_cpuState.regs.de.h), Uint8ToStrC(m_cpuState.regs.de.l), nullptr, *m_regDColor, *m_regEColor);
+		DrawProperty2RegPair("HL", Uint8ToStrC(m_cpuState.regs.hl.h), Uint8ToStrC(m_cpuState.regs.hl.l), nullptr, *m_regHColor, *m_regLColor);
 		DrawProperty2("SP", Uint16ToStrC(m_cpuState.regs.sp.word), nullptr, *m_regSPColor);
 		DrawProperty2("PC", Uint16ToStrC(m_cpuState.regs.pc.word), nullptr, *m_regPCColor);
 		DrawProperty2(" M", Uint8ToStrC(m_cpuRegM), nullptr, *m_regPCColor);
@@ -242,40 +242,47 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 
 	// Regs
 	CpuI8080::AF regAF{ data["af"] };
-	Addr regBC{ data["bc"] };
-	Addr regDE{ data["de"] };
-	Addr regHL{ data["hl"] };
+	CpuI8080::RegPair regBC{ data["bc"] };
+	CpuI8080::RegPair regDE{ data["de"] };
+	CpuI8080::RegPair regHL{ data["hl"] };
 	Addr regSP{ data["sp"] };
 	Addr regPC{ data["pc"] };
 
 	// Flags
+	bool fcUpdated = regAF.c != m_cpuState.regs.psw.c;
+	m_flagCColor = fcUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool fzUpdated = regAF.z != m_cpuState.regs.psw.z;
+	m_flagZColor = fzUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool fpUpdated = regAF.p != m_cpuState.regs.psw.p;
+	m_flagPColor = fpUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool fsUpdated = regAF.s != m_cpuState.regs.psw.s;
+	m_flagSColor = fsUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool facUpdated = regAF.ac != m_cpuState.regs.psw.ac;
+	m_flagACColor = facUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
 
-	bool cUpdated = regAF.c != m_cpuState.regs.psw.c;
-	m_flagCColor = cUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-	bool zUpdated = regAF.z != m_cpuState.regs.psw.z;
-	m_flagZColor = zUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-	bool pUpdated = regAF.p != m_cpuState.regs.psw.p;
-	m_flagPColor = pUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-	bool sUpdated = regAF.s != m_cpuState.regs.psw.s;
-	m_flagSColor = sUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-	bool acUpdated = regAF.ac != m_cpuState.regs.psw.ac;
-	m_flagACColor = acUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-
-	bool afUpdated = regAF.af.word != m_cpuState.regs.psw.af.word;
-	m_regAFColor = afUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool aUpdated = regAF.af.h != m_cpuState.regs.psw.af.h;
+	bool fUpdated = regAF.af.l != m_cpuState.regs.psw.af.l;
+	m_regAColor = aUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_regFColor = fUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
 	m_cpuState.regs.psw = regAF;
 
-	bool bcUpdated = regBC != m_cpuState.regs.bc.word;
-	m_regBCColor = bcUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-	m_cpuState.regs.bc.word = regBC;
+	bool bUpdated = regBC.h != m_cpuState.regs.bc.h;
+	bool cUpdated = regBC.l != m_cpuState.regs.bc.l;
+	m_regBColor = bUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_regCColor = cUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_cpuState.regs.bc.word = regBC.word;
 
-	bool deUpdated = regDE != m_cpuState.regs.de.word;
-	m_regDEColor = deUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-	m_cpuState.regs.de.word = regDE;
+	bool dUpdated = regDE.h != m_cpuState.regs.de.h;
+	bool eUpdated = regDE.l != m_cpuState.regs.de.l;
+	m_regDColor = dUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_regEColor = eUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_cpuState.regs.de.word = regDE.word;
 
-	bool hlUpdated = regHL != m_cpuState.regs.hl.word;
-	m_regHLColor = hlUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-	m_cpuState.regs.hl.word = regHL;
+	bool hUpdated = regHL.h != m_cpuState.regs.hl.h;
+	bool lUpdated = regHL.l != m_cpuState.regs.hl.l;
+	m_regHColor = hUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_regLColor = lUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_cpuState.regs.hl.word = regHL.word;
 
 	bool spUpdated = regSP != m_cpuState.regs.sp.word;
 	m_regSPColor = spUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
@@ -462,10 +469,14 @@ void dev::HardwareStatsWindow::Init()
 {
 	m_portsInDataColor.fill(&DASM_CLR_NUMBER);
 	m_portsOutDataColor.fill(&DASM_CLR_NUMBER);
-	m_regAFColor = &DASM_CLR_NUMBER;
-	m_regBCColor = &DASM_CLR_NUMBER;
-	m_regDEColor = &DASM_CLR_NUMBER;
-	m_regHLColor = &DASM_CLR_NUMBER;
+	m_regAColor = &DASM_CLR_NUMBER;
+	m_regFColor = &DASM_CLR_NUMBER;
+	m_regBColor = &DASM_CLR_NUMBER;
+	m_regCColor = &DASM_CLR_NUMBER;
+	m_regDColor = &DASM_CLR_NUMBER;
+	m_regEColor = &DASM_CLR_NUMBER;
+	m_regHColor = &DASM_CLR_NUMBER;
+	m_regLColor = &DASM_CLR_NUMBER;
 	m_regSPColor = &DASM_CLR_NUMBER;
 	m_regPCColor = &DASM_CLR_NUMBER;
 

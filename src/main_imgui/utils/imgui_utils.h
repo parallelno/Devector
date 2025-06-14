@@ -133,8 +133,11 @@ namespace dev
 		const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
 	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, 
 		const float _posXOffset = -0.2f, const bool _itemHasSize = false);
-	void DrawProperty2(const char* _name, const char* _value,
+	void DrawProperty2(const char* _name, const char* _valueH,
 		const char* _hint = nullptr, const ImVec4& _valColor = CLR_WHITE);
+	void DrawProperty2RegPair(const char* _name, const char* _valueH, const char* _valueL,
+		const char* _hint = nullptr, 
+		const ImVec4& _valHColor = CLR_WHITE, const ImVec4& _valLColor = CLR_WHITE);
 	void DrawSeparator2(const char* _text);
 	bool DrawProperty2EditableI(const char* _name, const char* _label, int* _value, 
 		const char* _help = nullptr, const ImGuiInputTextFlags _flags = 0);

@@ -55,10 +55,14 @@ namespace dev
 
 		CpuI8080::State m_cpuState;
 		int m_cpuRegM = 0;
-		const ImVec4* m_regAFColor = &DASM_CLR_NUMBER;
-		const ImVec4* m_regBCColor = &DASM_CLR_NUMBER;
-		const ImVec4* m_regDEColor = &DASM_CLR_NUMBER;
-		const ImVec4* m_regHLColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regAColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regFColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regBColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regCColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regDColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regEColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regHColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_regLColor = &DASM_CLR_NUMBER;
 		const ImVec4* m_regSPColor = &DASM_CLR_NUMBER;
 		const ImVec4* m_regPCColor = &DASM_CLR_NUMBER;
 

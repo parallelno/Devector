@@ -271,6 +271,31 @@ void dev::DrawProperty2(const char* _name, const char* _value, const char* _hint
 	}
 }
 
+void dev::DrawProperty2RegPair(const char* _name, const char* _valueH, const char* _valueL, const char* _hint, const ImVec4& _valHColor, const ImVec4& _valLColor)
+{
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name, { 1.0f, 0.5f });
+	ImGui::PopStyleColor();
+
+	ImGui::TableNextColumn();
+	ImGui::Dummy(ImVec2(5.0f, 0.0f)); ImGui::SameLine();
+	ImGui::PushStyleColor(ImGuiCol_Text, _valHColor);
+	ImGui::Text(_valueH);
+	ImGui::PopStyleColor();
+	ImGui::PushStyleColor(ImGuiCol_Text, _valLColor);
+	ImGui::SameLine();
+	ImGui::Text(_valueL);
+	ImGui::PopStyleColor();	
+
+	if (_hint) {
+		ImGui::SameLine();
+		dev::DrawHelpMarker(_hint);
+	}
+}
+
 void dev::DrawSeparator2(const char* _text)
 {
 	ImGui::TableNextRow();

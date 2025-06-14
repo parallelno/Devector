@@ -507,7 +507,7 @@ void dev::DevectorApp::AppStyleInit()
 	ImVec4* colors = ImGui::GetStyle().Colors;
 	colors[ImGuiCol_Text] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_Text", "D4D4D4FF") ));
 	colors[ImGuiCol_TextDisabled] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_TextDisabled", "858585FF") ));
-	colors[ImGuiCol_WindowBg] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_WindowBg", "292929FF") ));
+	colors[ImGuiCol_WindowBg] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_WindowBg", "1F1F1FFF") ));
 	colors[ImGuiCol_ChildBg] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_ChildBg", "1717171F") ));
 	colors[ImGuiCol_PopupBg] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_PopupBg", "212121FF") ));
 	colors[ImGuiCol_Border] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_Border", "3D3D3D40") ));
@@ -516,7 +516,7 @@ void dev::DevectorApp::AppStyleInit()
 	colors[ImGuiCol_FrameBgHovered] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_FrameBgHovered", "2173CC85") ));
 	colors[ImGuiCol_FrameBgActive] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_FrameBgActive", "0080D4A1") ));
 	colors[ImGuiCol_TitleBg] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_TitleBg", "262626FF") ));
-	colors[ImGuiCol_TitleBgActive] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_TitleBgActive", "292929FF") ));
+	colors[ImGuiCol_TitleBgActive] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_TitleBgActive", "1F1F1FFF") ));
 	colors[ImGuiCol_TitleBgCollapsed] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_TitleBgCollapsed", "2E2E2EFF") ));
 	colors[ImGuiCol_MenuBarBg] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_MenuBarBg", "333333FF") ));
 	colors[ImGuiCol_ScrollbarBg] = dev::IM_VEC4(dev::StrHexToInt( GetSettingsString("ImGuiCol_ScrollbarBg", "1414143D") ));
