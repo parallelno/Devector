@@ -156,6 +156,8 @@ void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 // UI thread
 void dev::DevectorApp::Update()
 {
+	LoadDroppedFile();
+	
 	ReqUIHandling();
 	
 	MainMenuUpdate();
@@ -887,4 +889,14 @@ void dev::DevectorApp::MountRecentFddImg()
 			break;
 		}
 	}
+}
+
+void dev::DevectorApp::LoadDroppedFile()
+{
+	auto droppedFilePath = GetDroppedFilePath();
+	if (droppedFilePath.empty()) return;
+
+	Load(droppedFilePath);
+
+	ResetDroppedFilePath();
 }

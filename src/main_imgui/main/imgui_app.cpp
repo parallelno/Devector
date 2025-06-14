@@ -133,12 +133,20 @@ void dev::ImGuiApp::Run()
 		while (SDL_PollEvent(&event))
 		{
 			ImGui_ImplSDL3_ProcessEvent(&event);
-			if (event.type == SDL_EVENT_QUIT ||
-				(event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && 
-				event.window.windowID == SDL_GetWindowID(m_window)))
-
-				m_status = m_prepare_for_exit ? 
-							AppStatus::REQ_PREPARE_FOR_EXIT : AppStatus::EXIT;
+			switch (event.type)
+            {
+            case SDL_EVENT_QUIT: [[fallthrough]];
+            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                if (event.window.windowID == SDL_GetWindowID(m_window))
+                {
+                    m_status = m_prepare_for_exit ? 
+								AppStatus::REQ_PREPARE_FOR_EXIT : AppStatus::EXIT;
+                }
+                break;
+            case SDL_EVENT_DROP_FILE:
+                m_droppedFilePath = event.drop.data;
+                break;
+            }
 		}
 		if (SDL_GetWindowFlags(m_window) & SDL_WINDOW_MINIMIZED)
 		{

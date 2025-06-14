@@ -83,9 +83,12 @@ namespace dev {
 		int GetSettingsInt(const std::string& _fieldName, int _defaultValue);
 		bool GetSettingsBool(const std::string& _fieldName, bool _defaultValue);
 		float GetDpiScale();
+		auto GetDroppedFilePath() const -> std::string { return m_droppedFilePath; }
+		void ResetDroppedFilePath() { m_droppedFilePath.clear(); }
 
 	private:
 		std::mutex m_settingsMutex;
 		nlohmann::json m_settingsJ;
+		std::string m_droppedFilePath;
 	};
 }

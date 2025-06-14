@@ -176,5 +176,6 @@ namespace dev
 		void DebugAttach();
 		void RestartOnLoadFdd();
 		void MountRecentFddImg();
+		void LoadDroppedFile();
 	};
 }
