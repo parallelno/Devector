@@ -100,23 +100,23 @@ void dev::HardwareStatsWindow::DrawHardware(const bool _isRunning) const
 
 	if (ImGui::BeginTable("hardware", 2, flags))
 	{
-		ImGui::TableSetupColumn("hwName", ImGuiTableColumnFlags_WidthFixed, 80);
+		ImGui::TableSetupColumn("hwName", ImGuiTableColumnFlags_WidthFixed, 120);
 
 		DrawProperty2("Up Time", m_upTimeS.c_str());
 		DrawProperty2("CPU Cycles", m_ccS.c_str());
 		DrawProperty2("Last Run", m_ccLastRunS.c_str());
 		DrawProperty2("CRT X/Y", m_crtS.c_str());
 		DrawProperty2("Frame CC", m_frameCCS.c_str());
-		DrawProperty2("Frame Num", m_frameNumS.c_str());
-		DrawProperty2("Display Mode", m_displayModeS.c_str());
-		DrawProperty2("Scroll V", dev::Uint8ToStrC(m_scrollVert));
-		DrawProperty2("Rus/Lat", m_ruslatS.c_str());
+		DrawProperty2("Frame Num", m_frameNumS.c_str(), nullptr, *m_frameNumColor);
+		DrawProperty2("Display Mode", m_displayModeS.c_str(), nullptr, *m_displayModeColor);
+		DrawProperty2("Scroll V", dev::Uint8ToStrC(m_scrollVert), nullptr, *m_scrollVColor);
+		DrawProperty2("Rus/Lat", m_ruslatS.c_str(), nullptr, *m_ruslatColor);
 
 		// interuption states
 		ImGui::Dummy({ 1,8 });
-		DrawProperty2("INTE", dev::BoolToStrC(m_cpuState.ints.inte));
-		DrawProperty2("IFF", dev::BoolToStrC(m_cpuState.ints.iff));
-		DrawProperty2("HLTA", dev::BoolToStrC(m_cpuState.ints.hlta));
+		DrawProperty2("INTE", dev::BoolToStrC(m_cpuState.ints.inte), nullptr, *m_inteColor);
+		DrawProperty2("IFF", dev::BoolToStrC(m_cpuState.ints.iff), nullptr, *m_iffColor);
+		DrawProperty2("HLTA", dev::BoolToStrC(m_cpuState.ints.hlta), nullptr, *m_hltaColor);
 
 		// palette
 		dev::DrawSeparator2("Palette");
@@ -293,6 +293,12 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_cpuState.regs.pc.word = regPC;
 
 	dev::CpuI8080::Int ints{ data["ints"] };
+	bool inteUpdated = ints.inte != m_cpuState.ints.inte;
+	m_inteColor = inteUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool iffUpdated = ints.iff != m_cpuState.ints.iff;
+	m_iffColor = iffUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	bool hltaUpdated = ints.hlta != m_cpuState.ints.hlta;
+	m_hltaColor = hltaUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
 	m_cpuState.ints = ints;
 
 	m_cpuRegM = data["m"];
@@ -343,6 +349,10 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_ccLastRunS = std::to_string(m_ccLastRun);
 	m_crtS = std::format("{}/{}", rasterPixel, rasterLine);
 	m_frameCCS = std::to_string((rasterPixel + rasterLine * Display::FRAME_W) / 4);
+	
+	bool frameNumUpdated = m_frameNum != frameNum;
+	m_frameNumColor = frameNumUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_frameNum = frameNum;
 	m_frameNumS = std::to_string(frameNum);
 
 	res = m_hardware.Request(Hardware::Req::GET_IO_PALETTE);
@@ -391,10 +401,17 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_portsOutData = portdataOut;
 
 	// Vertical scroll
-	m_scrollVert = m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert");
+	auto scrollVert = m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert");
+	bool scrollVertUpdated = m_scrollVert != scrollVert;
+	m_scrollVert = scrollVert;
+	m_scrollVColor = scrollVertUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
 
 	// IO
-	m_displayModeS = m_hardware.Request(Hardware::Req::GET_IO_DISPLAY_MODE)->at("data") ? "512" : "256";
+	auto displayMode = m_hardware.Request(Hardware::Req::GET_IO_DISPLAY_MODE)->at("data");
+	bool displayModeUpdated = m_displayMode != displayMode;
+	m_displayMode = displayMode;
+	m_displayModeColor = displayModeUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_displayModeS = m_displayMode ? "512" : "256";
 }
 
 void dev::HardwareStatsWindow::UpdateDataRuntime()
@@ -427,6 +444,8 @@ void dev::HardwareStatsWindow::UpdateDataRuntime()
 
 	// ruslat
 	m_ruslatS = m_ruslat ? "(*)" : "( )";
+	m_ruslatColor = m_ruslat != m_ruslatOld ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_ruslatOld = m_ruslat;
 
 	UpdateUpTime();
 }
@@ -485,6 +504,14 @@ void dev::HardwareStatsWindow::Init()
 	m_flagPColor = &DASM_CLR_NUMBER;
 	m_flagSColor = &DASM_CLR_NUMBER;
 	m_flagACColor = &DASM_CLR_NUMBER;
+
+	m_frameNumColor = &DASM_CLR_NUMBER;
+	m_displayModeColor = &DASM_CLR_NUMBER;
+	m_scrollVColor = &DASM_CLR_NUMBER;
+	m_ruslatColor = &DASM_CLR_NUMBER;
+	m_inteColor = &DASM_CLR_NUMBER;
+	m_iffColor = &DASM_CLR_NUMBER;
+	m_hltaColor = &DASM_CLR_NUMBER;
 }
 
 void dev::HardwareStatsWindow::UpdateUpTime()

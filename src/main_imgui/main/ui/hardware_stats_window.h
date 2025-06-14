@@ -17,6 +17,9 @@ namespace dev
 		int64_t m_ccLastRun = 0;
 		Hardware& m_hardware;
 		bool& m_ruslat;
+		bool m_ruslatOld;
+		int m_frameNum = 0;
+		int m_displayMode = 0;
 		
 		////////////////////
 		// stats
@@ -71,6 +74,14 @@ namespace dev
 		const ImVec4* m_flagPColor = &DASM_CLR_NUMBER;
 		const ImVec4* m_flagSColor = &DASM_CLR_NUMBER;
 		const ImVec4* m_flagACColor = &DASM_CLR_NUMBER;
+
+		const ImVec4* m_frameNumColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_displayModeColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_scrollVColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_ruslatColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_inteColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_iffColor = &DASM_CLR_NUMBER;
+		const ImVec4* m_hltaColor = &DASM_CLR_NUMBER;
 
 		IO::Palette m_palette;
 		IO::PortsData m_portsInData;
