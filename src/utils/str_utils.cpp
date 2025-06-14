@@ -93,13 +93,6 @@ const char* dev::BoolToStrC(const bool _val, int _mode)
 	return "NOT_SUPPORTED";
 }
 
-auto dev::StrHexToInt(const char* _str)
--> int
-{
-	char* end;
-	return strtol(_str, &end, 16);
-}
-
 auto dev::GetSubstringCount(const std::string& _str, const std::string& _substr)
 -> int
 {

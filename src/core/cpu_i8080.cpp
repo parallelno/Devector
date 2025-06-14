@@ -112,7 +112,7 @@ bool dev::CpuI8080::IsInstructionExecuted() const
 	return MC == FIRST_MACHINE_CICLE_IDX || HLTA;
 }
 
-// an instruction execution time in macine cycles. each machine cicle is 4 cc
+// an instruction execution time in macine cycles. each machine cycle is 4 cc
 static constexpr uint8_t M_CYCLES[]
 {
 //  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F

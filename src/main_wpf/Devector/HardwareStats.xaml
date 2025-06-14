@@ -207,7 +207,7 @@
 							<TextBlock Grid.Row="0" Grid.Column="0" Text="Up Time" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding UpTime}"/>
 
-							<TextBlock Grid.Row="1" Grid.Column="0" Text="CPU Cicles" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
+							<TextBlock Grid.Row="1" Grid.Column="0" Text="CPU Cycles" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CpuCicles}"/>
 
 							<TextBlock Grid.Row="2" Grid.Column="0" Text="Last Run" Margin="0,0,10,1" Foreground="DarkGray" HorizontalAlignment="Right"/>

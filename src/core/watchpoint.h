@@ -91,11 +91,11 @@ namespace dev
 			Data(const nlohmann::json& _wpJ) : 
 				Data(_wpJ["id"],
 					GetAccess(_wpJ["access"].get<std::string>()), 
-					dev::StrHexToInt(_wpJ["globalAddr"].get<std::string>().c_str()), 
+					dev::StrHexToInt(_wpJ["globalAddr"].get<std::string>()), 
 					GetCondition(_wpJ["cond"].get<std::string>()), 
-					dev::StrHexToInt(_wpJ["value"].get<std::string>().c_str()),
+					dev::StrHexToInt(_wpJ["value"].get<std::string>()),
 					GetType(_wpJ["type"].get<std::string>()),
-					dev::StrHexToInt(_wpJ["len"].get<std::string>().c_str()),
+					dev::StrHexToInt(_wpJ["len"].get<std::string>()),
 					_wpJ["active"])
 			{};
 		};

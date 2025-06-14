@@ -43,8 +43,8 @@ namespace dev
 		MemoryEdit(const nlohmann::json& _json)
 			:
 			comment(_json["comment"].get<std::string>()),
-			globalAddr(dev::StrHexToInt(_json["globalAddr"].get<std::string>().c_str())),
-			value(dev::StrHexToInt(_json["value"].get<std::string>().c_str())),
+			globalAddr(dev::StrHexToInt(_json["globalAddr"].get<std::string>())),
+			value(dev::StrHexToInt(_json["value"].get<std::string>())),
 			readonly(_json["readonly"].get<bool>()),
 			active(_json["active"].get<bool>())
 		{}

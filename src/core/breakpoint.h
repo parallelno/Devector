@@ -140,13 +140,13 @@ namespace dev
 			{}
 			Data(const nlohmann::json& _bpJ) :
 				structured(
-					dev::StrHexToInt(_bpJ["addr"].get<std::string>().c_str()),
+					dev::StrHexToInt(_bpJ["addr"].get<std::string>()),
 					static_cast<MemPages>(_bpJ["memPages"]),
 					static_cast<Status>(_bpJ["status"]),
 					_bpJ["autoDel"],
 					GetOperand(_bpJ["operand"].get<std::string>()),
 					dev::GetCondition(_bpJ["cond"].get<std::string>()),
-					dev::StrHexToInt(_bpJ["value"].get<std::string>().c_str())
+					dev::StrHexToInt(_bpJ["value"].get<std::string>())
 				)
 			{};
 		};

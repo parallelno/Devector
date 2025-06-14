@@ -67,7 +67,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 		// draw an addr search
 		if (ImGui::InputTextWithHint("##addrSelection", "FF", m_searchAddrS, IM_ARRAYSIZE(m_searchAddrS), ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			GlobalAddr globalAddr = (GlobalAddr)dev::StrHexToInt(m_searchAddrS);
+			GlobalAddr globalAddr = (GlobalAddr)dev::StrCHexToInt(m_searchAddrS);
 			m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
 			globalAddr = dev::Max(0, globalAddr);
 			globalAddr = dev::Min(globalAddr, Memory::MEMORY_GLOBAL_LEN);

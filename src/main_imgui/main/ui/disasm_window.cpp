@@ -115,7 +115,7 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 	ImGui::PushItemWidth(-100);
 	if (ImGui::InputTextWithHint("##disasmSearch", "FF", m_searchText, IM_ARRAYSIZE(m_searchText), ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		Addr addr = (Addr)dev::StrHexToInt(m_searchText);
+		Addr addr = (Addr)dev::StrCHexToInt(m_searchText);
 		UpdateDisasm(addr);
 		m_selectedLineAddr = addr;
 	}

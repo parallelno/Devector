@@ -62,8 +62,8 @@ namespace dev
 		CodePerf(const nlohmann::json& _json)
 			:
 			label(_json["label"].get<std::string>()),
-			addrStart(dev::StrHexToInt(_json["addrStart"].get<std::string>().c_str())),
-			addrEnd(dev::StrHexToInt(_json["addrEnd"].get<std::string>().c_str())),
+			addrStart(dev::StrHexToInt(_json["addrStart"].get<std::string>())),
+			addrEnd(dev::StrHexToInt(_json["addrEnd"].get<std::string>())),
 			active(_json["active"].get<bool>())
 		{}
 

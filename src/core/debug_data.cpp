@@ -406,7 +406,7 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 	if (debugDataJ.contains("labels")) {
 		for (auto& [str, addrS] : debugDataJ["labels"].items())
 		{
-			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
+			Addr addr = dev::StrHexToInt(addrS.get<std::string>());
 			m_labels.emplace(addr, LabelList{}).first->second.emplace_back(str);
 		}
 	}
@@ -415,7 +415,7 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 	if (debugDataJ.contains("consts")) {
 		for (auto& [str, addrS] : debugDataJ["consts"].items())
 		{
-			Addr addr = dev::StrHexToInt(addrS.get<std::string>().c_str());
+			Addr addr = dev::StrHexToInt(addrS.get<std::string>());
 			m_consts.emplace(addr, LabelList{}).first->second.emplace_back(str);
 		}
 	}
@@ -424,7 +424,7 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 	if (debugDataJ.contains("comments")) {
 		for (auto& [addrS, str] : debugDataJ["comments"].items())
 		{
-			Addr addr = dev::StrHexToInt(addrS.c_str());
+			Addr addr = dev::StrHexToInt(addrS);
 			m_comments.emplace(addr, str);
 		}
 	}

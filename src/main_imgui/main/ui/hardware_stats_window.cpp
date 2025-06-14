@@ -103,7 +103,7 @@ void dev::HardwareStatsWindow::DrawHardware(const bool _isRunning) const
 		ImGui::TableSetupColumn("hwName", ImGuiTableColumnFlags_WidthFixed, 80);
 
 		DrawProperty2("Up Time", m_upTimeS.c_str());
-		DrawProperty2("CPU Cicles", m_ccS.c_str());
+		DrawProperty2("CPU Cycles", m_ccS.c_str());
 		DrawProperty2("Last Run", m_ccLastRunS.c_str());
 		DrawProperty2("CRT X/Y", m_crtS.c_str());
 		DrawProperty2("Frame CC", m_frameCCS.c_str());
@@ -437,12 +437,8 @@ void dev::HardwareStatsWindow::DrawPortsDataProperty(const char* _name,
 
 	ImGui::TableNextColumn();
 	ImGui::Dummy(ImVec2(5.0f, 0.0f)); ImGui::SameLine();
-	if (!_isRunning) {
-		ImGui::Text("Stop emulation for info");
-	}
-	else{
-		ImGui::Text("Hover for info");
-	}
+	ImGui::Text(_isRunning ? "Stop emulation for info" : "Hover for info");
+
 	if (ImGui::IsItemHovered())
 	{
 		for (int i=0; i<256; i++)
