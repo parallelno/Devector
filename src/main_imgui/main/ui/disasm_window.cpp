@@ -113,9 +113,19 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 {
 	if (_isRunning) ImGui::BeginDisabled();
 	ImGui::PushItemWidth(-100);
-	if (ImGui::InputTextWithHint("##disasmSearch", "FF", m_searchText, IM_ARRAYSIZE(m_searchText), ImGuiInputTextFlags_EnterReturnsTrue))
+	if (ImGui::InputTextWithHint("##disasmSearch", "FF", m_searchText, IM_ARRAYSIZE(m_searchText)))
 	{
-		Addr addr = (Addr)dev::StrCHexToInt(m_searchText);
+		DebugData::FilteredElements _filteredElements;
+		m_debugger.GetDebugData().GetFilteredLabels(_filteredElements, m_searchText);
+		int32_t addr = 0;
+
+		if (_filteredElements.empty()){
+			addr = (Addr)dev::StrCHexToInt(m_searchText);
+		}
+		else {
+			addr = std::get<1>(_filteredElements[0]);
+		};
+
 		UpdateDisasm(addr);
 		m_selectedLineAddr = addr;
 	}

@@ -18,9 +18,11 @@ namespace dev
 	auto StrWToStr(const std::wstring& _s) -> const std::string;
 	auto BoolToStrC(const bool _val, int _mode = 0) -> const char*;
 	inline auto StrHexToInt(const std::string& _str) -> uint32_t { return std::stoul(_str, nullptr, 16); };
-	inline auto StrCHexToInt(const char* _str) -> uint32_t { 
-		char* end = nullptr;
-		return std::strtoul(_str, &end, 16); 
+	inline auto StrCHexToInt(const char* _str) -> int32_t {
+		if (!_str) return -1;
+    	char* end = nullptr;
+    	auto result = std::strtoul(_str, &end, 16);
+    	return (*end == '\0') ? result : -1;
 	};
 	auto GetSubstringCount(const std::string& _str, const std::string& _substr) -> int;
 	auto StrToUpperW(const std::wstring _str) -> std::wstring;
