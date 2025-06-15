@@ -62,7 +62,7 @@ static const char* elems_names[static_cast<int>(Element::COUNT)] = { "Main Ram",
 };
 
 void dev::HexViewerWindow::DrawHex(const bool _isRunning)
-{
+{ 
 	{
 		// draw an addr search
 		if (ImGui::InputTextWithHint("##addrSelection", "FF", m_searchAddrS, IM_ARRAYSIZE(m_searchAddrS)))
