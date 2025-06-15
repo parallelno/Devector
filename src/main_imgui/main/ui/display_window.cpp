@@ -427,7 +427,7 @@ void dev::DisplayWindow::DrawContextMenu()
 		}
 		if (ImGui::BeginMenu("Emulation Settings"))
 		{
-			if (ImGui::Combo("Cpu Speed", (int*)(&m_execSpeed), m_execSpeedsS)) 
+			if (ImGui::Combo("Emulation Speed", (int*)(&m_execSpeed), m_execSpeedsS)) 
 			{
 				SetExecutionSpeed(m_execSpeed);
 			};
