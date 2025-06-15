@@ -891,10 +891,15 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 	line.Init();
 
 	auto cmdLen = cmdLens[opcode];
+
 	switch (cmdLen)
 	{
-	case 1:
-		line.imm = immType == CMD_IB_OFF0 ? opcode : 0;
+	case 1: 
+		// if immType != CMD_IB_OFF0 means the instruction is single byte instruction.
+		// if immType == CMD_IB_OFF0 means the instruction is DB NN, where NN is the opcode that represent the data byte.
+		// if immType == CMD_IB_OFF0 and _cmd > 0xFF means the instruction is DB NN, where NN is the data byte. 
+		// 		This is for the special case there are no valid instructions found to fit into the addr range addr - instructionOffset to addr.
+		line.imm = immType != CMD_IB_OFF0 ? 0 : _cmd > 0xFF ? (_cmd >> 8) & 0xFF : opcode;
 		break;
 	case 2:
 		line.imm = (_cmd >> 8) & 0xFF;
@@ -910,7 +915,7 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 	line.accessed = runs != UINT64_MAX && reads != UINT64_MAX && writes != UINT64_MAX;
 	line.breakpointStatus = _breakpointStatus;
 
-	if (immType != CMD_IM_NONE) 
+	if (immType != CMD_IM_NONE && immType != CMD_IB_OFF0)
 	{
 		auto labelsP = m_debugData.GetLabels(line.imm); 
 		line.labels = labelsP ? *labelsP : LabelList();

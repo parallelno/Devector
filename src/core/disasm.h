@@ -19,7 +19,7 @@ namespace dev
 
 	// instruction immediate operand.
 	#define CMD_IM_NONE 0 // no immediate operand
-	#define CMD_IB_OFF0 1 // immediate byte, offset = 0
+	#define CMD_IB_OFF0 1 // immediate byte, offset = 0. Used to represent the data blobs such as DB 0x00, DB 0x01, DB 0x02, etc
 	#define CMD_IB_OFF1 2 // immediate byte, offset = 1
 	#define CMD_IW_OFF1 3 // immediate word, offset = 1
 

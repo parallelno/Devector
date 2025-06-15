@@ -37,6 +37,7 @@ namespace dev
 		static const constexpr uint8_t OPCODE_JPE = 0xEA;
 		static const constexpr uint8_t OPCODE_JP = 0xF2;
 		static const constexpr uint8_t OPCODE_JM = 0xFA;
+		static const constexpr uint8_t OPCODE_DB = 0x10;
 
 		static const constexpr int CLOCK = 3000000;
 

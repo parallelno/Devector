@@ -391,8 +391,8 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 	if (_instructionOffset < 0 && addr == _addr)
 	{
 		// _instructionOffset < 0 means we want to disasm several intructions prior the _addr.
-		// if the GetAddr output addr is equal to input _addr, that means 
-		// there is no valid instructions fit into the range (_addr+_instructionOffset, _addr) 
+		// if the GetAddr() outputs the addr equal to input _addr, that means
+		// there are no valid instructions fit into the range (_addr+_instructionOffset, _addr)
 		// and that means a data blob is ahead
 		addr += (Addr)_instructionOffset;
 
@@ -402,7 +402,7 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 			m_disasm.AddLabes(addr);
 
 			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
-			uint32_t cmd = 0x1000 | db; // opcode 0x10 is used as a placeholder
+			uint32_t cmd = db<<8 | CpuI8080::OPCODE_DB;
 			auto breakpointStatus = m_debugData.GetBreakpoints().GetStatus(addr);
 			addr += m_disasm.AddCode(addr, cmd, breakpointStatus);
 		}
