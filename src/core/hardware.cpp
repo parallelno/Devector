@@ -306,7 +306,7 @@ void dev::Hardware::ReqHandling(const std::chrono::duration<int64_t, std::nano> 
 		break;
 
 	case Req::GET_MEM_STRING_GLOBAL:
-		out = GetMemString(dataJ, Memory::AddrSpace::RAM);
+		out = GetMemString(dataJ);
 		break;
 
 	case Req::GET_WORD_STACK:
@@ -603,20 +603,20 @@ static bool init_hex_data() {
 
 static bool hex_data_initialized = init_hex_data();
 
-auto dev::Hardware::GetMemString(const nlohmann::json _dataJ, const Memory::AddrSpace _addrSpace)
+auto dev::Hardware::GetMemString(const nlohmann::json _dataJ)
 -> nlohmann::json
 {
-	Addr addr = _dataJ["addr"];
+	GlobalAddr globalAddr = _dataJ["addr"];
 	Addr len = _dataJ["len"];
 	len = len > 255 ? 255 : len;
 	int char_idx = 0;
 	int line_len = len < BYTES_IN_LINE ? len : BYTES_IN_LINE;
 
-	for (Addr i = 0; i < len; i++)
+	for (Addr addrOffset = 0; addrOffset < len; addrOffset++)
 	{
-		auto c = m_memory.GetByte(addr + i, _addrSpace);
-		int x = i % BYTES_IN_LINE;
-		int y = i / BYTES_IN_LINE;
+		auto c = m_memory.GetByteGlobal(globalAddr + addrOffset);
+		int x = addrOffset % BYTES_IN_LINE;
+		int y = addrOffset / BYTES_IN_LINE;
 		
 		// hex
 		int hex_idx = LINE_LEN_MAX * y + x * HEX_LEN;

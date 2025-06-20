@@ -100,7 +100,7 @@ namespace dev
 		auto GetByteGlobal(const nlohmann::json _globalAddrJ) -> nlohmann::json;
 		auto GetByte(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto Get3Bytes(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
-		auto GetMemString(const nlohmann::json _dataJ, const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) -> nlohmann::json;
+		auto GetMemString(const nlohmann::json _dataJ) -> nlohmann::json;
 		auto GetWord(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
 		auto GetStackSample(const nlohmann::json _addrJ) -> nlohmann::json;
 		auto GetFddInfo(const int _driveIdx) -> Fdc1793::DiskInfo;

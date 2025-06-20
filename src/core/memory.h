@@ -123,6 +123,7 @@ namespace dev
 		void Restart();
 		auto GetByte(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const -> uint8_t;
+		auto GetByteGlobal(const GlobalAddr _globalAddr) const -> uint8_t;			
 		auto CpuReadInstr(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM,
 			const uint8_t _byteNum = 0) -> uint8_t;

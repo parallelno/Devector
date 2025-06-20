@@ -63,12 +63,17 @@ static const char* elems_names[static_cast<int>(Element::COUNT)] = { "Main Ram",
 
 void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 { 
+	bool memPageIdxChanged = false;
 	{
 		// draw an addr search
 		if (ImGui::InputInt("##addrSelection", &m_searchAddr, 1, 0x10000, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll))
 		{
 			m_searchAddr = dev::Max(0, m_searchAddr);
 			m_searchAddr = dev::Min(m_searchAddr, Memory::MEMORY_GLOBAL_LEN - 1);
+			
+			memPageIdxChanged = m_searchAddr >> 16 != m_memPageIdx;
+			m_memPageIdx = m_searchAddr >> 16;
+
 			m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
 			m_reqUI.globalAddr = m_searchAddr;
 			m_reqUI.len = 1;
@@ -84,7 +89,8 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 	m_memPageIdx = dev::Max(0, m_memPageIdx);
 	m_memPageIdx = dev::Min(static_cast<int>(Element::COUNT)-1, m_memPageIdx);
 	const char* elem_name = elems_names[m_memPageIdx];
-	if (ImGui::SliderInt("##pageSelection", &m_memPageIdx, 0, static_cast<int>(Element::COUNT) - 1, elem_name, ImGuiSliderFlags_NoInput))
+	bool pageSelected = ImGui::SliderInt("##pageSelection", &m_memPageIdx, 0, static_cast<int>(Element::COUNT) - 1, elem_name, ImGuiSliderFlags_NoInput);
+	if (memPageIdxChanged || pageSelected)
 	{
 		// update
 		auto memP = m_hardware.GetRam()->data();
