@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.22)
 message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
 
-
 project(devector)
 
 # Check if we are in a three build
@@ -222,6 +221,12 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_EXTENSIONS OFF)  # Ensures no compiler-specific extensions are used
 
 # Linking
+
+# Force static linking of libgcc and libstdc++ to avoid runtime dependency issues
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_link_options(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++)
+endif()
+
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PRIVATE glad)
 
