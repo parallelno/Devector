@@ -851,7 +851,7 @@ void dev::Disasm::AddLabes(const Addr _addr)
 	line.type = Line::Type::LABELS;
 	line.addr = _addr;
 	
-	line.labels = labelsP ? *labelsP : LabelList();
+	line.labels = std::move(*labelsP);
 
 	m_lineIdx++;
 }

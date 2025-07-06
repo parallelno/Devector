@@ -54,7 +54,7 @@ namespace dev
 				addr = _addr;
 				str = _lineS;
 
-				labelExists = _debugData.GetLabels(addr);
+				labelExists = _debugData.GetLabels(addr) != std::nullopt;
 				constExists = _debugData.GetConsts(addr);
 				commentExists = _debugData.GetComment(addr);
 				editMemoryExists = _debugData.GetMemoryEdit(addr);

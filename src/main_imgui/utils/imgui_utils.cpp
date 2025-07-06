@@ -1507,7 +1507,7 @@ void dev::DrawEditLabelWindow(Hardware& _hardware, DebugData& _debugData, ReqUI&
 		addr = _reqUI.globalAddr;
 		oldAddr = addr;
 		auto labelsP = _debugData.GetLabels(_reqUI.globalAddr);
-		if (labelsP) labels = *labelsP;
+		if (labelsP) labels = std::move(*labelsP);
 		setFocus = true;
 		selectedItemIdx = 0;
 		editLabel = true;

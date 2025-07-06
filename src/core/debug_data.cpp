@@ -33,10 +33,29 @@ bool IsConstLabel(const char* _s)
 	return true; // All characters are capital letters or underscores
 }
 
-auto dev::DebugData::GetLabels(const Addr _addr) const -> const LabelList*
+// returns a list of labels for the given address
+// local labels are put at the end of the list
+// if no labels are found, returns std::nullopt
+auto dev::DebugData::GetLabels(const Addr _addr) const 
+-> std::optional<LabelList>
 {
 	auto labelsI = m_labels.find(_addr);
-	return labelsI != m_labels.end() ? &labelsI->second : nullptr;
+	if (labelsI == m_labels.end()){
+		return std::nullopt;
+	}
+	LabelList labels;
+	for (auto& label : labelsI->second)
+	{
+		// put local labels at the end of the label list
+		if (!label.empty() && label[0] == '@') {
+			labels.push_back(label);
+		}
+		else{
+			labels.insert(labels.begin(), label);
+		}
+	}
+
+	return labels;
 }
 void dev::DebugData::GetFilteredLabels(FilteredElements& _out, const std::string& _filter) const
 {

@@ -313,16 +313,15 @@ void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
 		if (ccDiff != 0) m_debugger.UpdateLastRW();
 		auto memLastRWP = m_debugger.GetLastRW()->data();
 
-		// update params
-		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_globalColorBg, m_globalColorBg);
-		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_globalColorFg, m_globalColorFg);
-		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_highlightRead, m_highlightRead);
-		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_highlightWrite, m_highlightWrite);
-		m_glUtils.UpdateMaterialParam(m_memViewMatIds[0], m_paramId_highlightIdxMax, m_highlightIdxMax);
-
-		// update vram texture
+		// update params and vram texture
 		for (int i = 0; i < RAM_TEXTURES; i++)
 		{
+			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_globalColorBg, m_globalColorBg);
+			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_globalColorFg, m_globalColorFg);
+			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_highlightRead, m_highlightRead);
+			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_highlightWrite, m_highlightWrite);
+			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_highlightIdxMax, m_highlightIdxMax);
+
 			m_glUtils.UpdateTexture(m_memViewTexIds[i], memP + i * Memory::MEM_64K);
 			m_glUtils.UpdateTexture(m_lastRWTexIds[i], (const uint8_t*)(memLastRWP) + i * Memory::MEM_64K * 4);
 			m_glUtils.Draw(m_memViewMatIds[i]);
