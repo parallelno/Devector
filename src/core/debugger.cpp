@@ -396,7 +396,7 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 		// and that means a data blob is ahead
 		addr += (Addr)_instructionOffset;
 
-		for (; m_disasm.GetLineIdx() < -_instructionOffset;)
+		for (int i=0; i < -_instructionOffset; i++)
 		{
 			m_disasm.AddComment(addr);
 			m_disasm.AddLabes(addr);
