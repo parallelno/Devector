@@ -22,37 +22,55 @@ namespace dev
 		using RamDiskData = std::vector<uint8_t>;
 
 #pragma pack(push, 1)
-		// The ram-disk mapping into the RAM memory space
-		// RAM mapping is applied if:
-		// 	- RAM mapping is enabled
-		// 	- The RAM is accessed via non-stack instructions
-		// 	- The address falls within the RAM mapping range associated with the current RAM mapping
 
-		// Stack mapping is applied if:
-		// 	- Stack mapping is enabled
-		// 	- The RAM is accessed via stack-related instructions:
-		// 		Push, Pop, XTHL, Call, Ret, conditional calls/returns, or RST
+		//=============================================================================
+		// The RAM Disk
+		//=============================================================================
+		// The RAM Disk is an external 256-byte RAM space. It is split into four 64k 
+		// memory pages. It operates in two modes:
+		// 
+		//   • Stack Mode:
+		//       - Accessed using stack-related instructions
+		// 
+		//   • Memory-Mapped Mode:
+		//       - The RAM Disk is mapped into the 0xA000–0xFFFF address space
+		//       - The RAM Disk memory space operates as a regular RAM
+		//
+		// Stack Mode is applied if:
+		//   - Stack mapping is enabled
+		//   - The RAM is accessed via stack-related instructions:
+		//       Push, Pop, XTHL, Call, Ret, conditional calls/returns, or RST
 
-		// Special case:
-		// 	If stack mapping is disabled but RAM mapping is enabled, RAM mapping applies to stack operations 
-		// 	if the stack address falls within the RAM mapping range.
+		// Memory-Mapped Mode is applied if:
+		//	- RAM mapping is enabled
+		//	- The address falls within the RAM mapping range associated with the current
+		//       RAM mapping
+		//	- The RAM is accessed via non-stack instructions when Stack Mode is enabled
+		//   - The RAM is accessed via stack instructions when Stack Mode is disabled
+		//		Example:
+		//		Memory-Mapped Mode of the first RAM Disk is enabled.
+		//		Memory Mapping is enabled for 0xA000-0xDFFF.
+		//		Stack Mode is disabled.
+		//		SP = 0xA000
+		//		POP H
+		//		In that case, the Memory-Mapped Mode is used to access the RAM Disk.
 
-		// The ram-disk activation command is E8ASssMM:
-		// 	MM: The index of the Ram-Disk 64k page accessed via non-stack instructions (all instructions except mentioned below)
-		// 	ss: The index of the RAM-Disk 64k page accessed via stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
-		// 	S : Enable stack mapping
-		// 	A : Enable RAM mapping for range [0xA000-0xDFFF]
-		// 	8 : Enable RAM mapping for range [0x8000-0x9FFF]
-		// 	E : Enable RAM mapping for range [0xE000-0xFFFF]
+		// The RAM Disk activation command: %E8ASssMM:
+		//	MM: The index of the RAM Disk 64k page accessed in the Memory-Mapped Mode
+		//	ss: The index of the RAM Disk 64k page accessed in the Stack Mode
+		//	S : Enables the Stack Mode
+		//	A : Enables the Memory-Mapped Mode with mapping for range [0xA000-0xDFFF]
+		//	8 : Enables the Memory-Mapped Mode with mapping for range [0x8000-0x9FFF]
+		//	E : Enables the Memory-Mapped Mode with mapping for range [0xE000-0xFFFF]
 
 		union Mapping {
 			struct {
-				uint8_t pageRam : 2;	// The index of the Ram-Disk 64k page accessed via non-stack instructions (all instructions except mentioned below)
-				uint8_t pageStack : 2;	// The index of the RAM-Disk 64k page accessed via stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
-				bool modeStack : 1;		// Enable stack mapping
-				bool modeRamA : 1; // Enable RAM mapping for range [0xA000-0xDFFF]
-				bool modeRam8 : 1; // Enable RAM mapping for range [0x8000-0x9FFF]
-				bool modeRamE : 1; // Enable RAM mapping for range [0xE000-0xFFFF]
+				uint8_t pageRam : 2;	// The index of the RAM Disk 64k page accessed in the Memory-Mapped Mode
+				uint8_t pageStack : 2;	// The index of the RAM Disk 64k page accessed in the Stack Mode
+				bool modeStack : 1;		// Enables the Stack Mode
+				bool modeRamA : 1; // Enables the Memory-Mapped Mode with mapping for range [0xA000-0xDFFF]
+				bool modeRam8 : 1; // Enables the Memory-Mapped Mode with mapping for range [0x8000-0x9FFF]
+				bool modeRamE : 1; // Enables the Memory-Mapped Mode with mapping for range [0xE000-0xFFFF]
 			};
 			uint8_t data = 0;
 			Mapping(const uint8_t _data = 0) : data(_data) {}

@@ -704,7 +704,7 @@ namespace Devector
 
         // peripherial
 
-        // ram-disks
+        // RAM Disks
         public RamMappingViewModel RamMappingViewModel { get; }
 
         public HardwareStatsViewModel()

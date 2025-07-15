@@ -62,7 +62,7 @@ namespace dev
 				uint8_t rdisk7page3 : 1;
 
 			};
-			uint64_t data;  // ...876543210R, R - ram, 0 - Ram-disk0 page0, 1 - Ram-disk0 page1,... 4 - Ram-disk1 page0, 5 - Ram-disk0 page1 etc
+			uint64_t data;  // ...876543210R, R - ram, 0 - RAM Disk0 page0, 1 - RAM Disk0 page1,... 4 - RAM Disk1 page0, 5 - RAM Disk0 page1 etc
 			MemPages(uint64_t _data) : data(_data) {};
 		};
 #pragma pack(pop)

@@ -505,14 +505,14 @@ auto dev::DrawPropertyMemoryMapping(Breakpoint::MemPages _memPages)
 	bool rd73 = _memPages.rdisk7page3;
 
 	DrawProperty2EditableCheckBox("Ram", "##BPContextAccessRam", &ram, "To check the main ram");
-	DrawProperty2EditableCheckBox4("Ram Disk 1", "##BPCARD0P0", "##BPCARD0P1", "##BPCARD0P2", "##BPCARD0P3", &rd00, &rd01, &rd02, &rd03, "To check the Ram-Disk1 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 2", "##BPCARD1P0", "##BPCARD1P1", "##BPCARD1P2", "##BPCARD1P3", &rd10, &rd11, &rd12, &rd13, "To check the Ram-Disk2 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 3", "##BPCARD2P0", "##BPCARD2P1", "##BPCARD2P2", "##BPCARD2P3", &rd20, &rd21, &rd22, &rd23, "To check the Ram-Disk3 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 4", "##BPCARD3P0", "##BPCARD3P1", "##BPCARD3P2", "##BPCARD3P3", &rd30, &rd31, &rd32, &rd33, "To check the Ram-Disk4 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 5", "##BPCARD4P0", "##BPCARD4P1", "##BPCARD4P2", "##BPCARD4P3", &rd40, &rd41, &rd42, &rd43, "To check the Ram-Disk5 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 6", "##BPCARD5P0", "##BPCARD5P1", "##BPCARD5P2", "##BPCARD5P3", &rd50, &rd51, &rd52, &rd53, "To check the Ram-Disk6 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 7", "##BPCARD6P0", "##BPCARD6P1", "##BPCARD6P2", "##BPCARD6P3", &rd60, &rd61, &rd62, &rd63, "To check the Ram-Disk7 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 8", "##BPCARD7P0", "##BPCARD7P1", "##BPCARD7P2", "##BPCARD7P3", &rd70, &rd71, &rd72, &rd73, "To check the Ram-Disk8 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 1", "##BPCARD0P0", "##BPCARD0P1", "##BPCARD0P2", "##BPCARD0P3", &rd00, &rd01, &rd02, &rd03, "To check the RAM Disk1 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 2", "##BPCARD1P0", "##BPCARD1P1", "##BPCARD1P2", "##BPCARD1P3", &rd10, &rd11, &rd12, &rd13, "To check the RAM Disk2 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 3", "##BPCARD2P0", "##BPCARD2P1", "##BPCARD2P2", "##BPCARD2P3", &rd20, &rd21, &rd22, &rd23, "To check the RAM Disk3 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 4", "##BPCARD3P0", "##BPCARD3P1", "##BPCARD3P2", "##BPCARD3P3", &rd30, &rd31, &rd32, &rd33, "To check the RAM Disk4 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 5", "##BPCARD4P0", "##BPCARD4P1", "##BPCARD4P2", "##BPCARD4P3", &rd40, &rd41, &rd42, &rd43, "To check the RAM Disk5 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 6", "##BPCARD5P0", "##BPCARD5P1", "##BPCARD5P2", "##BPCARD5P3", &rd50, &rd51, &rd52, &rd53, "To check the RAM Disk6 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 7", "##BPCARD6P0", "##BPCARD6P1", "##BPCARD6P2", "##BPCARD6P3", &rd60, &rd61, &rd62, &rd63, "To check the RAM Disk7 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4("Ram Disk 8", "##BPCARD7P0", "##BPCARD7P1", "##BPCARD7P2", "##BPCARD7P3", &rd70, &rd71, &rd72, &rd73, "To check the RAM Disk8 pages 0,1,2,3");
 
 	_memPages.ram = ram;
 	_memPages.rdisk0page0 = rd00;

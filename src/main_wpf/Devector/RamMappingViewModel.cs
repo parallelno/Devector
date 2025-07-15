@@ -17,12 +17,12 @@ namespace Devector
         public struct MappingData
         {
             public int idx;
-            public int pageRam;    // Ram-Disk 64k page idx accesssed via non-stack instructions (all instructions except mentioned below)
-            public int pageStack;  // Ram-Disk 64k page idx accesssed via the stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
+            public int pageRam;    // RAM Disk 64k page idx accesssed via non-stack instructions (all instructions except mentioned below)
+            public int pageStack;  // RAM Disk 64k page idx accesssed via the stack instructions (Push, Pop, XTHL, Call, Ret, C*, R*, RST)
             public bool modeStack; // enabling stack mapping
-            public bool modeRamA;  // enabling ram [0xA000-0xDFFF] mapped into the the Ram-Disk
-            public bool modeRam8;  // enabling ram [0x8000-0x9FFF] mapped into the the Ram-Disk
-            public bool modeRamE;  // enabling ram [0xE000-0xFFFF] mapped into the the Ram-Disk   
+            public bool modeRamA;  // enabling ram [0xA000-0xDFFF] mapped into the the RAM Disk
+            public bool modeRam8;  // enabling ram [0x8000-0x9FFF] mapped into the the RAM Disk
+            public bool modeRamE;  // enabling ram [0xE000-0xFFFF] mapped into the the RAM Disk   
 
             public MappingData(int ramDiskIdx, int data = 0)
             {

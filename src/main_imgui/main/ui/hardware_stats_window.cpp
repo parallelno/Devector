@@ -166,8 +166,8 @@ void dev::HardwareStatsWindow::DrawPeripheral() const
 	{
 		ImGui::TableSetupColumn("pfNames", ImGuiTableColumnFlags_WidthFixed, 110);
 
-		// ram-disk 1 mapping
-		DrawSeparator2("Ram-Disk:");
+		// RAM Disk 1 mapping
+		DrawSeparator2("RAM Disk:");
 		DrawProperty2("Index", m_ramdiskIdxS.c_str());
 		DrawProperty2("RAM Mode", m_mappingRamModeS.c_str());
 		DrawProperty2("RAM Page", m_mappingPageRamS.c_str());
@@ -338,7 +338,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	Memory::Mapping mapping { res->at("mapping") };
 	int ramdiskIdx = res->at("ramdiskIdx");
 
-	// update Ram-disk
+	// update RAM Disk
 	m_mappingRamModeS = mapping.RamModeToStr();
 	m_mappingPageRamS = std::to_string(mapping.pageRam);
 	m_mappingModeStackS = dev::BoolToStrC(mapping.modeStack, 2);

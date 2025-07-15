@@ -322,8 +322,8 @@
 						<RowDefinition Height="*"/>
 					</Grid.RowDefinitions>
 					
-					<!-- Ram-Disk -->
-                    <TextBlock Text="Ram-Disks" Grid.Row="0" HorizontalAlignment="Center"/>
+					<!-- RAM Disk -->
+                    <TextBlock Text="RAM Disks" Grid.Row="0" HorizontalAlignment="Center"/>
                     <StackPanel Grid.Row="1" Margin="5">
                         <DataGrid
 									ItemsSource="{Binding RamMappingViewModel.MappingDataList}"

@@ -182,7 +182,7 @@ namespace Devector
             //ViewModel.RamMappingViewModel.MappingDataList = mappings;
 
 
-            // Ram-Disk
+            // RAM Disk
             jsonDoc = Hal?.Request(HAL.Req.GET_MEMORY_MAPPINGS, "");
             var enabledRamdiskIdx = jsonDoc?.RootElement.GetProperty("ramdiskIdx").GetInt32();
 

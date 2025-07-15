@@ -172,8 +172,8 @@ auto dev::Memory::GetGlobalAddr(const Addr _addr, const AddrSpace _addrSpace) co
 	return _addr;
 }
 
-// it raises an exception if the mapping is enabled for more than one Ram-disk.
-// it used the first enabled Ram-disk during an exception
+// it raises an exception if the mapping is enabled for more than one RAM Disk.
+// it used the first enabled RAM Disk during an exception
 void dev::Memory::SetRamDiskMode(uint8_t _diskIdx, uint8_t _data) 
 {	
 	m_mappings[_diskIdx].data = _data;

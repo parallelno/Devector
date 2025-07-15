@@ -66,8 +66,8 @@ bool dev::Hardware::ExecuteInstruction()
 
 	if (m_memory.IsException())
 	{
-		m_memory.InitRamDiskMapping(); // reset ram-disk mode collision
-		dev::Log("ERROR: more than one Ram-disk has mapping enabled");
+		m_memory.InitRamDiskMapping(); // reset RAM Disk mode collision
+		dev::Log("ERROR: more than one RAM Disk has mapping enabled");
 		return true;
 	}
 

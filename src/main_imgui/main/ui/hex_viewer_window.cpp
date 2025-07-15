@@ -51,14 +51,14 @@ enum class Element : int { MAIN_RAM = 0,
 	RAM_DISK8_B0, RAM_DISK8_B1, RAM_DISK8_B2, RAM_DISK8_B3,
 	COUNT };
 static const char* elems_names[static_cast<int>(Element::COUNT)] = { "Main Ram",
-	"Ram-Disk1 Bank0", "Ram-Disk1 Bank1", "Ram-Disk1 Bank2", "Ram-Disk1 Bank3", 
-	"Ram-Disk2 Bank0", "Ram-Disk2 Bank1", "Ram-Disk2 Bank2", "Ram-Disk2 Bank3", 
-	"Ram-Disk3 Bank0", "Ram-Disk3 Bank1", "Ram-Disk3 Bank2", "Ram-Disk3 Bank3",
-	"Ram-Disk4 Bank0", "Ram-Disk4 Bank1", "Ram-Disk4 Bank2", "Ram-Disk4 Bank3",
-	"Ram-Disk5 Bank0", "Ram-Disk5 Bank1", "Ram-Disk5 Bank2", "Ram-Disk5 Bank3",
-	"Ram-Disk6 Bank0", "Ram-Disk6 Bank1", "Ram-Disk6 Bank2", "Ram-Disk6 Bank3",
-	"Ram-Disk7 Bank0", "Ram-Disk7 Bank1", "Ram-Disk7 Bank2", "Ram-Disk7 Bank3",
-	"Ram-Disk8 Bank0", "Ram-Disk8 Bank1", "Ram-Disk8 Bank2", "Ram-Disk8 Bank3",
+	"RAM Disk1 Bank0", "RAM Disk1 Bank1", "RAM Disk1 Bank2", "RAM Disk1 Bank3", 
+	"RAM Disk2 Bank0", "RAM Disk2 Bank1", "RAM Disk2 Bank2", "RAM Disk2 Bank3", 
+	"RAM Disk3 Bank0", "RAM Disk3 Bank1", "RAM Disk3 Bank2", "RAM Disk3 Bank3",
+	"RAM Disk4 Bank0", "RAM Disk4 Bank1", "RAM Disk4 Bank2", "RAM Disk4 Bank3",
+	"RAM Disk5 Bank0", "RAM Disk5 Bank1", "RAM Disk5 Bank2", "RAM Disk5 Bank3",
+	"RAM Disk6 Bank0", "RAM Disk6 Bank1", "RAM Disk6 Bank2", "RAM Disk6 Bank3",
+	"RAM Disk7 Bank0", "RAM Disk7 Bank1", "RAM Disk7 Bank2", "RAM Disk7 Bank3",
+	"RAM Disk8 Bank0", "RAM Disk8 Bank1", "RAM Disk8 Bank2", "RAM Disk8 Bank3",
 };
 
 void dev::HexViewerWindow::DrawHex(const bool _isRunning)
