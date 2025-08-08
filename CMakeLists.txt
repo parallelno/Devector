@@ -292,9 +292,8 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 )
 
 # Copy contents of resources folder directly into bin folder
-set(DATA_DIR ${RES_DIR})
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_directory ${DATA_DIR} ${BIN_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${RES_DIR} ${BIN_DIR}
 	COMMAND ${CMAKE_COMMAND} -E echo "--------- Data files copied to: ${BIN_DIR}"
 )
 
