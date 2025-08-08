@@ -33,17 +33,12 @@ set(LUAJIT_DIR ${3RD_PARTY_DIR}/luajit)
 file(MAKE_DIRECTORY ${3RD_PARTY_DIR})
 
 # Fetch SDL3 if not already in 3rd_party
-if(NOT EXISTS ${SDL3_DIR})
-	message(STATUS "Cloning SDL3 into ${SDL3_DIR}")
-	FetchContent_Declare(
-		SDL3
-		GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-		GIT_TAG main
-		SOURCE_DIR ${SDL3_DIR}  # the destination directory
-	)
-	FetchContent_MakeAvailable(SDL3)
-endif()
-add_subdirectory(${SDL3_DIR} EXCLUDE_FROM_ALL)
+FetchContent_Declare(
+  SDL3
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+  GIT_TAG main
+)
+FetchContent_MakeAvailable(SDL3)
 
 # Fetch ImGui if not already in 3rd_party
 if(NOT EXISTS ${IMGUI_DIR})
@@ -247,7 +242,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	${IMGUI_DIR}
 	${IMGUI_DIR}/backends
 	${SRC_DIR}
-	${3RD_PARTY_DIR}
 	${GLAD_DIR}/include
 	${GLAD_DIR}/src
 	${IMGUI_DIR}/misc/cpp
