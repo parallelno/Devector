@@ -101,7 +101,7 @@ if(WIN32)
 			luajit_build
 			SOURCE_DIR ${LUAJIT_DIR}
 			CONFIGURE_COMMAND ""  # LuaJIT uses its own build system
-			BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${LUAJIT_DIR}/src msvcbuild.bat static "TARGET_CFLAGS=-m64" 
+			BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${LUAJIT_DIR}/src msvcbuild.bat static "TARGET_CFLAGS=-m64"
 			INSTALL_COMMAND ""    # No install step; we use the output directly
 			BUILD_IN_SOURCE 1     # LuaJIT builds in its source dir
 		)
@@ -135,7 +135,7 @@ target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 # Optionally, build GLEW utilities (glewinfo, visualinfo)
 set(BUILD_UTILS OFF CACHE BOOL "Build GLEW utilities")
 
-# ImGui source 
+# ImGui source
 set(IMGUI_SRC
 	${IMGUI_DIR}/imgui.cpp
 	${IMGUI_DIR}/imgui_demo.cpp
@@ -147,7 +147,7 @@ set(IMGUI_SRC
 	${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
 )
 
-# libtinyfiledialogs source 
+# libtinyfiledialogs source
 set(TINY_DIALOGS_SRC
 	${TINY_DIALOGS_DIR}/tinyfiledialogs.c
 )
@@ -169,7 +169,7 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/main.cpp
 	${DEVECTOR_DIR}/main/devector_app.h
 	${DEVECTOR_DIR}/main/devector_app.cpp
-	
+
 	${DEVECTOR_DIR}/main/imgui_app.h
 	${DEVECTOR_DIR}/main/imgui_app.cpp
 
@@ -206,7 +206,7 @@ set(SOURCES
 
 	${DEVECTOR_DIR}/utils/imgui_utils.cpp
 	${DEVECTOR_DIR}/utils/imgui_utils.h
-) 
+)
 
 # Executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC} ${TINY_DIALOGS_SRC} ${STB_IMAGE_SRC})
@@ -254,23 +254,23 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	${LUAJIT_DIR}/src
 	${LUAJIT_DIR}/src/host
 	${LUAJIT_DIR}/src/jit
-	${DEVECTOR_DIR}	
+	${DEVECTOR_DIR}
 	${DEVECTOR_DIR}/main
 	${DEVECTOR_DIR}/main/ui
 )
 if(UNIX AND NOT APPLE)
 	# Include GTK and GLib headers
-	target_include_directories(${PROJECT_NAME} PRIVATE 
+	target_include_directories(${PROJECT_NAME} PRIVATE
 		${GTK_DIR}/include
 		${GLIB_DIR}/include
 	)
 endif()
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#
 # Post build commands
-# 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Create bin directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
