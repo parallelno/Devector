@@ -14,7 +14,7 @@
 #include "utils/str_utils.h"
 #include "utils/result.h"
 
-void dev::RunApp(const std::string& _dir, const std::string& _appName) 
+void dev::RunApp(const std::string& _dir, const std::string& _appName)
 {
 	if ( !IsFileExist(_dir + _appName) )
 	{
@@ -41,7 +41,7 @@ void dev::OsOpenInShell(const char* path)
 #endif
 }
 
-void dev::ThreadSleep(double _seconds) 
+void dev::ThreadSleep(double _seconds)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds((long long)(_seconds * 1000.0)));
 }
@@ -66,7 +66,7 @@ void dev::CopyToClipboard(const std::string& _str) {
 
 auto dev::LoadTextFile(const std::string& _path)
 -> std::string
-{	
+{
 	if (!IsFileExist(_path)) {
 		return {};
 	}
@@ -107,7 +107,7 @@ bool dev::SaveFile(const std::string& _path, const std::vector<uint8_t>& _data, 
 	if (!file)
 	{
 		dev::Log("Failed to init a file object: {}", _path);
-		return false;	
+		return false;
 	}
 	else if ((!_override && std::filesystem::exists(_path)))
 	{
@@ -172,7 +172,7 @@ auto dev::GetExecutableDir()
     ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer)-1);
     if (len != -1) {
         buffer[len] = '\0';
-        path = dev::string(buffer);
+        path = std::string(buffer);
     }
 #endif
 	return dev::GetDir(path) + "/";
