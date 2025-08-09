@@ -135,7 +135,12 @@ jobs:
           echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
           echo "Release ${{ steps.tag_name.outputs.TAG_NAME }}" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "Built with GCC 13.2.0 (MSYS2 UCRT64) using C++20 standard." >> $GITHUB_OUTPUT
+          echo "Features:" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "Updates:" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "Fixes:" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         fi
 
