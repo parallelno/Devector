@@ -20,11 +20,10 @@ jobs:
             triplet: windows-x86_64
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # Linux setup
-      - name: Install GCC 13.2 and dependencies on Linux
+      # --- Linux: GCC 13.2 ---
+      - name: Install GCC 13.2 on Linux
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
@@ -35,47 +34,30 @@ jobs:
           gcc --version
           g++ --version
 
-      # Windows setup
-      - name: Install MinGW-w64 GCC 13.2
+      # --- Windows: GCC 13.0.0 x86_64 ---
+      - name: Install MinGW-w64 GCC 13.0.0 on Windows
         if: matrix.os == 'windows-2022'
-        shell: bash
         run: |
-          choco install mingw --version=13.2.0 --allow-downgrade --no-progress
+          choco install mingw --version=13.0.0 --allow-downgrade --no-progress
           echo "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin" >> $GITHUB_PATH
           gcc --version
           g++ --version
 
-      # Windows pkg-config install
-      - name: Install pkg-config on Windows
-        if: matrix.os == 'windows-2022'
-        run: choco install pkgconfiglite -y
-
-      # Install Ninja on Windows (if you're using Ninja generator)
-      - name: Install Ninja on Windows
-        if: matrix.os == 'windows-2022'
-        run: choco install ninja -y
-
-      # Configure CMake (conditional compiler flags)
+      # --- Configure CMake ---
       - name: Configure CMake
-        shell: bash
         run: |
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-          else
-            cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
-          fi
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+        shell: bash
 
-      # Build project (use verbose for better logs)
+      # --- Build ---
       - name: Build
         run: cmake --build build --config Release --verbose --parallel
 
-      # Zip the bin folder (from source root)
+      # --- Package ---
       - name: Create ZIP of bin folder
-        run: |
-          zip -r release-${{ matrix.triplet }}.zip bin/
+        run: zip -r release-${{ matrix.triplet }}.zip bin/
         shell: bash
 
-      # Upload the zipped bin folder as an artifact
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
@@ -88,20 +70,15 @@ jobs:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Download Linux ZIP artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: linux-x86_64-zip
           path: ./release
-
-      - name: Download Windows ZIP artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: windows-x86_64-zip
           path: ./release
-
-      - name: Create GitHub Release and upload assets
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2
         with:
           files: |
             release/linux-x86_64.zip
