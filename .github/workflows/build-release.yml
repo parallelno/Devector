@@ -41,6 +41,8 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++ -static" \
+          -DCMAKE_SHARED_LINKER_FLAGS="-static-libgcc -static-libstdc++ -static" \
           -G "MinGW Makefiles"
 
     - name: Build project
@@ -48,6 +50,24 @@ jobs:
       run: |
         cd build
         cmake --build . --config ${{ env.BUILD_TYPE }} --parallel $(nproc)
+
+    - name: Collect runtime dependencies
+      shell: msys2 {0}
+      run: |
+        # Find all DLL dependencies using ldd and copy them
+        mkdir -p runtime_deps
+        cd bin
+
+        echo "Checking dependencies for devector.exe:"
+        ldd devector.exe | grep -E "(ucrt64|msys)" | awk '{print $3}' | while read dll; do
+          if [ -f "$dll" ] && [ ! -f "../runtime_deps/$(basename $dll)" ]; then
+            cp "$dll" ../runtime_deps/
+            echo "Copied: $(basename $dll)"
+          fi
+        done
+
+        echo "Runtime dependencies collected:"
+        ls -la ../runtime_deps/
 
     - name: Create release package
       shell: pwsh
@@ -68,6 +88,12 @@ jobs:
             Write-Host "Error: No bin directory found"
             exit 1
           }
+        }
+
+        # Copy runtime dependencies
+        if (Test-Path "runtime_deps") {
+          Copy-Item -Path "runtime_deps/*" -Destination "release/devector/" -Force
+          Write-Host "Copied runtime dependencies"
         }
 
         # Copy additional files if they exist
