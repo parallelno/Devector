@@ -34,28 +34,27 @@ jobs:
           gcc --version
           g++ --version
 
-      # --- Windows: GCC 13.0.0 x86_64 ---
-      - name: Install MinGW-w64 GCC 13.0.0 and pkg-config
+      # --- Windows: MinGW-w64 GCC 13.0.0 and pkg-config ---
+      - name: Install MinGW-w64 GCC 13.0.0 and pkg-config on Windows
         if: matrix.os == 'windows-2022'
         run: |
-          choco install mingw --version=13.0.0 --allow-downgrade --no-progress
+          choco install mingw --version=13.0.0 --allow-downgrade --no-progress -y
           choco install pkgconfiglite -y --no-progress
           echo "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin" >> $GITHUB_PATH
+          echo "C:/ProgramData/chocolatey/bin" >> $GITHUB_PATH
           gcc --version
           g++ --version
+          pkg-config --version
 
-      # --- Configure CMake ---
+      # --- Configure CMake on Linux ---
       - name: Configure CMake (Linux)
         if: matrix.os == 'ubuntu-22.04'
         run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 
+      # --- Configure CMake on Windows (MinGW) ---
       - name: Configure CMake (Windows MinGW)
         if: matrix.os == 'windows-2022'
-        run: >
-          cmake -B build -S . -G "MinGW Makefiles"
-          -DCMAKE_C_COMPILER=gcc
-          -DCMAKE_CXX_COMPILER=g++
-          -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -S . -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
 
       # --- Build ---
       - name: Build
