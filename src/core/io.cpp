@@ -158,11 +158,11 @@ auto dev::IO::PortInHandling(uint8_t _port)
 void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 {
 	switch (_port) {
-		// PortInputA 
+		// PortInputA
 	case 0x00:
 		RUS_LAT = (PORT_C >> 3) & 1;
 		if ((_value & 0x80) == 0) {
-			// port C BSR: 
+			// port C BSR:
 			//   bit 0: 1 = set, 0 = reset
 			//   bit 1-3: bit number
 			int bit = (_value >> 1) & 7;
@@ -254,7 +254,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 	case 0x1c:
 		m_fdc.Write(Fdc1793::Port::SYSTEM, _value);
 		break;
-		
+
 		// Ram Disk 2
 	case 0x20:
 		m_memory.SetRamDiskMode(2, _value);
@@ -281,8 +281,9 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		break;
 		// Sends data to the emulator
 	case 0xED:
-		// TODO: do something meaningful. 
-		// For example: write to a file, breaks the app, or let the emulator execute a custom command depending on the _value
+		// TODO: do something meaningful.
+		// For example: write to a file, breaks the app,
+		// or let the emulator execute a custom command depending on the _value
 		dev::Log("Debug Port (0xED) out: {}", _value);
 		break;
 	default:
