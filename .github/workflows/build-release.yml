@@ -108,10 +108,28 @@ jobs:
           cmake \
           ninja-build \
           pkg-config \
+          git \
           libx11-dev \
+          libxcursor-dev \
+          libxrandr-dev \
+          libxinerama-dev \
+          libxi-dev \
+          libxext-dev \
+          libxfixes-dev \
           libgl1-mesa-dev \
           libglu1-mesa-dev \
-          git
+          libasound2-dev \
+          libpulse-dev \
+          libudev-dev \
+          libdbus-1-dev \
+          libusb-1.0-0-dev \
+          libwayland-dev \
+          wayland-protocols \
+          libxkbcommon-dev \
+          libegl1-mesa-dev \
+          libdrm-dev \
+          libxss-dev \
+          libgbm-dev
 
     - name: Configure CMake
       run: |
