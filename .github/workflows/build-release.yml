@@ -2,11 +2,8 @@ name: Build and Release
 
 on:
   push:
-    branches: [ main, master ]
-    tags: [ 'v*' ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0, v2.1.3, etc.
 
 env:
   BUILD_TYPE: Release
@@ -19,7 +16,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        submodules: recursive
+        fetch-depth: 0  # Fetch full history for proper versioning
 
     - name: Setup MSYS2
       uses: msys2/setup-msys2@v2
@@ -29,65 +26,51 @@ jobs:
         install: >-
           mingw-w64-ucrt-x86_64-gcc
           mingw-w64-ucrt-x86_64-cmake
+          mingw-w64-ucrt-x86_64-make
           mingw-w64-ucrt-x86_64-ninja
           mingw-w64-ucrt-x86_64-pkg-config
-          mingw-w64-ucrt-x86_64-gtk3
           git
-          make
-
-    - name: Set up build environment
-      shell: msys2 {0}
-      run: |
-        echo "CC=gcc" >> $GITHUB_ENV
-        echo "CXX=g++" >> $GITHUB_ENV
-        echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
-
-    - name: Create build directory
-      shell: msys2 {0}
-      run: |
-        mkdir -p build
 
     - name: Configure CMake
       shell: msys2 {0}
       run: |
+        mkdir -p build
         cd build
         cmake .. \
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
-          -G Ninja
+          -G "MinGW Makefiles"
 
     - name: Build project
       shell: msys2 {0}
       run: |
         cd build
-        cmake --build . --config ${{ env.BUILD_TYPE }} -j $(nproc)
+        cmake --build . --config ${{ env.BUILD_TYPE }} --parallel $(nproc)
 
-    - name: Verify build artifacts
-      shell: msys2 {0}
-      run: |
-        ls -la bin/
-        if [ ! -f "bin/devector.exe" ]; then
-          echo "Error: devector.exe not found in bin directory"
-          exit 1
-        fi
-
-    - name: Package artifacts
+    - name: Create release package
       shell: msys2 {0}
       run: |
         # Create release directory
         mkdir -p release/devector
 
-        # Copy all bin contents to release directory
+        # Copy the bin directory contents to release
         cp -r bin/* release/devector/
+
+        # Copy additional files if they exist
+        if [ -f README.md ]; then
+          cp README.md release/devector/
+        fi
+        if [ -f LICENSE ]; then
+          cp LICENSE release/devector/
+        fi
+        if [ -f CHANGELOG.md ]; then
+          cp CHANGELOG.md release/devector/
+        fi
 
         # Create ZIP archive
         cd release
         zip -r ../devector-windows-x64.zip devector/
-
-        # Verify ZIP contents
-        cd ..
-        unzip -l devector-windows-x64.zip
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -96,14 +79,9 @@ jobs:
         path: devector-windows-x64.zip
         retention-days: 30
 
-    outputs:
-      artifact-name: devector-windows-x64.zip
-
   release:
     needs: build-windows
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-
     permissions:
       contents: write
 
@@ -117,57 +95,47 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: devector-windows-x64
-        path: ./artifacts
+        path: ./
 
-    - name: Generate changelog
-      id: changelog
+    - name: Extract tag name
+      id: tag_name
+      run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Generate release notes
+      id: release_notes
       run: |
-        # Get the latest tag
-        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-
-        # If this is the first tag, use initial commit
-        if [ -z "$LATEST_TAG" ]; then
-          PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+        if [ -f CHANGELOG.md ]; then
+          # Extract changelog section for this version if it exists
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "## Changes in ${{ steps.tag_name.outputs.TAG_NAME }}" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "Built with:" >> $GITHUB_OUTPUT
+          echo "- GCC 13.2.0 (MSYS2 UCRT64)" >> $GITHUB_OUTPUT
+          echo "- C++20 standard" >> $GITHUB_OUTPUT
+          echo "- Static linking for portability" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### Package Contents" >> $GITHUB_OUTPUT
+          echo "- devector.exe - Main executable" >> $GITHUB_OUTPUT
+          echo "- SDL3.dll - Required SDL3 library" >> $GITHUB_OUTPUT
+          echo "- Resource files and data" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         else
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 $LATEST_TAG^)
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "Release ${{ steps.tag_name.outputs.TAG_NAME }}" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "Built with GCC 13.2.0 (MSYS2 UCRT64) using C++20 standard." >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         fi
-
-        echo "Generating changelog from $PREVIOUS_TAG to $GITHUB_REF_NAME"
-
-        # Generate changelog
-        CHANGELOG=$(git log --oneline --pretty=format:"- %s (%h)" $PREVIOUS_TAG..$GITHUB_SHA | head -50)
-
-        # Create changelog file
-        cat > CHANGELOG.md << EOF
-        ## Changes in $GITHUB_REF_NAME
-
-        $CHANGELOG
-
-        ## Build Information
-        - Built on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-        - Commit: $GITHUB_SHA
-        - Compiler: GCC 13.2.0 (UCRT64)
-        - Target: Windows x64
-        EOF
-
-        echo "changelog-file=CHANGELOG.md" >> $GITHUB_OUTPUT
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ steps.tag_name.outputs.TAG_NAME }}
+        name: Release ${{ steps.tag_name.outputs.TAG_NAME }}
+        body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
         files: |
-          artifacts/devector-windows-x64.zip
-        body_path: CHANGELOG.md
+          devector-windows-x64.zip
         draft: false
-        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
-        generate_release_notes: true
-        make_latest: true
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Update release description
-      run: |
-        echo "✅ Release ${{ github.ref_name }} created successfully"
-        echo "📦 Artifact: devector-windows-x64.zip"
-        echo "🎯 Target: Windows x64"
-        echo "🔧 Toolchain: GCC 13.2.0 (UCRT64)"
