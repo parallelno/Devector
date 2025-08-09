@@ -67,7 +67,7 @@ jobs:
 
       # Build project (use verbose for better logs)
       - name: Build
-        run: cmake --build build --config Release --verbose -j$(nproc || echo 4)
+        run: cmake --build build --config Release --verbose --parallel
 
       # Zip the bin folder (from source root)
       - name: Create ZIP of bin folder
