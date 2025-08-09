@@ -41,10 +41,9 @@ jobs:
 
       - name: Install GCC 13.2.0 (ucrt64), CMake, and pkg-config via MSYS2
         if: matrix.os == 'windows-2022'
-        shell: msys2 {0}
         run: |
-          pacman -Syu --noconfirm
-          pacman -S --noconfirm mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-pkg-config zip
+          C:\msys64\usr\bin\bash.exe --login -c "pacman -Syu --noconfirm"
+          C:\msys64\usr\bin\bash.exe --login -c "pacman -S --noconfirm mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-pkg-config zip"
 
       - name: Add ucrt64 to PATH
         if: matrix.os == 'windows-2022'
@@ -58,13 +57,13 @@ jobs:
       # --- Configure CMake on Windows (ucrt64 GCC) ---
       - name: Configure CMake (Windows ucrt64)
         if: matrix.os == 'windows-2022'
-        shell: msys2 {0}
         run: >
-          cmake -B build -S . -G "MinGW Makefiles"
+          C:\msys64\usr\bin\bash.exe --login -c
+          "cmake -B build -S . -G 'MinGW Makefiles'
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_C_COMPILER=/ucrt64/bin/gcc.exe
           -DCMAKE_CXX_COMPILER=/ucrt64/bin/g++.exe
-          -DCMAKE_CXX_STANDARD=20
+          -DCMAKE_CXX_STANDARD=20"
 
       # --- Build ---
       - name: Build on Linux
@@ -73,8 +72,7 @@ jobs:
 
       - name: Build on Windows (ucrt64 GCC)
         if: matrix.os == 'windows-2022'
-        shell: msys2 {0}
-        run: mingw32-make -C build -j4
+        run: C:\msys64\usr\bin\bash.exe --login -c "mingw32-make -C build -j4"
 
       # --- Package ---
       - name: Create ZIP of bin folder
