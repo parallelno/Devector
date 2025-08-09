@@ -56,11 +56,14 @@ jobs:
 
       - name: Configure CMake (Windows ucrt64)
         if: matrix.os == 'windows-2022'
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
           C:\msys64\usr\bin\bash.exe --login -c "
             export PATH=/ucrt64/bin:\$PATH;
-            cd $GITHUB_WORKSPACE;
-            cmake -B build -S . -G 'MinGW Makefiles' -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/ucrt64/bin/gcc.exe -CMAKE_CXX_COMPILER=/ucrt64/bin/g++.exe -CMAKE_CXX_STANDARD=20
+            echo 'Changing directory to \$GITHUB_WORKSPACE: $GITHUB_WORKSPACE';
+            cd \"$GITHUB_WORKSPACE\";
+            cmake -B build -S . -G 'MinGW Makefiles' -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/ucrt64/bin/gcc.exe -DCMAKE_CXX_COMPILER=/ucrt64/bin/g++.exe -DCMAKE_CXX_STANDARD=20
           "
 
       # --- Build ---
