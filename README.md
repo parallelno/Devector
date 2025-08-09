@@ -15,50 +15,113 @@ Devector is a multi-platform emulator of a Soviet personal computer Vector06c. I
 
 ## Usage
 
-To run the emulator: 
+To run the emulator:
 `./Devector.exe` <-settingsPath settings.json> <-path rom_fdd_rec_file>
 
 ## Build
 
-ImGui frontend:
+### ImGui frontend:
 
-On Windows
+#### On Windows
 
-It requires VS 2019+ c++ development environment installed
-1. Install MSYS2. https://www.msys2.org/
-2. Run MSYS2 terminal
-3. In this terminal, install the MinGW-w64 toolchain: 
+Requirements:
+- VS 2019+ C++ development environment
+- MSYS2 with MinGW-w64 toolchain
 
-pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain. 
-Enter Y when prompted
+Steps:
+1. Install MSYS2 from https://www.msys2.org/
+2. Run MSYS2 UCRT64 terminal
+3. Install the MinGW-w64 toolchain:
+   ```bash
+   pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
+   ```
+   Enter Y when prompted
+4. Update your system PATH environment variable by adding:
+   ```
+   C:\msys64\ucrt64\bin
+   ```
+5. Clone the repository and build:
+   ```bash
+   mkdir build
+   cd build
+   cmake .. -G "MinGW Makefiles"
+   cmake --build . --config Release
+   ```
 
-4. Update Path environment variable adding following paths:
+#### On Linux
 
-C:\msys64\ucrt64\bin
+Requirements:
+- GCC 13+ or compatible compiler
+- CMake 3.22+
+- Development packages for X11, OpenGL, and audio
 
-5. mkdir build
-6. cd build
-7. cmake --build build --target all
+Steps:
+1. Install dependencies:
+   ```bash
+   sudo apt update
+   sudo apt-get install -y \
+     build-essential \
+     cmake \
+     ninja-build \
+     pkg-config \
+     git \
+     libx11-dev \
+     libxcursor-dev \
+     libxrandr-dev \
+     libxinerama-dev \
+     libxi-dev \
+     libxext-dev \
+     libxfixes-dev \
+     libgl1-mesa-dev \
+     libglu1-mesa-dev \
+     libasound2-dev \
+     libpulse-dev \
+     libudev-dev \
+     libdbus-1-dev \
+     libusb-1.0-0-dev \
+     libwayland-dev \
+     wayland-protocols \
+     libxkbcommon-dev \
+     libegl1-mesa-dev \
+     libdrm-dev \
+     libxss-dev \
+     libgbm-dev
+   ```
 
+2. Clone the repository and build:
+   ```bash
+   mkdir build
+   cd build
+   cmake .. -G Ninja
+   ninja
+   ```
 
-On Linux
-1. sudo apt update
-2. sudo apt-get install build-essential git gcc-13 g++-13 make cmake libgl1-mesa-dev xorg-dev ninja-build libgtk-3-dev libx11-dev
-3. mkdir build
-3. cd build
-4. cmake -G Ninja ..
-5. ninja
-or 
-4. cmake ..
-5. cmake --build .
+   Alternative using Make:
+   ```bash
+   mkdir build
+   cd build
+   cmake ..
+   cmake --build . --config Release
+   ```
 
-WPF frontend:
-It requires VS 2019+ c++ development environment installed
-1. open DevectorWPF.sln VS Studio solution
-2. install NuGet package:
-    1. Tools -> NuGet Package Manager -> Package Manager Console
-    2. Install-Package ModernWpfUI
-3. build
+#### Cross-platform Notes
+
+- The project uses C++20 standard
+- CMake automatically downloads and builds dependencies (SDL3, ImGui, LuaJIT, etc.)
+- The executable and required files will be placed in the `bin/` directory after building
+- Use the `run` target to automatically execute after building: `cmake --build . --target run`
+
+### WPF frontend:
+
+Requirements:
+- VS 2019+ C++ development environment
+
+Steps:
+1. Open `DevectorWPF.sln` in Visual Studio
+2. Install required NuGet package:
+   - Tools → NuGet Package Manager → Package Manager Console
+   - Run: `Install-Package ModernWpfUI`
+3. Build the solution
 
 ## FAQ
 
