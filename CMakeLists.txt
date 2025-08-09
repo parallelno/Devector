@@ -5,34 +5,27 @@ message(STATUS "C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
 
 project(devector)
 
-# Check if we are in a three build
+# Prevent in-source build
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-	message(FATAL_ERROR "Prevented in-three build. Please, create a build folder outside of the source code.")
+	message(FATAL_ERROR "Prevented in-source build. Please create a build folder outside the source code.")
 endif()
 
 find_package(PkgConfig REQUIRED)
 include(FetchContent)
 find_package(X11 REQUIRED)
 
-# Defining vars
+# Directories
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(DEVECTOR_DIR ${SRC_DIR}/main_imgui)
 set(3RD_PARTY_DIR ${SRC_DIR}/3rd_party)
-set(SDL3_DIR ${3RD_PARTY_DIR}/SDL)
-set(IMGUI_DIR ${3RD_PARTY_DIR}/imgui)
-set(TINY_DIALOGS_DIR ${3RD_PARTY_DIR}/libtinyfiledialogs)
 set(STB_IMAGE_DIR ${SRC_DIR}/stb_image)
 set(GLAD_DIR ${SRC_DIR}/glad)
 set(CORE_DIR ${SRC_DIR}/core)
 set(UTILS_DIR ${SRC_DIR}/utils)
 set(BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 set(RES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
-set(LUAJIT_DIR ${3RD_PARTY_DIR}/luajit)
 
-# Create 3rd_party folder
-file(MAKE_DIRECTORY ${3RD_PARTY_DIR})
-
-# Fetch SDL3 if not already in 3rd_party
+# SDL3: FetchContent, default build dir
 FetchContent_Declare(
   SDL3
   GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
@@ -40,88 +33,82 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(SDL3)
 
-# Fetch ImGui if not already in 3rd_party
-if(NOT EXISTS ${IMGUI_DIR})
-	message(STATUS "Cloning ImGui into ${IMGUI_DIR}")
-	FetchContent_Declare(
-		ImGui
-		GIT_REPOSITORY https://github.com/ocornut/imgui.git
-		GIT_TAG docking  # Switch to the 'docking' branch
-		SOURCE_DIR ${IMGUI_DIR}  # the destination directory
-	)
-	FetchContent_MakeAvailable(ImGui)
-endif()
+# ImGui: FetchContent without SOURCE_DIR to let CMake manage it
+FetchContent_Declare(
+  ImGui
+  GIT_REPOSITORY https://github.com/ocornut/imgui.git
+  GIT_TAG docking
+)
+FetchContent_MakeAvailable(ImGui)
 
-# Fetch libtinyfiledialogs if not already in 3rd_party
-if(NOT EXISTS ${TINY_DIALOGS_DIR})
-	message(STATUS "Cloning libtinyfiledialogs into ${TINY_DIALOGS_DIR}")
-	FetchContent_Declare(
-		libtinyfiledialogs
-		GIT_REPOSITORY https://github.com/native-toolkit/libtinyfiledialogs.git
-		GIT_TAG master
-		SOURCE_DIR ${TINY_DIALOGS_DIR}  # the destination directory
-	)
-	FetchContent_MakeAvailable(libtinyfiledialogs)
-endif()
+# libtinyfiledialogs
+FetchContent_Declare(
+  libtinyfiledialogs
+  GIT_REPOSITORY https://github.com/native-toolkit/libtinyfiledialogs.git
+  GIT_TAG master
+)
+FetchContent_MakeAvailable(libtinyfiledialogs)
 
-# Fetch LuaJIT if not already in 3rd_party
-if(NOT EXISTS ${LUAJIT_DIR})
-	message(STATUS "Cloning LuaJIT into ${LUAJIT_DIR}")
-	FetchContent_Declare(
-		LuaJIT
-		GIT_REPOSITORY https://github.com/LuaJIT/LuaJIT.git
-		GIT_TAG v2.1.0-beta3  # Stable version
-		SOURCE_DIR ${LUAJIT_DIR}
-	)
-	FetchContent_MakeAvailable(LuaJIT)
-endif()
+# LuaJIT
+FetchContent_Declare(
+  LuaJIT
+  GIT_REPOSITORY https://github.com/LuaJIT/LuaJIT.git
+  GIT_TAG v2.1.0-beta3
+)
+FetchContent_MakeAvailable(LuaJIT)
+FetchContent_GetProperties(LuaJIT)
 
-# Build LuaJIT statically as an external project
+# ExternalProject for LuaJIT static build (same as before)
 include(ExternalProject)
+
 if(WIN32)
 	if(MINGW)
-		# MinGW on Windows: Use Makefile with static build
 		ExternalProject_Add(
 			luajit_build
-			SOURCE_DIR ${LUAJIT_DIR}
-			CONFIGURE_COMMAND ""  # LuaJIT uses its own build system
-			BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${LUAJIT_DIR} mingw32-make BUILDMODE=static "TARGET_CFLAGS=-m64"
-			INSTALL_COMMAND ""    # No install step; we use the output directly
-			BUILD_IN_SOURCE 1     # LuaJIT builds in its source dir
+			SOURCE_DIR ${luajit_SOURCE_DIR}  # We'll get this below
+			CONFIGURE_COMMAND ""
+			BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${luajit_SOURCE_DIR} mingw32-make BUILDMODE=static "TARGET_CFLAGS=-m64"
+			INSTALL_COMMAND ""
+			BUILD_IN_SOURCE 1
 		)
-		set(LUAJIT_STATIC_LIB "${LUAJIT_DIR}/src/libluajit.a")
 	else()
-		# MSVC on Windows: Use msvcbuild.bat
 		ExternalProject_Add(
 			luajit_build
-			SOURCE_DIR ${LUAJIT_DIR}
-			CONFIGURE_COMMAND ""  # LuaJIT uses its own build system
-			BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${LUAJIT_DIR}/src msvcbuild.bat static "TARGET_CFLAGS=-m64"
-			INSTALL_COMMAND ""    # No install step; we use the output directly
-			BUILD_IN_SOURCE 1     # LuaJIT builds in its source dir
+			SOURCE_DIR ${luajit_SOURCE_DIR}
+			CONFIGURE_COMMAND ""
+			BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${luajit_SOURCE_DIR}/src msvcbuild.bat static "TARGET_CFLAGS=-m64"
+			INSTALL_COMMAND ""
+			BUILD_IN_SOURCE 1
 		)
-		set(LUAJIT_STATIC_LIB ${LUAJIT_DIR}/src/libluajit.lib)
 	endif()
 else()
-	# Unix-like: Use Makefile with static build
 	ExternalProject_Add(
 		luajit_build
-		SOURCE_DIR ${LUAJIT_DIR}
-		CONFIGURE_COMMAND ""  # LuaJIT uses its own build system
-		BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${LUAJIT_DIR} make BUILDMODE=static "TARGET_CFLAGS=-m64"
-		INSTALL_COMMAND ""    # No install step; we use the output directly
-		BUILD_IN_SOURCE 1     # LuaJIT builds in its source dir
+		SOURCE_DIR ${luajit_SOURCE_DIR}
+		CONFIGURE_COMMAND ""
+		BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${luajit_SOURCE_DIR} make BUILDMODE=static "TARGET_CFLAGS=-m64"
+		INSTALL_COMMAND ""
+		BUILD_IN_SOURCE 1
 	)
-	set(LUAJIT_STATIC_LIB "${LUAJIT_DIR}/src/libluajit.a")
 endif()
 
-# Define LuaJIT as an imported static library
+# Set LuaJIT static lib path accordingly
+if(WIN32)
+	if(MINGW)
+		set(LUAJIT_STATIC_LIB "${luajit_SOURCE_DIR}/src/libluajit.a")
+	else()
+		set(LUAJIT_STATIC_LIB "${luajit_SOURCE_DIR}/src/libluajit.lib")
+	endif()
+else()
+	set(LUAJIT_STATIC_LIB "${luajit_SOURCE_DIR}/src/libluajit.a")
+endif()
+
+# Add LuaJIT as imported static lib
 add_library(luajit STATIC IMPORTED)
 set_target_properties(luajit PROPERTIES
 	IMPORTED_LOCATION ${LUAJIT_STATIC_LIB}
-	INTERFACE_INCLUDE_DIRECTORIES ${LUAJIT_DIR}/src
+	INTERFACE_INCLUDE_DIRECTORIES ${luajit_SOURCE_DIR}/src
 )
-add_dependencies(luajit luajit_build)
 
 # Add GLAD
 add_library(glad ${GLAD_DIR}/src/glad.c)
@@ -130,21 +117,23 @@ target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 # Optionally, build GLEW utilities (glewinfo, visualinfo)
 set(BUILD_UTILS OFF CACHE BOOL "Build GLEW utilities")
 
-# ImGui source
+# ImGui source files (using imgui_SOURCE_DIR from FetchContent)
+FetchContent_GetProperties(ImGui)
 set(IMGUI_SRC
-	${IMGUI_DIR}/imgui.cpp
-	${IMGUI_DIR}/imgui_demo.cpp
-	${IMGUI_DIR}/imgui_draw.cpp
-	${IMGUI_DIR}/imgui_tables.cpp
-	${IMGUI_DIR}/imgui_widgets.cpp
-	${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
-	${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
-	${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
+	${imgui_SOURCE_DIR}/imgui.cpp
+	${imgui_SOURCE_DIR}/imgui_demo.cpp
+	${imgui_SOURCE_DIR}/imgui_draw.cpp
+	${imgui_SOURCE_DIR}/imgui_tables.cpp
+	${imgui_SOURCE_DIR}/imgui_widgets.cpp
+	${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+	${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+	${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp
 )
 
-# libtinyfiledialogs source
+# libtinyfiledialogs source files
+FetchContent_GetProperties(libtinyfiledialogs)
 set(TINY_DIALOGS_SRC
-	${TINY_DIALOGS_DIR}/tinyfiledialogs.c
+	${libtinyfiledialogs_SOURCE_DIR}/tinyfiledialogs.c
 )
 
 # stb_image source
@@ -152,7 +141,7 @@ set(STB_IMAGE_SRC
 	${STB_IMAGE_DIR}/stb_image.h
 )
 
-# devector source
+# devector source files
 file(GLOB_RECURSE CORE_SRC ${CORE_DIR}/*.cpp ${CORE_DIR}/*.h)
 file(GLOB_RECURSE UTILS_SRC ${UTILS_DIR}/*.cpp ${UTILS_DIR}/*.h)
 
@@ -206,11 +195,11 @@ set(SOURCES
 # Executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SRC} ${TINY_DIALOGS_SRC} ${STB_IMAGE_SRC})
 
-# Add Unicode definitions for Windows
+# Unicode definitions for Windows
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE)
 target_compile_definitions(${PROJECT_NAME} PRIVATE USE_GTK)
 
-# Set C++20 as the standard
+# C++20 standard
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_EXTENSIONS OFF)  # Ensures no compiler-specific extensions are used
@@ -237,23 +226,24 @@ if (WIN32)
 	target_link_libraries(${PROJECT_NAME} PRIVATE user32)  # LuaJIT may require this on Windows
 endif()
 
-# Include dirs
+# Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
-	${IMGUI_DIR}
-	${IMGUI_DIR}/backends
+	${imgui_SOURCE_DIR}
+	${imgui_SOURCE_DIR}/backends
 	${SRC_DIR}
 	${GLAD_DIR}/include
 	${GLAD_DIR}/src
-	${IMGUI_DIR}/misc/cpp
-	${LUAJIT_DIR}/src
-	${LUAJIT_DIR}/src/host
-	${LUAJIT_DIR}/src/jit
+	${imgui_SOURCE_DIR}/misc/cpp
+	${luajit_SOURCE_DIR}/src
+	${luajit_SOURCE_DIR}/src/host
+	${luajit_SOURCE_DIR}/src/jit
+	${libtinyfiledialogs_SOURCE_DIR}
 	${DEVECTOR_DIR}
 	${DEVECTOR_DIR}/main
 	${DEVECTOR_DIR}/main/ui
 )
+
 if(UNIX AND NOT APPLE)
-	# Include GTK and GLib headers
 	target_include_directories(${PROJECT_NAME} PRIVATE
 		${GTK_DIR}/include
 		${GLIB_DIR}/include

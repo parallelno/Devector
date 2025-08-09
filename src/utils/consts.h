@@ -8,8 +8,7 @@ namespace dev
 	static constexpr int MAIN_WINDOW_H = 670;
 	static constexpr int MAIN_WINDOW_X = 0;
 	static constexpr int MAIN_WINDOW_Y = 32;
-	static constexpr int DEFAULT_FONT_SIZE = 18;
-	static constexpr int DEFAULT_FONT_ITALIC_SIZE = 18;
+	static constexpr float DEFAULT_FONT_SCALE = 1.0f;
 	static const char* DEFAULT_FONT_PATH = "fonts//medium.ttf";
 	static const char* DEFAULT_FONT_ITALIC_PATH = "fonts//medium_italic.ttf";
 

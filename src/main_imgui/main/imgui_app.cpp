@@ -8,13 +8,13 @@
 #elif defined(__linux__)
 	#include <X11/Xlib.h>
 	#include <X11/Xresource.h>
-#endif	
+#endif
 
 #include "utils/consts.h"
 #include "utils/utils.h"
 
 dev::ImGuiApp::ImGuiApp(
-		nlohmann::json _settingsJ, const std::string& _settingsPath, const std::string& _title) 
+		nlohmann::json _settingsJ, const std::string& _settingsPath, const std::string& _title)
 	:
 	m_settingsJ(_settingsJ),
 	m_title(_title), m_settingsPath(_settingsPath),
@@ -64,7 +64,8 @@ dev::ImGuiApp::ImGuiApp(
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-	Uint32 window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
+	Uint32 window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+
 	m_window = SDL_CreateWindow(_title.c_str(), m_width, m_height, window_flags);
 	if (m_window == nullptr)
 	{
@@ -84,14 +85,16 @@ dev::ImGuiApp::ImGuiApp(
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	m_ioP = &(ImGui::GetIO());
-	
+
 	static std::string iniPath = dev::GetExecutableDir() + "imgui.ini";
 	m_ioP->IniFilename = iniPath.c_str();
 
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-	
+
+	m_ioP->BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+
 	// it works unstable on Linux
 #if defined(_WIN32)
 	m_ioP->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
@@ -102,7 +105,7 @@ dev::ImGuiApp::ImGuiApp(
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.WindowRounding = 3.0f;
 
-	// When viewports are enabled we tweak WindowRounding/WindowBg 
+	// When viewports are enabled we tweak WindowRounding/WindowBg
 	// so platform windows can look identical to regular ones.
 	if (m_ioP->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
@@ -110,7 +113,7 @@ dev::ImGuiApp::ImGuiApp(
 	}
 
 	// Setup Platform/Renderer backends
-	ImGui_ImplSDL3_InitForOpenGL(m_window, m_gl_context);  
+	ImGui_ImplSDL3_InitForOpenGL(m_window, m_gl_context);
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
 	m_status = AppStatus::INITED;
@@ -139,7 +142,7 @@ void dev::ImGuiApp::Run()
             case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                 if (event.window.windowID == SDL_GetWindowID(m_window))
                 {
-                    m_status = m_prepare_for_exit ? 
+                    m_status = m_prepare_for_exit ?
 								AppStatus::REQ_PREPARE_FOR_EXIT : AppStatus::EXIT;
                 }
                 break;
@@ -161,10 +164,10 @@ void dev::ImGuiApp::Run()
 		ReqHandling();
 
 		ImGui::NewFrame();
-	   
+
 	   	// Setup docking
 		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-	
+
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 		{
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -197,7 +200,7 @@ void dev::ImGuiApp::Run()
 		m_posY = int(pos.y);
 
 		Update();
-		
+
 		ImGui::End();
 
 		// Rendering
@@ -209,9 +212,9 @@ void dev::ImGuiApp::Run()
 
 
 		// Update and Render additional Platform Windows
-		// (Platform functions may change the current OpenGL context, 
-		//so we save/restore it to make it easier to paste this code elsewhere.
-		//  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
+		// (Platform functions may change the current OpenGL context,
+		// so we save/restore it to make it easier to paste this code elsewhere.
+		// For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
 		if (m_ioP->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
             SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
@@ -254,7 +257,7 @@ void dev::ImGuiApp::AutoUpdate()
 		{
 			Request(Req::LOAD_FONT);
 		}
-			
+
 		Request(Req::CHECK_WINDOW_SIZE_POS);
 	}
 }
@@ -311,27 +314,33 @@ void dev::ImGuiApp::LoadFonts()
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Clear();
 
-	//io.Fonts->AddFontDefault(); // adds a default ImGui font.
-
-	m_dpiScale = GetDpiScale();
-
 	auto fontCodePath = dev::GetExecutableDir() + dev::GetJsonString(m_settingsJ, "fontPath", false, DEFAULT_FONT_PATH);
-	auto fontSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false, DEFAULT_FONT_SIZE) * m_dpiScale;
-
 	if (!fontCodePath.empty() && dev::IsFileExist(fontCodePath))
 	{
-		m_font = io.Fonts->AddFontFromFileTTF(fontCodePath.c_str(), fontSize);
+		m_font = io.Fonts->AddFontFromFileTTF(fontCodePath.c_str(), 0);
 	}
+	else{
+        m_font = io.Fonts->AddFontDefault();
+    }
 
 	auto fontCommentPath = dev::GetExecutableDir() + dev::GetJsonString(m_settingsJ, "fontItalicPath", false, DEFAULT_FONT_ITALIC_PATH);
-	auto fontCommentSize = (float)dev::GetJsonDouble(m_settingsJ, "fontItalicSize", false, DEFAULT_FONT_ITALIC_SIZE);
-
 	if (!fontCommentPath.empty() && dev::IsFileExist(fontCommentPath))
 	{
-		m_fontItalic = io.Fonts->AddFontFromFileTTF(fontCommentPath.c_str(), fontCommentSize);
+		m_fontItalic = io.Fonts->AddFontFromFileTTF(fontCommentPath.c_str(), 0);
 	}
+	else{
+        m_fontItalic = io.Fonts->AddFontDefault();
+    }
 
-	ImGui_ImplOpenGL3_CreateFontsTexture();
+	// Build the font atlas
+	io.Fonts->Build();
+
+	m_dpiScale = GetDpiScale();
+	auto fontSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false, DEFAULT_FONT_SCALE) * m_dpiScale;
+	io.FontGlobalScale = fontSize;
+
+	// Create font texture and other device objects (GPU resources)
+    ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
 
 void dev::ImGuiApp::SettingsUpdate(const std::string& _fieldName, nlohmann::json _json)
@@ -372,57 +381,8 @@ bool dev::ImGuiApp::GetSettingsBool(const std::string& _fieldName, bool _default
 	return dev::GetJsonBool(m_settingsJ, _fieldName, false, _defaultValue);
 }
 
-#if defined(_WIN32)
-    #if defined(__MINGW32__) || defined(__MINGW64__)
-        #include <VersionHelpers.h>
-        #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((DPI_AWARENESS_CONTEXT)-4)
-        UINT GetDpiForWindowFallback(HWND hwnd) {
-            // Approximation for DPI when `GetDpiForWindow` is unavailable.
-            HDC hdc = GetDC(hwnd);
-            UINT dpi = GetDeviceCaps(hdc, LOGPIXELSX);
-            ReleaseDC(hwnd, hdc);
-            return dpi;
-        }
-        #define GetDpiForWindow(hwnd) GetDpiForWindowFallback(hwnd)
-    #endif
-#endif
-
 float dev::ImGuiApp::GetDpiScale()
 {
-	static constexpr float WINDOW_DPI_DEFAULT = 96.0f;
-#if defined(_WIN32)
-    HWND m_hWndMain = GetActiveWindow();
-	if (m_hWndMain) 
-	{
-		return GetDpiForWindow(m_hWndMain) / WINDOW_DPI_DEFAULT;
-	}
-	else {
-		return 1.0f;
-	}
-#elif defined(__linux__)
-	   ::Display* dysplayP = XOpenDisplay(NULL);
-    if (!dysplayP) {
-        std::cerr << "Unable to open X display." << std::endl;
-        return 1.0f; // Default scaling factor
-    }
-
-    // Get the screen DPI
-    char* rms = XResourceManagerString(dysplayP);
-    XrmDatabase db;
-    XrmValue value;
-    char* type = NULL;
-
-    XrmInitialize(); // Initialize X resource manager
-    db = XrmGetStringDatabase(rms);
-
-    // Query the DPI from Xft resource (Xft.dpi)
-    if (XrmGetResource(db, "Xft.dpi", "Xft.Dpi", &type, &value)) {
-        float dpi = atof(value.addr);
-        XCloseDisplay(dysplayP);
-        return dpi / 96.0f; // 96 DPI is the default scale factor
-    }
-
-    XCloseDisplay(dysplayP);
-    return 1.0f; // Default scaling factor
-#endif
+	auto display_id = SDL_GetDisplayForWindow(m_window);
+	return SDL_GetDisplayContentScale(display_id);
 }

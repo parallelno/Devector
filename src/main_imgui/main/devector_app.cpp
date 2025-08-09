@@ -7,7 +7,7 @@
 #include <iterator>
 #include <cstdint>
 #include <codecvt>
-#include "libtinyfiledialogs/tinyfiledialogs.h"
+#include "tinyfiledialogs.h"
 
 #include "devector_app.h"
 
@@ -74,9 +74,9 @@ void dev::DevectorApp::HardwareInit()
 void dev::DevectorApp::WindowsInit()
 {
 	auto executionSpeed = static_cast<Hardware::ExecSpeed>(GetSettingsInt("executionSpeed", static_cast<int>(Hardware::ExecSpeed::NORMAL)));
-	
+
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_dpiScale, m_ruslat);
-	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP, 
+	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP,
 		m_fontItalic, &m_dpiScale, m_reqUI);
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI, m_debuggerP->GetDebugData().GetScripts(), executionSpeed);
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_hardwareP, &m_dpiScale, m_reqUI);
@@ -113,7 +113,7 @@ void dev::DevectorApp::SettingsInit()
 	m_pathImgKeyboard = GetSettingsString("pathImgKeyboard", "images//vector_keyboard.jpg");
 
 	RecentFilesInit();
-	
+
 	m_mountRecentFddImg = GetSettingsBool("m_mountRecentFddImg", true);
 	if (m_mountRecentFddImg) m_reqUI.type = ReqUI::Type::LOAD_RECENT_FDD_IMG;
 }
@@ -157,11 +157,11 @@ void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 void dev::DevectorApp::Update()
 {
 	LoadDroppedFile();
-	
+
 	ReqUIHandling();
-	
+
 	MainMenuUpdate();
-	
+
 	DebugAttach();
 
 	LoadingResStatusHandling();
@@ -227,7 +227,7 @@ void dev::DevectorApp::Reload()
 	if (m_recentFilePaths.empty()) return;
 	// get latest recent path
 	const auto& [fileType, path, driveIdx, autoBoot] = m_recentFilePaths.front();
-	
+
 	switch (fileType) {
 	case FileType::ROM:
 		LoadRom(path);
@@ -366,7 +366,7 @@ void dev::DevectorApp::LoadingResStatusHandling()
 		m_loadingRes.state = LoadingRes::State::OPEN_FILE;
 		break;
 
-	case LoadingRes::State::OPEN_FILE: 
+	case LoadingRes::State::OPEN_FILE:
 	{
 		switch (m_loadingRes.type)
 		{
@@ -478,7 +478,7 @@ bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 {
 	// Retrieve the user pointer to access the class instance
 	DevectorApp* appP = static_cast<DevectorApp*>(_userdata);
-	
+
 	auto scancode = _event->key.scancode;
 	auto action = _event->type;
 
@@ -570,7 +570,7 @@ void dev::DevectorApp::CheckMountedFdd()
 	{
 		auto fddInfo = *m_hardwareP->Request(
 			Hardware::Req::GET_FDD_INFO, { {"driveIdx", driveIdx} });
-		
+
 		if (fddInfo["updated"])
 		{
 			m_loadingRes.pathFddUpdated = fddInfo["path"];
@@ -602,7 +602,7 @@ void dev::DevectorApp::DrawSaveDiscardFddPopup()
 	if (ImGui::BeginPopupModal(m_loadingRes.POPUP_SAVE_DISCARD, NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		static const char* diskNames[] = { "A", "B", "C", "D" };
-		ImGui::Text("Previously mounted disk %s was updated. Save or discard changes?", 
+		ImGui::Text("Previously mounted disk %s was updated. Save or discard changes?",
 			diskNames[m_loadingRes.driveIdxUpdated]);
 		ImGui::Text(m_loadingRes.pathFddUpdated.c_str());
 
@@ -635,7 +635,7 @@ void dev::DevectorApp::SaveUpdatedFdd()
 	auto res = *m_hardwareP->Request(
 		Hardware::Req::GET_FDD_IMAGE, { {"driveIdx", m_loadingRes.driveIdxUpdated} });
 	auto data = res["data"];
-	dev::SaveFile(m_loadingRes.pathFddUpdated, data);	
+	dev::SaveFile(m_loadingRes.pathFddUpdated, data);
 	m_hardwareP->Request(
 			Hardware::Req::RESET_UPDATE_FDD, { {"driveIdx", m_loadingRes.driveIdxUpdated} });
 
@@ -652,7 +652,7 @@ void dev::DevectorApp::OpenFile()
 	const char* filters[] = {"*.rom", "*.fdd", "*.rec"};
 	const char* filename = tinyfd_openFileDialog(
 		"Open File", "", sizeof(filters)/sizeof(const char*), filters, nullptr, 0);
-	
+
 	if (filename)
 	{
 		std::string path = std::string(filename);
@@ -704,12 +704,12 @@ void dev::DevectorApp::SaveFile()
 
 	switch (m_loadingRes.fileType)
 	{
-	case FileType::REC: 
+	case FileType::REC:
 	{
 		const char* filters[] = {"*.rom", "*.fdd", "*.rec"};
 		const char* filename = tinyfd_saveFileDialog(
 			"Save File", "file_name.rec", sizeof(filters)/sizeof(const char*), filters, nullptr);
-	
+
 		if (filename)
 		{
 			auto result = m_hardwareP->Request(Hardware::Req::DEBUG_RECORDER_SERIALIZE);
@@ -726,7 +726,7 @@ void dev::DevectorApp::SaveFile()
 		break;
 	}
 	}
-	
+
 	if (isRunning) m_hardwareP->Request(Hardware::Req::RUN);
 }
 
@@ -750,10 +750,10 @@ void dev::DevectorApp::DrawSelectDrivePopup()
 		}
 		ImGui::SetItemDefaultFocus();
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel", ImVec2(120, 0))) 
-		{ 
+		if (ImGui::Button("Cancel", ImVec2(120, 0)))
+		{
 			m_loadingRes.state = LoadingRes::State::NONE;
-			ImGui::CloseCurrentPopup(); 
+			ImGui::CloseCurrentPopup();
 		}
 		ImGui::EndPopup();
 	}
