@@ -3,6 +3,10 @@
 
 #include "imgui_app.h"
 
+#ifndef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0A00 // Windows 10
+#endif
+
 #if defined(_WIN32)
 	#include <windows.h>
 #elif defined(__linux__)
@@ -12,6 +16,10 @@
 
 #include "utils/consts.h"
 #include "utils/utils.h"
+
+#ifndef DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+    #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((DPI_AWARENESS_CONTEXT)-4)
+#endif
 
 dev::ImGuiApp::ImGuiApp(
 		nlohmann::json _settingsJ, const std::string& _settingsPath, const std::string& _title)
