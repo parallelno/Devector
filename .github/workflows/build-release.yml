@@ -29,6 +29,7 @@ jobs:
           mingw-w64-ucrt-x86_64-make
           mingw-w64-ucrt-x86_64-ninja
           mingw-w64-ucrt-x86_64-pkg-config
+          zip
           git
 
     - name: Configure CMake
@@ -49,28 +50,37 @@ jobs:
         cmake --build . --config ${{ env.BUILD_TYPE }} --parallel $(nproc)
 
     - name: Create release package
-      shell: msys2 {0}
+      shell: pwsh
       run: |
         # Create release directory
-        mkdir -p release/devector
+        New-Item -ItemType Directory -Force -Path "release/devector"
 
-        # Copy the bin directory contents to release
-        cp -r bin/* release/devector/
+        # Check if bin directory exists and copy contents
+        if (Test-Path "bin") {
+          Copy-Item -Path "bin/*" -Destination "release/devector/" -Recurse -Force
+          Write-Host "Copied bin directory contents"
+        } else {
+          Write-Host "Warning: bin directory not found, checking build directory"
+          if (Test-Path "build/bin") {
+            Copy-Item -Path "build/bin/*" -Destination "release/devector/" -Recurse -Force
+            Write-Host "Copied build/bin directory contents"
+          } else {
+            Write-Host "Error: No bin directory found"
+            exit 1
+          }
+        }
 
         # Copy additional files if they exist
-        if [ -f README.md ]; then
-          cp README.md release/devector/
-        fi
-        if [ -f LICENSE ]; then
-          cp LICENSE release/devector/
-        fi
-        if [ -f CHANGELOG.md ]; then
-          cp CHANGELOG.md release/devector/
-        fi
+        @("README.md", "LICENSE", "CHANGELOG.md") | ForEach-Object {
+          if (Test-Path $_) {
+            Copy-Item -Path $_ -Destination "release/devector/"
+            Write-Host "Copied $_"
+          }
+        }
 
-        # Create ZIP archive
-        cd release
-        zip -r ../devector-windows-x64.zip devector/
+        # Create ZIP archive using PowerShell
+        Compress-Archive -Path "release/devector" -DestinationPath "devector-windows-x64.zip" -Force
+        Write-Host "Created devector-windows-x64.zip"
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
