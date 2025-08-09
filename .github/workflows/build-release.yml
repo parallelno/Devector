@@ -57,9 +57,12 @@ jobs:
       - name: Configure CMake (Windows ucrt64)
         if: matrix.os == 'windows-2022'
         run: |
-          # Convert Windows path to MSYS2 path by replacing drive letter and backslashes
-          MSYS2_PATH=$(echo "${{ github.workspace }}" | sed -E 's#^([a-zA-Z]):#/\L\1#' | tr '\\' '/')
-          C:\msys64\usr\bin\bash.exe --login -c "export PATH=/ucrt64/bin:\$PATH && cd $MSYS2_PATH && cmake -B build -S . -G 'MinGW Makefiles' -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/ucrt64/bin/gcc.exe -DCMAKE_CXX_COMPILER=/ucrt64/bin/g++.exe -DCMAKE_CXX_STANDARD=20"
+          C:\msys64\usr\bin\bash.exe --login -c "
+            MSYS2_PATH=\$(echo \"$PWD\" | sed -E 's#^([a-zA-Z]):#/\L\\1#' | tr '\\\\' '/');
+            export PATH=/ucrt64/bin:\$PATH;
+            cd \$MSYS2_PATH;
+            cmake -B build -S . -G 'MinGW Makefiles' -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/ucrt64/bin/gcc.exe -DCMAKE_CXX_COMPILER=/ucrt64/bin/g++.exe -DCMAKE_CXX_STANDARD=20
+          "
 
       # --- Build ---
       - name: Build on Linux
