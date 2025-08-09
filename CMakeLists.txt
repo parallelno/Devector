@@ -65,7 +65,7 @@ if(WIN32)
 	if(MINGW)
 		ExternalProject_Add(
 			luajit_build
-			SOURCE_DIR ${luajit_SOURCE_DIR}  # We'll get this below
+			SOURCE_DIR ${luajit_SOURCE_DIR}
 			CONFIGURE_COMMAND ""
 			BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${luajit_SOURCE_DIR} mingw32-make BUILDMODE=static "TARGET_CFLAGS=-m64"
 			INSTALL_COMMAND ""
