@@ -50,19 +50,24 @@ jobs:
         if: matrix.os == 'windows-2022'
         run: choco install pkgconfiglite -y
 
+      # Install Ninja on Windows (if you're using Ninja generator)
+      - name: Install Ninja on Windows
+        if: matrix.os == 'windows-2022'
+        run: choco install ninja -y
+
       # Configure CMake (conditional compiler flags)
       - name: Configure CMake
+        shell: bash
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
             cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           else
             cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           fi
-        shell: bash
 
-      # Build project
+      # Build project (use verbose for better logs)
       - name: Build
-        run: cmake --build build --config Release -j$(nproc || echo 4)
+        run: cmake --build build --config Release --verbose -j$(nproc || echo 4)
 
       # Zip the bin folder (from source root)
       - name: Create ZIP of bin folder
