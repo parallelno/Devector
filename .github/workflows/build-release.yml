@@ -92,7 +92,7 @@ jobs:
         retention-days: 30
 
   build-linux:
-    runs-on: ubuntu-20.04  # Use older Ubuntu for better GLIBC compatibility
+    runs-on: [self-hosted, linux]
 
     steps:
     - name: Checkout repository
