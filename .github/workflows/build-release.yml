@@ -93,7 +93,7 @@ jobs:
         retention-days: 30
 
   build-linux:
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
