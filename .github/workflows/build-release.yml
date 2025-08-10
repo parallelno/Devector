@@ -92,23 +92,20 @@ jobs:
         retention-days: 30
 
   build-linux:
-    runs-on: ubuntu-20.04  # Use older Ubuntu for older glibc
+    runs-on: ubuntu-latest
+    container: ubuntu:18.04  # Old Ubuntu with glibc 2.27
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
+        apt-get update
+        apt-get install -y \
           build-essential \
           cmake \
           ninja-build \
           pkg-config \
           git \
+          ca-certificates \
           libx11-dev \
           libxcursor-dev \
           libxrandr-dev \
@@ -130,6 +127,11 @@ jobs:
           libdrm-dev \
           libxss-dev \
           libgbm-dev
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Configure CMake
       run: |
