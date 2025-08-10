@@ -344,7 +344,7 @@ void dev::ImGuiApp::LoadFonts()
 	io.Fonts->Build();
 
 	m_dpiScale = GetDpiScale();
-	auto fontScale = (float)dev::GetJsonDouble(m_settingsJ, "fontScale", false, DEFAULT_FONT_SCALE) * m_dpiScale;
+	auto fontScale = (float)dev::GetJsonDouble(m_settingsJ, "fontScale", false, DEFAULT_FONT_SCALE);;
 	io.FontGlobalScale = fontScale;
 
 	// Create font texture and other device objects (GPU resources)
@@ -388,6 +388,7 @@ bool dev::ImGuiApp::GetSettingsBool(const std::string& _fieldName, bool _default
 	std::lock_guard<std::mutex> mlock(m_settingsMutex);
 	return dev::GetJsonBool(m_settingsJ, _fieldName, false, _defaultValue);
 }
+
 
 float dev::ImGuiApp::GetDpiScale()
 {
