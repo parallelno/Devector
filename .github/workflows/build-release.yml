@@ -128,44 +128,35 @@ jobs:
         g++ -std=c++20 test_format.cpp -o test_format || echo "Format header available but may need linking"
         rm -f test_format.cpp test_format
 
-    - name: Install X11 and OpenGL dependencies
+    - name: Install X11 dependencies (if needed)
       run: |
         apk add --no-cache \
           libx11-dev \
-          libx11-static \
           libxcursor-dev \
           libxrandr-dev \
           libxinerama-dev \
           libxi-dev \
           libxext-dev \
-          libxext-static \
-          libxfixes-dev \
-          mesa-dev \
-          mesa-gl \
-          mesa-osmesa \
-          libglvnd-dev \
-          libglvnd-static || echo "Some packages may not be available"
+          libxfixes-dev || true
 
     - name: Install optional dependencies (ignore failures)
       run: |
         apk add --no-cache \
+          mesa-dev \
           alsa-lib-dev \
           dbus-dev \
-          libusb-dev \
-          wayland-dev \
-          wayland-protocols \
-          libxkbcommon-dev \
-          libdrm-dev || true
+          libusb-dev || true
 
-    - name: Configure CMake for hybrid static build
+    - name: Configure CMake for static build
       run: |
         mkdir -p build
         cd build
         cmake .. \
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-          -DCMAKE_C_FLAGS="-O3" \
-          -DCMAKE_CXX_FLAGS="-O3 -std=c++20" \
-          -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
+          -DCMAKE_C_FLAGS="-O3 -static" \
+          -DCMAKE_CXX_FLAGS="-O3 -static -std=c++20" \
+          -DCMAKE_EXE_LINKER_FLAGS="-static -no-pie" \
+          -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" \
           -DBUILD_SHARED_LIBS=OFF \
           -G "Ninja"
 
