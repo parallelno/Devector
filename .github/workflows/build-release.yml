@@ -93,40 +93,39 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-latest
-    container: ubuntu:18.04  # Old Ubuntu with glibc 2.27
+    container: alpine:latest
 
     steps:
     - name: Install dependencies
       run: |
-        apt-get update
-        apt-get install -y \
-          build-essential \
+        apk update
+        apk add --no-cache \
+          build-base \
           cmake \
-          ninja-build \
-          pkg-config \
+          ninja \
+          pkgconf \
           git \
-          ca-certificates \
+          linux-headers \
           libx11-dev \
+          libx11-static \
           libxcursor-dev \
           libxrandr-dev \
           libxinerama-dev \
           libxi-dev \
           libxext-dev \
           libxfixes-dev \
-          libgl1-mesa-dev \
-          libglu1-mesa-dev \
-          libasound2-dev \
-          libpulse-dev \
-          libudev-dev \
-          libdbus-1-dev \
-          libusb-1.0-0-dev \
-          libwayland-dev \
+          mesa-dev \
+          alsa-lib-dev \
+          alsa-lib-static \
+          eudev-dev \
+          dbus-dev \
+          libusb-dev \
+          wayland-dev \
           wayland-protocols \
           libxkbcommon-dev \
-          libegl1-mesa-dev \
           libdrm-dev \
-          libxss-dev \
-          libgbm-dev
+          zlib-static \
+          libpng-static
 
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -139,11 +138,11 @@ jobs:
         cd build
         cmake .. \
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-          -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
-          -DCMAKE_C_FLAGS="-O3" \
-          -DCMAKE_CXX_FLAGS="-O3" \
+          -DCMAKE_C_FLAGS="-O3 -static" \
+          -DCMAKE_CXX_FLAGS="-O3 -static" \
+          -DCMAKE_EXE_LINKER_FLAGS="-static -no-pie" \
+          -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" \
+          -DBUILD_SHARED_LIBS=OFF \
           -G "Ninja"
 
     - name: Build LuaJIT manually
@@ -151,7 +150,7 @@ jobs:
         if [ -d "build/_deps/luajit-src" ]; then
           cd build/_deps/luajit-src
           make clean || true
-          make BUILDMODE=static -j$(nproc)
+          make BUILDMODE=static CC="gcc -static" -j$(nproc)
         fi
 
     - name: Build project
@@ -159,16 +158,16 @@ jobs:
         cd build
         cmake --build . --config ${{ env.BUILD_TYPE }} --parallel $(nproc)
 
-    - name: Check glibc version used
+    - name: Verify static linking
       run: |
-        echo "glibc version on build system:"
-        ldd --version
         if [ -f "build/devector" ]; then
-          echo "Binary dependencies:"
-          ldd build/devector
+          echo "Checking binary dependencies:"
+          ldd build/devector || echo "Static binary - no dynamic dependencies"
+          file build/devector
         elif [ -f "build/bin/devector" ]; then
-          echo "Binary dependencies:"
-          ldd build/bin/devector
+          echo "Checking binary dependencies:"
+          ldd build/bin/devector || echo "Static binary - no dynamic dependencies"
+          file build/bin/devector
         fi
 
     - name: Create release package
