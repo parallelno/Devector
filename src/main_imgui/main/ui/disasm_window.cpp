@@ -6,7 +6,7 @@
 
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
-		const float* const _dpiScale, 
+		const float* const _dpiScale,
 		ReqUI& _reqUI)
 	:
 	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScale),
@@ -106,7 +106,7 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 		"Step 0x100 executes 256 instructions.\n"
 		"Step Frame executes until RST7 (the next frame start).\n"
 		"Reset relaods the ROM/FDD file and reset the hardware keeping all brealpoints intact."
-		);	
+		);
 }
 
 void dev::DisasmWindow::DrawSearch(const bool _isRunning)
@@ -205,7 +205,7 @@ void dev::DisasmWindow::DrawDisasmIcons(const bool _isRunning, const Disasm::Lin
 	}
 }
 
-void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line, 
+void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
 	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// the addr column
@@ -270,7 +270,7 @@ void dev::DisasmWindow::DrawDisasmLabels(const Disasm::Line& _line)
 	const ImVec4* mainLabelColorP = &DASM_CLR_LABEL_GLOBAL;
 
 	int i = 0;
-	for (const auto& label : _line.labels) 
+	for (const auto& label : _line.labels)
 	{
 		if (i == 1) {
 			ImGui::SameLine();
@@ -317,7 +317,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	int hoveredLineIdx = -1;
 	ImVec2 selectionMin = ImGui::GetCursorScreenPos();
 	ImVec2 selectionMax = ImVec2(selectionMin.x + ImGui::GetWindowWidth(), selectionMin.y);
-	
+
 	if (_isRunning) ImGui::BeginDisabled();
 
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
@@ -354,10 +354,10 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			{
 				m_selectedLineAddr = addr;
 			}
-			if (!_isRunning) 
+			if (!_isRunning)
 			{
 				selectionMin.y = ImGui::GetItemRectMin().y;
-				selectionMax.y = ImGui::GetItemRectMax().y;	
+				selectionMax.y = ImGui::GetItemRectMax().y;
 				hoveredLineIdx = ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ? lineIdx : hoveredLineIdx;
 			}
 
@@ -386,12 +386,12 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					break;
 				}
 			}
-			
+
 			if (!_isRunning)
 			{
 				// line is hovered. check if right-clicked to open the Context menu
 				if (hoveredLineIdx == lineIdx &&
-					ImGui::IsMouseClicked(ImGuiMouseButton_Right)) 
+					ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 				{
 					m_contextMenu.Init(addr, line.GetStr(), m_debugger.GetDebugData());
 				}
@@ -405,9 +405,9 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
 	ImGui::PopStyleVar(2);
 
-	/////////////////////////////////////////////////////////	
+	/////////////////////////////////////////////////////////
 	// check the keys and the mouse
-	/////////////////////////////////////////////////////////	
+	/////////////////////////////////////////////////////////
 	if (!_isRunning && hoveredLineIdx >= 0)
 	{
 		// Up/Down scrolling
@@ -443,6 +443,20 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
 			UpdateDisasm(addr);
 		}
+		// Left side navigation mouse button to navigate back
+		else if (ImGui::IsMouseClicked(ImGuiKey_MouseX1) &&
+			m_navigateAddrsIdx - 1 >= 0)
+		{
+			auto addr = m_navigateAddrs[--m_navigateAddrsIdx];
+			UpdateDisasm(addr);
+		}
+		// Right side navigation mouse button to navigate forward
+		else if (ImGui::IsMouseClicked(ImGuiKey_MouseX2) &&
+			m_navigateAddrsIdx + 1 < m_navigateAddrsSize)
+		{
+			auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
+			UpdateDisasm(addr);
+		}
 	}
 
 	if (_isRunning) ImGui::EndDisabled();
@@ -451,7 +465,7 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
 void dev::DisasmWindow::UpdateData(const bool _isRunning)
 {
-	ReqHandling(); // should be before UpdateDisasm and DrawDisasm 
+	ReqHandling(); // should be before UpdateDisasm and DrawDisasm
 
 	if (_isRunning) return;
 
@@ -490,7 +504,7 @@ void dev::DisasmWindow::ReqHandling()
 
 	case ReqUI::Type::DISASM_NAVIGATE_TO_ADDR:
 		m_reqUI.type = ReqUI::Type::NONE;
-		if (m_navigateAddrsIdx == 0) 
+		if (m_navigateAddrsIdx == 0)
 		{
 			auto disasmPP = m_debugger.GetDisasm().GetLines();
 			if (!disasmPP || !*disasmPP) return;
@@ -531,7 +545,7 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Run To"))
 		{
-			Breakpoint::Data bpData{ 
+			Breakpoint::Data bpData{
 				_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true };
 			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
 				{"data0", bpData.data0 },
@@ -567,11 +581,11 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 		};
 
 		ImGui::SeparatorText("");
-		
+
 		if (ImGui::MenuItem("Add/Edit Label")) {
 			m_reqUI.type = _contextMenu.labelExists ? ReqUI::Type::LABEL_EDIT_WINDOW_EDIT : ReqUI::Type::LABEL_EDIT_WINDOW_ADD;
 			m_reqUI.globalAddr = _contextMenu.addr;
-		};		
+		};
 
 		if (_contextMenu.immHovered && ImGui::MenuItem("Add/Edit Const")) {
 			m_reqUI.type = _contextMenu.constExists ? ReqUI::Type::CONST_EDIT_WINDOW_EDIT : ReqUI::Type::CONST_EDIT_WINDOW_ADD;
@@ -604,7 +618,7 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 	}
 }
 
-void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx, 
+void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 	const bool _selected)
 {
 	if (_isRunning) return;
@@ -613,9 +627,9 @@ void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 	if (link.lineIdx == Disasm::IMM_NO_LINK) return;
 
 	float linkWidth = _selected ? 1.5f : 1.0f;
-	
+
 	float linkHorizLen = IMM_ADDR_LINK_AREA_W * link.linkIdx / m_immLinksNum;
-	
+
 	auto pos0 = ImGui::GetCursorScreenPos();
 	pos0.x += IMM_ADDR_LINK_POS_X;
 	pos0.y -= ImGui::GetFontSize() * 0.5f;
@@ -623,7 +637,7 @@ void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 
 	bool minorLink = (link.lineIdx == Disasm::IMM_LINK_UP || link.lineIdx == Disasm::IMM_LINK_DOWN || link.lineIdx == Disasm::IMM_NO_LINK);
 	ImU32 linkColor = _selected ? DIS_CLR_LINK_HIGHLIGHT : DIS_CLR_LINK;
-	
+
 	if (minorLink)
 	{	// links to the addrs outside the disasm view
 		/*
