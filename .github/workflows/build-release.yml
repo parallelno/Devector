@@ -93,145 +93,55 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-latest
-    container: alpine:edge  # Use Alpine edge for latest GCC
 
     steps:
-    - name: Install Git and basic tools for Actions
-      run: |
-        apk add --no-cache git nodejs npm
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Build inside Ubuntu 20.04 container
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ubuntu:20.04
+          options: --rm
+          run: |
+            apt-get update
+            apt-get install -y build-essential cmake ninja-build libsdl3-dev libgl1-mesa-dev libx11-dev pkg-config
 
-    - name: Install build dependencies
-      run: |
-        apk update
-        apk add --no-cache \
-          build-base \
-          cmake \
-          ninja \
-          pkgconf \
-          musl-dev \
-          linux-headers \
-          zlib-static \
-          zlib-dev
+            # Prepare build directory
+            mkdir -p build
+            cd build
 
-    - name: Check GCC version
-      run: |
-        echo "GCC version:"
-        gcc --version
-        echo "Testing C++20 format support:"
-        echo '#include <format>' > test_format.cpp
-        echo 'int main() { std::format("test"); return 0; }' >> test_format.cpp
-        g++ -std=c++20 test_format.cpp -o test_format || echo "Format header available but may need linking"
-        rm -f test_format.cpp test_format
+            # Configure with CMake
+            cmake .. -DCMAKE_BUILD_TYPE=Release -G Ninja
 
-    - name: Install X11 dependencies (if needed)
-      run: |
-        apk add --no-cache \
-          libx11-dev \
-          libxcursor-dev \
-          libxrandr-dev \
-          libxinerama-dev \
-          libxi-dev \
-          libxext-dev \
-          libxfixes-dev || true
+            # Build project
+            ninja
 
-    - name: Install optional dependencies (ignore failures)
-      run: |
-        apk add --no-cache \
-          mesa-dev \
-          alsa-lib-dev \
-          dbus-dev \
-          libusb-dev || true
+            # Verify binary
+            file devector
+            ldd devector
 
-    - name: Configure CMake for static build
-      run: |
-        mkdir -p build
-        cd build
-        cmake .. \
-          cmake .. \
-          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-          -DCMAKE_C_FLAGS="-O3" \
-          -DCMAKE_CXX_FLAGS="-O3 -std=c++20" \
-          -G "Ninja"
+            # Create release directory
+            mkdir -p ../release/devector
 
-    - name: Build LuaJIT manually (if exists)
-      run: |
-        if [ -d "build/_deps/luajit-src" ]; then
-          cd build/_deps/luajit-src
-          make clean || true
-          make BUILDMODE=static CC="gcc -static" -j$(nproc)
-        fi
+            # Copy binary and resources
+            cp devector ../release/devector/
+            cp ../README.md ../release/devector/ 2>/dev/null || true
+            cp ../LICENSE ../release/devector/ 2>/dev/null || true
+            cp ../CHANGELOG.md ../release/devector/ 2>/dev/null || true
 
-    - name: Build project
-      run: |
-        cd build
-        cmake --build . --config ${{ env.BUILD_TYPE }} --parallel $(nproc)
+            # Pack release archive
+            cd ../release
+            tar czf ../devector-linux-x64.tar.gz devector
 
-    - name: Verify static linking
-      run: |
-        echo "Checking for devector binary..."
-        find . -name "devector" -type f 2>/dev/null || echo "devector binary not found"
-
-        if [ -f "build/devector" ]; then
-          echo "Found build/devector - checking dependencies:"
-          file build/devector
-          ldd build/devector 2>/dev/null || echo "Static binary - no dynamic dependencies"
-        elif [ -f "build/bin/devector" ]; then
-          echo "Found build/bin/devector - checking dependencies:"
-          file build/bin/devector
-          ldd build/bin/devector 2>/dev/null || echo "Static binary - no dynamic dependencies"
-        else
-          echo "Binary location unknown, searching..."
-          find build -name "*devector*" -type f 2>/dev/null || echo "No devector binary found in build directory"
-        fi
-
-    - name: Create release package
-      run: |
-        mkdir -p release/devector
-
-        # Find and copy the binary
-        if [ -f "build/devector" ]; then
-          cp build/devector release/devector/
-          echo "Copied build/devector"
-        elif [ -f "build/bin/devector" ]; then
-          cp build/bin/devector release/devector/
-          echo "Copied build/bin/devector"
-        elif [ -d "bin" ]; then
-          cp -r bin/* release/devector/
-          echo "Copied bin directory contents"
-        elif [ -d "build/bin" ]; then
-          cp -r build/bin/* release/devector/
-          echo "Copied build/bin directory contents"
-        else
-          echo "Error: No devector binary found"
-          echo "Contents of build directory:"
-          find build -type f -name "*" | head -20
-          exit 1
-        fi
-
-        # Copy additional files if they exist
-        for file in README.md LICENSE CHANGELOG.md; do
-          if [ -f "$file" ]; then
-            cp "$file" release/devector/
-            echo "Copied $file"
-          fi
-        done
-
-        # Create tar.gz archive
-        cd release
-        tar -czf ../devector-linux-x64.tar.gz devector/
-        echo "Created devector-linux-x64.tar.gz"
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: devector-linux-x64
-        path: devector-linux-x64.tar.gz
-        retention-days: 30
+      - name: Upload Linux build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devector-linux-x64
+          path: devector-linux-x64.tar.gz
+          retention-days: 30
 
   release:
     needs: [build-windows, build-linux]
