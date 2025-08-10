@@ -91,7 +91,7 @@ jobs:
         path: devector-windows-x64.zip
         retention-days: 30
 
-build-linux:
+  build-linux:
     runs-on: ubuntu-20.04  # Use older Ubuntu for older glibc
 
     steps:
