@@ -91,60 +91,9 @@ jobs:
         path: devector-windows-x64.zip
         retention-days: 30
 
-  build-linux:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Build inside Ubuntu 20.04 container
-        uses: addnab/docker-run-action@v3
-        with:
-          image: ubuntu:20.04
-          options: --rm
-          run: |
-            apt-get update
-            apt-get install -y build-essential cmake ninja-build libsdl3-dev libgl1-mesa-dev libx11-dev pkg-config
-
-            # Prepare build directory
-            mkdir -p build
-            cd build
-
-            # Configure with CMake
-            cmake .. -DCMAKE_BUILD_TYPE=Release -G Ninja
-
-            # Build project
-            ninja
-
-            # Verify binary
-            file devector
-            ldd devector
-
-            # Create release directory
-            mkdir -p ../release/devector
-
-            # Copy binary and resources
-            cp devector ../release/devector/
-            cp ../README.md ../release/devector/ 2>/dev/null || true
-            cp ../LICENSE ../release/devector/ 2>/dev/null || true
-            cp ../CHANGELOG.md ../release/devector/ 2>/dev/null || true
-
-            # Pack release archive
-            cd ../release
-            tar czf ../devector-linux-x64.tar.gz devector
-
-      - name: Upload Linux build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: devector-linux-x64
-          path: devector-linux-x64.tar.gz
-          retention-days: 30
 
   release:
-    needs: [build-windows, build-linux]
+    needs: [build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
