@@ -68,8 +68,8 @@ jobs:
             Write-Host "Copied build/bin directory contents"
           } else {
             Write-Host "Error: No bin directory found"
-            exit 1
-          }
+          exit 1
+        }
         }
 
         # Copy additional files if they exist
@@ -109,6 +109,7 @@ jobs:
           ninja-build \
           pkg-config \
           git \
+          musl-tools \
           libx11-dev \
           libxcursor-dev \
           libxrandr-dev \
@@ -131,26 +132,24 @@ jobs:
           libxss-dev \
           libgbm-dev
 
-    - name: Configure CMake
+    - name: Configure CMake with musl
       run: |
         mkdir -p build
         cd build
         cmake .. \
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-          -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++ -Wl,--as-needed" \
-          -DCMAKE_C_FLAGS="-O3 -march=x86-64 -mtune=generic" \
-          -DCMAKE_CXX_FLAGS="-O3 -march=x86-64 -mtune=generic" \
+          -DCMAKE_C_COMPILER=musl-gcc \
+          -DCMAKE_CXX_COMPILER=musl-g++ \
+          -DCMAKE_EXE_LINKER_FLAGS="-static" \
+          -DCMAKE_C_FLAGS="-O3 -m64 -static" \
+          -DCMAKE_CXX_FLAGS="-O3 -m64 -static" \
           -G "Ninja"
 
     - name: Build LuaJIT manually
       run: |
         cd build/_deps/luajit-src
         make clean || true
-        make BUILDMODE=static TARGET_CFLAGS="-m64" -j$(nproc)
-        echo "LuaJIT build completed"
-        ls -la src/
+        make BUILDMODE=static TARGET_CFLAGS="-m64 -static" -j$(nproc)
 
     - name: Build project
       run: |
@@ -241,16 +240,16 @@ jobs:
           echo "- Resource files and data" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         else
-          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
-          echo "Release ${{ steps.tag_name.outputs.TAG_NAME }}" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+        echo "Release ${{ steps.tag_name.outputs.TAG_NAME }}" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
           echo "Features:" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "Updates:" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "Fixes:" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
         fi
 
     - name: Create GitHub Release
