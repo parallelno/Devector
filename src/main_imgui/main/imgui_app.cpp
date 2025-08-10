@@ -344,8 +344,8 @@ void dev::ImGuiApp::LoadFonts()
 	io.Fonts->Build();
 
 	m_dpiScale = GetDpiScale();
-	auto fontSize = (float)dev::GetJsonDouble(m_settingsJ, "fontSize", false, DEFAULT_FONT_SCALE) * m_dpiScale;
-	io.FontGlobalScale = fontSize;
+	auto fontScale = (float)dev::GetJsonDouble(m_settingsJ, "fontScale", false, DEFAULT_FONT_SCALE) * m_dpiScale;
+	io.FontGlobalScale = fontScale;
 
 	// Create font texture and other device objects (GPU resources)
     ImGui_ImplOpenGL3_CreateDeviceObjects();
