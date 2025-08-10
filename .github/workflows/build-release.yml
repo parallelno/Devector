@@ -10,7 +10,6 @@ env:
 
 jobs:
   build-windows:
-    if: false  # disables this job
     runs-on: windows-latest
 
     steps:
