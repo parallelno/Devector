@@ -444,14 +444,14 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			UpdateDisasm(addr);
 		}
 		// Left side navigation mouse button to navigate back
-		else if (ImGui::IsMouseClicked(ImGuiKey_MouseX1) &&
+		else if (ImGui::IsKeyPressed(ImGuiKey_MouseX1) &&
 			m_navigateAddrsIdx - 1 >= 0)
 		{
 			auto addr = m_navigateAddrs[--m_navigateAddrsIdx];
 			UpdateDisasm(addr);
 		}
 		// Right side navigation mouse button to navigate forward
-		else if (ImGui::IsMouseClicked(ImGuiKey_MouseX2) &&
+		else if (ImGui::IsKeyPressed(ImGuiKey_MouseX2) &&
 			m_navigateAddrsIdx + 1 < m_navigateAddrsSize)
 		{
 			auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
