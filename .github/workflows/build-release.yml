@@ -91,14 +91,14 @@ jobs:
         path: devector-windows-x64.zip
         retention-days: 30
 
-  build-linux:
-    runs-on: ubuntu-latest
+build-linux:
+    runs-on: ubuntu-20.04  # Use older Ubuntu for older glibc
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Fetch full history for proper versioning
+        fetch-depth: 0
 
     - name: Install dependencies
       run: |
@@ -109,7 +109,6 @@ jobs:
           ninja-build \
           pkg-config \
           git \
-          musl-tools \
           libx11-dev \
           libxcursor-dev \
           libxrandr-dev \
@@ -132,29 +131,43 @@ jobs:
           libxss-dev \
           libgbm-dev
 
-    - name: Configure CMake with musl
+    - name: Configure CMake
       run: |
         mkdir -p build
         cd build
         cmake .. \
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-          -DCMAKE_C_COMPILER=musl-gcc \
-          -DCMAKE_CXX_COMPILER=musl-g++ \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
-          -DCMAKE_C_FLAGS="-O3 -m64" \
-          -DCMAKE_CXX_FLAGS="-O3 -m64" \
+          -DCMAKE_C_FLAGS="-O3" \
+          -DCMAKE_CXX_FLAGS="-O3" \
           -G "Ninja"
 
     - name: Build LuaJIT manually
       run: |
-        cd build/_deps/luajit-src
-        make clean || true
-        make BUILDMODE=static TARGET_CFLAGS="-m64 -static" -j$(nproc)
+        if [ -d "build/_deps/luajit-src" ]; then
+          cd build/_deps/luajit-src
+          make clean || true
+          make BUILDMODE=static -j$(nproc)
+        fi
 
     - name: Build project
       run: |
         cd build
         cmake --build . --config ${{ env.BUILD_TYPE }} --parallel $(nproc)
+
+    - name: Check glibc version used
+      run: |
+        echo "glibc version on build system:"
+        ldd --version
+        if [ -f "build/devector" ]; then
+          echo "Binary dependencies:"
+          ldd build/devector
+        elif [ -f "build/bin/devector" ]; then
+          echo "Binary dependencies:"
+          ldd build/bin/devector
+        fi
 
     - name: Create release package
       run: |
@@ -168,8 +181,11 @@ jobs:
         elif [ -d "build/bin" ]; then
           cp -r build/bin/* release/devector/
           echo "Copied build/bin directory contents"
+        elif [ -f "build/devector" ]; then
+          cp build/devector release/devector/
+          echo "Copied devector binary"
         else
-          echo "Error: No bin directory found"
+          echo "Error: No devector binary found"
           exit 1
         fi
 
