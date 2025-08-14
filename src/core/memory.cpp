@@ -1,9 +1,9 @@
 #include "core/memory.h"
 #include "utils/utils.h"
 
-dev::Memory::Memory(const std::string& _pathBootData, const std::string& _pathRamDiskData, 
+dev::Memory::Memory(const std::string& _pathBootData, const std::string& _pathRamDiskData,
 	const bool _ramDiskClearAfterRestart)
-	: 
+	:
 	m_rom(), m_ram(),
 	m_pathRamDiskData(_pathRamDiskData),
 	m_ramDiskClearAfterRestart(_ramDiskClearAfterRestart)
@@ -34,11 +34,9 @@ void dev::Memory::Init()
 		std::fill(m_ram.data(), m_ram.data() + MEMORY_MAIN_LEN, 0);
 	}
 
-
-	*((uint64_t*) &m_mappings[0].data) = 0;
-	m_state.update.mapping.data = m_state.update.ramdiskIdx = m_mappingsEnabled = 0;
 	m_state.update.memType = MemType::ROM;
 	m_state.ramP = &m_ram;
+	InitRamDiskMapping();
 }
 
 void dev::Memory::InitRamDiskMapping()
@@ -49,7 +47,10 @@ void dev::Memory::InitRamDiskMapping()
 	m_mappingsEnabled = 0;
 }
 
-void dev::Memory::Restart() { m_state.update.memType = MemType::RAM; }
+void dev::Memory::Restart() {
+	m_state.update.memType = MemType::RAM;
+	InitRamDiskMapping();
+}
 
 
 void dev::Memory::SetMemType(const MemType _memType)
@@ -66,7 +67,7 @@ void dev::Memory::SetByteGlobal(const GlobalAddr _globalAddr, const uint8_t _dat
 	m_ram[_globalAddr] = _data;
 }
 
-auto dev::Memory::GetByteGlobal(const GlobalAddr _globalAddr) const 
+auto dev::Memory::GetByteGlobal(const GlobalAddr _globalAddr) const
 -> uint8_t
 {
 	return m_ram[_globalAddr];
@@ -172,10 +173,11 @@ auto dev::Memory::GetGlobalAddr(const Addr _addr, const AddrSpace _addrSpace) co
 	return _addr;
 }
 
+
 // it raises an exception if the mapping is enabled for more than one RAM Disk.
 // it used the first enabled RAM Disk during an exception
-void dev::Memory::SetRamDiskMode(uint8_t _diskIdx, uint8_t _data) 
-{	
+void dev::Memory::SetRamDiskMode(uint8_t _diskIdx, uint8_t _data)
+{
 	m_mappings[_diskIdx].data = _data;
 
 	m_state.update.mapping.data = 0;
