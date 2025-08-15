@@ -6,7 +6,7 @@
     "displayWindowVisible": true,
     "fontItalicPath": "fonts/medium_italic.ttf",
     "fontPath": "fonts/medium.ttf",
-    "fontScale": 0.85,
+    "fontScale": 1.0,
     "hardwareStatsWindowVisible": true,
     "hexViewerWindowVisible": true,
     "keyboardWindowVisible": false,
