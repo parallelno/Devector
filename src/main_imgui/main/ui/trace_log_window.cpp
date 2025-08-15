@@ -1,29 +1,32 @@
 #include "ui/trace_log_window.h"
 
 dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _dpiScaleP, 
-		ReqUI& _reqUI)
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP,
+	ReqUI& _reqUI)
 	:
-	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger), 
+	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
+	m_hardware(_hardware), m_debugger(_debugger),
 	m_reqUI(_reqUI)
 {}
 
-void dev::TraceLogWindow::Update(bool& _visible, const bool _isRunning)
+void dev::TraceLogWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-
-	if (_visible && !m_visible) {
+	static bool visible = false;
+	if (visible && !m_visible) {
 		m_traceLogP = m_debugger.GetTraceLog().GetDisasm(TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
 		m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
 	}
-	m_visible = _visible;
-		
-	BaseWindow::Update();
+	visible = m_visible;
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
+	BaseWindow::Draw(_signals);
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+
+	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		UpdateData(_isRunning);
-		DrawLog(_isRunning);
+		UpdateData(isRunning);
+		DrawLog(isRunning);
 
 		ImGui::End();
 	}
@@ -97,7 +100,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 
 	// filter mode
 	const char* filterName = filterNames[m_disasmFilter];
-	
+
 	if (_isRunning) ImGui::BeginDisabled();
 	if (ImGui::BeginCombo("##filterNames", filterName))
 	{
@@ -172,7 +175,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 				DrawDisasmAddr(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
 				DrawDisasmCode(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
 				DrawDisasmConsts(line, MAX_DISASM_LABELS);
-				
+
 			}
 		}
 		ImGui::EndTable();
@@ -198,12 +201,12 @@ void dev::TraceLogWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _conte
 		if (ImGui::MenuItem("Copy")) {
 			dev::CopyToClipboard(_contextMenu.str);
 		}
-		
+
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Add/Remove Beakpoint"))
 		{
 			Breakpoint::Status bpStatus = static_cast<Breakpoint::Status>(m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS, { {"addr", m_contextMenu.addr} })->at("status"));
-			
+
 			if (bpStatus == Breakpoint::Status::DELETED) {
 				Breakpoint::Data bpData { m_contextMenu.addr };
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {

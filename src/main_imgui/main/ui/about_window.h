@@ -2,6 +2,7 @@
 
 #include "utils/imgui_utils.h"
 #include "ui/base_window.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -12,9 +13,12 @@ namespace dev
 
 		const std::string compilation_date = __DATE__;
 
+		void DrawContext();
+
 	public:
-		AboutWindow(const float* const _dpiScaleP);
-		void Update(bool& _visible, const bool _isRunning);
-		void Draw();
+		AboutWindow(dev::Scheduler& _scheduler,
+			bool& _visible,
+			const float* const _dpiScaleP);
+		void Draw(const dev::Scheduler::Signals _signals) override;
 	};
 };

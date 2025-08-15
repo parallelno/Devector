@@ -24,6 +24,7 @@
 
 #include "core/hardware.h"
 #include "core/debugger.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -37,20 +38,20 @@ namespace dev
 		const std::string EXT_REC = ".REC";
 
 		enum class FileType : int {ROM = 0, FDD, REC, UNDEFINED};
-		
+
 		struct LoadingRes
 		{
 			enum class State {
-				NONE, 
-				CHECK_MOUNTED, 
-				SAVE_DISCARD, 
+				NONE,
+				CHECK_MOUNTED,
+				SAVE_DISCARD,
 				OPEN_FILE,
-				OPEN_POPUP_SAVE_DISCARD, 
+				OPEN_POPUP_SAVE_DISCARD,
 				POPUP_SAVE_DISCARD,
 				OPEN_POPUP_SELECT_DRIVE,
 				POPUP_SELECT_DRIVE,
 				ALWAYS_DISCARD,
-				DISCARD, 
+				DISCARD,
 				ALWAYS_SAVE,
 				SAVE,
 				LOAD,
@@ -77,7 +78,7 @@ namespace dev
 			FileType fileType = FileType::ROM;
 
 			void Init(const State& _state, const Type _type = Type::OPEN_FILE_DIALOG, FileType _fileType = FileType::UNDEFINED, const std::string& _path = "",
-				const int _driveIdx = INVALID_ID, bool _autoBoot = false) 
+				const int _driveIdx = INVALID_ID, bool _autoBoot = false)
 			{
 				if (state == LoadingRes::State::EXIT) return;
 				fileType = _fileType;
@@ -141,6 +142,8 @@ namespace dev
 		ReqUI m_reqUI;
 		GLUtils m_glUtils;
 
+		Scheduler m_scheduler;
+
 	public:
 		DevectorApp(const std::string& _settingsPath, nlohmann::json _settingsJ,
 					const std::string& _rom_fdd_recPath = "");
@@ -158,7 +161,7 @@ namespace dev
 		void RecentFilesUpdate(const FileType _fileType, const std::string& _path, const int _driveIdx = INVALID_ID, const bool _autoBoot = false);
 		void AppStyleInit();
 		void MainMenuUpdate();
-		void Load(const std::string& _path);		
+		void Load(const std::string& _path);
 		void LoadRom(const std::string& _path);
 		void LoadFdd(const std::string& _path, const int _driveIdx, const bool _autoBoot);
 		void LoadRecording(const std::string& _path);

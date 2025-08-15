@@ -3,21 +3,24 @@
 #include "imgui_stdlib.h"
 
 dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _dpiScaleP, ReqUI& _reqUI)
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
-	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
+	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqUI(_reqUI)
 {}
 
-void dev::HexViewerWindow::Update(bool& _visible, const bool _isRunning)
+void dev::HexViewerWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
 	static bool open = true;
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
+	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		UpdateData(_isRunning);
-		DrawHex(_isRunning);
+		UpdateData(isRunning);
+		DrawHex(isRunning);
 
 		ImGui::End();
 	}
@@ -40,7 +43,7 @@ void dev::HexViewerWindow::UpdateData(const bool _isRunning)
 	m_debugger.UpdateLastRW();
 }
 
-enum class Element : int { MAIN_RAM = 0, 
+enum class Element : int { MAIN_RAM = 0,
 	RAM_DISK1_B0, RAM_DISK1_B1, RAM_DISK1_B2, RAM_DISK1_B3,
 	RAM_DISK2_B0, RAM_DISK2_B1, RAM_DISK2_B2, RAM_DISK2_B3,
 	RAM_DISK3_B0, RAM_DISK3_B1, RAM_DISK3_B2, RAM_DISK3_B3,
@@ -51,8 +54,8 @@ enum class Element : int { MAIN_RAM = 0,
 	RAM_DISK8_B0, RAM_DISK8_B1, RAM_DISK8_B2, RAM_DISK8_B3,
 	COUNT };
 static const char* elems_names[static_cast<int>(Element::COUNT)] = { "Main Ram",
-	"RAM Disk1 Bank0", "RAM Disk1 Bank1", "RAM Disk1 Bank2", "RAM Disk1 Bank3", 
-	"RAM Disk2 Bank0", "RAM Disk2 Bank1", "RAM Disk2 Bank2", "RAM Disk2 Bank3", 
+	"RAM Disk1 Bank0", "RAM Disk1 Bank1", "RAM Disk1 Bank2", "RAM Disk1 Bank3",
+	"RAM Disk2 Bank0", "RAM Disk2 Bank1", "RAM Disk2 Bank2", "RAM Disk2 Bank3",
 	"RAM Disk3 Bank0", "RAM Disk3 Bank1", "RAM Disk3 Bank2", "RAM Disk3 Bank3",
 	"RAM Disk4 Bank0", "RAM Disk4 Bank1", "RAM Disk4 Bank2", "RAM Disk4 Bank3",
 	"RAM Disk5 Bank0", "RAM Disk5 Bank1", "RAM Disk5 Bank2", "RAM Disk5 Bank3",
@@ -62,7 +65,7 @@ static const char* elems_names[static_cast<int>(Element::COUNT)] = { "Main Ram",
 };
 
 void dev::HexViewerWindow::DrawHex(const bool _isRunning)
-{ 
+{
 	bool memPageIdxChanged = false;
 	{
 		// draw an addr search
@@ -70,7 +73,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 		{
 			m_searchAddr = dev::Max(0, m_searchAddr);
 			m_searchAddr = dev::Min(m_searchAddr, Memory::MEMORY_GLOBAL_LEN - 1);
-			
+
 			memPageIdxChanged = m_searchAddr >> 16 != m_memPageIdx;
 			m_memPageIdx = m_searchAddr >> 16;
 
@@ -110,14 +113,14 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 		"The brighter the color, the more recent the change.");
 
 	constexpr auto headerColumn = "00\0 01\0 02\0 03\0 04\0 05\0 06\0 07\0 08\0 09\0 0A\0 0B\0 0C\0 0D\0 0E\0 0F\0";
-	
+
 	const int COLUMNS_COUNT = 17;
 	const char* tableName = "##HexViewer";
 
 	static ImGuiTableFlags flags =
 		ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_HighlightHoveredColumn |
-		ImGuiTableFlags_BordersOuter | 
+		ImGuiTableFlags_BordersOuter |
 		ImGuiTableFlags_Hideable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
@@ -128,7 +131,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 		{
 				ImGui::TableSetupColumn(headerColumn + column*4, ImGuiTableColumnFlags_WidthFixed, 18);
 		}
-		
+
 		ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 		for (int column = 0; column < COLUMNS_COUNT; column++)
 		{
@@ -148,16 +151,16 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 			}
 		}
 
-		// Set the scroll position to the selected watchpoint addr or 
+		// Set the scroll position to the selected watchpoint addr or
 		// clicked addr in the Memory Display window
 		if (m_reqUI.type == ReqUI::Type::HEX_HIGHLIGHT_ON)
 		{
-			
+
 
 		}
 		switch (m_reqUI.type)
 		{
-		case ReqUI::Type::HEX_HIGHLIGHT_ON: 
+		case ReqUI::Type::HEX_HIGHLIGHT_ON:
 		{
 			m_reqUI.type = ReqUI::Type::NONE;
 			m_status = Status::HIGHLIGHT;
@@ -171,7 +174,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 			ImGui::SetScrollY((m_highlightAddr >> 4) * (ImGui::GetFontSize() + cellPaddingY + offset) * (*m_dpiScaleP));
 			break;
 		}
-		case ReqUI::Type::HEX_HIGHLIGHT_OFF: 
+		case ReqUI::Type::HEX_HIGHLIGHT_OFF:
 			m_reqUI.type = ReqUI::Type::NONE;
 			m_status = Status::NONE;
 			break;
@@ -188,8 +191,8 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
 			{
 				ImGui::TableNextRow();
-				
-				// addr. left header 
+
+				// addr. left header
 				ImGui::TableNextColumn();
 				Addr headerAddr = row * (COLUMNS_COUNT - 1);
 				if ((addrHovered & 0xFFFF0) == headerAddr){
@@ -218,7 +221,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 					ImVec2 highlightEnd = ImVec2(highlightPos.x + textSize.x + offsetX * 2 + 1, highlightPos.y + textSize.y + offsetY * 2);
 
 					// highlight a selected watchpoint
-					if (m_status == Status::HIGHLIGHT && 
+					if (m_status == Status::HIGHLIGHT &&
 						addr >= m_highlightAddr && addr < m_highlightAddrLen + m_highlightAddr )
 					{
 						ImGui::GetWindowDrawList()->AddRectFilled(highlightPos, highlightEnd, IM_COL32(100, 100, 100, 255));
@@ -228,7 +231,7 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 						int lastRWIdx = m_debugger.GetLastRW()->at(addr + m_memPageIdx * Memory::MEM_64K);
 						auto lastReadsIdx = lastRWIdx & 0xFFFF;
 						auto lastWritesIdx = lastRWIdx >> 16;
-						
+
 						// highlight the last reads
 						if ((highlightMode == 0 || highlightMode == 1) && lastReadsIdx > 0)
 						{

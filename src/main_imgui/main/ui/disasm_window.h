@@ -8,6 +8,7 @@
 #include "ui/base_window.h"
 #include "core/hardware.h"
 #include "core/debugger.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -15,7 +16,7 @@ namespace dev
 	static constexpr int DEFAULT_WINDOW_H = 800;
 
 	class DisasmWindow : public BaseWindow
-	{	
+	{
 		// Set column widths
 		static constexpr float BRK_W = 40;
 		static constexpr float ADDR_W = 50.0f;
@@ -30,7 +31,7 @@ namespace dev
 		static constexpr int DISASM_INSTRUCTION_OFFSET = 6;
 
 		static constexpr int MAX_DISASM_LABELS = 20;
-		
+
 		static constexpr ImU32 DIS_CLR_LINK		= dev::IM_U32(0x808010FF);
 		static constexpr ImU32 DIS_CLR_LINK_MINOR = dev::IM_U32(0xD0C443FF);
 		static constexpr ImU32 DIS_CLR_LINK_HIGHLIGHT = dev::IM_U32(0xD010FFFF);
@@ -72,22 +73,22 @@ namespace dev
 		};
 		ContextMenu m_contextMenu;
 
-		struct AddrHighlight 
+		struct AddrHighlight
 		{
 			int addr = -1; // -1 means disabled
 
-			void Init(const Addr _addr) { 
+			void Init(const Addr _addr) {
 				addr = _addr;
 			}
 			bool IsEnabled(const Addr _addr)
-			{ 
+			{
 				bool out = _addr == addr;
 				if (_addr == addr) addr = -1; // disable after use
 				return out;
 			}
 		};
 		AddrHighlight m_addrHighlight;
-		
+
 		Hardware& m_hardware;
 		Debugger& m_debugger;
 		ImFont* m_fontCommentP = nullptr;
@@ -109,7 +110,7 @@ namespace dev
 		void DrawSearch(const bool _isRunning);
 		void DrawDisasm(const bool _isRunning);
 		void DrawDisasmIcons(const bool _isRunning, const Disasm::Line& _line, const int _lineIdx, const Addr _regPC);
-		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line, 
+		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
 			ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
 		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
 			ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
@@ -127,11 +128,15 @@ namespace dev
 
 	public:
 
-		DisasmWindow(Hardware& _hardware, Debugger& _debugger, ImFont* fontComment, 
-			const float* const _dpiScaleP, 
+		DisasmWindow(Hardware& _hardware, Debugger& _debugger,
+			ImFont* fontComment,
+			dev::Scheduler& _scheduler,
+			bool& _visible, const float* const _dpiScaleP,
 			ReqUI& _reqUI);
-		void Update(bool& _visible, const bool _isRunning);
-		void UpdateDisasm(const Addr _addr, const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
+		void Draw(const dev::Scheduler::Signals _signals) override;
+		void UpdateDisasm(
+			const Addr _addr,
+			const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
 			const bool _updateSelection = true);
 	};
 

@@ -55,7 +55,7 @@ const char* memViewShaderFrag = R"(
 		vec3 bgColor = mix(globalColorBg.xyz, globalColorBg.xyz * BACK_COLOR_MULL, isOdd8K);
 
 		int bitIdx = 7 - int(uv0.x * 1024.0) & 7;
-		int isBitOn = GetBit(byte, bitIdx);		
+		int isBitOn = GetBit(byte, bitIdx);
 
 		// highlight every second column
 		int isByteOdd = (int(uv0.x * 512.0)>>2) & 1;
@@ -80,10 +80,12 @@ const char* memViewShaderFrag = R"(
 )";
 
 dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger,
-		const float* const _dpiScaleP, GLUtils& _glUtils,
-		ReqUI& _reqUI)
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
+	ReqUI& _reqUI)
 	:
-	BaseWindow("Memory Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
+	BaseWindow("Memory Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils),
 	m_reqUI(_reqUI)
 {
@@ -123,7 +125,7 @@ bool dev::MemDisplayWindow::Init()
 			FRAME_BUFFER_W, FRAME_BUFFER_H);
 
 		if (matId == INVALID_ID) return false;
-		
+
 		m_memViewMatIds[i] = matId;
 	}
 
@@ -136,13 +138,14 @@ bool dev::MemDisplayWindow::Init()
 	return true;
 }
 
-void dev::MemDisplayWindow::Update(bool& _visible, const bool _isRunning)
+void dev::MemDisplayWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
+	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		UpdateData(_isRunning);
+		UpdateData(isRunning);
 		DrawDisplay();
 
 		ImGui::End();
@@ -192,7 +195,7 @@ dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale)
 	int imgY = int(_pos.y / _scale);
 
 	// img size (1024, 512)
-	int addrOffsetH = imgY / 256; // addrOffsetH = 0 means addr is <= 32K, addrOffsetH = 1 means addr is > 32K, 
+	int addrOffsetH = imgY / 256; // addrOffsetH = 0 means addr is <= 32K, addrOffsetH = 1 means addr is > 32K,
 	int eigthKBankIdx = imgX / 256 + 4 * addrOffsetH;
 
 	int eigthKBankPosX = imgX % 256;
@@ -309,7 +312,7 @@ void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
 	if (m_isGLInited)
 	{
 		auto memP = m_hardware.GetRam()->data();
-		
+
 		if (ccDiff != 0) m_debugger.UpdateLastRW();
 		auto memLastRWP = m_debugger.GetLastRW()->data();
 

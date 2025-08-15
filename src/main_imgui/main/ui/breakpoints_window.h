@@ -6,6 +6,7 @@
 #include "utils/consts.h"
 #include "ui/base_window.h"
 #include "core/debugger.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -20,16 +21,19 @@ namespace dev
 		size_t m_updates = 0; // stores the updates to prevent extra Debug data fetching
 
 		void DrawTable();
-		void DrawPopup(ReqPopup& _reqPopup, const Breakpoints::BpMap& _pbs, int _addr);
+		void DrawPopup(ReqPopup& _reqPopup, const Breakpoints::BpMap& _pbs,
+			const int _addr);
 		void CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
 			const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup);
 		void UpdateBreakpoints();
 
 	public:
 		BreakpointsWindow(Hardware& _hardware,
-			const float* const _dpiScaleP, ReqUI& _reqUI);
-		void Update(bool& _visible, const bool _isRunning);
-		void DrawProperty(const std::string& _name, const ImVec2& _aligment = { 0.0f, 0.5f });
+			dev::Scheduler& _scheduler,
+			bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI);
+		void Draw(const dev::Scheduler::Signals _signals) override;
+		void DrawProperty(const std::string& _name,
+						const ImVec2& _aligment = { 0.0f, 0.5f });
 	};
 
 };

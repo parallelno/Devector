@@ -64,32 +64,76 @@ void dev::DevectorApp::HardwareInit()
 {
 	std::string pathBootData = GetSettingsString("bootPath", "boot//boot.bin");
 	m_restartOnLoadFdd = GetSettingsBool("restartOnLoadFdd", true);
-	m_ramDiskClearAfterRestart = GetSettingsBool("ramDiskClearAfterRestart", false);
+	m_ramDiskClearAfterRestart = GetSettingsBool(
+		"ramDiskClearAfterRestart", false);
 	m_ramDiskDataPath = GetSettingsString("ramDiskDataPath", "ramDisks.bin");
 
-	m_hardwareP = std::make_unique < dev::Hardware>(pathBootData, m_ramDiskDataPath, m_ramDiskClearAfterRestart);
+	m_hardwareP = std::make_unique < dev::Hardware>(
+		pathBootData, m_ramDiskDataPath, m_ramDiskClearAfterRestart);
 	m_debuggerP = std::make_unique < dev::Debugger>(*m_hardwareP);
 }
 
 void dev::DevectorApp::WindowsInit()
 {
-	auto executionSpeed = static_cast<Hardware::ExecSpeed>(GetSettingsInt("executionSpeed", static_cast<int>(Hardware::ExecSpeed::NORMAL)));
+	auto executionSpeed = static_cast<Hardware::ExecSpeed>(
+		GetSettingsInt("executionSpeed", static_cast<int>(
+			Hardware::ExecSpeed::NORMAL)));
 
-	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(*m_hardwareP, &m_dpiScale, m_ruslat);
-	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(*m_hardwareP, *m_debuggerP,
-		m_fontItalic, &m_dpiScale, m_reqUI);
-	m_displayWindowP = std::make_unique<dev::DisplayWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI, m_debuggerP->GetDebugData().GetScripts(), executionSpeed);
-	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(*m_hardwareP, &m_dpiScale, m_reqUI);
-	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(*m_hardwareP, &m_dpiScale, m_reqUI);
-	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_glUtils, m_reqUI);
-	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
-	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
-	m_aboutWindowP = std::make_unique<dev::AboutWindow>(&m_dpiScale);
-	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(&m_dpiScale);
-	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
-	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(*m_hardwareP, &m_dpiScale, m_glUtils, m_reqUI, m_pathImgKeyboard);
-	m_searchWindowP = std::make_unique<dev::SearchWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
-	m_debugdataWindowP = std::make_unique<dev::DebugDataWindow>(*m_hardwareP, *m_debuggerP, &m_dpiScale, m_reqUI);
+
+	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(
+		*m_hardwareP, m_scheduler, m_hardwareStatsWindowVisible,
+		&m_dpiScale, m_ruslat);
+
+	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(
+		*m_hardwareP, *m_debuggerP, m_fontItalic,
+		m_scheduler, m_disasmWindowVisible, &m_dpiScale, m_reqUI);
+
+	m_displayWindowP = std::make_unique<dev::DisplayWindow>(
+		*m_hardwareP, m_scheduler,
+		m_displayWindowVisible, &m_dpiScale, m_glUtils, m_reqUI,
+		m_debuggerP->GetDebugData().GetScripts(), executionSpeed);
+
+	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(
+		*m_hardwareP, m_scheduler, m_breakpointsWindowVisisble,
+		&m_dpiScale, m_reqUI);
+
+	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(
+		*m_hardwareP, m_scheduler, m_watchpointsWindowVisible,
+		&m_dpiScale, m_reqUI);
+
+	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_memDisplayWindowVisible,
+		&m_dpiScale, m_glUtils, m_reqUI);
+
+	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_hexViewerWindowVisible,
+		&m_dpiScale, m_reqUI);
+
+	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_traceLogWindowVisible,
+		&m_dpiScale, m_reqUI);
+
+	m_aboutWindowP = std::make_unique<dev::AboutWindow>(
+		m_scheduler, m_aboutWindowVisible, &m_dpiScale);
+
+	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(
+		m_scheduler, m_feedbackWindowVisible, &m_dpiScale);
+
+	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_recorderWindowVisible,
+		&m_dpiScale, m_reqUI);
+
+	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(
+		*m_hardwareP, m_scheduler, m_keyboardWindowVisible,
+		&m_dpiScale, m_glUtils, m_reqUI, m_pathImgKeyboard);
+
+	m_searchWindowP = std::make_unique<dev::SearchWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_searchWindowVisible,
+		&m_dpiScale, m_reqUI);
+
+	m_debugdataWindowP = std::make_unique<dev::DebugDataWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_debugdataWindowVisible,
+		&m_dpiScale, m_reqUI);
 }
 
 void dev::DevectorApp::SettingsInit()
@@ -110,7 +154,8 @@ void dev::DevectorApp::SettingsInit()
 	m_searchWindowVisible = GetSettingsBool("searchWindowVisible", false);
 	m_debugdataWindowVisible = GetSettingsBool("debugdataWindowVisible", false);
 
-	m_pathImgKeyboard = GetSettingsString("pathImgKeyboard", "images//vector_keyboard.jpg");
+	m_pathImgKeyboard = GetSettingsString(
+		"pathImgKeyboard", "images//vector_keyboard.jpg");
 
 	RecentFilesInit();
 
@@ -123,7 +168,8 @@ void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 	// load the rom/fdd/rec image if it was send via the console command
 	if (_rom_fdd_recPath.empty()) return;
 
-	bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+	bool isRunning =
+		m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 	if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
 
 	auto path = _rom_fdd_recPath;
@@ -166,22 +212,7 @@ void dev::DevectorApp::Update()
 
 	LoadingResStatusHandling();
 
-	bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-
-	m_hardwareStatsWindowP->Update(m_hardwareStatsWindowVisible, isRunning);
-	m_disasmWindowP->Update(m_disasmWindowVisible, isRunning);
-	m_displayWindowP->Update(m_displayWindowVisible, isRunning);
-	m_breakpointsWindowP->Update(m_breakpointsWindowVisisble, isRunning);
-	m_watchpointsWindowP->Update(m_watchpointsWindowVisible, isRunning);
-	m_memDisplayWindowP->Update(m_memDisplayWindowVisible, isRunning);
-	m_hexViewerWindowP->Update(m_hexViewerWindowVisible, isRunning);
-	m_traceLogWindowP->Update(m_traceLogWindowVisible, isRunning);
-	m_aboutWindowP->Update(m_aboutWindowVisible, isRunning);
-	m_feedbackWindowP->Update(m_feedbackWindowVisible, isRunning);
-	m_recorderWindowP->Update(m_recorderWindowVisible, isRunning);
-	m_keyboardWindowP->Update(m_keyboardWindowVisible, isRunning);
-	m_searchWindowP->Update(m_searchWindowVisible, isRunning);
-	m_debugdataWindowP->Update(m_debugdataWindowVisible, isRunning);
+	m_scheduler.Update(*m_hardwareP, *m_debuggerP);
 
 	// context menues to edit the debug data
 	DrawEditLabelWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
@@ -194,7 +225,8 @@ void dev::DevectorApp::Update()
 
 	if (m_status == AppStatus::REQ_PREPARE_FOR_EXIT)
 	{
-		m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::SAVE_THEN_EXIT);
+		m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED,
+						LoadingRes::Type::SAVE_THEN_EXIT);
 		m_status = AppStatus::PREPARE_FOR_EXIT;
 	}
 
@@ -252,7 +284,8 @@ void dev::DevectorApp::MainMenuUpdate()
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
 				m_debuggerP->GetDebugData().SaveDebugData();
-				m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::OPEN_FILE_DIALOG);
+				m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED,
+								LoadingRes::Type::OPEN_FILE_DIALOG);
 			}
 			if (ImGui::BeginMenu("Recent Files"))
 			{
@@ -268,35 +301,66 @@ void dev::DevectorApp::MainMenuUpdate()
 					if (ImGui::MenuItem(itemS.c_str()))
 					{
 						m_debuggerP->GetDebugData().SaveDebugData();
-						m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::RECENT, fileType, path, driveIdx, autoBoot);
+						m_loadingRes.Init(
+							LoadingRes::State::CHECK_MOUNTED,
+							LoadingRes::Type::RECENT, fileType, path,
+							driveIdx, autoBoot);
 					}
 				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::MenuItem("Save Rec"))
 			{
-				m_loadingRes.Init(LoadingRes::State::CHECK_MOUNTED, LoadingRes::Type::SAVE_REC_FILE_DIALOG, FileType::REC);
+				m_loadingRes.Init(
+					LoadingRes::State::CHECK_MOUNTED,
+					LoadingRes::Type::SAVE_REC_FILE_DIALOG,
+					FileType::REC);
 			}
 
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Quit", "Alt+F4")) { m_status = AppStatus::REQ_PREPARE_FOR_EXIT; }
+			if (ImGui::MenuItem("Quit", "Alt+F4")) {
+				m_status = AppStatus::REQ_PREPARE_FOR_EXIT;
+			}
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Tools"))
 		{
-			ImGui::MenuItem(m_displayWindowP->m_name.c_str(), NULL, &m_displayWindowVisible);
-			ImGui::MenuItem(m_hardwareStatsWindowP->m_name.c_str(), NULL, &m_hardwareStatsWindowVisible);
-			ImGui::MenuItem(m_disasmWindowP->m_name.c_str(), NULL, &m_disasmWindowVisible);
-			ImGui::MenuItem(m_breakpointsWindowP->m_name.c_str(), NULL, &m_breakpointsWindowVisisble);
-			ImGui::MenuItem(m_watchpointsWindowP->m_name.c_str(), NULL, &m_watchpointsWindowVisible);
-			ImGui::MenuItem(m_memDisplayWindowP->m_name.c_str(), NULL, &m_memDisplayWindowVisible);
-			ImGui::MenuItem(m_hexViewerWindowP->m_name.c_str(), NULL, &m_hexViewerWindowVisible);
-			ImGui::MenuItem(m_traceLogWindowP->m_name.c_str(), NULL, &m_traceLogWindowVisible);
-			ImGui::MenuItem(m_recorderWindowP->m_name.c_str(), NULL, &m_recorderWindowVisible);
-			ImGui::MenuItem(m_keyboardWindowP->m_name.c_str(), NULL, &m_keyboardWindowVisible);
-			ImGui::MenuItem(m_searchWindowP->m_name.c_str(), NULL, &m_searchWindowVisible);
-			ImGui::MenuItem(m_debugdataWindowP->m_name.c_str(), NULL, &m_debugdataWindowVisible);
+			ImGui::MenuItem(m_displayWindowP->m_name.c_str(),
+							NULL, &m_displayWindowVisible);
+
+			ImGui::MenuItem(m_hardwareStatsWindowP->m_name.c_str(),
+							NULL, &m_hardwareStatsWindowVisible);
+
+			ImGui::MenuItem(m_disasmWindowP->m_name.c_str(),
+							NULL, &m_disasmWindowVisible);
+
+			ImGui::MenuItem(m_breakpointsWindowP->m_name.c_str(),
+							NULL, &m_breakpointsWindowVisisble);
+
+			ImGui::MenuItem(m_watchpointsWindowP->m_name.c_str(),
+							NULL, &m_watchpointsWindowVisible);
+
+			ImGui::MenuItem(m_memDisplayWindowP->m_name.c_str(),
+							NULL, &m_memDisplayWindowVisible);
+
+			ImGui::MenuItem(m_hexViewerWindowP->m_name.c_str(),
+							NULL, &m_hexViewerWindowVisible);
+
+			ImGui::MenuItem(m_traceLogWindowP->m_name.c_str(),
+							NULL, &m_traceLogWindowVisible);
+
+			ImGui::MenuItem(m_recorderWindowP->m_name.c_str(),
+							NULL, &m_recorderWindowVisible);
+
+			ImGui::MenuItem(m_keyboardWindowP->m_name.c_str(),
+							NULL, &m_keyboardWindowVisible);
+
+			ImGui::MenuItem(m_searchWindowP->m_name.c_str(),
+							NULL, &m_searchWindowVisible);
+
+			ImGui::MenuItem(m_debugdataWindowP->m_name.c_str(),
+							NULL, &m_debugdataWindowVisible);
 			ImGui::EndMenu();
 		}
 

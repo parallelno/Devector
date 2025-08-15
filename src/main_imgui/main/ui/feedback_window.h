@@ -1,9 +1,11 @@
 #pragma once
-#include "utils/imgui_utils.h"
 
+#include <array>
+
+#include "utils/imgui_utils.h"
 #include "ui/base_window.h"
 //#include "utils/telegramBot.h"
-#include <array>
+#include "scheduler.h"
 
 namespace dev
 {
@@ -27,9 +29,11 @@ namespace dev
 		//TelegramBot m_telegramBot;
 
 	public:
-		FeedbackWindow(const float* const _dpiScaleP);
-		void Update(bool& _visible, const bool _isRunning);
-		void Draw();
+		FeedbackWindow(
+			dev::Scheduler& _scheduler, bool& _visible,
+			const float* const _dpiScaleP);
+		void Draw(const dev::Scheduler::Signals _signals) override;
+		void DrawContext();
 		void DrawConfirmation();
 	};
 };

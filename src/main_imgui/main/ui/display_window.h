@@ -12,6 +12,7 @@
 #include "core/scripts.h"
 #include "utils/gl_utils.h"
 #include "imgui_app.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -41,7 +42,7 @@ namespace dev
 		const char* m_displaySizeAS[4] = { "Display Size: 256x256", "Display Size: 512x256", "Display Size: 512x512", "Display Size: Maximize" };
 		Hardware::ExecSpeed m_execSpeed = Hardware::ExecSpeed::NORMAL;
 		const char* m_execSpeedsS = " 1%\0 20%\0 50%\0 100%\0 200%\0 MAX\0\0";
-		
+
 		GLUtils& m_glUtils;
 		GLUtils::Vec4 m_activeArea_pxlSize = { Display::ACTIVE_AREA_W, Display::ACTIVE_AREA_H, FRAME_PXL_SIZE_W, FRAME_PXL_SIZE_H};
 		GLUtils::Vec4 m_scrollV_crtXY_highlightMul = { 255.0f * FRAME_PXL_SIZE_H, 0.0f, 0.0f, 1.0f};
@@ -57,7 +58,7 @@ namespace dev
 
 		dev::Id m_vramShaderId = -1;
 		dev::Id m_vramTexId = -1;
-		dev::Id m_vramMatId	= -1;		
+		dev::Id m_vramMatId	= -1;
 		bool m_isGLInited = false;
 		bool m_displayIsHovered = false;
 		const char* m_contextMenuName = "##displayCMenu";
@@ -73,9 +74,10 @@ namespace dev
 
 	public:
 		DisplayWindow(Hardware& _hardware,
-			const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI,
+			dev::Scheduler& _scheduler,
+			bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI,
 			Scripts& _scripts, const Hardware::ExecSpeed _execSpeed);
-		void Update(bool& _visible, const bool _isRunning);
+		void Draw(const dev::Scheduler::Signals _signals) override;
 		bool IsFocused() const;
 		auto GetExecutionSpeed() const { return m_execSpeed; };
 		void SetExecutionSpeed(const Hardware::ExecSpeed _execSpeed);

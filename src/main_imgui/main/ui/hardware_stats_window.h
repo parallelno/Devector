@@ -5,6 +5,7 @@
 #include "core/hardware.h"
 #include "core/cpu_i8080.h"
 #include "utils/imgui_utils.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -20,7 +21,7 @@ namespace dev
 		bool m_ruslatOld;
 		int m_frameNum = 0;
 		int m_displayMode = 0;
-		
+
 		////////////////////
 		// stats
 		std::string m_dataAddrN10S;
@@ -101,7 +102,7 @@ namespace dev
 		void DrawStack() const;
 		void DrawHardware(const bool _isRunning) const;
 		void DrawPeripheral() const;
-		void DrawPortsDataProperty(const char* _name, 
+		void DrawPortsDataProperty(const char* _name,
 			const IO::PortsData& _portsData, const bool _isRunning,
 			const PortsDataColors& _colors,
 			const char* _hint = nullptr) const;
@@ -112,11 +113,11 @@ namespace dev
 
 	public:
 		HardwareStatsWindow(Hardware& _hardware,
-			const float* const _dpiScaleP, 
+			dev::Scheduler& _scheduler,
+			bool& _visible, const float* const _dpiScaleP,
 			bool& _ruslat);
-		
-		void Update(bool& _visible, const bool _isRunning);
 
+		void Draw(const dev::Scheduler::Signals _signals) override;
 	};
 
 };

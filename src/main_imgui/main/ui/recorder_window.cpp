@@ -4,28 +4,31 @@
 #include "utils/str_utils.h"
 
 dev::RecorderWindow::RecorderWindow(Hardware& _hardware, Debugger& _debugger,
-	const float* const _dpiScaleP,
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP,
 	ReqUI& _reqUI)
 	:
-	BaseWindow("Recorder", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger), 
+	BaseWindow("Recorder", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
+	m_hardware(_hardware), m_debugger(_debugger),
 	m_reqUI(_reqUI)
 {}
 
-void dev::RecorderWindow::Update(bool& _visible, const bool _isRunning)
+void dev::RecorderWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
+	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
 	{
-		UpdateData(_isRunning);
-		Draw(_isRunning);
+		UpdateData(isRunning);
+		DrawContext(isRunning);
 
 		ImGui::End();
 	}
 }
 
-void dev::RecorderWindow::Draw(const bool _isRunning)
+void dev::RecorderWindow::DrawContext(const bool _isRunning)
 {
 
 	ImGui::Text("State current / recorded: %d / %d", m_stateCurrent, m_stateRecorded);
@@ -47,7 +50,7 @@ void dev::RecorderWindow::Draw(const bool _isRunning)
 		m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
 	}
 	if (_isRunning) ImGui::EndDisabled();
-	
+
 	ImGui::SameLine();
 	dev::DrawHelpMarker("Left Ctrl + R - reverse playback. Works runtime and while break\n"
 						"Left Ctrl + F - forward playback. Works while break only");

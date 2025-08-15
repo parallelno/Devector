@@ -4,6 +4,7 @@
 #include "utils/imgui_utils.h"
 #include "ui/base_window.h"
 #include "utils/gl_utils.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -17,13 +18,13 @@ namespace dev
 		Hardware& m_hardware;
 		ReqUI& m_reqUI;
 		std::string m_pathImgKeyboard;
-		
+
 		bool m_isGLInited = false;
 		GLUtils& m_glUtils;
 		GLUtils::Vec4 m_pressedKeyImgIdx_scaleXY = { 0, 1.0f, 1.0f, 0};
 		GLuint m_vramShaderId = -1;
 		dev::Id m_vramMatId;
-		GLuint m_vramTexId = -1;	
+		GLuint m_vramTexId = -1;
 		int m_imgKeyboardH;
 		int m_imgKeyboardW;
 		int m_imgKeyboardCh;
@@ -34,10 +35,12 @@ namespace dev
 		bool Init();
 
 	public:
-		KeyboardWindow(Hardware& _hardware, const float* const _dpiScaleP, 
+		KeyboardWindow(Hardware& _hardware,
+			dev::Scheduler& _scheduler,
+			bool& _visible, const float* const _dpiScaleP,
 			GLUtils& _glUtils, ReqUI& _reqUI, const std::string& _pathImgKeyboard);
-		void Update(bool& _visible, const bool _isRunning);
-		void Draw(const bool _isRunning);
+		void Draw(const dev::Scheduler::Signals _signals) override;
+		void DrawContext(const bool _isRunning);
 		bool IsFocused() const;
 	};
 };

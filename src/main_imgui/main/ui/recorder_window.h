@@ -3,6 +3,7 @@
 #include "utils/imgui_utils.h"
 #include "ui/base_window.h"
 #include "core/hardware.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -22,10 +23,11 @@ namespace dev
 		void UpdateData(const bool _isRunning);
 
 	public:
-		RecorderWindow(Hardware& _hardware, Debugger& _debugger, 
-			const float* const _dpiScaleP,
+		RecorderWindow(Hardware& _hardware, Debugger& _debugger,
+			dev::Scheduler& _scheduler,
+			bool& _visible, const float* const _dpiScaleP,
 			ReqUI& _reqUI);
-		void Update(bool& _visible, const bool _isRunning);
-		void Draw(const bool _isRunning);
+		void Draw(const dev::Scheduler::Signals _signals) override;
+		void DrawContext(const bool _isRunning);
 	};
 };

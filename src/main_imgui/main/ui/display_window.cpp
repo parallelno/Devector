@@ -67,8 +67,8 @@ const char* fragShaderS = R"#(
 				// highlight the rasterized pixels of the current crt line
 				color.xyz = vec3(0.3f, 0.3f, 0.3f) + color.xyz * 2.0f;
 			}
-			else 
-			if ((uv.y >= crt.y && 
+			else
+			if ((uv.y >= crt.y &&
 				uv.y < crt.y + pxlSize.y &&
 				uv.x >= crt.x + pxlSize.x ) || uv.y > crt.y + pxlSize.y)
 			{
@@ -82,12 +82,15 @@ const char* fragShaderS = R"#(
 )#";
 
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
-	const float* const _dpiScaleP, GLUtils& _glUtils, 
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
 	ReqUI& _reqUI, Scripts& _scripts,
 	const Hardware::ExecSpeed _execSpeed)
 	:
-	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
-	m_hardware(_hardware), m_glUtils(_glUtils), m_reqUI(_reqUI), m_scripts(_scripts)
+	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
+	m_hardware(_hardware), m_glUtils(_glUtils),
+	m_reqUI(_reqUI), m_scripts(_scripts)
 {
 	m_isGLInited = Init();
 	SetExecutionSpeed(_execSpeed);
@@ -101,7 +104,8 @@ bool dev::DisplayWindow::Init()
 	m_vramShaderId = vramShaderId;
 
 	// init texture
-	auto vramTexId = m_glUtils.InitTexture(Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
+	auto vramTexId = m_glUtils.InitTexture(
+		Display::FRAME_W, Display::FRAME_H, GLUtils::Texture::Format::RGBA);
 	if (vramTexId == INVALID_ID) return false;
 	m_vramTexId = vramTexId;
 
@@ -131,11 +135,13 @@ bool dev::DisplayWindow::Init()
 	return true;
 }
 
-void dev::DisplayWindow::Update(bool& _visible, const bool _isRunning)
+void dev::DisplayWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
+	if (m_visible &&
+		ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
 	{
 /*
 		// TODO: DEBUG test to tune the display settings
@@ -144,7 +150,7 @@ void dev::DisplayWindow::Update(bool& _visible, const bool _isRunning)
 		{
 			m_hardware.Request(Hardware::Req::SET_IO_PALETTE_COMMIT_TIME, { {"paletteCommitTime", paletteCommitTime}});
 		};
-		
+
 		int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
 		if (ImGui::InputInt("Border Left", &borderLeft, 1, 2000))
 		{
@@ -162,7 +168,7 @@ void dev::DisplayWindow::Update(bool& _visible, const bool _isRunning)
 		// TODO: DEBUG test end
 */
 		m_windowFocused = ImGui::IsWindowFocused();
-		
+
 		// switch the border type
 		if (ImGui::IsKeyPressed(ImGuiKey_B) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl)) {
 			m_borderType = static_cast<BorderType>((static_cast<int>(m_borderType) + 1) % static_cast<int>(BorderType::LEN));
@@ -174,7 +180,7 @@ void dev::DisplayWindow::Update(bool& _visible, const bool _isRunning)
 			DrawTooltipTimer(m_displaySizeAS[(int)(m_displaySize)]);
 		}
 
-		UpdateData(_isRunning);
+		UpdateData(isRunning);
 		DrawContextMenu();
 		DrawDisplay();
 		DrawTooltipTimer();
@@ -201,7 +207,7 @@ void dev::DisplayWindow::UpdateData(const bool _isRunning)
 
 	if (!_isRunning)
 	{
-		if (ccDiff) 
+		if (ccDiff)
 		{
 			auto res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
 			const auto& displayData = *res;
@@ -251,7 +257,7 @@ void dev::DisplayWindow::DrawDisplay()
 			border = Display::BORDER_VISIBLE;
 			[[fallthrough]];
 
-		case dev::DisplayWindow::BorderType::NONE: 
+		case dev::DisplayWindow::BorderType::NONE:
 		{
 			int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
 
@@ -285,10 +291,10 @@ void dev::DisplayWindow::DrawDisplay()
 			ImGuiStyle& style = ImGui::GetStyle();
 			auto wMax = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
 			auto hMax = ImGui::GetWindowHeight() - style.FramePadding.y * 14;
-			
+
 			displaySize.x = wMax;
 			displaySize.y = displaySize.x * WINDOW_ASPECT;
-			if (displaySize.y > hMax) 
+			if (displaySize.y > hMax)
 			{
 				displaySize.y = hMax;
 				displaySize.x = displaySize.y / WINDOW_ASPECT;
@@ -297,13 +303,13 @@ void dev::DisplayWindow::DrawDisplay()
 		}
 		}
 
-		
+
 		auto pos = ImGui::GetCursorPos();
 
 		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
 		ImGui::Image(framebufferTex, displaySize, borderMin, borderMax);
 		m_displayIsHovered = ImGui::IsItemHovered();
-		
+
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
 			ImGui::OpenPopup(m_contextMenuName);
@@ -311,7 +317,7 @@ void dev::DisplayWindow::DrawDisplay()
 
 		// Draw script objects
 		DrawScriptsUIItems(pos, displaySize);
-				
+
 	}
 }
 
@@ -322,7 +328,7 @@ void dev::DisplayWindow::DrawScriptsUIItems(
 	float v6visibleBorderR = 0;
 	float v6visibleBorderT = 0;
 	float v6visibleBorderB = 0;
-	
+
 	switch (m_borderType)
 	{
 		case dev::DisplayWindow::BorderType::FULL:
@@ -349,7 +355,7 @@ void dev::DisplayWindow::DrawScriptsUIItems(
 	float posRightBottomX = _pos.x + _displaySize.x - v6visibleBorderR * v6pixelSizeX;
 	float posRightBottomY = _pos.y + _displaySize.y - v6visibleBorderB * v6pixelSizeY;
 
-	
+
 
 	for (auto const& [id, uiItem] : m_scripts.GetUIItems())
 	{
@@ -358,13 +364,13 @@ void dev::DisplayWindow::DrawScriptsUIItems(
 		float sizeX = 0;
 		float sizeY = 0;
 		if (uiItem.vectorScreenCoords)
-		{	
+		{
 			posX = uiItem.x * v6pixelSizeX;
 			posY = -uiItem.y * v6pixelSizeY;
-	
+
 			posX += uiItem.x >= 0 ? posLeftTopX : posRightBottomX;
 			posY += uiItem.y < 0 ? posLeftTopY : posRightBottomY;
-	
+
 			sizeX = uiItem.width * v6pixelSizeX;
 			sizeY = -uiItem.height * v6pixelSizeY;
 		}
@@ -388,11 +394,11 @@ void dev::DisplayWindow::DrawScriptsUIItems(
 				ImGui::SetCursorPos( pos );
 				ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(uiItem.color));
 				ImGui::Text(uiItem.text.c_str());
-				ImGui::PopStyleColor();		
+				ImGui::PopStyleColor();
 				break;
 			}
 			case dev::Scripts::UIType::RECT:
-			{	
+			{
 				ImVec2 screenPos = dev::CursorPosToScreenPos(pos);
 				ImGui::GetWindowDrawList()->AddRect(
 					screenPos,
@@ -400,14 +406,14 @@ void dev::DisplayWindow::DrawScriptsUIItems(
 					dev::IM_U32(uiItem.color));
 				break;
 			}
-			
+
 			case dev::Scripts::UIType::RECT_FILLED:
 			{
 				ImVec2 screenPos = dev::CursorPosToScreenPos(pos);
 				ImGui::GetWindowDrawList()->AddRectFilled(
 					screenPos,
 					{screenPos.x + sizeX, screenPos.y + sizeY},
-					dev::IM_U32(uiItem.color));	
+					dev::IM_U32(uiItem.color));
 				break;
 			}
 		}
@@ -427,7 +433,7 @@ void dev::DisplayWindow::DrawContextMenu()
 		}
 		if (ImGui::BeginMenu("Emulation Settings"))
 		{
-			if (ImGui::Combo("Emulation Speed", (int*)(&m_execSpeed), m_execSpeedsS)) 
+			if (ImGui::Combo("Emulation Speed", (int*)(&m_execSpeed), m_execSpeedsS))
 			{
 				SetExecutionSpeed(m_execSpeed);
 			};
@@ -460,7 +466,7 @@ void dev::DisplayWindow::ReqHandling()
 */
 
 void dev::DisplayWindow::SetExecutionSpeed(const Hardware::ExecSpeed _execSpeed)
-{ 
+{
 	m_execSpeed = _execSpeed;
-	m_hardware.Request(Hardware::Req::SET_CPU_SPEED, { {"speed", int(m_execSpeed)} }); 
+	m_hardware.Request(Hardware::Req::SET_CPU_SPEED, { {"speed", int(m_execSpeed)} });
 };

@@ -2,37 +2,45 @@
 #include "ui/about_window.h"
 #include "utils/str_utils.h"
 
-dev::AboutWindow::AboutWindow(const float* const _dpiScaleP)
+dev::AboutWindow::AboutWindow(
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP)
 	:
-	BaseWindow("About Devector", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP)
+	BaseWindow("About Devector", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP)
 {}
 
-void dev::AboutWindow::Update(bool& _visible, const bool _isRunning)
+void dev::AboutWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
 
-	if (_visible) 
+	// Always center this window when appearing
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible,
+		ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking |
+		ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse))
 	{
-		ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
-		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
-		if (ImGui::Begin(m_name.c_str(), &_visible, 
-			ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking | 
-			ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse))
-		{
-			Draw();
-			ImGui::End();
-		}
+		DrawContext();
+		ImGui::End();
 	}
 }
 
-void dev::AboutWindow::Draw()
+void dev::AboutWindow::DrawContext()
 {
-	ImGui::BeginChild("##aboutchframe", { DEFAULT_WINDOW_W, 205}, ImGuiChildFlags_FrameStyle);
+	ImGui::BeginChild("##aboutchframe",
+		{ DEFAULT_WINDOW_W, 205}, ImGuiChildFlags_FrameStyle);
 
-	ImGui::Text("Devector is an emulator of the Soviet personal computer\nVector 06C, offering advanced debugging options to enhance \nyour development experience.");
+	ImGui::Text(
+		"Devector is an emulator of the Soviet personal computer\n"
+		"Vector 06C, offering advanced debugging options to enhance \n"
+		"your development experience.");
 	ImGui::Dummy({1, 5});
-	ImGui::Text("Your feedback is invaluable, whether positive or negative. \nPlease share your thoughts using the Feedback window. \nYour contributions and support help improve this emulator.");
+	ImGui::Text(
+		"Your feedback is invaluable, whether positive or negative. \n"
+		"Please share your thoughts using the Feedback window. \n"
+		"Your contributions and support help improve this emulator.");
 	ImGui::Dummy({ 1, 20 });
 	ImGui::Text("Please join our Telegram channel");
 	ImGui::SameLine();
@@ -44,9 +52,15 @@ void dev::AboutWindow::Draw()
 
 	//ImGui::Separator();
 
-	//ImGui::Text("Devector - эмулятор советского персонального компьютера\nVector 06Ц, со встроенными возможностями отладки \nдля улучшения вашего опыта разработки.");
+	//ImGui::Text(
+	//	"Devector - эмулятор советского персонального компьютера\n"
+	//	"Vector 06Ц, со встроенными возможностями отладки \n"
+	//	"для улучшения вашего опыта разработки.");
 	//ImGui::Dummy({ 1, 5 });
-	//ImGui::Text("Ваши положительные и даже отрицательные отзывы бесценны. \nПожалуйста, поделитесь вашими предложениями в окне Feedback. \nЭто поможет сделать эмулятор лучше.");
+	//ImGui::Text(
+	//	"Ваши положительные и даже отрицательные отзывы бесценны. \n"
+	//	"Пожалуйста, поделитесь вашими предложениями в окне Feedback. \n"
+	//	"Это поможет сделать эмулятор лучше.");
 	//ImGui::Dummy({ 1, 20 });
 	//ImGui::Text("Подключайтесь в");
 	//ImGui::SameLine();
@@ -54,7 +68,8 @@ void dev::AboutWindow::Draw()
 	//{
 	//	dev::OsOpenInShell("http://t.me/devector06C");
 	//}
-	//ImGui::SameLine(); ImGui::Text("для дальнейших обновлений и обсуждений.");
+	//ImGui::SameLine();
+	//ImGui::Text("для дальнейших обновлений и обсуждений.");
 
 	ImGui::EndChild();
 

@@ -9,6 +9,7 @@
 #include "core/hardware.h"
 #include "core/debugger.h"
 #include "utils/gl_utils.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -37,7 +38,7 @@ namespace dev
 
 		GLUtils& m_glUtils;
 		GLUtils::Vec4 m_globalColorBg = { 0.2f, 0.2f, 0.2f, 1.0f };
-		GLUtils::Vec4 m_globalColorFg = { 1.0f, 1.0f, 1.0f, 1.0f };		
+		GLUtils::Vec4 m_globalColorFg = { 1.0f, 1.0f, 1.0f, 1.0f };
 		GLUtils::Vec4 m_highlightRead = { 0.078f, 0.078f, 1.0f, 0.8f };
 		GLUtils::Vec4 m_highlightWrite = { 1.0f, 0.078f, 0.078f, 0.8f };
 		GLUtils::Vec4 m_highlightIdxMax = {Debugger::LAST_RW_MAX, 0.0f, 0.0f, 0.0f};
@@ -61,9 +62,11 @@ namespace dev
 		bool Init();
 
 	public:
-		MemDisplayWindow(Hardware& _hardware, Debugger& _debugger, 
-			const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI);
-		void Update(bool& _visible, const bool _isRunning);
+		MemDisplayWindow(Hardware& _hardware, Debugger& _debugger,
+			dev::Scheduler& _scheduler,
+			bool& _visible, const float* const _dpiScaleP,
+			GLUtils& _glUtils, ReqUI& _reqUI);
+		void Draw(const dev::Scheduler::Signals _signals) override;
 	};
 
 };

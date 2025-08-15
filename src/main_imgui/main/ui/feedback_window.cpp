@@ -2,35 +2,38 @@
 #include "ui/feedback_window.h"
 #include "utils/str_utils.h"
 
-dev::FeedbackWindow::FeedbackWindow(const float* const _dpiScaleP)
+dev::FeedbackWindow::FeedbackWindow(
+	dev::Scheduler& _scheduler, bool& _visible,
+	const float* const _dpiScaleP)
 	:
-	BaseWindow("Send Feedback", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP)
+	BaseWindow("Send Feedback", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP)
 {
 	m_userFeedback = m_defaultFeedback;
 }
 
 
-void dev::FeedbackWindow::Update(bool& _visible, const bool _isRunning)
+void dev::FeedbackWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
 
-	if (_visible)
+	if (m_visible)
 	{
 		ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
 		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
-		if (ImGui::Begin(m_name.c_str(), &_visible, 
-			ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking | 
+		if (ImGui::Begin(m_name.c_str(), &m_visible,
+			ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking |
 			ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse))
 		{
-			Draw();
+			DrawContext();
 			DrawConfirmation();
 			ImGui::End();
 		}
 	}
 }
 
-void dev::FeedbackWindow::Draw()
+void dev::FeedbackWindow::DrawContext()
 {
 	dev::DrawHelpMarker("Please, use english alphabet only, \nbecause the current font does not support \ncyrillic in the current version.");
 

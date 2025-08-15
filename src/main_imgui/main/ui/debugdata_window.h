@@ -3,6 +3,7 @@
 #include "utils/imgui_utils.h"
 #include "ui/base_window.h"
 #include "core/hardware.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -41,7 +42,7 @@ namespace dev
 		std::string m_tempFilter;
 
 		int m_selectedLineIdx = 0;
-		
+
 		enum class ElementType { LABEL = 0, CONST, COMMENT, MEMORY_EDIT, CODE_PERFS, SCRIPTS };
 
 		struct ContextMenu {
@@ -78,19 +79,21 @@ namespace dev
 
 		void UpdateData(const bool _isRunning);
 
-		void UpdateAndDrawFilteredElements(DebugData::FilteredElements& _filteredElements,
-										DebugData::UpdateId& _filteredUpdateId, 
-										const DebugData::UpdateId& _updateId,
-										std::string& _filter,
-										ElementType _elementType);
+		void UpdateAndDrawFilteredElements(
+			DebugData::FilteredElements& _filteredElements,
+			DebugData::UpdateId& _filteredUpdateId,
+			const DebugData::UpdateId& _updateId,
+			std::string& _filter,
+			ElementType _elementType);
 
 		void DrawContextMenu(ContextMenu& _contextMenu);
 
 	public:
-		DebugDataWindow(Hardware& _hardware, Debugger& _debugger, 
-			const float* const _dpiScaleP,
+		DebugDataWindow(Hardware& _hardware, Debugger& _debugger,
+			dev::Scheduler& _scheduler,
+			bool& _visible, const float* const _dpiScaleP,
 			ReqUI& _reqUI);
-		void Update(bool& _visible, const bool _isRunning);
-		void Draw(const bool _isRunning);
+		void Draw(const dev::Scheduler::Signals _signals) override;
+		void DrawContext(const bool _isRunning);
 	};
 };

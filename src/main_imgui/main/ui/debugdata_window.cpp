@@ -5,28 +5,32 @@
 #include "imgui_stdlib.h"
 
 dev::DebugDataWindow::DebugDataWindow(Hardware& _hardware, Debugger& _debugger,
-	const float* const _dpiScaleP,
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP,
 	ReqUI& _reqUI)
 	:
-	BaseWindow("Debug Data", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger), 
+	BaseWindow("Debug Data", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
+	m_hardware(_hardware), m_debugger(_debugger),
 	m_reqUI(_reqUI)
 {}
 
-void dev::DebugDataWindow::Update(bool& _visible, const bool _isRunning)
+void dev::DebugDataWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
+	if (m_visible &&
+		ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
 	{
-		UpdateData(_isRunning);
-		Draw(_isRunning);
+		bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+		UpdateData(isRunning);
+		DrawContext(isRunning);
 
 		ImGui::End();
 	}
 }
 
-void dev::DebugDataWindow::Draw(const bool _isRunning)
+void dev::DebugDataWindow::DrawContext(const bool _isRunning)
 {
 	// three tabs: consts, labels, comments
 	if (ImGui::BeginTabBar("ElementsTabs"))
@@ -34,43 +38,49 @@ void dev::DebugDataWindow::Draw(const bool _isRunning)
 		if (ImGui::BeginTabItem("Labels"))
 		{
 			auto updateId = m_debugger.GetDebugData().GetLabelsUpdates();
-			UpdateAndDrawFilteredElements(m_filteredLabels, m_labelsUpdates, updateId,
-										m_labelFilter, ElementType::LABEL);
+			UpdateAndDrawFilteredElements(
+				m_filteredLabels, m_labelsUpdates, updateId,
+				m_labelFilter, ElementType::LABEL);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Consts"))
 		{
 			auto updateId = m_debugger.GetDebugData().GetConstsUpdates();
-			UpdateAndDrawFilteredElements(m_filteredConsts, m_constsUpdates, updateId,
-										m_constFilter, ElementType::CONST);
+			UpdateAndDrawFilteredElements(
+				m_filteredConsts, m_constsUpdates, updateId,
+				m_constFilter, ElementType::CONST);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Comments"))
 		{
 			auto updateId = m_debugger.GetDebugData().GetCommentsUpdates();
-			UpdateAndDrawFilteredElements(m_filteredComments, m_commentsUpdates, updateId,
-										m_commentFilter, ElementType::COMMENT);
+			UpdateAndDrawFilteredElements(
+				m_filteredComments, m_commentsUpdates, updateId,
+				m_commentFilter, ElementType::COMMENT);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Memory Edits"))
 		{
 			auto updateId = m_debugger.GetDebugData().GetEditsUpdates();
-			UpdateAndDrawFilteredElements(m_filteredEdits, m_editsUpdates, updateId,
-										m_editFilter, ElementType::MEMORY_EDIT);
+			UpdateAndDrawFilteredElements(
+				m_filteredEdits, m_editsUpdates, updateId,
+				m_editFilter, ElementType::MEMORY_EDIT);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Code Perfs"))
 		{
 			auto updateId = m_debugger.GetDebugData().GetCodePerfsUpdates();
-			UpdateAndDrawFilteredElements(m_filteredCodePerfs, m_codePerfsUpdates, updateId,
-										m_codePerfFilter, ElementType::CODE_PERFS);
+			UpdateAndDrawFilteredElements(
+				m_filteredCodePerfs, m_codePerfsUpdates, updateId,
+				m_codePerfFilter, ElementType::CODE_PERFS);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Scripts"))
 		{
 			auto updateId = m_debugger.GetDebugData().GetScripts().GetUpdates();
-			UpdateAndDrawFilteredElements(m_filteredScripts, m_scriptsUpdates, updateId,
-										m_scriptFilter, ElementType::SCRIPTS);
+			UpdateAndDrawFilteredElements(
+				m_filteredScripts, m_scriptsUpdates, updateId,
+				m_scriptFilter, ElementType::SCRIPTS);
 			ImGui::EndTabItem();
 		}
 
@@ -92,17 +102,18 @@ void dev::DebugDataWindow::UpdateData(const bool _isRunning)
 }
 
 void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
-	DebugData::FilteredElements& _filteredElements, 
+	DebugData::FilteredElements& _filteredElements,
 	DebugData::UpdateId& _filteredUpdateId, const DebugData::UpdateId& _updateId,
 	std::string& _filter, ElementType _elementType)
 {
 	// update the data and draw a filter
 	ImGui::Text("Filter"); ImGui::SameLine();
-	bool filterUpdated = ImGui::InputTextWithHint("##filter", "search name", &_filter);
+	bool filterUpdated = ImGui::InputTextWithHint("##filter", "search name",
+		&_filter);
 	ImGui::SameLine(); dev::DrawHelpMarker(
-		"Accepts substrings. Case insensitive.\n\
-Double click on the element to locate the addr in the Disasm Window.\n\
-Double click + Ctrl the element to locate the addr in the Hex Window.");
+		"Accepts substrings. Case insensitive.\n"
+		"Double click on the element to locate the addr in the Disasm Window.\n"
+		"Double click + Ctrl the element to locate the addr in the Hex Window.");
 
 	if (filterUpdated || _filteredUpdateId != _updateId)
 	{
@@ -130,10 +141,10 @@ Double click + Ctrl the element to locate the addr in the Hex Window.");
 			m_debugger.GetDebugData().GetFilteredScripts(_filteredElements, _filter);
 			break;
 		default:
-			break;			
+			break;
 		}
 	}
-	
+
 	// update the CODE_PERFS tab every second
 	static auto lastTime = std::chrono::steady_clock::now();
 	auto now = std::chrono::steady_clock::now();
@@ -157,7 +168,9 @@ Double click + Ctrl the element to locate the addr in the Hex Window.");
 		ImGuiTableFlags_Resizable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
-		ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, 0); // for the line selection/highlight
+		ImGui::TableSetupColumn("",
+			ImGuiTableColumnFlags_WidthFixed |
+			ImGuiTableColumnFlags_NoResize, 0); // for the line selection/highlight
 		ImGui::TableSetupColumn("consts", ImGuiTableColumnFlags_WidthFixed, 100);
 		ImGui::TableSetupColumn("Addr");
 
@@ -165,7 +178,8 @@ Double click + Ctrl the element to locate the addr in the Hex Window.");
 		clipper.Begin(int(_filteredElements.size()));
 		while (clipper.Step())
 		{
-			for (int lineIdx = clipper.DisplayStart; lineIdx < clipper.DisplayEnd; lineIdx++)
+			for (int lineIdx = clipper.DisplayStart;
+				lineIdx < clipper.DisplayEnd; lineIdx++)
 			{
 				ImGui::TableNextRow();
 
@@ -173,7 +187,10 @@ Double click + Ctrl the element to locate the addr in the Hex Window.");
 				ImGui::TableNextColumn();
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
 				const bool isSelected = m_selectedLineIdx == lineIdx;
-				if (ImGui::Selectable(std::format("##ElementLineId{}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
+				if (ImGui::Selectable(
+					std::format("##ElementLineId{}",lineIdx).c_str(),
+					isSelected,
+					ImGuiSelectableFlags_SpanAllColumns))
 				{
 					m_selectedLineIdx = lineIdx;
 				}
@@ -183,7 +200,9 @@ Double click + Ctrl the element to locate the addr in the Hex Window.");
 
 				// draw the element
 				ImGui::TableNextColumn();
-				ImGui::TextColored( label[0] == '@' ? DASM_CLR_LABEL_LOCAL : DASM_CLR_LABEL_GLOBAL, label.c_str());
+				ImGui::TextColored( label[0] == '@' ?
+					DASM_CLR_LABEL_LOCAL : DASM_CLR_LABEL_GLOBAL,
+					label.c_str());
 
 				// draw the addr
 				ImGui::TableNextColumn();
@@ -206,22 +225,23 @@ Double click + Ctrl the element to locate the addr in the Hex Window.");
 							m_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
 						}
 					}
-				
+
 					// init the context menu
 					if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 					{
-						const auto& [element, selectedAddr, selectedAddrS] = _filteredElements.at(hoveredLineIdx);
+						const auto& [element, selectedAddr, selectedAddrS] =
+							_filteredElements.at(hoveredLineIdx);
 						m_contextMenu.Init(selectedAddr, element, _elementType);
 					}
 				}
-				
+
 			}
 		}
 		ImGui::EndTable();
 		// init the context menu
 		ImVec2 tableMin = ImGui::GetItemRectMin();
 		ImVec2 tableMax = ImGui::GetItemRectMax();
-		if (ImGui::IsMouseHoveringRect(tableMin, tableMax) && 
+		if (ImGui::IsMouseHoveringRect(tableMin, tableMax) &&
 			hoveredLineIdx < 0 &&
 			ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 		{
@@ -269,7 +289,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 		if (ImGui::MenuItem("Add"))
 		{
 			ImGui::CloseCurrentPopup();
-			
+
 			switch (_contextMenu.elementType)
 			{
 			case ElementType::LABEL:
@@ -289,7 +309,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 				break;
 			case ElementType::SCRIPTS:
 				m_reqUI.type = ReqUI::Type::SCRIPTS_EDIT_WINDOW_ADD;
-				break;			
+				break;
 			}
 			m_reqUI.globalAddr = 0;
 		}
@@ -299,7 +319,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 			if (ImGui::MenuItem("Edit"))
 			{
 				ImGui::CloseCurrentPopup();
-			
+
 				switch (_contextMenu.elementType)
 				{
 				case ElementType::LABEL:
@@ -319,7 +339,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 					break;
 				case ElementType::SCRIPTS:
 					m_reqUI.type = ReqUI::Type::SCRIPTS_EDIT_WINDOW_EDIT;
-					break;					
+					break;
 				}
 				m_reqUI.globalAddr = _contextMenu.addr;
 			}
@@ -329,11 +349,13 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 				switch (_contextMenu.elementType)
 				{
 				case ElementType::LABEL:
-					m_debugger.GetDebugData().DelLabel(_contextMenu.addr, _contextMenu.elementName);
+					m_debugger.GetDebugData().DelLabel(
+						_contextMenu.addr, _contextMenu.elementName);
 					break;
 
 				case ElementType::CONST:
-					m_debugger.GetDebugData().DelConst(_contextMenu.addr, _contextMenu.elementName);
+					m_debugger.GetDebugData().DelConst(
+						_contextMenu.addr, _contextMenu.elementName);
 					break;
 
 				case ElementType::COMMENT:
@@ -350,14 +372,14 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 				case ElementType::SCRIPTS:
 					m_debugger.GetDebugData().GetScripts().Del(_contextMenu.addr);
 					break;
-				
+
 				default:
 					break;
 				}
 				m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 				ImGui::CloseCurrentPopup();
 			}
-			
+
 			ImGui::SeparatorText("");
 		}
 
@@ -373,7 +395,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 				m_debugger.GetDebugData().DelAllConsts();
 				break;
 
-			case ElementType::COMMENT:				
+			case ElementType::COMMENT:
 				m_debugger.GetDebugData().DelAllComments();
 				break;
 

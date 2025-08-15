@@ -26,12 +26,12 @@ namespace dev
 		//=============================================================================
 		// The RAM Disk
 		//=============================================================================
-		// The RAM Disk is an external 256-byte RAM space. It is split into four 64k 
+		// The RAM Disk is an external 256-byte RAM space. It is split into four 64k
 		// memory pages. It operates in two modes:
-		// 
+		//
 		//   • Stack Mode:
 		//       - Accessed using stack-related instructions
-		// 
+		//
 		//   • Memory-Mapped Mode:
 		//       - The RAM Disk is mapped into the 0xA000–0xFFFF address space
 		//       - The RAM Disk memory space operates as a regular RAM
@@ -141,7 +141,7 @@ namespace dev
 		void Restart();
 		auto GetByte(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM) const -> uint8_t;
-		auto GetByteGlobal(const GlobalAddr _globalAddr) const -> uint8_t;			
+		auto GetByteGlobal(const GlobalAddr _globalAddr) const -> uint8_t;
 		auto CpuReadInstr(const Addr _addr,
 			const Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM,
 			const uint8_t _byteNum = 0) -> uint8_t;

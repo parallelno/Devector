@@ -3,18 +3,20 @@
 #include "utils/str_utils.h"
 
 dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
-	const float* const _dpiScaleP, ReqUI& _reqUI)
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
-	BaseWindow("Watchpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
+	BaseWindow("Watchpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware),
 	m_reqUI(_reqUI)
 {}
 
-void dev::WatchpointsWindow::Update(bool& _visible, const bool _isRunning)
+void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
+	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
 	{
 		DrawTable();
 		ImGui::End();
@@ -29,11 +31,11 @@ void dev::WatchpointsWindow::DrawProperty(const std::string& _name, const ImVec2
 	ImGui::PopStyleColor();
 }
 
-void dev::WatchpointsWindow::CheckIfItemClicked(const ImVec2& _rowMin, 
+void dev::WatchpointsWindow::CheckIfItemClicked(const ImVec2& _rowMin,
 	bool& _showItemContextMenu, const int _id, int& _editedWatchpointId, ReqPopup& _reqPopup)
 {
-	if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) 
-	{ 
+	if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+	{
 		_showItemContextMenu = true;
 		_editedWatchpointId = _id;
 	}
@@ -140,7 +142,7 @@ void dev::WatchpointsWindow::DrawTable()
 			// Condition
 			std::string condS = wp.GetConditionS();
 			if (wp.data.cond != dev::Condition::ANY) {
-				if (wp.data.type == Watchpoint::Type::LEN) 
+				if (wp.data.type == Watchpoint::Type::LEN)
 				{
 					condS += std::format("{:02X}", wp.data.value);
 				}
@@ -167,7 +169,7 @@ void dev::WatchpointsWindow::DrawTable()
 				auto len = wp.data.len;
 				auto data = m_hardware.Request(Hardware::Req::GET_MEM_STRING_GLOBAL, { {"addr", addr}, {"len", len} });
 				auto hexS = data->at("data").get<std::string>();
-				
+
 
 				// draw a tooltip
 				ImGui::BeginTooltip();
@@ -200,7 +202,7 @@ void dev::WatchpointsWindow::DrawTable()
 			}
 			else if (ImGui::MenuItem("Disable All"))
 			{
-				for (auto& [id, wp] : m_watchpoints) 
+				for (auto& [id, wp] : m_watchpoints)
 				{
 					wp.data.active = false;
 					m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_ADD,
@@ -232,7 +234,7 @@ void dev::WatchpointsWindow::DrawTable()
 					m_reqUI.globalAddr = wp.data.globalAddr;
 					m_reqUI.len = wp.data.len;
 				}
-				if (ImGui::MenuItem("Delete")) 
+				if (ImGui::MenuItem("Delete"))
 				{
 					m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_DEL, { {"id", editedWatchpointId} });
 					m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_OFF;
@@ -307,21 +309,21 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 		{
 			ImGui::TableSetupColumn("##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
 			ImGui::TableSetupColumn("##WpContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 210);
-			
+
 			// Status
 			DrawProperty2EditableCheckBox("Active", "##WpContextStatus", &isActive, "Enable or disable the watchpoint");
-			
+
 			// addr
 			DrawProperty2EditableI("Global Address", "##WpContextAddress", &globalAddr,
-				"A hexademical address in the format FF", 
+				"A hexademical address in the format FF",
 				ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
-			
+
 			// Access
 			DrawProperty2RadioButtons("Access", &access, dev::wpAccessS, IM_ARRAYSIZE(dev::wpAccessS), 8.0f,
 				"R - read, W - write, RW - read or write");
 
 			// Condition
-			DrawProperty2Combo("Condition", "##WpContextCondition", 
+			DrawProperty2Combo("Condition", "##WpContextCondition",
 				&cond, dev::ConditionsS, IM_ARRAYSIZE(dev::ConditionsS), "");
 
 			// Value
@@ -335,7 +337,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 			DrawProperty2RadioButtons("Type", &type, wpTypesS, IM_ARRAYSIZE(wpTypesS), 15.0f,
 				"Byte - breaks if the condition succeeds for any bytes in the defined range\n"
 				"Word - breaks if the condition succeeds for a word");
-			
+
 			// Length
 			if (type == static_cast<int>(Watchpoint::Type::WORD)) {
 				ImGui::BeginDisabled();
@@ -352,7 +354,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
-			
+
 			// Warnings
 			std::string warningS = "";
 
@@ -369,7 +371,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 			if (val > 0xFFFF || (type != static_cast<int>(Watchpoint::Type::WORD) && val > 0xFF)) {
 				warningS = "Too large value";
 			}
-			
+
 			ImGui::TextColored(DASM_CLR_WARNING, warningS.c_str());
 
 			ImGui::TableNextRow();

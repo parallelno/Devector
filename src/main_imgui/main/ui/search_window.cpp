@@ -4,28 +4,31 @@
 #include "utils/str_utils.h"
 
 dev::SearchWindow::SearchWindow(Hardware& _hardware, Debugger& _debugger,
-	const float* const _dpiScaleP,
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP,
 	ReqUI& _reqUI)
 	:
-	BaseWindow("Search", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger), 
+	BaseWindow("Search", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
+	m_hardware(_hardware), m_debugger(_debugger),
 	m_reqUI(_reqUI)
 {}
 
-void dev::SearchWindow::Update(bool& _visible, const bool _isRunning)
+void dev::SearchWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
+	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
 	{
-		UpdateData(_isRunning);
-		Draw(_isRunning);
+		UpdateData(isRunning);
+		DrawContext(isRunning);
 
 		ImGui::End();
 	}
 }
 
-void dev::SearchWindow::Draw(const bool _isRunning)
+void dev::SearchWindow::DrawContext(const bool _isRunning)
 {
 	if (m_searchEnabled) ImGui::BeginDisabled();
 
@@ -42,7 +45,7 @@ void dev::SearchWindow::Draw(const bool _isRunning)
 	}
 
 	if (m_searchEnabled) ImGui::EndDisabled();
-	
+
 	if (ImGui::InputInt("Search Value", &m_searchVal, 1, 100, ImGuiInputTextFlags_CharsHexadecimal))
 	{
 		m_searchVal = dev::Max(0, m_searchVal);
@@ -65,7 +68,7 @@ void dev::SearchWindow::Draw(const bool _isRunning)
 				}
 			}
 		}
-	} 
+	}
 
 	if (!m_searchEnabled) ImGui::BeginDisabled();
 

@@ -6,10 +6,12 @@
 
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
-		const float* const _dpiScale,
+		dev::Scheduler& _scheduler,
+		bool& _visible, const float* const _dpiScale,
 		ReqUI& _reqUI)
 	:
-	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScale),
+	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScale),
 	m_hardware(_hardware),
 	m_debugger(_debugger),
 	m_fontCommentP(fontComment),
@@ -18,16 +20,21 @@ dev::DisasmWindow::DisasmWindow(
 	UpdateData(false);
 }
 
-void dev::DisasmWindow::Update(bool& _visible, const bool _isRunning)
+void dev::DisasmWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	BaseWindow::Draw(_signals);
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
+	if (m_visible &&
+		ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
 	{
-		DrawDebugControls(_isRunning);
-		DrawSearch(_isRunning);
+		DrawDebugControls(isRunning);
+		DrawSearch(isRunning);
 
-		bool isRunning = m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning"); // in case it changed the bpStatus in DrawDebugControls
+		// in case it changed the bpStatus in DrawDebugControls
+		// TODO: optimize - don't call Request if not needed
+		bool isRunning =
+			m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 		UpdateData(isRunning);
 		DrawDisasm(isRunning);
 
@@ -58,9 +65,14 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	ImGui::SameLine();
 	if (ImGui::Button("Step Over"))
 	{
-		Addr addr = m_hardware.Request(Hardware::Req::GET_STEP_OVER_ADDR)->at("data");
-		Breakpoint::Data bpData
-			{addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true};
+		Addr addr = m_hardware.Request(
+			Hardware::Req::GET_STEP_OVER_ADDR)->at("data");
+		Breakpoint::Data bpData{
+			addr,
+			Breakpoint::MAPPING_PAGES_ALL,
+			Breakpoint::Status::ACTIVE,
+			true
+		};
 
 		m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
 			{"data0", bpData.data0 },
@@ -149,18 +161,21 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 bool dev::DisasmWindow::IsDisasmTableOutOfWindow() const
 {
 	ImVec2 cursorPos = ImGui::GetCursorPos();
-	float remainingSpace = ImGui::GetWindowSize().y - cursorPos.y - ImGui::GetFontSize();
+	float remainingSpace = ImGui::GetWindowSize().y -
+		cursorPos.y - ImGui::GetFontSize();
 
 	return remainingSpace < 0;
 }
 
 int dev::DisasmWindow::GetVisibleLines() const
 {
-	auto lines = (ImGui::GetWindowSize().y - ImGui::GetCursorPosY()) / ImGui::GetFontSize();
+	auto lines = (ImGui::GetWindowSize().y - ImGui::GetCursorPosY()) /
+				ImGui::GetFontSize();
 	return static_cast<int>(lines);
 }
 
-void dev::DisasmWindow::DrawNextExecutedLineHighlight(const bool _isRunning, const Disasm::Line& _line, const Addr _regPC)
+void dev::DisasmWindow::DrawNextExecutedLineHighlight(
+	const bool _isRunning, const Disasm::Line& _line, const Addr _regPC)
 {
 	if (_isRunning) return;
 	if (_line.addr != _regPC) return;
@@ -170,11 +185,14 @@ void dev::DisasmWindow::DrawNextExecutedLineHighlight(const bool _isRunning, con
 	auto highlightMin = ImGui::GetItemRectMin();
 	auto highlightMax = ImGui::GetItemRectMax();
 
-	ImGui::GetWindowDrawList()->AddRectFilled(highlightMin, highlightMax, DASM_CLR_PC_LINE_HIGHLIGHT);
+	ImGui::GetWindowDrawList()->AddRectFilled(
+		highlightMin, highlightMax, DASM_CLR_PC_LINE_HIGHLIGHT);
 
 }
 
-void dev::DisasmWindow::DrawDisasmIcons(const bool _isRunning, const Disasm::Line& _line, const int _lineIdx, const Addr _regPC)
+void dev::DisasmWindow::DrawDisasmIcons(
+	const bool _isRunning, const Disasm::Line& _line, const int _lineIdx,
+	const Addr _regPC)
 {
 	if (_isRunning) return;
 	// draw breakpoints
@@ -185,13 +203,16 @@ void dev::DisasmWindow::DrawDisasmIcons(const bool _isRunning, const Disasm::Lin
 		switch (bpStatus)
 		{
 		case dev::Breakpoint::Status::DISABLED:
-			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DISABLE, { {"addr", _line.addr} });
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DISABLE,
+				{ {"addr", _line.addr} });
 			break;
 		case dev::Breakpoint::Status::ACTIVE:
-			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ACTIVE, { {"addr", _line.addr} });
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ACTIVE,
+				{ {"addr", _line.addr} });
 			break;
 		case dev::Breakpoint::Status::DELETED:
-			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", _line.addr} });
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL,
+				{ {"addr", _line.addr} });
 			break;
 		}
 		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
@@ -201,11 +222,13 @@ void dev::DisasmWindow::DrawDisasmIcons(const bool _isRunning, const Disasm::Lin
 	if (_line.addr == _regPC)
 	{
 		ImGui::SameLine();
-		dev::DrawProgramCounter(DASM_CLR_PC, ImGuiDir_Right, *m_dpiScaleP, PC_ICON_OFFSET_X);
+		dev::DrawProgramCounter(
+			DASM_CLR_PC, ImGuiDir_Right, *m_dpiScaleP, PC_ICON_OFFSET_X);
 	}
 }
 
-void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
+void dev::DisasmWindow::DrawDisasmAddr(
+	const bool _isRunning, const Disasm::Line& _line,
 	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// the addr column
@@ -213,7 +236,8 @@ void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 
 	auto mouseAction = DrawAddr(_isRunning, _line.GetAddrS(),
-		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF), _addrHighlight.IsEnabled(_line.addr));
+		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF),
+		_addrHighlight.IsEnabled(_line.addr));
 	switch (mouseAction)
 	{
 	case UIItemMouseAction::LEFT: // Navigate to the address
@@ -221,12 +245,14 @@ void dev::DisasmWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line
 		_reqUI.globalAddr = _line.addr;
 		break;
 	case UIItemMouseAction::RIGHT:
-		_contextMenu.Init(_line.addr, _line.GetAddrS(), m_debugger.GetDebugData());
+		_contextMenu.Init(
+			_line.addr, _line.GetAddrS(), m_debugger.GetDebugData());
 		break;
 	}
 }
 
-void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
+void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning,
+	const Disasm::Line& _line,
 	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// draw code
@@ -241,7 +267,8 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line
 		_reqUI.globalAddr = _line.imm;
 		break;
 	case UIItemMouseAction::RIGHT: // init the immediate value as an addr to let the context menu copy it
-		_contextMenu.Init(_line.imm, _line.GetImmediateS(), m_debugger.GetDebugData(), true);
+		_contextMenu.Init(
+			_line.imm, _line.GetImmediateS(), m_debugger.GetDebugData(), true);
 		break;
 	}
 
@@ -301,8 +328,10 @@ void dev::DisasmWindow::DrawDisasmStats(const Disasm::Line& _line)
 {
 	ImGui::TableNextColumn();
 	ColumnClippingEnable(*m_dpiScaleP); // enable clipping
-	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DASM_BG_CLR_ADDR));
-	const ImVec4& statsColor = _line.accessed ? DASM_CLR_ADDR : DASM_CLR_ZERO_STATS;
+	ImGui::TableSetBgColor(
+		ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DASM_BG_CLR_ADDR));
+	const ImVec4& statsColor = _line.accessed ?
+							DASM_CLR_ADDR : DASM_CLR_ZERO_STATS;
 	ImGui::TextColored(statsColor, _line.statsS);
 	ColumnClippingDisable();
 }
@@ -316,7 +345,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
 	int hoveredLineIdx = -1;
 	ImVec2 selectionMin = ImGui::GetCursorScreenPos();
-	ImVec2 selectionMax = ImVec2(selectionMin.x + ImGui::GetWindowWidth(), selectionMin.y);
+	ImVec2 selectionMax = ImVec2(selectionMin.x + ImGui::GetWindowWidth(),
+								selectionMin.y);
 
 	if (_isRunning) ImGui::BeginDisabled();
 
@@ -331,10 +361,16 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		ImGuiTableFlags_Resizable
 	))
 	{
-		ImGui::TableSetupColumn("Brk", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, BRK_W);
-		ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, ADDR_W);
-		ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthFixed, CODE_W);
-		ImGui::TableSetupColumn("stats", ImGuiTableColumnFlags_WidthFixed, STATS_W);
+		ImGui::TableSetupColumn("Brk",
+			ImGuiTableColumnFlags_WidthFixed |
+			ImGuiTableColumnFlags_NoResize, BRK_W);
+		ImGui::TableSetupColumn("Addr",
+			ImGuiTableColumnFlags_WidthFixed |
+			ImGuiTableColumnFlags_NoResize, ADDR_W);
+		ImGui::TableSetupColumn("command",
+			ImGuiTableColumnFlags_WidthFixed, CODE_W);
+		ImGui::TableSetupColumn("stats",
+			ImGuiTableColumnFlags_WidthFixed, STATS_W);
 		ImGui::TableSetupColumn("consts");
 
 		m_disasmLines = dev::Min((int)disasm.size(), GetVisibleLines());
@@ -350,7 +386,9 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			ImGui::TableNextColumn();
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
 			const bool isSelected = m_selectedLineAddr == addr;
-			if (ImGui::Selectable(std::format("##disasm{}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
+			if (ImGui::Selectable(
+				std::format("##disasm{}", lineIdx).c_str(),
+				isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
 				m_selectedLineAddr = addr;
 			}
@@ -358,7 +396,9 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 			{
 				selectionMin.y = ImGui::GetItemRectMin().y;
 				selectionMax.y = ImGui::GetItemRectMax().y;
-				hoveredLineIdx = ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ? lineIdx : hoveredLineIdx;
+				hoveredLineIdx =
+					ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ?
+					lineIdx : hoveredLineIdx;
 			}
 
 			switch (line.type)
@@ -378,8 +418,10 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					DrawAddrLinks(_isRunning, lineIdx, hoveredLineIdx == lineIdx);
 					DrawNextExecutedLineHighlight(_isRunning, line, regPC);
 					DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
-					DrawDisasmAddr(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
-					DrawDisasmCode(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
+					DrawDisasmAddr(_isRunning, line, m_reqUI, m_contextMenu,
+						m_addrHighlight);
+					DrawDisasmCode(_isRunning, line, m_reqUI, m_contextMenu,
+						m_addrHighlight);
 
 					DrawDisasmStats(line);
 					DrawDisasmConsts(line, MAX_DISASM_LABELS);
@@ -393,7 +435,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				if (hoveredLineIdx == lineIdx &&
 					ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 				{
-					m_contextMenu.Init(addr, line.GetStr(), m_debugger.GetDebugData());
+					m_contextMenu.Init(
+						addr, line.GetStr(), m_debugger.GetDebugData());
 				}
 			}
 		}
@@ -430,14 +473,16 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 
 
 		// Alt + Left navigation
-		if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_LeftArrow) &&
+		if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
+			ImGui::IsKeyPressed(ImGuiKey_LeftArrow) &&
 			m_navigateAddrsIdx - 1 >= 0)
 		{
 			auto addr = m_navigateAddrs[--m_navigateAddrsIdx];
 			UpdateDisasm(addr);
 		}
 		// Alt + Right navigation
-		else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) && ImGui::IsKeyPressed(ImGuiKey_RightArrow) &&
+		else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
+			ImGui::IsKeyPressed(ImGuiKey_RightArrow) &&
 			m_navigateAddrsIdx + 1 < m_navigateAddrsSize)
 		{
 			auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
@@ -508,7 +553,8 @@ void dev::DisasmWindow::ReqHandling()
 		{
 			auto disasmPP = m_debugger.GetDisasm().GetLines();
 			if (!disasmPP || !*disasmPP) return;
-			m_navigateAddrs[m_navigateAddrsIdx] = (*disasmPP)->at(DISASM_INSTRUCTION_OFFSET).addr;
+			m_navigateAddrs[m_navigateAddrsIdx] =
+				(*disasmPP)->at(DISASM_INSTRUCTION_OFFSET).addr;
 			m_navigateAddrsSize++;
 		}
 		if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
@@ -520,7 +566,9 @@ void dev::DisasmWindow::ReqHandling()
 	}
 }
 
-void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOffset, const bool _updateSelection)
+void dev::DisasmWindow::UpdateDisasm(
+	const Addr _addr, const int _instructionsOffset,
+	const bool _updateSelection)
 {
 	m_disasmAddr = _addr;
 	m_debugger.UpdateDisasm(_addr, m_disasmLines, -_instructionsOffset);
@@ -530,7 +578,8 @@ void dev::DisasmWindow::UpdateDisasm(const Addr _addr, const int _instructionsOf
 	if (_updateSelection) m_selectedLineAddr = _addr;
 }
 
-void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu)
+void dev::DisasmWindow::DrawContextMenu(
+	const Addr _regPC, ContextMenu& _contextMenu)
 {
 	// draw a context menu
 	if (_contextMenu.BeginPopup())
@@ -546,7 +595,8 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 		if (ImGui::MenuItem("Run To"))
 		{
 			Breakpoint::Data bpData{
-				_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL, Breakpoint::Status::ACTIVE, true };
+				_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL,
+				Breakpoint::Status::ACTIVE, true };
 			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
 				{"data0", bpData.data0 },
 				{"data1", bpData.data1 },
@@ -559,7 +609,9 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Add/Remove Beakpoint"))
 		{
-			Breakpoint::Status bpStatus = static_cast<Breakpoint::Status>(m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS, { {"addr", m_contextMenu.addr} })->at("status"));
+			Breakpoint::Status bpStatus = static_cast<Breakpoint::Status>(
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS,
+					{ {"addr", m_contextMenu.addr} })->at("status"));
 
 			if (bpStatus == Breakpoint::Status::DELETED) {
 				Breakpoint::Data bpData { m_contextMenu.addr };
@@ -571,7 +623,8 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 					});
 			}
 			else {
-				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", m_contextMenu.addr} });
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL,
+					{ {"addr", m_contextMenu.addr} });
 			}
 			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		}
@@ -583,24 +636,36 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 		ImGui::SeparatorText("");
 
 		if (ImGui::MenuItem("Add/Edit Label")) {
-			m_reqUI.type = _contextMenu.labelExists ? ReqUI::Type::LABEL_EDIT_WINDOW_EDIT : ReqUI::Type::LABEL_EDIT_WINDOW_ADD;
+			m_reqUI.type = _contextMenu.labelExists ?
+				ReqUI::Type::LABEL_EDIT_WINDOW_EDIT :
+				ReqUI::Type::LABEL_EDIT_WINDOW_ADD;
+
 			m_reqUI.globalAddr = _contextMenu.addr;
 		};
 
 		if (_contextMenu.immHovered && ImGui::MenuItem("Add/Edit Const")) {
-			m_reqUI.type = _contextMenu.constExists ? ReqUI::Type::CONST_EDIT_WINDOW_EDIT : ReqUI::Type::CONST_EDIT_WINDOW_ADD;
+			m_reqUI.type = _contextMenu.constExists ?
+				ReqUI::Type::CONST_EDIT_WINDOW_EDIT :
+				ReqUI::Type::CONST_EDIT_WINDOW_ADD;
+
 			m_reqUI.globalAddr = _contextMenu.addr;
 		};
 
 		if (ImGui::MenuItem("Add/Edit Comment")) {
-			m_reqUI.type = _contextMenu.commentExists ? ReqUI::Type::COMMENT_EDIT_WINDOW_EDIT : ReqUI::Type::COMMENT_EDIT_WINDOW_ADD;
+			m_reqUI.type = _contextMenu.commentExists ?
+				ReqUI::Type::COMMENT_EDIT_WINDOW_EDIT :
+				ReqUI::Type::COMMENT_EDIT_WINDOW_ADD;
+
 			m_reqUI.globalAddr = _contextMenu.addr;
 		};
 
 		ImGui::SeparatorText("");
 
 		if (ImGui::MenuItem("Edit Memory")) {
-			m_reqUI.type = _contextMenu.editMemoryExists ? ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_EDIT : ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_ADD;
+			m_reqUI.type = _contextMenu.editMemoryExists ?
+				ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_EDIT :
+				ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_ADD;
+
 			m_reqUI.globalAddr = _contextMenu.addr;
 		}
 
@@ -610,7 +675,10 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 		}
 
 		if (ImGui::MenuItem("Code Perf")) {
-			m_reqUI.type = _contextMenu.codePerfExists ? ReqUI::Type::CODE_PERFS_EDIT_WINDOW_EDIT : ReqUI::Type::CODE_PERFS_EDIT_WINDOW_ADD;
+			m_reqUI.type = _contextMenu.codePerfExists ?
+				ReqUI::Type::CODE_PERFS_EDIT_WINDOW_EDIT :
+				ReqUI::Type::CODE_PERFS_EDIT_WINDOW_ADD;
+
 			m_reqUI.globalAddr = _contextMenu.addr;
 		}
 
@@ -618,7 +686,8 @@ void dev::DisasmWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _context
 	}
 }
 
-void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
+void dev::DisasmWindow::DrawAddrLinks(
+	const bool _isRunning, const int _lineIdx,
 	const bool _selected)
 {
 	if (_isRunning) return;
@@ -635,7 +704,9 @@ void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 	pos0.y -= ImGui::GetFontSize() * 0.5f;
 	auto pos1 = ImVec2(pos0.x - linkHorizLen - 5.0f, pos0.y);
 
-	bool minorLink = (link.lineIdx == Disasm::IMM_LINK_UP || link.lineIdx == Disasm::IMM_LINK_DOWN || link.lineIdx == Disasm::IMM_NO_LINK);
+	bool minorLink = (link.lineIdx == Disasm::IMM_LINK_UP ||
+					link.lineIdx == Disasm::IMM_LINK_DOWN ||
+					link.lineIdx == Disasm::IMM_NO_LINK);
 	ImU32 linkColor = _selected ? DIS_CLR_LINK_HIGHLIGHT : DIS_CLR_LINK;
 
 	if (minorLink)
@@ -656,11 +727,15 @@ void dev::DisasmWindow::DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 		// horizontal line from the command
 		ImGui::GetForegroundDrawList()->AddLine(pos0, pos1, linkColor, linkWidth);
 		// vertical line
-		auto pos2 = ImVec2(pos1.x, pos1.y + (link.lineIdx - _lineIdx) * ImGui::GetFontSize());
-		ImGui::GetForegroundDrawList()->AddLine(pos1, pos2, linkColor, linkWidth);
+		auto pos2 = ImVec2(
+			pos1.x,
+			pos1.y + (link.lineIdx - _lineIdx) * ImGui::GetFontSize());
+		ImGui::GetForegroundDrawList()->AddLine(
+			pos1, pos2, linkColor, linkWidth);
 		// horizontal line to the addr
 		pos0.y = pos2.y;
-		ImGui::GetForegroundDrawList()->AddLine(pos2, pos0, linkColor, linkWidth);
+		ImGui::GetForegroundDrawList()->AddLine(
+			pos2, pos0, linkColor, linkWidth);
 		// arrow
 		float r = 5.0f;
 		ImVec2 center = pos0;

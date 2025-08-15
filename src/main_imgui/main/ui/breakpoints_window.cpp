@@ -6,24 +6,28 @@
 #include "utils/str_utils.h"
 
 dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
-	const float* const _dpiScaleP, ReqUI& _reqUI)
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
-	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
+	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware), m_reqUI(_reqUI)
 {}
 
-void dev::BreakpointsWindow::Update(bool& _visible, const bool _isRunning)
+void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
+	if (m_visible &&
+		ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
 	{
 		DrawTable();
 		ImGui::End();
 	}
 }
 
-void dev::BreakpointsWindow::DrawProperty(const std::string& _name, const ImVec2& _aligment)
+void dev::BreakpointsWindow::DrawProperty(
+	const std::string& _name, const ImVec2& _aligment)
 {
 	ImGui::TableNextColumn();
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
@@ -31,12 +35,13 @@ void dev::BreakpointsWindow::DrawProperty(const std::string& _name, const ImVec2
 	ImGui::PopStyleColor();
 }
 
-void dev::BreakpointsWindow::CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
+void dev::BreakpointsWindow::CheckIfItemClicked(
+	const ImVec2& _rowMin, bool& _showItemContextMenu,
 	const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup)
 {
 	if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 	{
-		_showItemContextMenu = true; 
+		_showItemContextMenu = true;
 		_editedBreakpointAddr = _addr;
 	}
 
@@ -66,16 +71,20 @@ void dev::BreakpointsWindow::DrawTable()
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
 
 	static ImGuiTableFlags flags =
-		ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
+		ImGuiTableFlags_NoPadInnerX |
+		ImGuiTableFlags_NoPadOuterX |
+		ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Hideable;
+		ImGuiTableFlags_Resizable |
+		ImGuiTableFlags_BordersOuter |
+		ImGuiTableFlags_Hideable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
 		ImGui::TableSetupColumn("##BPActive", ImGuiTableColumnFlags_WidthFixed, 25);
 		ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, 110);
 		ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 180);
 		ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch);
-		
+
 		ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 		for (int column = 0; column < COLUMNS_COUNT; column++)
 		{
@@ -105,14 +114,16 @@ void dev::BreakpointsWindow::DrawTable()
 
 			// isActive
 			ImGui::TableNextColumn();
-						
-			bool isActive = bp.data.structured.status == Breakpoint::Status::ACTIVE;
+
+			bool isActive =
+				bp.data.structured.status == Breakpoint::Status::ACTIVE;
 			ImGui::Checkbox(std::format("##0x{:04X}", addr).c_str(), &isActive);
-			Breakpoint::Status newStatus = isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED;
+			Breakpoint::Status newStatus = isActive ?
+				Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED;
 
 			if (newStatus != bp.data.structured.status)
 			{
-				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_SET_STATUS, 
+				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_SET_STATUS,
 					{ {"addr", addr},
 					{"status", static_cast<uint8_t>(newStatus)}});
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
@@ -121,25 +132,29 @@ void dev::BreakpointsWindow::DrawTable()
 			ImGui::TableNextColumn();
 			ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
 			const bool isSelected = selectedAddr == (int)addr;
-			if (ImGui::Selectable(bp.GetAddrMappingS(), isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
+			if (ImGui::Selectable(bp.GetAddrMappingS(),
+				isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				selectedAddr = addr;
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE_ADDR;
 				m_reqUI.globalAddr = addr;
 			}
 			ImVec2 rowMin = ImGui::GetItemRectMin();
-			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
+			CheckIfItemClicked(rowMin, showItemContextMenu, addr,
+				editedBreakpointAddr, reqPopup);
 
 			ImGui::PopStyleColor();
 
 			// Condition
 			std::string cond = bp.GetConditionS();
 			DrawProperty(cond);
-			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
+			CheckIfItemClicked(rowMin, showItemContextMenu, addr,
+				editedBreakpointAddr, reqPopup);
 
 			// Comment
 			DrawProperty(bp.comment);
-			CheckIfItemClicked(rowMin, showItemContextMenu, addr, editedBreakpointAddr, reqPopup);
+			CheckIfItemClicked(rowMin, showItemContextMenu, addr,
+				editedBreakpointAddr, reqPopup);
 		}
 
 		PopStyleCompact();
@@ -165,14 +180,15 @@ void dev::BreakpointsWindow::DrawTable()
 			if (ImGui::MenuItem("Add")) {
 				reqPopup = ReqPopup::INIT_ADD;
 			}
-			else if (ImGui::MenuItem("Disable All")) 
+			else if (ImGui::MenuItem("Disable All"))
 			{
 				for (const auto& [addr, bp] : m_breakpoints) {
-					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DISABLE, { {"addr", addr} });
+					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DISABLE,
+						{ {"addr", addr} });
 				}
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
-			else if (ImGui::MenuItem("Delete All")) 
+			else if (ImGui::MenuItem("Delete All"))
 			{
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL_ALL);
 				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
@@ -190,18 +206,25 @@ void dev::BreakpointsWindow::DrawTable()
 
 				if (bp.IsActive()) {
 					if (ImGui::MenuItem("Disable")) {
-						m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DISABLE, { {"addr", editedBreakpointAddr} });
+						m_hardware.Request(
+							Hardware::Req::DEBUG_BREAKPOINT_DISABLE,
+							{ {"addr", editedBreakpointAddr} });
+
 						m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 					}
 				}
 				else {
 					if (ImGui::MenuItem("Enable")) {
-						m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ACTIVE, { {"addr", editedBreakpointAddr} });
+						m_hardware.Request(
+							Hardware::Req::DEBUG_BREAKPOINT_ACTIVE,
+							{ {"addr", editedBreakpointAddr} });
 						m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 					}
 				}
 				if (ImGui::MenuItem("Delete")) {
-					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", editedBreakpointAddr}});
+					m_hardware.Request(
+						Hardware::Req::DEBUG_BREAKPOINT_DEL,
+						{ {"addr", editedBreakpointAddr}});
 					m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				}
 				else if (ImGui::MenuItem("Edit")) {
@@ -210,19 +233,22 @@ void dev::BreakpointsWindow::DrawTable()
 			}
 			ImGui::EndPopup();
 		}
-		
+
 		DrawPopup(reqPopup, m_breakpoints, editedBreakpointAddr);
 	}
 
 	ImGui::PopStyleVar(2);
 }
 
-void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::BpMap& _pbs, int _addr)
+void dev::BreakpointsWindow::DrawPopup(
+	ReqPopup& _reqPopup, const Breakpoints::BpMap& _pbs, const int _addr)
 {
 	if (_reqPopup == ReqPopup::NONE) {
 		return;
 	}
-	else if (_reqPopup == ReqPopup::INIT_ADD || _reqPopup == ReqPopup::INIT_EDIT) {
+	else if (_reqPopup == ReqPopup::INIT_ADD ||
+			_reqPopup == ReqPopup::INIT_EDIT)
+	{
 		ImGui::OpenPopup("##BpEdit");
 	}
 
@@ -271,52 +297,62 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 
 		if (ImGui::BeginTable("##BPContextMenu", 2, flags))
 		{
-			ImGui::TableSetupColumn("##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
-			ImGui::TableSetupColumn("##BPContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 210);
-			
+			ImGui::TableSetupColumn(
+				"##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
+			ImGui::TableSetupColumn(
+				"##BPContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 210);
+
 			// status
 			DrawProperty2EditableCheckBox("Active", "##BPContextStatus", &isActive, "Enable or disable the breakpoint");
-			
+
 			// addr
 			DrawProperty2EditableI("Address", "##WpContextAddress", &addr,
-				"A hexademical address in the format FF", 
-				ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);				
-			
+				"A hexademical address in the format FF",
+				ImGuiInputTextFlags_CharsHexadecimal |
+				ImGuiInputTextFlags_AutoSelectAll);
+
 			// mapping
 			DrawPropertyMemoryMapping(memPages);
 
 			// auto delete
-			DrawProperty2EditableCheckBox("Auto Delete", "##BPContextAutoDel", &isAutoDel, "Removes the breakpoint when execution halts");
-			
+			DrawProperty2EditableCheckBox("Auto Delete",
+				"##BPContextAutoDel", &isAutoDel,
+				"Removes the breakpoint when execution halts");
+
 			// Operand
-			DrawProperty2Combo("Operand", "##BPContextOperand", &selectedOp, 
+			DrawProperty2Combo("Operand", "##BPContextOperand", &selectedOp,
 				dev::bpOperandsS, IM_ARRAYSIZE(dev::bpOperandsS),
 				"A, B, C, D, E, H, L, BC, DE, HL - CPU registers\n"\
 				"Flags - CPU flags\n"\
 				"SP - CPU Stack Pointer\n"\
 				"CC - CPU Cicles counted from the last reset/reboot/reload");
-			
+
 			// Condition
-			DrawProperty2Combo("Condition", "##BPContextCondition", &selectedCond, dev::ConditionsS, IM_ARRAYSIZE(dev::ConditionsS), "");
-			
+			DrawProperty2Combo("Condition", "##BPContextCondition",
+				&selectedCond, dev::ConditionsS,
+				IM_ARRAYSIZE(dev::ConditionsS), "");
+
 			// Value
 			if (selectedCond == 0) ImGui::BeginDisabled();
 			DrawProperty2EditableI("Value", "##BPContextValue", &val,
 				"A hexademical value in the format FF",
-				ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+				ImGuiInputTextFlags_CharsHexadecimal |
+				ImGuiInputTextFlags_AutoSelectAll);
 			if (selectedCond == 0) ImGui::EndDisabled();
-			
+
 			// Comment
-			DrawProperty2EditableS("Comment", "##BPContextComment", &comment, "");
+			DrawProperty2EditableS("Comment", "##BPContextComment",
+				&comment, "");
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TableNextColumn();
 			// warning
 			std::string warningS = "";
-			warningS = addr >= Memory::MEMORY_MAIN_LEN ? 
+			warningS = addr >= Memory::MEMORY_MAIN_LEN ?
 				"Too large address" : warningS;
-			size_t maxVal = selectedOp == static_cast<int>(Breakpoint::Operand::CC) ?
+			size_t maxVal =
+				selectedOp == static_cast<int>(Breakpoint::Operand::CC) ?
 				UINT64_MAX : selectedOp > static_cast<int>(Breakpoint::Operand::PSW) ?
 				UINT16_MAX : UINT8_MAX;
 			warningS = val < 0 || val > maxVal ?
@@ -334,14 +370,16 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 			{
 				if (_reqPopup == ReqPopup::EDIT && addrOld != addr)
 				{
-					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", addrOld} });
+					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL,
+						{ {"addr", addrOld} });
 				}
 				Breakpoint::Data bpData
 				{
 					static_cast<Addr>(addr), memPages,
 					isActive ? Breakpoint::Status::ACTIVE : Breakpoint::Status::DISABLED,
 					isAutoDel, static_cast<Breakpoint::Operand>(selectedOp),
-					static_cast<dev::Condition>(selectedCond), static_cast<size_t>(val)
+					static_cast<dev::Condition>(selectedCond),
+					static_cast<size_t>(val)
 				};
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
 					{"data0", bpData.data0 },
@@ -357,7 +395,7 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 
 			// Cancel button
 			ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
-			if (ImGui::Button("Cancel", buttonSize)) 
+			if (ImGui::Button("Cancel", buttonSize))
 			{
 				ImGui::CloseCurrentPopup();
 				_reqPopup = ReqPopup::NONE;
@@ -372,19 +410,26 @@ void dev::BreakpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Breakpoints::B
 
 void dev::BreakpointsWindow::UpdateBreakpoints()
 {
-	size_t updates = m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES)->at("updates");
+	size_t updates = m_hardware.Request(
+		Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES)->at("updates");
 
 	if (updates == m_updates) return;
 
 	m_updates = updates;
 
 	m_breakpoints.clear();
-	auto breakpointsJ = m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_ALL);
+	auto breakpointsJ = m_hardware.Request(
+		Hardware::Req::DEBUG_BREAKPOINT_GET_ALL);
+
 	if (breakpointsJ)
 	{
 		for (const auto& breakpointJ : *breakpointsJ)
 		{
-			Breakpoint::Data bpData{ breakpointJ["data0"], breakpointJ["data1"], breakpointJ["data2"] };
+			Breakpoint::Data bpData{
+				breakpointJ["data0"],
+				breakpointJ["data1"],
+				breakpointJ["data2"]
+			};
 
 			Breakpoint bp{ std::move(bpData), breakpointJ["comment"] };
 			auto addr = bp.data.structured.addr;

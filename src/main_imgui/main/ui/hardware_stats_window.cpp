@@ -2,11 +2,13 @@
 #include "ui/hardware_stats_window.h"
 #include "utils/str_utils.h"
 
-dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware, 
-		const float* const _dpiScaleP, 
+dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
+		dev::Scheduler& _scheduler,
+		bool& _visible, const float* const _dpiScaleP,
 		bool& _ruslat)
 	:
-	BaseWindow("Hardware Stats", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
+	BaseWindow("Hardware Stats", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware),
 	m_ruslat(_ruslat)
 {
@@ -14,15 +16,16 @@ dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 	UpdateData(false);
 }
 
-void dev::HardwareStatsWindow::Update(bool& _visible, const bool _isRunning)
+void dev::HardwareStatsWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
+	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
 	{
-		UpdateData(_isRunning);
+		UpdateData(isRunning);
 		UpdateDataRuntime();
-		DrawStats(_isRunning);
+		DrawStats(isRunning);
 		ImGui::End();
 	}
 }
@@ -55,7 +58,7 @@ void dev::HardwareStatsWindow::DrawRegs() const
 		DrawProperty2("AC", dev::BoolToStrC(m_cpuState.regs.psw.ac, 1), nullptr, *m_flagACColor);
 		DrawProperty2("Z", dev::BoolToStrC(m_cpuState.regs.psw.z, 1), nullptr, *m_flagZColor);
 		DrawProperty2("S", dev::BoolToStrC(m_cpuState.regs.psw.s, 1), nullptr, *m_flagSColor);
-		
+
 
 		ImGui::EndTable();
 	}
@@ -73,7 +76,7 @@ void dev::HardwareStatsWindow::DrawStack() const
 	{
 		ImGui::TableSetupColumn("stackAddrs", ImGuiTableColumnFlags_WidthFixed, 30);
 
-		// Stack		
+		// Stack
 		DrawProperty2("-10", m_dataAddrN10S.c_str());
 		DrawProperty2("-8", m_dataAddrN8S.c_str());
 		DrawProperty2("-6", m_dataAddrN6S.c_str());
@@ -135,13 +138,13 @@ void dev::HardwareStatsWindow::DrawHardware(const bool _isRunning) const
 			ColorI color = Display::VectorColorToArgb(m_palette.bytes[i]);
 			ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x + sz, pos.y + sz), color);
 			ImGui::Dummy(ImVec2(sz, sz));
-			if (ImGui::IsItemHovered()) 
+			if (ImGui::IsItemHovered())
 			{
 				ImGui::BeginTooltip();
 				ImGui::Text("idx: %d, HW Color: 0x%02X, RGB: 0x%06X", i, m_palette.bytes[i], color & 0xFFFFFF);
 				ImGui::EndTooltip();
 			}
-			
+
 			if (i % 4 != 3) ImGui::SameLine();
 		}
 
@@ -189,7 +192,7 @@ void dev::HardwareStatsWindow::DrawPeripheral() const
 }
 
 void dev::HardwareStatsWindow::DrawStats(const bool _isRunning)
-{	
+{
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
 
@@ -221,7 +224,7 @@ void dev::HardwareStatsWindow::DrawStats(const bool _isRunning)
 
 		PopStyleCompact();
 		if (_isRunning) ImGui::EndDisabled();
-		
+
 		ImGui::EndTable();
 	}
 	ImGui::PopStyleVar(2);
@@ -349,7 +352,7 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_ccLastRunS = std::to_string(m_ccLastRun);
 	m_crtS = std::format("{}/{}", rasterPixel, rasterLine);
 	m_frameCCS = std::to_string((rasterPixel + rasterLine * Display::FRAME_W) / 4);
-	
+
 	bool frameNumUpdated = m_frameNum != frameNum;
 	m_frameNumColor = frameNumUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
 	m_frameNum = frameNum;
@@ -373,13 +376,13 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	portdataIn.data6 = portsDataInJ["data6"];
 	portdataIn.data7 = portsDataInJ["data7"];
 	// check if updated, set the colors
-	for (int i = 0; i < 256; i++) 
+	for (int i = 0; i < 256; i++)
 	{
 		bool updated = portdataIn.data[i] != m_portsInData.data[i];
 		m_portsInDataColor[i] = updated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
 	}
 	m_portsInData = portdataIn;
-	
+
 	// ports OUT data
 	res = m_hardware.Request(Hardware::Req::GET_IO_PORTS_OUT_DATA);
 	const auto& portsDataOutJ = *res;

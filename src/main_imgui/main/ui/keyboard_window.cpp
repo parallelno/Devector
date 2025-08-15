@@ -8,10 +8,12 @@
 #include "stb_image/stb_image.h"
 
 dev::KeyboardWindow::KeyboardWindow(Hardware& _hardware,
-	const float* const _dpiScaleP, GLUtils& _glUtils,
+	dev::Scheduler& _scheduler,
+	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
 	ReqUI& _reqUI, const std::string& _pathImgKeyboard)
 	:
-	BaseWindow("Keyboard", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H, _dpiScaleP),
+	BaseWindow("Keyboard", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware), m_glUtils(_glUtils),
 	m_reqUI(_reqUI), m_pathImgKeyboard(_pathImgKeyboard)
 {
@@ -37,15 +39,16 @@ bool dev::KeyboardWindow::Init()
 	return true;
 }
 
-void dev::KeyboardWindow::Update(bool& _visible, const bool _isRunning)
+void dev::KeyboardWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Update();
+	BaseWindow::Draw(_signals);
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (_visible && ImGui::Begin(m_name.c_str(), &_visible, ImGuiWindowFlags_NoCollapse))
+	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
 	{
 		m_windowFocused = ImGui::IsWindowFocused();
 
-		Draw(_isRunning);
+		DrawContext(isRunning);
 
 		ImGui::End();
 	}
@@ -97,7 +100,7 @@ ButtonTransform buttons[] = {
 	{103.0f + 63.25f * 9, 431.0f, 62.0f, 60.0f, SDL_SCANCODE_D, "Hotkey: 'd'"},
 	{103.0f + 63.25f * 10, 431.0f, 62.0f, 60.0f, SDL_SCANCODE_V, "Hotkey: 'v'"},
 	{103.0f + 63.25f * 11, 431.0f, 62.0f, 60.0f, SDL_SCANCODE_BACKSLASH, "Hotkey: '\'"},
-	{103.0f + 63.25f * 12, 431.0f, 62.0f, 60.0f, SDL_SCANCODE_PERIOD, "Hotkey: '.'"},	
+	{103.0f + 63.25f * 12, 431.0f, 62.0f, 60.0f, SDL_SCANCODE_PERIOD, "Hotkey: '.'"},
 
 	{106.0f + 63.25f * 0, 495.0f, 90.0f, 60.0f, SDL_SCANCODE_LSHIFT, "Hotkey: Left shift"},
 	{199.0f + 63.25f * 0, 495.0f, 62.0f, 60.0f, SDL_SCANCODE_Q, "Hotkey: 'q'"},
@@ -129,13 +132,13 @@ ButtonTransform buttons[] = {
 	{989.0f + 62.25f * 2, 305.0f + 63.25f * 2, 62.0f, 60.0f, SDL_SCANCODE_ESCAPE, "Hotkey: Esc"},
 	{989.0f + 62.25f * 0, 305.0f + 63.25f * 3, 62.0f, 60.0f, SDL_SCANCODE_F7, "Hotkey: 'F7'"},
 	{989.0f + 62.25f * 1, 305.0f + 63.25f * 3, 62.0f, 60.0f, SDL_SCANCODE_UP, "Hotkey: 'UP'"},
-	{989.0f + 62.25f * 2, 305.0f + 63.25f * 3, 62.0f, 60.0f, SDL_SCANCODE_F8, "Hotkey: 'F8'"},	
+	{989.0f + 62.25f * 2, 305.0f + 63.25f * 3, 62.0f, 60.0f, SDL_SCANCODE_F8, "Hotkey: 'F8'"},
 	{989.0f + 62.25f * 0, 305.0f + 63.25f * 4, 62.0f, 60.0f, SDL_SCANCODE_LEFT, "Hotkey: Left arrow"},
 	{989.0f + 62.25f * 1, 305.0f + 63.25f * 4, 62.0f, 60.0f, SDL_SCANCODE_DOWN, "Hotkey: Down arrow"},
 	{989.0f + 62.25f * 2, 305.0f + 63.25f * 4, 62.0f, 60.0f, SDL_SCANCODE_RIGHT, "Hotkey: Right arrow"},
 };
 
-void dev::KeyboardWindow::Draw(const bool _isRunning)
+void dev::KeyboardWindow::DrawContext(const bool _isRunning)
 {
 	if (m_isGLInited)
 	{
@@ -144,11 +147,11 @@ void dev::KeyboardWindow::Draw(const bool _isRunning)
 		ImGuiStyle& style = ImGui::GetStyle();
 		auto wMax = ImGui::GetWindowWidth() - style.FramePadding.x * 4;
 		auto hMax = ImGui::GetWindowHeight() - style.FramePadding.y * 14;
-		
+
 		ImVec2 displaySize;
 		displaySize.x = wMax;
 		displaySize.y = displaySize.x * KEYBOARD_IMG_ASPECT;
-		if (displaySize.y > hMax) 
+		if (displaySize.y > hMax)
 		{
 			displaySize.y = hMax;
 			displaySize.x = displaySize.y / KEYBOARD_IMG_ASPECT;
@@ -156,7 +159,7 @@ void dev::KeyboardWindow::Draw(const bool _isRunning)
 
 		ImGui::Image(m_vramTexId, displaySize);
 		m_displayIsHovered = ImGui::IsItemHovered();
-		
+
 		// Draw buttons
 		int buttonsCount = sizeof(buttons) / sizeof(ButtonTransform);
 		for( int i = 0; i < buttonsCount; i++)

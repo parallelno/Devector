@@ -157,6 +157,9 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/imgui_app.h
 	${DEVECTOR_DIR}/main/imgui_app.cpp
 
+	${DEVECTOR_DIR}/main/scheduler.h
+	${DEVECTOR_DIR}/main/scheduler.cpp
+
 	${DEVECTOR_DIR}/main/ui/about_window.cpp
 	${DEVECTOR_DIR}/main/ui/about_window.h
 	${DEVECTOR_DIR}/main/ui/base_window.cpp

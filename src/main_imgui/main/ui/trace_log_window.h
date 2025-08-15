@@ -9,6 +9,7 @@
 #include "utils/result.h"
 #include "core/hardware.h"
 #include "core/debugger.h"
+#include "scheduler.h"
 
 namespace dev
 {
@@ -18,7 +19,7 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_H = 300;
 		static constexpr float ADDR_W = 50.0f;
 		static constexpr float CODE_W = 200.0f;
-		
+
 		static constexpr int MAX_DISASM_LABELS = 4;
 
 		struct ContextMenu {
@@ -39,7 +40,7 @@ namespace dev
 		};
 		ContextMenu m_contextMenu;
 
-		struct AddrHighlight 
+		struct AddrHighlight
 		{
 			int addr = -1; // -1 means disabled
 
@@ -64,7 +65,6 @@ namespace dev
 		uint8_t m_disasmFilter = 0;
 		int m_selectedLineIdx = 0;
 		size_t m_disasmLinesLen = 0;
-		bool m_visible = false;
 
 		void UpdateData(const bool _isRunning);
 		void DrawLog(const bool _isRunning);
@@ -76,7 +76,8 @@ namespace dev
 
 	public:
 		TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
-				const float* const _dpiScaleP, ReqUI& _reqUI);
-		void Update(bool& _visible, const bool _isRunning);
+			dev::Scheduler& _scheduler,
+			bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI);
+		void Draw(const dev::Scheduler::Signals _signals) override;
 	};
 };
