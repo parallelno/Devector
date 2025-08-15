@@ -143,6 +143,10 @@ namespace dev
 		GLUtils m_glUtils;
 
 		Scheduler m_scheduler;
+		std::string m_memdisplay_vtxShader = "";
+		std::string m_memdisplay_fragShader = "";
+		std::string m_display_vtxShader = "";
+		std::string m_display_fragShader = "";
 
 	public:
 		DevectorApp(const std::string& _settingsPath, nlohmann::json _settingsJ,
@@ -156,6 +160,8 @@ namespace dev
 		void HardwareInit();
 		void WindowsInit();
 		void SettingsInit();
+		void SettingsInitDisplayShaders();
+		void SettingsInitMemDisplayShaders();
 		void RecentFilesInit();
 		void RecentFilesStore();
 		void RecentFilesUpdate(const FileType _fileType, const std::string& _path, const int _driveIdx = INVALID_ID, const bool _autoBoot = false);

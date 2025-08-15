@@ -59,13 +59,20 @@ namespace dev
 		void DrawDisplay();
 		void UpdateData(const bool _isRunning);
 		void ScaleView();
-		bool Init();
+		bool Init(const std::string& _vtxShaderS,
+				const std::string& _fragShaderS);
 
 	public:
-		MemDisplayWindow(Hardware& _hardware, Debugger& _debugger,
+		MemDisplayWindow(Hardware& _hardware,
+			Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP,
-			GLUtils& _glUtils, ReqUI& _reqUI);
+			bool& _visible,
+			const float* const _dpiScaleP,
+			GLUtils& _glUtils,
+			ReqUI& _reqUI,
+			const std::string& _vtxShaderS,
+			const std::string& _fragShaderS);
+
 		void Draw(const dev::Scheduler::Signals _signals) override;
 	};
 

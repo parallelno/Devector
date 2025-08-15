@@ -1,105 +1,30 @@
 #include "ui/display_window.h"
 #include "utils/imgui_utils.h"
 
-// Vertex shader source code
-const char* vtxShaderS = R"#(
-	#version 330 core
-	precision highp float;
-
-	layout (location = 0) in vec3 pos;
-	layout (location = 1) in vec2 uv;
-
-	out vec2 uv0;
-
-	void main()
-	{
-		uv0 = vec2(uv.x, 1.0f - uv.y);
-		gl_Position = vec4(pos.xyz, 1.0f);
-	}
-)#";
-
-// Fragment shader source code
-const char* fragShaderS = R"#(
-	#version 330 core
-	precision highp float;
-	precision highp int;
-
-	in vec2 uv0;
-
-	uniform sampler2D texture0;
-	uniform vec4 m_activeArea_pxlSize;
-	uniform vec4 m_bordsLRTB;
-	uniform vec4 m_scrollV_crtXY_highlightMul;
-
-	layout (location = 0) out vec4 out0;
-
-	void main()
-	{
-		vec2 uv = uv0;
-		float bordL = m_bordsLRTB.x;
-		float bordR = m_bordsLRTB.y;
-		float bordT = m_bordsLRTB.z;
-		float bordB = m_bordsLRTB.w;
-		float highlightMul = m_scrollV_crtXY_highlightMul.w;
-		vec2 crt = m_scrollV_crtXY_highlightMul.yz;
-		vec2 pxlSize = m_activeArea_pxlSize.zw;
-
-		// vertical scrolling
-		if (uv.x >= bordL &&
-			uv.x < bordR &&
-			uv.y >= bordT &&
-			uv.y < bordB)
-		{
-			uv.y -= m_scrollV_crtXY_highlightMul.x;
-			// wrap V
-			uv.y += uv.y < bordT ? m_activeArea_pxlSize.y * pxlSize.y : 0.0f;
-		}
-
-		vec3 color = texture(texture0, uv).rgb;
-
-		// crt scanline highlight
-		if (highlightMul < 1.0f)
-		{
-			if (uv.y >= crt.y &&
-				uv.y < crt.y + pxlSize.y &&
-				uv.x < crt.x + pxlSize.x )
-			{
-				// highlight the rasterized pixels of the current crt line
-				color.xyz = vec3(0.3f, 0.3f, 0.3f) + color.xyz * 2.0f;
-			}
-			else
-			if ((uv.y >= crt.y &&
-				uv.y < crt.y + pxlSize.y &&
-				uv.x >= crt.x + pxlSize.x ) || uv.y > crt.y + pxlSize.y)
-			{
-				// renders not rasterized pixels yet
-				color.xyz *= m_scrollV_crtXY_highlightMul.w;
-			}
-		}
-
-		out0 = vec4(color, 1.0f);
-	}
-)#";
 
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
 	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
 	ReqUI& _reqUI, Scripts& _scripts,
-	const Hardware::ExecSpeed _execSpeed)
+	const Hardware::ExecSpeed _execSpeed,
+	const std::string& _vtxShaderS,
+	const std::string& _fragShaderS)
 	:
 	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware), m_glUtils(_glUtils),
 	m_reqUI(_reqUI), m_scripts(_scripts)
 {
-	m_isGLInited = Init();
+	m_isGLInited = Init(_vtxShaderS, _fragShaderS);
 	SetExecutionSpeed(_execSpeed);
 }
 
-bool dev::DisplayWindow::Init()
+bool dev::DisplayWindow::Init(const std::string& _vtxShaderS,
+							const std::string& _fragShaderS)
 {
 	// init shader
-	auto vramShaderId = m_glUtils.InitShader(vtxShaderS, fragShaderS);
+	auto vramShaderId = m_glUtils.InitShader(
+								_vtxShaderS.c_str(), _fragShaderS.c_str());
 	if (vramShaderId == INVALID_ID) return false;
 	m_vramShaderId = vramShaderId;
 
@@ -110,7 +35,9 @@ bool dev::DisplayWindow::Init()
 	m_vramTexId = vramTexId;
 
 	// shader params
-	int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
+	int borderLeft = m_hardware.Request(
+		Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
+
 	m_bordsLRTB.x = borderLeft * FRAME_PXL_SIZE_W;
 	m_bordsLRTB.y = (borderLeft + Display::ACTIVE_AREA_W) * FRAME_PXL_SIZE_W;
 	GLUtils::ShaderParams shaderParams = {
@@ -127,9 +54,14 @@ bool dev::DisplayWindow::Init()
 	m_vramMatId = vramMatId;
 
 	// get param ids
-	m_matParamId_scrollV_crtXY_highlightMul = m_glUtils.GetMaterialParamId(vramMatId, "m_scrollV_crtXY_highlightMul");
-	m_matParamId_activeArea_pxlSize = m_glUtils.GetMaterialParamId(vramMatId, "m_activeArea_pxlSize");
-	m_matParamId_bordsLRTB = m_glUtils.GetMaterialParamId(vramMatId, "m_bordsLRTB");
+	m_matParamId_scrollV_crtXY_highlightMul = m_glUtils.GetMaterialParamId(
+		vramMatId, "m_scrollV_crtXY_highlightMul");
+
+	m_matParamId_activeArea_pxlSize = m_glUtils.GetMaterialParamId(
+		vramMatId, "m_activeArea_pxlSize");
+
+	m_matParamId_bordsLRTB = m_glUtils.GetMaterialParamId(
+		vramMatId, "m_bordsLRTB");
 
 
 	return true;

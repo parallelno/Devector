@@ -69,14 +69,22 @@ namespace dev
 		void DrawContextMenu();
 		void CreateTexture(const bool _vsync);
 		void UpdateData(const bool _isRunning);
-		bool Init();
+		bool Init(const std::string& m_display_vtxShader,
+				const std::string& m_display_fragShader);
 		void DrawScriptsUIItems(const ImVec2& _pos, const ImVec2& _displaySize);
 
 	public:
 		DisplayWindow(Hardware& _hardware,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils, ReqUI& _reqUI,
-			Scripts& _scripts, const Hardware::ExecSpeed _execSpeed);
+			bool& _visible,
+			const float* const _dpiScaleP,
+			GLUtils& _glUtils,
+			ReqUI& _reqUI,
+			Scripts& _scripts,
+			const Hardware::ExecSpeed _execSpeed,
+			const std::string& _vtxShaderS,
+			const std::string& _fragShaderS);
+
 		void Draw(const dev::Scheduler::Signals _signals) override;
 		bool IsFocused() const;
 		auto GetExecutionSpeed() const { return m_execSpeed; };

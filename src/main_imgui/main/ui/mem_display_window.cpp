@@ -1,88 +1,13 @@
 #include "ui/mem_display_window.h"
 #include "utils/imgui_utils.h"
 
-// #include "imgui_impl_opengl3.h"
-// #include "imgui_impl_opengl3_loader.h"
-
-const char* memViewShaderVtx = R"(
-	#version 330 core
-	precision highp float;
-
-	layout (location = 0) in vec3 vtxPos;
-	layout (location = 1) in vec2 vtxUV;
-
-	out vec2 uv0;
-
-	void main()
-	{
-		uv0 = vtxUV;
-		gl_Position = vec4(vtxPos.xyz, 1.0f);
-	}
-)";
-
-const char* memViewShaderFrag = R"(
-	#version 330 core
-	precision highp float;
-	precision highp int;
-
-	in vec2 uv0;
-
-	uniform sampler2D texture0; // global ram values
-	uniform sampler2D texture1; // .xy - highlight reads, .zw - highlight writes
-	uniform vec4 globalColorBg;
-	uniform vec4 globalColorFg;
-	uniform vec4 highlightRead;
-	uniform vec4 highlightWrite;
-	uniform vec4 highlightIdxMax;
-
-	layout (location = 0) out vec4 out0;
-
-	#define BYTE_COLOR_MULL 0.6
-	#define BACK_COLOR_MULL 0.7
-
-	int GetBit(float _val, int _bitIdx) {
-		return (int(_val * 255.0) >> _bitIdx) & 1;
-	}
-
-	void main()
-	{
-		float isAddrBelow32K = 1.0 - step(0.5, uv0.y);
-		vec2 uv = vec2( uv0.y * 2.0, uv0.x / 2.0 + isAddrBelow32K * 0.5);
-		float byte = texture(texture0, uv).r;
-
-		float isOdd8K = step(0.5, fract(uv0.x / 0.5));
-		isOdd8K = mix(isOdd8K, 1.0 - isOdd8K, isAddrBelow32K);
-		vec3 bgColor = mix(globalColorBg.xyz, globalColorBg.xyz * BACK_COLOR_MULL, isOdd8K);
-
-		int bitIdx = 7 - int(uv0.x * 1024.0) & 7;
-		int isBitOn = GetBit(byte, bitIdx);
-
-		// highlight every second column
-		int isByteOdd = (int(uv0.x * 512.0)>>2) & 1;
-		vec3 byteColor = mix(globalColorFg.xyz * BYTE_COLOR_MULL, globalColorFg.xyz, float(isByteOdd));
-
-		vec3 color = mix(bgColor, byteColor, float(isBitOn));
-
-		// highlight
-		vec4 rw = texture(texture1, uv);
-		float reads = (rw[1] * 256.0f + rw[0]) * 256.0f / highlightIdxMax.x;
-		float writes = (rw[3] * 255.0f + rw[2] ) * 256.0f / highlightIdxMax.x;
-		vec3 readsColor = reads * highlightRead.rgb * highlightRead.a;
-		vec3 writesColor = writes * highlightWrite.rgb * highlightWrite.a;
-		vec3 rwColor = readsColor + writesColor;
-		color = mix(color * 0.8f, color * 0.5f + rwColor * 0.5f + color * rwColor * 2.0f, rwColor);
-
-
-
-
-		out0 = vec4(color, globalColorBg.a);
-	}
-)";
 
 dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
 	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
-	ReqUI& _reqUI)
+	ReqUI& _reqUI,
+	const std::string& _vtxShaderS,
+	const std::string& _fragShaderS)
 	:
 	BaseWindow("Memory Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP,
@@ -91,13 +16,16 @@ dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger
 	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils),
 	m_reqUI(_reqUI)
 {
-	m_isGLInited = Init();
+	m_isGLInited = Init(_vtxShaderS, _fragShaderS);
 }
 
-bool dev::MemDisplayWindow::Init()
+bool dev::MemDisplayWindow::Init(
+	const std::string& _vtxShaderS,
+	const std::string& _fragShaderS)
 {
 	// setting up the mem view rendering
-	auto memViewShaderId = m_glUtils.InitShader(memViewShaderVtx, memViewShaderFrag);
+	auto memViewShaderId = m_glUtils.InitShader(
+									_vtxShaderS.c_str(), _fragShaderS.c_str());
 	if (memViewShaderId == INVALID_ID) return false;
 	m_memViewShaderId = memViewShaderId;
 
