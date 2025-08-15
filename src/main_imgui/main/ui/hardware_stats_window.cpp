@@ -18,16 +18,11 @@ dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 
 void dev::HardwareStatsWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
-	{
-		UpdateData(isRunning);
-		UpdateDataRuntime();
-		DrawStats(isRunning);
-		ImGui::End();
-	}
+	UpdateData(isRunning);
+	UpdateDataRuntime();
+	DrawStats(isRunning);
 }
 
 void dev::HardwareStatsWindow::DrawRegs() const

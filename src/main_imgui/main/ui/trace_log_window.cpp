@@ -6,30 +6,29 @@ dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 	ReqUI& _reqUI)
 	:
 	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP),
+		_scheduler, _visible, _dpiScaleP,
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger),
 	m_reqUI(_reqUI)
 {}
 
 void dev::TraceLogWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	static bool visible = false;
-	if (visible && !m_visible) {
-		m_traceLogP = m_debugger.GetTraceLog().GetDisasm(TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
-		m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
-	}
-	visible = m_visible;
+	// static bool visible = false;
 
-	BaseWindow::Draw(_signals);
+	// if (visible && !m_visible) {
+	// 	m_traceLogP = m_debugger.GetTraceLog().GetDisasm(
+	// 							TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
+
+	// 	m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
+	// }
+	// visible = m_visible;
+
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
-	{
-		UpdateData(isRunning);
-		DrawLog(isRunning);
-
-		ImGui::End();
-	}
+	UpdateData(isRunning);
+	DrawLog(isRunning);
 }
 
 void dev::TraceLogWindow::UpdateData(const bool _isRunning)
@@ -102,6 +101,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 	const char* filterName = filterNames[m_disasmFilter];
 
 	if (_isRunning) ImGui::BeginDisabled();
+
 	if (ImGui::BeginCombo("##filterNames", filterName))
 	{
 		for (int n = 0; n < IM_ARRAYSIZE(filterNames); n++)

@@ -7,24 +7,17 @@ dev::AboutWindow::AboutWindow(
 	bool& _visible, const float* const _dpiScaleP)
 	:
 	BaseWindow("About Devector", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP)
+		_scheduler, _visible, _dpiScaleP,
+		ImGuiWindowFlags_AlwaysAutoResize |
+		ImGuiWindowFlags_NoDocking |
+		ImGuiWindowFlags_NoSavedSettings |
+		ImGuiWindowFlags_NoCollapse)
 {}
 
 void dev::AboutWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
-
-	// Always center this window when appearing
-	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
-	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible,
-		ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking |
-		ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse))
-	{
-		DrawContext();
-		ImGui::End();
-	}
+	SetWindowPos(WinPosPreset::CENTER);
+	DrawContext();
 }
 
 void dev::AboutWindow::DrawContext()

@@ -7,7 +7,12 @@ dev::FeedbackWindow::FeedbackWindow(
 	const float* const _dpiScaleP)
 	:
 	BaseWindow("Send Feedback", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP)
+		_scheduler, _visible, _dpiScaleP,
+		ImGuiWindowFlags_AlwaysAutoResize |
+		ImGuiWindowFlags_NoDocking |
+		ImGuiWindowFlags_NoSavedSettings |
+		ImGuiWindowFlags_NoCollapse
+		)
 {
 	m_userFeedback = m_defaultFeedback;
 }
@@ -15,22 +20,10 @@ dev::FeedbackWindow::FeedbackWindow(
 
 void dev::FeedbackWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
+	SetWindowPos(WinPosPreset::CENTER);
 
-	if (m_visible)
-	{
-		ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
-		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
-		if (ImGui::Begin(m_name.c_str(), &m_visible,
-			ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking |
-			ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse))
-		{
-			DrawContext();
-			DrawConfirmation();
-			ImGui::End();
-		}
-	}
+	DrawContext();
+	DrawConfirmation();
 }
 
 void dev::FeedbackWindow::DrawContext()

@@ -17,17 +17,9 @@ dev::DebugDataWindow::DebugDataWindow(Hardware& _hardware, Debugger& _debugger,
 
 void dev::DebugDataWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
-
-	if (m_visible &&
-		ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
-	{
-		bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
-		UpdateData(isRunning);
-		DrawContext(isRunning);
-
-		ImGui::End();
-	}
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	UpdateData(isRunning);
+	DrawContext(isRunning);
 }
 
 void dev::DebugDataWindow::DrawContext(const bool _isRunning)

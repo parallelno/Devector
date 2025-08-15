@@ -41,17 +41,11 @@ bool dev::KeyboardWindow::Init()
 
 void dev::KeyboardWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
-	{
-		m_windowFocused = ImGui::IsWindowFocused();
+	m_windowFocused = ImGui::IsWindowFocused();
 
-		DrawContext(isRunning);
-
-		ImGui::End();
-	}
+	DrawContext(isRunning);
 }
 
 struct ButtonTransform{

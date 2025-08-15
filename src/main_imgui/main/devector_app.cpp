@@ -57,7 +57,11 @@ dev::DevectorApp::~DevectorApp()
 	SettingsUpdate("keyboardWindowVisible", m_keyboardWindowVisible);
 	SettingsUpdate("searchWindowVisible", m_searchWindowVisible);
 	SettingsUpdate("debugdataWindowVisible", m_debugdataWindowVisible);
-	SettingsUpdate("executionSpeed", static_cast<int>(m_displayWindowP->GetExecutionSpeed()));
+	if (m_displayWindowP) {
+		SettingsUpdate("executionSpeed", static_cast<int>(
+			m_displayWindowP->GetExecutionSpeed()
+		));
+	}
 }
 
 void dev::DevectorApp::HardwareInit()
@@ -326,41 +330,65 @@ void dev::DevectorApp::MainMenuUpdate()
 		}
 		if (ImGui::BeginMenu("Tools"))
 		{
-			ImGui::MenuItem(m_displayWindowP->m_name.c_str(),
-							NULL, &m_displayWindowVisible);
+			if (m_displayWindowP){
+				ImGui::MenuItem(m_displayWindowP->m_name.c_str(),
+								NULL, &m_displayWindowVisible);
+			}
 
-			ImGui::MenuItem(m_hardwareStatsWindowP->m_name.c_str(),
-							NULL, &m_hardwareStatsWindowVisible);
+			if (m_hardwareStatsWindowP){
+				ImGui::MenuItem(m_hardwareStatsWindowP->m_name.c_str(),
+								NULL, &m_hardwareStatsWindowVisible);
+			}
 
-			ImGui::MenuItem(m_disasmWindowP->m_name.c_str(),
-							NULL, &m_disasmWindowVisible);
+			if (m_disasmWindowP){
+				ImGui::MenuItem(m_disasmWindowP->m_name.c_str(),
+								NULL, &m_disasmWindowVisible);
+			}
 
-			ImGui::MenuItem(m_breakpointsWindowP->m_name.c_str(),
-							NULL, &m_breakpointsWindowVisisble);
+			if (m_breakpointsWindowP){
+				ImGui::MenuItem(m_breakpointsWindowP->m_name.c_str(),
+								NULL, &m_breakpointsWindowVisisble);
+			}
 
-			ImGui::MenuItem(m_watchpointsWindowP->m_name.c_str(),
-							NULL, &m_watchpointsWindowVisible);
+			if (m_watchpointsWindowP){
+				ImGui::MenuItem(m_watchpointsWindowP->m_name.c_str(),
+								NULL, &m_watchpointsWindowVisible);
+			}
 
-			ImGui::MenuItem(m_memDisplayWindowP->m_name.c_str(),
-							NULL, &m_memDisplayWindowVisible);
+			if (m_memDisplayWindowP){
+				ImGui::MenuItem(m_memDisplayWindowP->m_name.c_str(),
+								NULL, &m_memDisplayWindowVisible);
+			}
 
-			ImGui::MenuItem(m_hexViewerWindowP->m_name.c_str(),
-							NULL, &m_hexViewerWindowVisible);
+			if (m_hexViewerWindowP){
+				ImGui::MenuItem(m_hexViewerWindowP->m_name.c_str(),
+								NULL, &m_hexViewerWindowVisible);
+			}
 
-			ImGui::MenuItem(m_traceLogWindowP->m_name.c_str(),
-							NULL, &m_traceLogWindowVisible);
+			if (m_traceLogWindowP){
+				ImGui::MenuItem(m_traceLogWindowP->m_name.c_str(),
+								NULL, &m_traceLogWindowVisible);
+			}
 
-			ImGui::MenuItem(m_recorderWindowP->m_name.c_str(),
-							NULL, &m_recorderWindowVisible);
+			if (m_recorderWindowP){
+				ImGui::MenuItem(m_recorderWindowP->m_name.c_str(),
+								NULL, &m_recorderWindowVisible);
+			}
 
-			ImGui::MenuItem(m_keyboardWindowP->m_name.c_str(),
-							NULL, &m_keyboardWindowVisible);
+			if (m_keyboardWindowP){
+				ImGui::MenuItem(m_keyboardWindowP->m_name.c_str(),
+								NULL, &m_keyboardWindowVisible);
+			}
 
-			ImGui::MenuItem(m_searchWindowP->m_name.c_str(),
-							NULL, &m_searchWindowVisible);
+			if (m_searchWindowP){
+				ImGui::MenuItem(m_searchWindowP->m_name.c_str(),
+								NULL, &m_searchWindowVisible);
+			}
 
-			ImGui::MenuItem(m_debugdataWindowP->m_name.c_str(),
-							NULL, &m_debugdataWindowVisible);
+			if (m_debugdataWindowP){
+				ImGui::MenuItem(m_debugdataWindowP->m_name.c_str(),
+								NULL, &m_debugdataWindowVisible);
+			}
 			ImGui::EndMenu();
 		}
 
@@ -369,7 +397,8 @@ void dev::DevectorApp::MainMenuUpdate()
 			//ImGui::MenuItem(m_feedbackWindowP->m_name.c_str(), NULL, &m_feedbackWindowVisible);
 			if (ImGui::MenuItem("zx-pk.ru: Vector06C Development"))
 			{
-				dev::OsOpenInShell("https://zx-pk.ru/threads/34480-programmirovanie.html");
+				dev::OsOpenInShell(
+					"https://zx-pk.ru/threads/34480-programmirovanie.html");
 			}
 			if (ImGui::MenuItem("Vector06C Software Catalog"))
 			{
@@ -381,9 +410,14 @@ void dev::DevectorApp::MainMenuUpdate()
 			}
 			if (ImGui::MenuItem("zx-pk.ru: Devector Discussions"))
 			{
-				dev::OsOpenInShell("https://zx-pk.ru/threads/35808-devector-emulyator-kompyutera-vektor-06ts.html");
+				dev::OsOpenInShell(
+					"https://zx-pk.ru/threads/"
+					"35808-devector-emulyator-kompyutera-vektor-06ts.html");
 			}
-			ImGui::MenuItem(m_aboutWindowP->m_name.c_str(), NULL, &m_aboutWindowVisible);
+			if (m_aboutWindowP){
+				ImGui::MenuItem(
+					m_aboutWindowP->m_name.c_str(), NULL, &m_aboutWindowVisible);
+			}
 			ImGui::EndMenu();
 		}
 
@@ -548,13 +582,18 @@ bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 
 	if (appP && appP->GetStatus() != AppStatus::EXIT)
 	{
-		auto displayFocused = appP->m_displayWindowP->IsFocused();
-		auto keyboardFocused = appP->m_keyboardWindowP->IsFocused();
-
 		if (action == SDL_EVENT_KEY_DOWN || action == SDL_EVENT_KEY_UP)
 		{
-			if (displayFocused || keyboardFocused){
-				appP->m_hardwareP->Request(Hardware::Req::KEY_HANDLING, { { "scancode", scancode }, { "action", action} });
+			auto displayFocused = appP->m_displayWindowP &&
+								appP->m_displayWindowP->IsFocused();
+
+			auto keyboardFocused = appP->m_keyboardWindowP &&
+								appP->m_keyboardWindowP->IsFocused();
+
+			if (displayFocused || keyboardFocused)
+			{
+				appP->m_hardwareP->Request(Hardware::Req::KEY_HANDLING,
+					{ { "scancode", scancode }, { "action", action} });
 				return false; // do not pass the event to SDL
 			}
 		}
@@ -929,18 +968,27 @@ void dev::DevectorApp::LoadRecording(const std::string& _path)
 
 void dev::DevectorApp::DebugAttach()
 {
-	bool requiresDebugger = m_disasmWindowVisible || m_breakpointsWindowVisisble || m_watchpointsWindowVisible ||
-		m_hexViewerWindowVisible || m_traceLogWindowVisible || m_recorderWindowVisible;
+	bool requiresDebugger = m_disasmWindowVisible ||
+		m_breakpointsWindowVisisble ||
+		m_watchpointsWindowVisible ||
+		m_hexViewerWindowVisible ||
+		m_traceLogWindowVisible ||
+		m_recorderWindowVisible;
+
 	if (requiresDebugger != m_debuggerAttached)
 	{
 		m_debuggerAttached = requiresDebugger;
 
 		if (requiresDebugger) {
-			m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", true} }); // has to be called before enabling debugging, because Hardware state was changed
+			// has to be called before enabling debugging,
+			// because Hardware state was changed
+			m_hardwareP->Request(Hardware::Req::DEBUG_RESET,
+				{ {"resetRecorder", true} });
 			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		}
 
-		m_hardwareP->Request(Hardware::Req::DEBUG_ATTACH, { { "data", requiresDebugger } });
+		m_hardwareP->Request(Hardware::Req::DEBUG_ATTACH,
+			{ { "data", requiresDebugger } });
 	}
 }
 

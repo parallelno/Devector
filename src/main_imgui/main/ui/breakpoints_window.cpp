@@ -16,46 +16,7 @@ dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
 
 void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
-
-	if (m_visible &&
-		ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
-	{
-		DrawTable();
-		ImGui::End();
-	}
-}
-
-void dev::BreakpointsWindow::DrawProperty(
-	const std::string& _name, const ImVec2& _aligment)
-{
-	ImGui::TableNextColumn();
-	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name.c_str(), _aligment);
-	ImGui::PopStyleColor();
-}
-
-void dev::BreakpointsWindow::CheckIfItemClicked(
-	const ImVec2& _rowMin, bool& _showItemContextMenu,
-	const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup)
-{
-	if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
-	{
-		_showItemContextMenu = true;
-		_editedBreakpointAddr = _addr;
-	}
-
-	// if double clicked, open the wp edit window
-	if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-	{
-		ImVec2 rowMax = ImGui::GetItemRectMax();
-
-		if (ImGui::IsMouseHoveringRect(_rowMin, rowMax))
-		{
-			_editedBreakpointAddr = _addr;
-			_reqPopup = ReqPopup::INIT_EDIT;
-		}
-	}
+	DrawTable();
 }
 
 void dev::BreakpointsWindow::DrawTable()
@@ -238,6 +199,38 @@ void dev::BreakpointsWindow::DrawTable()
 	}
 
 	ImGui::PopStyleVar(2);
+}
+
+void dev::BreakpointsWindow::DrawProperty(
+	const std::string& _name, const ImVec2& _aligment)
+{
+	ImGui::TableNextColumn();
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name.c_str(), _aligment);
+	ImGui::PopStyleColor();
+}
+
+void dev::BreakpointsWindow::CheckIfItemClicked(
+	const ImVec2& _rowMin, bool& _showItemContextMenu,
+	const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup)
+{
+	if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+	{
+		_showItemContextMenu = true;
+		_editedBreakpointAddr = _addr;
+	}
+
+	// if double clicked, open the wp edit window
+	if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+	{
+		ImVec2 rowMax = ImGui::GetItemRectMax();
+
+		if (ImGui::IsMouseHoveringRect(_rowMin, rowMax))
+		{
+			_editedBreakpointAddr = _addr;
+			_reqPopup = ReqPopup::INIT_EDIT;
+		}
+	}
 }
 
 void dev::BreakpointsWindow::DrawPopup(

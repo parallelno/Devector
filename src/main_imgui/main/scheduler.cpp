@@ -11,7 +11,9 @@ auto dev::Scheduler::AddSignal(Receiver&& _receiver)
 void dev::Scheduler::Update(dev::Hardware& _hardware, Debugger& _debugger)
 {
 	m_activeSignals = Signals::UI_DRAW;
-	bool isRunning = _hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+	bool isRunning = _hardware.Request(
+		Hardware::Req::IS_RUNNING)->at("isRunning");
+
 	m_activeSignals = (Signals)(m_activeSignals |
 					(isRunning ? Signals::HW_RUNNING : Signals::NONE));
 

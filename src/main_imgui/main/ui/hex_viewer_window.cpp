@@ -7,23 +7,18 @@ dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 	bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI)
 	:
 	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP),
+		_scheduler, _visible, _dpiScaleP,
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqUI(_reqUI)
 {}
 
 void dev::HexViewerWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	static bool open = true;
-	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar))
-	{
-		UpdateData(isRunning);
-		DrawHex(isRunning);
-
-		ImGui::End();
-	}
+	UpdateData(isRunning);
+	DrawHex(isRunning);
 }
 
 void dev::HexViewerWindow::UpdateData(const bool _isRunning)

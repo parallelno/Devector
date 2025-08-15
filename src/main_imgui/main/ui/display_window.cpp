@@ -137,56 +137,48 @@ bool dev::DisplayWindow::Init()
 
 void dev::DisplayWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
-
-	if (m_visible &&
-		ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
-	{
 /*
-		// TODO: DEBUG test to tune the display settings
-		int paletteCommitTime = m_hardware.Request(Hardware::Req::GET_IO_PALETTE_COMMIT_TIME)->at("paletteCommitTime");
-		if (ImGui::InputInt("paletteCommitTime", &paletteCommitTime, 1, 2000) )
-		{
-			m_hardware.Request(Hardware::Req::SET_IO_PALETTE_COMMIT_TIME, { {"paletteCommitTime", paletteCommitTime}});
-		};
+	// TODO: DEBUG test to tune the display settings
+	int paletteCommitTime = m_hardware.Request(Hardware::Req::GET_IO_PALETTE_COMMIT_TIME)->at("paletteCommitTime");
+	if (ImGui::InputInt("paletteCommitTime", &paletteCommitTime, 1, 2000) )
+	{
+		m_hardware.Request(Hardware::Req::SET_IO_PALETTE_COMMIT_TIME, { {"paletteCommitTime", paletteCommitTime}});
+	};
 
-		int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
-		if (ImGui::InputInt("Border Left", &borderLeft, 1, 2000))
-		{
-			m_hardware.Request(Hardware::Req::SET_DISPLAY_BORDER_LEFT, { {"borderLeft", borderLeft} });
+	int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
+	if (ImGui::InputInt("Border Left", &borderLeft, 1, 2000))
+	{
+		m_hardware.Request(Hardware::Req::SET_DISPLAY_BORDER_LEFT, { {"borderLeft", borderLeft} });
 
-			m_bordsLRTB.x = borderLeft * FRAME_PXL_SIZE_W;
-			m_bordsLRTB.y = (borderLeft + Display::ACTIVE_AREA_W) * FRAME_PXL_SIZE_W;
-		};
+		m_bordsLRTB.x = borderLeft * FRAME_PXL_SIZE_W;
+		m_bordsLRTB.y = (borderLeft + Display::ACTIVE_AREA_W) * FRAME_PXL_SIZE_W;
+	};
 
-		int irqCommitPxl = m_hardware.Request(Hardware::Req::GET_DISPLAY_IRQ_COMMIT_PXL)->at("irqCommitPxl");
-		if (ImGui::InputInt("irqCommitPxl", &irqCommitPxl, 1, 2000))
-		{
-			m_hardware.Request(Hardware::Req::SET_DISPLAY_IRQ_COMMIT_PXL, { {"irqCommitPxl", irqCommitPxl} });
-		};
-		// TODO: DEBUG test end
+	int irqCommitPxl = m_hardware.Request(Hardware::Req::GET_DISPLAY_IRQ_COMMIT_PXL)->at("irqCommitPxl");
+	if (ImGui::InputInt("irqCommitPxl", &irqCommitPxl, 1, 2000))
+	{
+		m_hardware.Request(Hardware::Req::SET_DISPLAY_IRQ_COMMIT_PXL, { {"irqCommitPxl", irqCommitPxl} });
+	};
+	// TODO: DEBUG test end
 */
-		m_windowFocused = ImGui::IsWindowFocused();
+	m_windowFocused = ImGui::IsWindowFocused();
 
-		// switch the border type
-		if (ImGui::IsKeyPressed(ImGuiKey_B) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl)) {
-			m_borderType = static_cast<BorderType>((static_cast<int>(m_borderType) + 1) % static_cast<int>(BorderType::LEN));
-			DrawTooltipTimer(m_borderTypeAS[(int)(m_borderType)]);
-		}
-		// switch the display size
-		if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl)) {
-			m_displaySize = static_cast<DisplaySize>((static_cast<int>(m_displaySize) + 1) % static_cast<int>(DisplaySize::LEN));
-			DrawTooltipTimer(m_displaySizeAS[(int)(m_displaySize)]);
-		}
-
-		UpdateData(isRunning);
-		DrawContextMenu();
-		DrawDisplay();
-		DrawTooltipTimer();
-
-		ImGui::End();
+	// switch the border type
+	if (ImGui::IsKeyPressed(ImGuiKey_B) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl)) {
+		m_borderType = static_cast<BorderType>((static_cast<int>(m_borderType) + 1) % static_cast<int>(BorderType::LEN));
+		DrawTooltipTimer(m_borderTypeAS[(int)(m_borderType)]);
 	}
+	// switch the display size
+	if (ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::IsKeyPressed(ImGuiKey_LeftCtrl)) {
+		m_displaySize = static_cast<DisplaySize>((static_cast<int>(m_displaySize) + 1) % static_cast<int>(DisplaySize::LEN));
+		DrawTooltipTimer(m_displaySizeAS[(int)(m_displaySize)]);
+	}
+
+	UpdateData(isRunning);
+	DrawContextMenu();
+	DrawDisplay();
+	DrawTooltipTimer();
 }
 
 bool dev::DisplayWindow::IsFocused() const

@@ -16,16 +16,10 @@ dev::RecorderWindow::RecorderWindow(Hardware& _hardware, Debugger& _debugger,
 
 void dev::RecorderWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
-	{
-		UpdateData(isRunning);
-		DrawContext(isRunning);
-
-		ImGui::End();
-	}
+	UpdateData(isRunning);
+	DrawContext(isRunning);
 }
 
 void dev::RecorderWindow::DrawContext(const bool _isRunning)

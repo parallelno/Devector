@@ -23,24 +23,15 @@ dev::DisasmWindow::DisasmWindow(
 void dev::DisasmWindow::Draw(const dev::Scheduler::Signals _signals)
 {
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
-	BaseWindow::Draw(_signals);
+	DrawDebugControls(isRunning);
+	DrawSearch(isRunning);
 
-	if (m_visible &&
-		ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
-	{
-		DrawDebugControls(isRunning);
-		DrawSearch(isRunning);
-
-		// in case it changed the bpStatus in DrawDebugControls
-		// TODO: optimize - don't call Request if not needed
-		bool isRunning =
-			m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-		UpdateData(isRunning);
-		DrawDisasm(isRunning);
-
-		ImGui::End();
-	}
-
+	// in case it changed the bpStatus in DrawDebugControls
+	// TODO: optimize - don't call Request if not needed
+	isRunning =
+		m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+	UpdateData(isRunning);
+	DrawDisasm(isRunning);
 }
 
 void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)

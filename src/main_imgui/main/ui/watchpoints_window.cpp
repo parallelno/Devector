@@ -14,13 +14,7 @@ dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
 
 void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
-
-	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
-	{
-		DrawTable();
-		ImGui::End();
-	}
+	DrawTable();
 }
 
 void dev::WatchpointsWindow::DrawProperty(const std::string& _name, const ImVec2& _aligment)

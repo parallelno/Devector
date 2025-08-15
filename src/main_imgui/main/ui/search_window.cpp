@@ -16,16 +16,10 @@ dev::SearchWindow::SearchWindow(Hardware& _hardware, Debugger& _debugger,
 
 void dev::SearchWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	BaseWindow::Draw(_signals);
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	if (m_visible && ImGui::Begin(m_name.c_str(), &m_visible, ImGuiWindowFlags_NoCollapse))
-	{
-		UpdateData(isRunning);
-		DrawContext(isRunning);
-
-		ImGui::End();
-	}
+	UpdateData(isRunning);
+	DrawContext(isRunning);
 }
 
 void dev::SearchWindow::DrawContext(const bool _isRunning)
