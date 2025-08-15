@@ -36,7 +36,8 @@ namespace dev
 			RUN_PAUSE	= 1 << 2, // enabled when the hardware starts or stops running
 			BREAKPOINTS	= 1 << 3,
 			WATCHPOINTS	= 1 << 4,
-			UI_DRAW		= 1 << 5
+			UI_DRAW		= 1 << 5,
+			BREAK		= 1 << 6
 		};
 		using CallFunc = std::function<void(Signals)>;
 

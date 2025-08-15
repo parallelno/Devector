@@ -23,14 +23,11 @@ dev::DisasmWindow::DisasmWindow(
 void dev::DisasmWindow::Draw(const dev::Scheduler::Signals _signals)
 {
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+
+	UpdateData(isRunning);
+
 	DrawDebugControls(isRunning);
 	DrawSearch(isRunning);
-
-	// in case it changed the bpStatus in DrawDebugControls
-	// TODO: optimize - don't call Request if not needed
-	isRunning =
-		m_hardware.Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-	UpdateData(isRunning);
 	DrawDisasm(isRunning);
 }
 

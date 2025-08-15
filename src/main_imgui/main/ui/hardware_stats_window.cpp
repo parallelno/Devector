@@ -13,16 +13,103 @@ dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 	m_ruslat(_ruslat)
 {
 	Init();
-	UpdateData(false);
+
+	dev::Scheduler::Signals runtime_signals = (dev::Scheduler::Signals)(
+										dev::Scheduler::Signals::HW_RUNNING |
+										dev::Scheduler::Signals::BREAK);
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			runtime_signals,
+			std::bind(&dev::HardwareStatsWindow::UpdateRegs,
+						this, std::placeholders::_1), 1000ms));
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			runtime_signals,
+			std::bind(&dev::HardwareStatsWindow::UpdateStack,
+						this, std::placeholders::_1), 1000ms));
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			runtime_signals,
+			std::bind(&dev::HardwareStatsWindow::UpdateHardware,
+						this, std::placeholders::_1), 1000ms));
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			runtime_signals,
+			std::bind(&dev::HardwareStatsWindow::UpdatePorts,
+						this, std::placeholders::_1), 1000ms));
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			runtime_signals,
+			std::bind(&dev::HardwareStatsWindow::UpdatePeripheral,
+						this, std::placeholders::_1), 1000ms));
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			runtime_signals,
+			std::bind(&dev::HardwareStatsWindow::UpdateFdc,
+						this, std::placeholders::_1), 1000ms));
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			runtime_signals,
+			std::bind(&dev::HardwareStatsWindow::UpdateTime,
+						this, std::placeholders::_1), 1000ms));
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			runtime_signals,
+			std::bind(&dev::HardwareStatsWindow::UpdatePalette,
+						this, std::placeholders::_1), 100ms));
 }
 
 void dev::HardwareStatsWindow::Draw(const dev::Scheduler::Signals _signals)
 {
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	UpdateData(isRunning);
-	UpdateDataRuntime();
-	DrawStats(isRunning);
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
+
+	static ImGuiTableFlags flags =
+		ImGuiTableFlags_NoPadInnerX |
+		ImGuiTableFlags_NoPadOuterX |
+		ImGuiTableFlags_ScrollY |
+		ImGuiTableFlags_SizingStretchSame |
+		ImGuiTableFlags_Resizable |
+		ImGuiTableFlags_BordersOuter |
+		ImGuiTableFlags_Hideable |
+		ImGuiTableFlags_ContextMenuInBody;
+	if (ImGui::BeginTable("Hardware Stats", 4, flags))
+	{
+		ImGui::TableSetupColumn("Regs", ImGuiTableColumnFlags_WidthFixed, 80);
+		ImGui::TableSetupColumn("Stack", ImGuiTableColumnFlags_WidthFixed, 76);
+		ImGui::TableSetupColumn("Hardware", ImGuiTableColumnFlags_WidthFixed, 140);
+		ImGui::TableSetupColumn("Peripheral", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableHeadersRow();
+
+		if (isRunning) ImGui::BeginDisabled();
+		PushStyleCompact(1.0f, 0.0f);
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		DrawRegs();
+		ImGui::TableNextColumn();
+		DrawStack();
+		ImGui::TableNextColumn();
+		DrawHardware(isRunning);
+		ImGui::TableNextColumn();
+		DrawPeripheral();
+
+		PopStyleCompact();
+		if (isRunning) ImGui::EndDisabled();
+
+		ImGui::EndTable();
+	}
+	ImGui::PopStyleVar(2);
 }
 
 void dev::HardwareStatsWindow::DrawRegs() const
@@ -186,57 +273,11 @@ void dev::HardwareStatsWindow::DrawPeripheral() const
 	}
 }
 
-void dev::HardwareStatsWindow::DrawStats(const bool _isRunning)
+
+void dev::HardwareStatsWindow::UpdateRegs(const dev::Scheduler::Signals _signals)
 {
-	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
-
-	static ImGuiTableFlags flags =
-		ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
-		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Hideable |
-		ImGuiTableFlags_ContextMenuInBody;
-	if (ImGui::BeginTable("Hardware Stats", 4, flags))
-	{
-		ImGui::TableSetupColumn("Regs", ImGuiTableColumnFlags_WidthFixed, 80);
-		ImGui::TableSetupColumn("Stack", ImGuiTableColumnFlags_WidthFixed, 76);
-		ImGui::TableSetupColumn("Hardware", ImGuiTableColumnFlags_WidthFixed, 140);
-		ImGui::TableSetupColumn("Peripheral", ImGuiTableColumnFlags_WidthStretch);
-		ImGui::TableHeadersRow();
-
-		if (_isRunning) ImGui::BeginDisabled();
-		PushStyleCompact(1.0f, 0.0f);
-
-		ImGui::TableNextRow();
-		ImGui::TableNextColumn();
-		DrawRegs();
-		ImGui::TableNextColumn();
-		DrawStack();
-		ImGui::TableNextColumn();
-		DrawHardware(_isRunning);
-		ImGui::TableNextColumn();
-		DrawPeripheral();
-
-		PopStyleCompact();
-		if (_isRunning) ImGui::EndDisabled();
-
-		ImGui::EndTable();
-	}
-	ImGui::PopStyleVar(2);
-}
-
-void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
-{
-	if (_isRunning) return;
-
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& data = *res;
-
-	uint64_t cc = data["cc"];
-	auto ccDiff = cc - m_ccLast;
-	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
-	m_ccLast = cc;
-	if (ccDiff == 0) return;
 
 	// Regs
 	CpuI8080::AF regAF{ data["af"] };
@@ -300,19 +341,39 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_cpuState.ints = ints;
 
 	m_cpuRegM = data["m"];
+}
+
+
+void dev::HardwareStatsWindow::UpdateStack(const dev::Scheduler::Signals _signals)
+{
+	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+	const auto& data = *res;
+
+	Addr regSP{ data["sp"] };
 
 	// Stack
-	Addr dataAddrN10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 10 } })->at("data");
-	Addr dataAddrN8 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 8 } })->at("data");
-	Addr dataAddrN6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 6 } })->at("data");
-	Addr dataAddrN4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 4 } })->at("data");
-	Addr dataAddrN2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 2 } })->at("data");
-	Addr dataAddr0 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP } })->at("data");
-	Addr dataAddrP2 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 2} })->at("data");
-	Addr dataAddrP4 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 4 } })->at("data");
-	Addr dataAddrP6 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 6 } })->at("data");
-	Addr dataAddrP8 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 8 } })->at("data");
-	Addr dataAddrP10 = m_hardware.Request(Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 10 } })->at("data");
+	Addr dataAddrN10 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 10 } })->at("data");
+	Addr dataAddrN8 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 8 } })->at("data");
+	Addr dataAddrN6 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 6 } })->at("data");
+	Addr dataAddrN4 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 4 } })->at("data");
+	Addr dataAddrN2 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP - 2 } })->at("data");
+	Addr dataAddr0 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP } })->at("data");
+	Addr dataAddrP2 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 2} })->at("data");
+	Addr dataAddrP4 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 4 } })->at("data");
+	Addr dataAddrP6 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 6 } })->at("data");
+	Addr dataAddrP8 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 8 } })->at("data");
+	Addr dataAddrP10 = m_hardware.Request(
+		Hardware::Req::GET_WORD_STACK, { { "addr", regSP + 10 } })->at("data");
 
 	m_dataAddrN10S = std::format("{:04X}", dataAddrN10);
 	m_dataAddrN8S = std::format("{:04X}", dataAddrN8);
@@ -325,6 +386,14 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_dataAddrP6S = std::format("{:04X}", dataAddrP6);
 	m_dataAddrP8S = std::format("{:04X}", dataAddrP8);
 	m_dataAddrP10S = std::format("{:04X}", dataAddrP10);
+}
+
+
+void dev::HardwareStatsWindow::UpdateHardware(
+	const dev::Scheduler::Signals _signals)
+{
+	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
+	const auto& data = *res;
 
 	// Hardware
 	res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
@@ -332,16 +401,6 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	int rasterPixel = displayDataJ["rasterPixel"];
 	int rasterLine = displayDataJ["rasterLine"];
 	int frameNum = displayDataJ["frameNum"];
-	res = m_hardware.Request(Hardware::Req::GET_MEMORY_MAPPING);
-	Memory::Mapping mapping { res->at("mapping") };
-	int ramdiskIdx = res->at("ramdiskIdx");
-
-	// update RAM Disk
-	m_mappingRamModeS = mapping.RamModeToStr();
-	m_mappingPageRamS = std::to_string(mapping.pageRam);
-	m_mappingModeStackS = dev::BoolToStrC(mapping.modeStack, 2);
-	m_mappingPageStackS = std::to_string(mapping.pageStack);
-	m_ramdiskIdxS = std::to_string(ramdiskIdx + 1);
 
 	// update hardware
 	m_ccLastRunS = std::to_string(m_ccLastRun);
@@ -353,13 +412,43 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 	m_frameNum = frameNum;
 	m_frameNumS = std::to_string(frameNum);
 
-	res = m_hardware.Request(Hardware::Req::GET_IO_PALETTE);
+	// Vertical scroll
+	auto scrollVert = m_hardware.Request(
+		Hardware::Req::GET_SCROLL_VERT)->at("scrollVert");
+	bool scrollVertUpdated = m_scrollVert != scrollVert;
+	m_scrollVert = scrollVert;
+	m_scrollVColor = scrollVertUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+
+	// IO
+	auto displayMode = m_hardware.Request(
+		Hardware::Req::GET_IO_DISPLAY_MODE)->at("data");
+	bool displayModeUpdated = m_displayMode != displayMode;
+	m_displayMode = displayMode;
+	m_displayModeColor = displayModeUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_displayModeS = m_displayMode ? "512" : "256";
+
+	// ruslat
+	m_ruslatS = m_ruslat ? "(*)" : "( )";
+	m_ruslatColor = m_ruslat != m_ruslatOld ?
+		&CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
+	m_ruslatOld = m_ruslat;
+}
+
+
+void dev::HardwareStatsWindow::UpdatePalette(
+	const dev::Scheduler::Signals _signals)
+{
+	auto res = m_hardware.Request(Hardware::Req::GET_IO_PALETTE);
 	const auto& paletteDataJ = *res;
 	m_palette.low = paletteDataJ["low"];
 	m_palette.hi = paletteDataJ["hi"];
+}
 
+
+void dev::HardwareStatsWindow::UpdatePorts(const dev::Scheduler::Signals _signals)
+{
 	// ports IN data
-	res = m_hardware.Request(Hardware::Req::GET_IO_PORTS_IN_DATA);
+	auto res = m_hardware.Request(Hardware::Req::GET_IO_PORTS_IN_DATA);
 	const auto& portsDataInJ = *res;
 	IO::PortsData portdataIn;
 	portdataIn.data0 = portsDataInJ["data0"];
@@ -397,29 +486,34 @@ void dev::HardwareStatsWindow::UpdateData(const bool _isRunning)
 		m_portsOutDataColor[i] = updated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
 	}
 	m_portsOutData = portdataOut;
-
-	// Vertical scroll
-	auto scrollVert = m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert");
-	bool scrollVertUpdated = m_scrollVert != scrollVert;
-	m_scrollVert = scrollVert;
-	m_scrollVColor = scrollVertUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-
-	// IO
-	auto displayMode = m_hardware.Request(Hardware::Req::GET_IO_DISPLAY_MODE)->at("data");
-	bool displayModeUpdated = m_displayMode != displayMode;
-	m_displayMode = displayMode;
-	m_displayModeColor = displayModeUpdated ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-	m_displayModeS = m_displayMode ? "512" : "256";
 }
 
-void dev::HardwareStatsWindow::UpdateDataRuntime()
-{
-	static int delay = 0;
-	if (delay++ < 10) return;
-	delay = 0;
 
+void dev::HardwareStatsWindow::UpdatePeripheral(
+	const dev::Scheduler::Signals _signals)
+{
+	auto res = m_hardware.Request(Hardware::Req::GET_MEMORY_MAPPING);
+	Memory::Mapping mapping { res->at("mapping") };
+	int ramdiskIdx = res->at("ramdiskIdx");
+
+	// update RAM Disk
+	m_mappingRamModeS = mapping.RamModeToStr();
+	m_mappingPageRamS = std::to_string(mapping.pageRam);
+	m_mappingModeStackS = dev::BoolToStrC(mapping.modeStack, 2);
+	m_mappingPageStackS = std::to_string(mapping.pageStack);
+	m_ramdiskIdxS = std::to_string(ramdiskIdx + 1);
+}
+
+
+void dev::HardwareStatsWindow::UpdateFdc(const dev::Scheduler::Signals _signals)
+{
 	// FDC
-	static const std::string diskNames[] = { "Drive A", "Drive B", "Drive C", "Drive D" };
+	static const std::string diskNames[] = {
+		"Drive A",
+		"Drive B",
+		"Drive C",
+		"Drive D"
+	};
 	auto fdcInfo = *m_hardware.Request(Hardware::Req::GET_FDC_INFO);
 	m_fdcDrive = diskNames[fdcInfo["drive"].get<int>()];
 	m_fdcSide = std::to_string(fdcInfo["side"].get<int>());
@@ -437,19 +531,29 @@ void dev::HardwareStatsWindow::UpdateDataRuntime()
 		size_t writes = fddInfo["writes"];
 		m_fddPaths[driveIdx] = fddInfo["path"];
 
-		m_fddStats[driveIdx] = fddInfo["mounted"] ? std::format("RW: {}/{}", reads, writes) : "dismounted";
+		m_fddStats[driveIdx] = fddInfo["mounted"] ?
+			std::format("RW: {}/{}", reads, writes) : "dismounted";
 	}
-
-	// ruslat
-	m_ruslatS = m_ruslat ? "(*)" : "( )";
-	m_ruslatColor = m_ruslat != m_ruslatOld ? &CLR_NUM_UPDATED : &DASM_CLR_NUMBER;
-	m_ruslatOld = m_ruslat;
-
-	UpdateUpTime();
 }
 
+
+void dev::HardwareStatsWindow::UpdateTime(const dev::Scheduler::Signals _signals)
+{
+	// update the up time
+	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
+	m_ccS = std::to_string(cc);
+	int sec = (int)(cc / CpuI8080::CLOCK);
+	int hours = sec / 3600;
+	int minutes = (sec % 3600) / 60;
+	int seconds = sec % 60;
+	m_upTimeS = std::format("{0:02}:{1:02}:{2:02}", hours, minutes, seconds);
+}
+
+
 void dev::HardwareStatsWindow::DrawPortsDataProperty(const char* _name,
-	const IO::PortsData& _portsData, const bool _isRunning, const PortsDataColors& _colors,
+	const IO::PortsData& _portsData,
+	const bool _isRunning,
+	const PortsDataColors& _colors,
 	const char* _hint) const
 {
 	ImGui::TableNextRow();
@@ -510,16 +614,4 @@ void dev::HardwareStatsWindow::Init()
 	m_inteColor = &DASM_CLR_NUMBER;
 	m_iffColor = &DASM_CLR_NUMBER;
 	m_hltaColor = &DASM_CLR_NUMBER;
-}
-
-void dev::HardwareStatsWindow::UpdateUpTime()
-{
-	// update the up time
-	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
-	m_ccS = std::to_string(cc);
-	int sec = (int)(cc / CpuI8080::CLOCK);
-	int hours = sec / 3600;
-	int minutes = (sec % 3600) / 60;
-	int seconds = sec % 60;
-	m_upTimeS = std::format("{0:02}:{1:02}:{2:02}", hours, minutes, seconds);
 }

@@ -97,7 +97,6 @@ namespace dev
 		// stats end
 		////////////////////
 
-		void DrawStats(const bool _isRunning);
 		void DrawRegs() const;
 		void DrawStack() const;
 		void DrawHardware(const bool _isRunning) const;
@@ -106,12 +105,21 @@ namespace dev
 			const IO::PortsData& _portsData, const bool _isRunning,
 			const PortsDataColors& _colors,
 			const char* _hint = nullptr) const;
-		void UpdateData(const bool _isRunning);
-		void UpdateDataRuntime();
+
+		void UpdateData(const dev::Scheduler::Signals _signals);
+		void UpdateRegs(const dev::Scheduler::Signals _signals);
+		void UpdateStack(const dev::Scheduler::Signals _signals);
+		void UpdateHardware(const dev::Scheduler::Signals _signals);
+		void UpdatePorts(const dev::Scheduler::Signals _signals);
+		void UpdatePeripheral(const dev::Scheduler::Signals _signals);
+		void UpdateFdc(const dev::Scheduler::Signals _signals);
+		void UpdateTime(const dev::Scheduler::Signals _signals);
+		void UpdatePalette(const dev::Scheduler::Signals _signals);
+
 		void Init();
-		void UpdateUpTime();
 
 	public:
+
 		HardwareStatsWindow(Hardware& _hardware,
 			dev::Scheduler& _scheduler,
 			bool& _visible, const float* const _dpiScaleP,

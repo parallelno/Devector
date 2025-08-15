@@ -20,6 +20,11 @@ void dev::Scheduler::Update(dev::Hardware& _hardware, Debugger& _debugger)
 	m_activeSignals = (Signals)(m_activeSignals |
 						(isRunning != m_isRunning ?
 						Signals::RUN_PAUSE : Signals::NONE));
+
+	m_activeSignals = (Signals)(m_activeSignals |
+						(isRunning != m_isRunning && !isRunning?
+						Signals::BREAK : Signals::NONE));
+
 	m_isRunning = isRunning;
 
 
@@ -34,7 +39,9 @@ void dev::Scheduler::Receiver::TryCall(const Signals _activeSignals)
 {
 	if ((flags & _activeSignals) == Signals::NONE) return;
 
-	if (hw_running_delay > 0ms){
+	if (_activeSignals & Signals::HW_RUNNING &&
+		hw_running_delay > 0ms)
+		{
 		auto now = std::chrono::steady_clock::now();
 		if (now - lastTimePoint < hw_running_delay) {
 			return;
