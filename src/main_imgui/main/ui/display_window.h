@@ -27,7 +27,6 @@ namespace dev
 
 		GLuint m_frameTextureId = 0;
 		Hardware& m_hardware;
-		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		std::atomic_bool m_windowFocused = false;
 		int m_rasterPixel = 0;
@@ -65,12 +64,17 @@ namespace dev
 		ReqUI& m_reqUI;
 		Scripts& m_scripts;
 
+		bool Init(const std::string& m_display_vtxShader,
+				const std::string& m_display_fragShader);
+
+		void UpdateData(const dev::Scheduler::Signals _signals);
+
+		void Draw(const dev::Scheduler::Signals _signals) override;
 		void DrawDisplay();
 		void DrawContextMenu();
 		void CreateTexture(const bool _vsync);
-		void UpdateData(const bool _isRunning);
-		bool Init(const std::string& m_display_vtxShader,
-				const std::string& m_display_fragShader);
+
+
 		void DrawScriptsUIItems(const ImVec2& _pos, const ImVec2& _displaySize);
 
 	public:
@@ -85,7 +89,6 @@ namespace dev
 			const std::string& _vtxShaderS,
 			const std::string& _fragShaderS);
 
-		void Draw(const dev::Scheduler::Signals _signals) override;
 		bool IsFocused() const;
 		auto GetExecutionSpeed() const { return m_execSpeed; };
 		void SetExecutionSpeed(const Hardware::ExecSpeed _execSpeed);

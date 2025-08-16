@@ -29,7 +29,6 @@ namespace dev
 		Debugger& m_debugger;
 		ReqUI& m_reqUI;
 
-		int64_t m_ccLast = -1; // to force the first stats update
 		std::array<uint8_t, Memory::MEMORY_MAIN_LEN> m_ram;
 		int m_searchAddr = 0;
 
@@ -39,13 +38,14 @@ namespace dev
 		GlobalAddr m_highlightAddr = 0;
 		GlobalAddr m_highlightAddrLen = 0;
 
-		void UpdateData(const bool _isRunning);
+		void UpdateData(const dev::Scheduler::Signals _signals);
+
 		void DrawHex(const bool _isRunning);
+		void Draw(const dev::Scheduler::Signals _signals) override;
 
 	public:
 		HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI);
-		void Draw(const dev::Scheduler::Signals _signals) override;
 	};
 };

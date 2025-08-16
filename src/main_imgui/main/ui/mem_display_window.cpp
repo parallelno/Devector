@@ -2,7 +2,9 @@
 #include "utils/imgui_utils.h"
 
 
-dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger,
+dev::MemDisplayWindow::MemDisplayWindow(
+	Hardware& _hardware,
+	Debugger& _debugger,
 	dev::Scheduler& _scheduler,
 	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
 	ReqUI& _reqUI,
@@ -17,6 +19,16 @@ dev::MemDisplayWindow::MemDisplayWindow(Hardware& _hardware, Debugger& _debugger
 	m_reqUI(_reqUI)
 {
 	m_isGLInited = Init(_vtxShaderS, _fragShaderS);
+
+	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
+										dev::Scheduler::Signals::HW_RUNNING |
+										dev::Scheduler::Signals::BREAK);
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			signals,
+			std::bind(&dev::MemDisplayWindow::UpdateData,
+					this, std::placeholders::_1),
+			m_visible, 10ms));
 }
 
 bool dev::MemDisplayWindow::Init(
@@ -24,18 +36,25 @@ bool dev::MemDisplayWindow::Init(
 	const std::string& _fragShaderS)
 {
 	// setting up the mem view rendering
-	auto memViewShaderId = m_glUtils.InitShader(
-									_vtxShaderS.c_str(), _fragShaderS.c_str());
+	auto memViewShaderId =
+		m_glUtils.InitShader(_vtxShaderS.c_str(), _fragShaderS.c_str());
+
 	if (memViewShaderId == INVALID_ID) return false;
+
 	m_memViewShaderId = memViewShaderId;
 
 	for (int i = 0; i < RAM_TEXTURES; i++){
 		// ram
-		auto memViewTexId = m_glUtils.InitTexture(RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::R8);
+		auto memViewTexId = m_glUtils.InitTexture(
+			RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::R8);
+
 		if (memViewTexId == INVALID_ID) return false;
+
 		m_memViewTexIds[i] = memViewTexId;
 		// highlight reads + writes
-		auto lastRWTexId = m_glUtils.InitTexture(RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::RGBA);
+		auto lastRWTexId = m_glUtils.InitTexture(
+			RAM_TEXTURE_W, RAM_TEXTURE_H, GLUtils::Texture::Format::RGBA);
+
 		if (lastRWTexId == INVALID_ID) return false;
 		m_lastRWTexIds[i] = lastRWTexId;
 	}
@@ -59,78 +78,32 @@ bool dev::MemDisplayWindow::Init(
 		m_memViewMatIds[i] = matId;
 	}
 
-	m_paramId_globalColorBg = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "globalColorBg");
-	m_paramId_globalColorFg = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "globalColorFg");
-	m_paramId_highlightRead = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "highlightRead");
-	m_paramId_highlightWrite = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "highlightWrite");
-	m_paramId_highlightIdxMax = m_glUtils.GetMaterialParamId(m_memViewMatIds[0], "highlightIdxMax");
+	m_paramId_globalColorBg = m_glUtils.GetMaterialParamId(
+		m_memViewMatIds[0], "globalColorBg");
+
+	m_paramId_globalColorFg = m_glUtils.GetMaterialParamId(
+		m_memViewMatIds[0], "globalColorFg");
+
+	m_paramId_highlightRead = m_glUtils.GetMaterialParamId(
+		m_memViewMatIds[0], "highlightRead");
+
+	m_paramId_highlightWrite = m_glUtils.GetMaterialParamId(
+		m_memViewMatIds[0], "highlightWrite");
+
+	m_paramId_highlightIdxMax = m_glUtils.GetMaterialParamId(
+		m_memViewMatIds[0], "highlightIdxMax");
 
 	return true;
 }
 
 void dev::MemDisplayWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
-
-	UpdateData(isRunning);
-	DrawDisplay();
+	DrawSelector();
+	DrawMemoryTabs();
 }
 
-static const char* separatorsS[] = {
-	"The Main Ram",
-	"The RAM Disk 1 Page 0",
-	"The RAM Disk 1 Page 1",
-	"The RAM Disk 1 Page 2",
-	"The RAM Disk 1 Page 3",
-	"The RAM Disk 2 Page 0",
-	"The RAM Disk 2 Page 1",
-	"The RAM Disk 2 Page 2",
-	"The RAM Disk 2 Page 3",
-	"The RAM Disk 3 Page 0",
-	"The RAM Disk 3 Page 1",
-	"The RAM Disk 3 Page 2",
-	"The RAM Disk 3 Page 3",
-	"The RAM Disk 4 Page 0",
-	"The RAM Disk 4 Page 1",
-	"The RAM Disk 4 Page 2",
-	"The RAM Disk 4 Page 3",
-	"The RAM Disk 5 Page 0",
-	"The RAM Disk 5 Page 1",
-	"The RAM Disk 5 Page 2",
-	"The RAM Disk 5 Page 3",
-	"The RAM Disk 6 Page 0",
-	"The RAM Disk 6 Page 1",
-	"The RAM Disk 6 Page 2",
-	"The RAM Disk 6 Page 3",
-	"The RAM Disk 7 Page 0",
-	"The RAM Disk 7 Page 1",
-	"The RAM Disk 7 Page 2",
-	"The RAM Disk 7 Page 3",
-	"The RAM Disk 8 Page 0",
-	"The RAM Disk 8 Page 1",
-	"The RAM Disk 8 Page 2",
-	"The RAM Disk 8 Page 3"
-};
 
-dev::Addr PixelPosToAddr(ImVec2 _pos, float _scale)
-{
-	// (0,0) is the left-top corner
-	int imgX = int(_pos.x / _scale);
-	int imgY = int(_pos.y / _scale);
-
-	// img size (1024, 512)
-	int addrOffsetH = imgY / 256; // addrOffsetH = 0 means addr is <= 32K, addrOffsetH = 1 means addr is > 32K,
-	int eigthKBankIdx = imgX / 256 + 4 * addrOffsetH;
-
-	int eigthKBankPosX = imgX % 256;
-	int eigthKBankPosY = imgY % 256;
-
-	dev::Addr addr = ((eigthKBankPosX>>3) * 256 + (255 - eigthKBankPosY)) + eigthKBankIdx * 1024 * 8;
-
-	return addr;
-}
-
-void dev::MemDisplayWindow::DrawDisplay()
+void dev::MemDisplayWindow::DrawSelector()
 {
 	static int highlightMode = 0; // 0 - RW, 1 - R, 2 - W
 	ImGui::Text("Highlight: "); ImGui::SameLine();
@@ -162,99 +135,184 @@ void dev::MemDisplayWindow::DrawDisplay()
 	default:
 		break;
 	}
-
-	ImVec2 mousePos = ImGui::GetMousePos();
-	static ImVec2 imgPixelPos;
-	static int imageHoveredId = 0;
-
-	ImVec2 remainingSize = ImGui::GetContentRegionAvail();
-	ImGui::BeginChild("ScrollingFrame", { remainingSize.x, remainingSize.y }, true, ImGuiWindowFlags_HorizontalScrollbar);
-
-	if (m_isGLInited)
-	{
-		ImVec2 imageSize(FRAME_BUFFER_W * m_scale, FRAME_BUFFER_H * m_scale);
-		imageHoveredId = -1;
-
-		for (int i = 0; i < RAM_TEXTURES; i++)
-		{
-			ImGui::SeparatorText(separatorsS[i]);
-			ImVec2 imagePos = ImGui::GetCursorScreenPos();
-			ImVec2 imageEndPos = ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y);
-
-			bool isInsideImg = mousePos.x >= imagePos.x && mousePos.x < imageEndPos.x &&
-				mousePos.y >= imagePos.y && mousePos.y < imageEndPos.y;
-
-			if (isInsideImg)
-			{
-				imgPixelPos = ImVec2(mousePos.x - imagePos.x, mousePos.y - imagePos.y);
-				imageHoveredId = i;
-			}
-
-			auto framebufferTex = m_glUtils.GetFramebufferTexture(m_memViewMatIds[i]);
-			ImGui::Image(framebufferTex, imageSize);
-
-			// if clicked, show the addr in the Hex Window
-			if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
-			{
-				Addr addr = PixelPosToAddr(imgPixelPos, m_scale);
-				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-				m_reqUI.globalAddr = addr + imageHoveredId * Memory::MEM_64K;
-				m_reqUI.len = 1;
-			}
-		}
-	}
-	ScaleView();
-	ImGui::EndChild();
-
-	// addr pop-up
-	if (ImGui::IsItemHovered())
-	{
-		if (imageHoveredId >= 0 &&
-			!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
-		{
-			ImGui::BeginTooltip();
-			GlobalAddr globalAddr = PixelPosToAddr(imgPixelPos, m_scale) + imageHoveredId * Memory::MEM_64K;
-			uint8_t val = m_hardware.Request(Hardware::Req::GET_BYTE_GLOBAL, { { "globalAddr", globalAddr } })->at("data");
-			ImGui::Text("0x%06X (0x%02X), %s", globalAddr, val, separatorsS[imageHoveredId]);
-			ImGui::EndTooltip();
-		}
-
-		// tooltip zoom
-		DrawTooltipTimer();
-	}
 }
 
-void dev::MemDisplayWindow::UpdateData(const bool _isRunning)
+static const char* separatorsS[] = {
+	"Main Ram",
+	"RAM Disk 1 Page 0",
+	"RAM Disk 1 Page 1",
+	"RAM Disk 1 Page 2",
+	"RAM Disk 1 Page 3",
+	"RAM Disk 2 Page 0",
+	"RAM Disk 2 Page 1",
+	"RAM Disk 2 Page 2",
+	"RAM Disk 2 Page 3",
+	"RAM Disk 3 Page 0",
+	"RAM Disk 3 Page 1",
+	"RAM Disk 3 Page 2",
+	"RAM Disk 3 Page 3",
+	"RAM Disk 4 Page 0",
+	"RAM Disk 4 Page 1",
+	"RAM Disk 4 Page 2",
+	"RAM Disk 4 Page 3",
+	"RAM Disk 5 Page 0",
+	"RAM Disk 5 Page 1",
+	"RAM Disk 5 Page 2",
+	"RAM Disk 5 Page 3",
+	"RAM Disk 6 Page 0",
+	"RAM Disk 6 Page 1",
+	"RAM Disk 6 Page 2",
+	"RAM Disk 6 Page 3",
+	"RAM Disk 7 Page 0",
+	"RAM Disk 7 Page 1",
+	"RAM Disk 7 Page 2",
+	"RAM Disk 7 Page 3",
+	"RAM Disk 8 Page 0",
+	"RAM Disk 8 Page 1",
+	"RAM Disk 8 Page 2",
+	"RAM Disk 8 Page 3"
+};
+
+
+static const char* tab_names[] = {
+	"Main Ram",
+	"RAM Disk 1",
+	"RAM Disk 2",
+	"RAM Disk 3",
+	"RAM Disk 4",
+	"RAM Disk 5",
+	"RAM Disk 6",
+	"RAM Disk 7",
+	"RAM Disk 8"
+};
+
+void dev::MemDisplayWindow::DrawMemoryTabs()
 {
-	// check if the hardware updated its state
-	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
-	auto ccDiff = cc - m_ccLast;
-	//if (ccDiff == 0) return;
-	m_ccLast = cc;
+	if (!m_isGLInited) return;
 
-	// update
-	if (m_isGLInited)
+	m_selectedTab = 0;
+	int hovered_bank_idx = -1;
+	static ImVec2 img_pixel_pos;
+
+	if (ImGui::BeginTabBar("MemoryPanels"))
 	{
-		auto memP = m_hardware.GetRam()->data();
-
-		if (ccDiff != 0) m_debugger.UpdateLastRW();
-		auto memLastRWP = m_debugger.GetLastRW()->data();
-
-		// update params and vram texture
-		for (int i = 0; i < RAM_TEXTURES; i++)
+		for (int tab_idx = 0; tab_idx < MEM_TABS; tab_idx++)
 		{
-			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_globalColorBg, m_globalColorBg);
-			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_globalColorFg, m_globalColorFg);
-			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_highlightRead, m_highlightRead);
-			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_highlightWrite, m_highlightWrite);
-			m_glUtils.UpdateMaterialParam(m_memViewMatIds[i], m_paramId_highlightIdxMax, m_highlightIdxMax);
+			if (ImGui::BeginTabItem(tab_names[tab_idx]))
+			{
+				m_selectedTab = tab_idx;
 
-			m_glUtils.UpdateTexture(m_memViewTexIds[i], memP + i * Memory::MEM_64K);
-			m_glUtils.UpdateTexture(m_lastRWTexIds[i], (const uint8_t*)(memLastRWP) + i * Memory::MEM_64K * 4);
-			m_glUtils.Draw(m_memViewMatIds[i]);
+				ImVec2 mousePos = ImGui::GetMousePos();
+
+				ImVec2 remainingSize = ImGui::GetContentRegionAvail();
+				ImGui::BeginChild("ScrollingFrame",
+					{ remainingSize.x, remainingSize.y },
+					true,
+					ImGuiWindowFlags_HorizontalScrollbar);
+
+				ImVec2 imageSize(
+					FRAME_BUFFER_W * m_scale,
+					FRAME_BUFFER_H * m_scale);
+
+				int bank_idx_start = tab_idx == 0 ?
+					0 :	// the main ram, one texture
+					1 + (tab_idx - 1) * RAMDISK_PAGES_MAX;
+
+				int banks_len = tab_idx == 0 ? 1 : RAMDISK_PAGES_MAX;
+
+
+				for (int bank_idx = bank_idx_start;
+					bank_idx < bank_idx_start + banks_len;
+					bank_idx++)
+				{
+					ImGui::SeparatorText(separatorsS[bank_idx]);
+					ImVec2 imagePos = ImGui::GetCursorScreenPos();
+
+					auto framebufferTex = m_glUtils.GetFramebufferTexture(
+						m_memViewMatIds[bank_idx]);
+
+					ImGui::Image(framebufferTex, imageSize);
+					hovered_bank_idx = ImGui::IsItemHovered() ?
+						bank_idx :
+						hovered_bank_idx;
+
+					if (hovered_bank_idx == bank_idx)
+					{
+						img_pixel_pos = ImVec2(
+							mousePos.x - imagePos.x,
+							mousePos.y - imagePos.y);
+					}
+
+
+					// if clicked, show the addr in the Hex Window
+					if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+					{
+						Addr addr = PixelPosToAddr(img_pixel_pos, m_scale);
+						m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+						m_reqUI.globalAddr =
+							addr + hovered_bank_idx * Memory::MEM_64K;
+
+						m_reqUI.len = 1;
+					}
+				}
+
+				ImGui::EndChild();
+
+				ImGui::EndTabItem();
+			}
 		}
 	}
+	ImGui::EndTabBar();
+
+	// ScaleView();
+	if (hovered_bank_idx >= 0)
+		DrawTooltip(hovered_bank_idx, img_pixel_pos);
 }
+
+
+void dev::MemDisplayWindow::DrawTooltip(
+	const int _img_hovered_idx, const ImVec2& _img_pixel_pos)
+{
+	// Addr Tooltip
+	if (!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+	{
+		ImGui::BeginTooltip();
+		GlobalAddr globalAddr = PixelPosToAddr(_img_pixel_pos, m_scale) +
+										_img_hovered_idx * Memory::MEM_64K;
+
+		uint8_t val = m_hardware.Request(Hardware::Req::GET_BYTE_GLOBAL,
+			{ { "globalAddr", globalAddr } })->at("data");
+
+		ImGui::Text("0x%06X (0x%02X), %s",
+			globalAddr, val, separatorsS[_img_hovered_idx]);
+
+		ImGui::EndTooltip();
+	}
+
+	// tooltip zoom
+	DrawTooltipTimer();
+}
+
+
+auto dev::MemDisplayWindow::PixelPosToAddr(ImVec2 _pos, float _scale)
+-> Addr
+{
+	// (0,0) is the left-top corner
+	int imgX = int(_pos.x / _scale);
+	int imgY = int(_pos.y / _scale);
+
+	// img size (1024, 512)
+	int addrOffsetH = imgY / 256; // addrOffsetH = 0 means addr is <= 32K, addrOffsetH = 1 means addr is > 32K,
+	int eigthKBankIdx = imgX / 256 + 4 * addrOffsetH;
+
+	int eigthKBankPosX = imgX % 256;
+	int eigthKBankPosY = imgY % 256;
+
+	dev::Addr addr = ((eigthKBankPosX>>3) * 256 + (255 - eigthKBankPosY)) + eigthKBankIdx * 1024 * 8;
+
+	return addr;
+}
+
 
 // check the keys, scale the view
 void dev::MemDisplayWindow::ScaleView()
@@ -274,6 +332,53 @@ void dev::MemDisplayWindow::ScaleView()
 			if (ImGui::GetIO().MouseWheel != 0.0f) {
 				DrawTooltipTimer(std::format("Zoom: {}", m_scale).c_str());
 			}
+		}
+	}
+}
+
+
+
+void dev::MemDisplayWindow::UpdateData(const dev::Scheduler::Signals _signals)
+{
+	// update
+	if (m_isGLInited)
+	{
+		auto memP = m_hardware.GetRam()->data();
+
+		m_debugger.UpdateLastRW();
+		auto memLastRWP = m_debugger.GetLastRW()->data();
+
+		// update params and vram texture
+		int bank_idx_start = m_selectedTab == 0 ?
+			0 :	// the main ram, one texture
+			1 + (m_selectedTab - 1) * RAMDISK_PAGES_MAX;
+		int banks_len = m_selectedTab == 0 ? 1 : RAMDISK_PAGES_MAX;
+
+		for (int i = bank_idx_start; i < bank_idx_start + banks_len; i++)
+		{
+			m_glUtils.UpdateMaterialParam(
+				m_memViewMatIds[i], m_paramId_globalColorBg, m_globalColorBg);
+
+			m_glUtils.UpdateMaterialParam(
+				m_memViewMatIds[i], m_paramId_globalColorFg, m_globalColorFg);
+
+			m_glUtils.UpdateMaterialParam(
+				m_memViewMatIds[i], m_paramId_highlightRead, m_highlightRead);
+
+			m_glUtils.UpdateMaterialParam(
+				m_memViewMatIds[i], m_paramId_highlightWrite, m_highlightWrite);
+
+			m_glUtils.UpdateMaterialParam(
+				m_memViewMatIds[i], m_paramId_highlightIdxMax, m_highlightIdxMax);
+
+			m_glUtils.UpdateTexture(
+				m_memViewTexIds[i], memP + i * Memory::MEM_64K);
+
+			m_glUtils.UpdateTexture(
+				m_lastRWTexIds[i],
+				(const uint8_t*)(memLastRWP) + i * Memory::MEM_64K * 4);
+
+			m_glUtils.Draw(m_memViewMatIds[i]);
 		}
 	}
 }

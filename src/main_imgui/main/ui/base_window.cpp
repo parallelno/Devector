@@ -15,14 +15,13 @@ dev::BaseWindow::BaseWindow(const std::string& _name,
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
 			dev::Scheduler::Signals::UI_DRAW,
-			std::bind(&dev::BaseWindow::Update, this, std::placeholders::_1)));
+			std::bind(&dev::BaseWindow::Update, this, std::placeholders::_1),
+			m_visible));
 };
 
 
 void dev::BaseWindow::Update(const dev::Scheduler::Signals _signals)
 {
-	if (!m_visible) return;
-
 	if (!m_default_pos_set){
 		SetWindowDefaultPosSize();
 		m_default_pos_set = true;

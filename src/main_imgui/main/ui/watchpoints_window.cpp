@@ -10,44 +10,20 @@ dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
 		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware),
 	m_reqUI(_reqUI)
-{}
+{
+	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
+									dev::Scheduler::Signals::HW_RUNNING |
+									dev::Scheduler::Signals::BREAK);
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			signals,
+			std::bind(&dev::WatchpointsWindow::UpdateWatchpoints,
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
+}
 
 void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
-{
-	DrawTable();
-}
-
-void dev::WatchpointsWindow::DrawProperty(const std::string& _name, const ImVec2& _aligment)
-{
-	ImGui::TableNextColumn();
-	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-	TextAligned(_name.c_str(), _aligment);
-	ImGui::PopStyleColor();
-}
-
-void dev::WatchpointsWindow::CheckIfItemClicked(const ImVec2& _rowMin,
-	bool& _showItemContextMenu, const int _id, int& _editedWatchpointId, ReqPopup& _reqPopup)
-{
-	if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
-	{
-		_showItemContextMenu = true;
-		_editedWatchpointId = _id;
-	}
-
-	// if double clicked, open the wp edit window
-	if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-	{
-		ImVec2 rowMax = ImGui::GetItemRectMax();
-
-		if (ImGui::IsMouseHoveringRect(_rowMin, rowMax))
-		{
-			_editedWatchpointId = _id;
-			_reqPopup = ReqPopup::INIT_EDIT;
-		}
-	}
-}
-
-void dev::WatchpointsWindow::DrawTable()
 {
 	static int selectedAddr = 0;
 	bool showItemContextMenu = false;
@@ -91,8 +67,6 @@ void dev::WatchpointsWindow::DrawTable()
 		}
 
 		PushStyleCompact(1.0f, 0.0f);
-
-		UpdateWatchpoints();
 
 		for (auto& [id, wp] : m_watchpoints)
 		{
@@ -246,6 +220,37 @@ void dev::WatchpointsWindow::DrawTable()
 	}
 	ImGui::PopStyleVar(2);
 }
+
+void dev::WatchpointsWindow::DrawProperty(const std::string& _name, const ImVec2& _aligment)
+{
+	ImGui::TableNextColumn();
+	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
+	TextAligned(_name.c_str(), _aligment);
+	ImGui::PopStyleColor();
+}
+
+void dev::WatchpointsWindow::CheckIfItemClicked(const ImVec2& _rowMin,
+	bool& _showItemContextMenu, const int _id, int& _editedWatchpointId, ReqPopup& _reqPopup)
+{
+	if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+	{
+		_showItemContextMenu = true;
+		_editedWatchpointId = _id;
+	}
+
+	// if double clicked, open the wp edit window
+	if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+	{
+		ImVec2 rowMax = ImGui::GetItemRectMax();
+
+		if (ImGui::IsMouseHoveringRect(_rowMin, rowMax))
+		{
+			_editedWatchpointId = _id;
+			_reqPopup = ReqPopup::INIT_EDIT;
+		}
+	}
+}
+
 
 void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::WpMap& _wps, int _id)
 {
@@ -404,9 +409,11 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 	}
 }
 
-void dev::WatchpointsWindow::UpdateWatchpoints()
+void dev::WatchpointsWindow::UpdateWatchpoints(
+	const dev::Scheduler::Signals _signals)
 {
-	size_t updates = m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_GET_UPDATES)->at("updates");
+	size_t updates = m_hardware.Request(
+		Hardware::Req::DEBUG_WATCHPOINT_GET_UPDATES)->at("updates");
 
 	if (updates == m_updates) return;
 

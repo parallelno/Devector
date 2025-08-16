@@ -12,14 +12,20 @@ dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
 	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware), m_reqUI(_reqUI)
-{}
-
-void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	DrawTable();
+	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
+									dev::Scheduler::Signals::HW_RUNNING |
+									dev::Scheduler::Signals::BREAK);
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			signals,
+			std::bind(&dev::BreakpointsWindow::UpdateBreakpoints,
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
 }
 
-void dev::BreakpointsWindow::DrawTable()
+void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 {
 	static int selectedAddr = -1;
 	bool showItemContextMenu = false;
@@ -66,8 +72,6 @@ void dev::BreakpointsWindow::DrawTable()
 		}
 
 		PushStyleCompact(1.0f, 0.0f);
-
-		UpdateBreakpoints();
 
 		for (const auto& [addr, bp] : m_breakpoints)
 		{
@@ -401,7 +405,8 @@ void dev::BreakpointsWindow::DrawPopup(
 	}
 }
 
-void dev::BreakpointsWindow::UpdateBreakpoints()
+void dev::BreakpointsWindow::UpdateBreakpoints(
+	const dev::Scheduler::Signals _signals)
 {
 	size_t updates = m_hardware.Request(
 		Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES)->at("updates");

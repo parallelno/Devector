@@ -17,14 +17,21 @@ dev::DisasmWindow::DisasmWindow(
 	m_fontCommentP(fontComment),
 	m_reqUI(_reqUI)
 {
-	UpdateData(false);
+	dev::Scheduler::Signals signals = dev::Scheduler::Signals::BREAK;
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			signals,
+			std::bind(&dev::DisasmWindow::UpdateData,
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
 }
 
 void dev::DisasmWindow::Draw(const dev::Scheduler::Signals _signals)
 {
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	UpdateData(isRunning);
+	ReqHandling(); // should be before UpdateDisasm and DrawDisasm
 
 	DrawDebugControls(isRunning);
 	DrawSearch(isRunning);
@@ -92,7 +99,6 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	ImGui::SameLine();
 	if (ImGui::Button("Reset"))
 	{
-		m_ccLast = -1;
 		m_reqUI.type = ReqUI::Type::RELOAD_ROM_FDD_REC;
 		m_hardware.Request(Hardware::Req::STOP);
 		m_debugger.GetDebugData().SaveDebugData();
@@ -113,7 +119,8 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 {
 	if (_isRunning) ImGui::BeginDisabled();
 	ImGui::PushItemWidth(-100);
-	if (ImGui::InputTextWithHint("##disasmSearch", "FF", m_searchText, IM_ARRAYSIZE(m_searchText)))
+	if (ImGui::InputTextWithHint(
+		"##disasmSearch", "FF", m_searchText, IM_ARRAYSIZE(m_searchText)))
 	{
 		DebugData::FilteredElements _filteredElements;
 		m_debugger.GetDebugData().GetFilteredLabels(_filteredElements, m_searchText);
@@ -254,7 +261,9 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning,
 		_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
 		_reqUI.globalAddr = _line.imm;
 		break;
-	case UIItemMouseAction::RIGHT: // init the immediate value as an addr to let the context menu copy it
+
+	// init the immediate value as an addr to let the context menu copy it
+	case UIItemMouseAction::RIGHT:
 		_contextMenu.Init(
 			_line.imm, _line.GetImmediateS(), m_debugger.GetDebugData(), true);
 		break;
@@ -496,24 +505,10 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 }
 
 
-void dev::DisasmWindow::UpdateData(const bool _isRunning)
+void dev::DisasmWindow::UpdateData(const dev::Scheduler::Signals _signals)
 {
-	ReqHandling(); // should be before UpdateDisasm and DrawDisasm
-
-	if (_isRunning) return;
-
-	auto res = m_hardware.Request(Hardware::Req::GET_CC);
-	const auto& data = *res;
-
-	uint64_t cc = data["cc"];
-	auto ccDiff = cc - m_ccLast;
-	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
-	m_ccLast = cc;
-	if (ccDiff == 0) return;
-
 	// update
 	Addr addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-
 	UpdateDisasm(addr);
 }
 
@@ -657,8 +652,13 @@ void dev::DisasmWindow::DrawContextMenu(
 			m_reqUI.globalAddr = _contextMenu.addr;
 		}
 
-		if (_contextMenu.editMemoryExists && ImGui::MenuItem("Cancel Edit Memory at This Addr")) {
-			m_hardware.Request(Hardware::Req::DEBUG_MEMORY_EDIT_DEL, { {"addr", _contextMenu.addr} });
+		if (_contextMenu.editMemoryExists && ImGui::MenuItem(
+			"Cancel Edit Memory at This Addr"))
+		{
+			m_hardware.Request(
+				Hardware::Req::DEBUG_MEMORY_EDIT_DEL,
+				{ {"addr", _contextMenu.addr} });
+
 			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 		}
 

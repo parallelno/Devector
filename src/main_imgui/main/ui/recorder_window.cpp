@@ -12,29 +12,32 @@ dev::RecorderWindow::RecorderWindow(Hardware& _hardware, Debugger& _debugger,
 		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger),
 	m_reqUI(_reqUI)
-{}
+{
+	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
+										dev::Scheduler::Signals::HW_RUNNING |
+										dev::Scheduler::Signals::BREAK);
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			signals,
+			std::bind(&dev::RecorderWindow::UpdateData,
+					this, std::placeholders::_1),
+			m_visible, 300ms));
+}
 
 void dev::RecorderWindow::Draw(const dev::Scheduler::Signals _signals)
 {
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	UpdateData(isRunning);
-	DrawContext(isRunning);
-}
-
-void dev::RecorderWindow::DrawContext(const bool _isRunning)
-{
-
 	ImGui::Text("State current / recorded: %d / %d", m_stateCurrent, m_stateRecorded);
 
 	ImGui::Separator();
 
-	if (ImGui::Button(_isRunning ? "Break" : " Run "))
+	if (ImGui::Button(isRunning ? "Break" : " Run "))
 	{
-		m_hardware.Request(_isRunning ? Hardware::Req::STOP : Hardware::Req::RUN);
+		m_hardware.Request(isRunning ? Hardware::Req::STOP : Hardware::Req::RUN);
 	}
 
-	if (_isRunning) ImGui::BeginDisabled();
+	if (isRunning) ImGui::BeginDisabled();
 
 	ImGui::SameLine();
 	if (ImGui::Button("Clear"))
@@ -43,7 +46,7 @@ void dev::RecorderWindow::DrawContext(const bool _isRunning)
 		m_stateRecorded = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED)->at("states");
 		m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
 	}
-	if (_isRunning) ImGui::EndDisabled();
+	if (isRunning) ImGui::EndDisabled();
 
 	ImGui::SameLine();
 	dev::DrawHelpMarker("Left Ctrl + R - reverse playback. Works runtime and while break\n"
@@ -85,15 +88,11 @@ void dev::RecorderWindow::DrawContext(const bool _isRunning)
 	dev::PopStyleCompact();
 }
 
-void dev::RecorderWindow::UpdateData(const bool _isRunning)
+void dev::RecorderWindow::UpdateData(const dev::Scheduler::Signals _signals)
 {
-	// check if the hardware updated its state
-	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
-	auto ccDiff = cc - m_ccLast;
-	if (ccDiff == 0) return;
-	m_ccLast = cc;
+	m_stateRecorded = m_hardware.Request(
+		Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED)->at("states");
 
-	// update
-	m_stateRecorded = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED)->at("states");
-	m_stateCurrent = m_hardware.Request(Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
+	m_stateCurrent = m_hardware.Request(
+		Hardware::Req::DEBUG_RECORDER_GET_STATE_CURRENT)->at("states");
 }

@@ -16,11 +16,12 @@ namespace dev
 	* Scheduler
 	* Allows to schedule functions calls from the main (UI) thread
 	* based on the events in the hardware, debugger, or UI Draw calls.
-	* Each function can be associated with one or more signals (events) and an optional delay.
-	* If the signal is active, the function will be called either on the next UI Draw call
-	* or after the specified delay has passed since the last call.
-	* This is useful for updating UI elements in response to changes in the hardware state
-	* without overwhelming the UI thread with too many updates.
+	* Each function can be associated with one or more signals (events) and an
+	* optional delay. If the signal is active, the function will be called
+	* either on the next UI Draw call or after the specified delay has passed
+	* since the last call. This is useful for updating UI elements in response
+	* to changes in the hardware state without overwhelming the UI thread with
+	* too many updates.
 	*/
 	class Scheduler
 	{
@@ -32,8 +33,8 @@ namespace dev
 		enum Signals : uint32_t{
 			NONE		= 0,
 			HW_RESET	= 1 << 0,
-			HW_RUNNING	= 1 << 1, // any change in the hardware state
-			RUN_PAUSE	= 1 << 2, // enabled when the hardware starts or stops running
+			HW_RUNNING	= 1 << 1, // cpu is ticking
+			START		= 1 << 2, // hardware starts after break
 			BREAKPOINTS	= 1 << 3,
 			WATCHPOINTS	= 1 << 4,
 			UI_DRAW		= 1 << 5,
@@ -46,16 +47,22 @@ namespace dev
 			Signals flags;
 			CallFunc func;
 			Delay hw_running_delay;
+			bool& active;
 
 			Receiver(const Signals _signals,
 				CallFunc _func,
+				bool& _active,
 				const Delay hw_running_delay = 0ms)
 				:
 				flags{_signals}, func{std::move(_func)},
+				active{_active},
 				hw_running_delay{hw_running_delay},
 				lastTimePoint{std::chrono::steady_clock::now() +
-				Delay(hw_running_delay.count() * std::rand() / RAND_MAX)}
+				Delay(int64_t(
+					double(hw_running_delay.count()) * std::rand() / RAND_MAX)
+					)}
 				{}
+
 			auto GetLastTimePoint() const -> const Clk& { return lastTimePoint; }
 			void TryCall(const Signals _activeSignals);
 		private:

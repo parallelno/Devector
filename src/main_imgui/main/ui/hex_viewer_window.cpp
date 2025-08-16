@@ -11,30 +11,35 @@ dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqUI(_reqUI)
-{}
+{
+	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
+										dev::Scheduler::Signals::HW_RUNNING |
+										dev::Scheduler::Signals::BREAK);
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			signals,
+			std::bind(&dev::HexViewerWindow::UpdateData,
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
+}
 
 void dev::HexViewerWindow::Draw(const dev::Scheduler::Signals _signals)
 {
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	UpdateData(isRunning);
 	DrawHex(isRunning);
 }
 
-void dev::HexViewerWindow::UpdateData(const bool _isRunning)
+void dev::HexViewerWindow::UpdateData(const dev::Scheduler::Signals _signals)
 {
-	if (_isRunning) return;
-
-	// check if the hardware updated its state
-	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
-	auto ccDiff = cc - m_ccLast;
-	if (ccDiff == 0) return;
-	m_ccLast = cc;
-
 	// update
 	auto memP = m_hardware.GetRam()->data();
 	auto pageOffset = m_memPageIdx * Memory::MEM_64K;
-	std::copy(memP + pageOffset, memP + pageOffset + Memory::MEMORY_MAIN_LEN, m_ram.begin());
+	std::copy(
+		memP + pageOffset,
+		memP + pageOffset + Memory::MEMORY_MAIN_LEN,
+		m_ram.begin());
 	m_debugger.UpdateLastRW();
 }
 

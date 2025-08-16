@@ -98,18 +98,25 @@ namespace dev
 		int m_disasmLines = Disasm::DISASM_LINES_MAX;
 		const Disasm::ImmAddrLinks* m_immLinksP = nullptr;
 		size_t m_immLinksNum = 0;
-		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		int m_selectedLineAddr = 0;
 		static constexpr int NAVIGATE_ADDRS_LEN = 256;
-		std::array<Addr, NAVIGATE_ADDRS_LEN> m_navigateAddrs; // contains addr where the user navigated to
-		int m_navigateAddrsIdx = 0; // points to the current addr in m_navigateAddrs
-		int m_navigateAddrsSize = 0; // the length of the stored addrs. it's how many times the user navigated through links without moving back.
+		// contains addr where the user navigated to
+		std::array<Addr, NAVIGATE_ADDRS_LEN> m_navigateAddrs;
+		// points to the current addr in m_navigateAddrs
+		int m_navigateAddrsIdx = 0;
+		// the length of the stored addrs.
+		// it's how many times the user navigated through links
+		// without moving back.
+		int m_navigateAddrsSize = 0;
 
+		void Draw(const dev::Scheduler::Signals _signals) override;
 		void DrawDebugControls(const bool _isRunning);
 		void DrawSearch(const bool _isRunning);
 		void DrawDisasm(const bool _isRunning);
-		void DrawDisasmIcons(const bool _isRunning, const Disasm::Line& _line, const int _lineIdx, const Addr _regPC);
+		void DrawDisasmIcons(
+			const bool _isRunning, const Disasm::Line& _line,
+			const int _lineIdx, const Addr _regPC);
 		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
 			ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
 		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
@@ -120,8 +127,17 @@ namespace dev
 		void DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu);
 		void DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 			const bool _selected);
-		void DrawNextExecutedLineHighlight(const bool _isRunning, const Disasm::Line& _line, const Addr _regPC);
-		void UpdateData(const bool _isRunning);
+		void DrawNextExecutedLineHighlight(
+			const bool _isRunning,
+			const Disasm::Line& _line,
+			const Addr _regPC);
+
+		void UpdateData(const dev::Scheduler::Signals _signals);
+		void UpdateDisasm(
+			const Addr _addr,
+			const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
+			const bool _updateSelection = true);
+
 		void ReqHandling();
 		bool IsDisasmTableOutOfWindow() const;
 		auto GetVisibleLines() const -> int;
@@ -133,11 +149,6 @@ namespace dev
 			dev::Scheduler& _scheduler,
 			bool& _visible, const float* const _dpiScaleP,
 			ReqUI& _reqUI);
-		void Draw(const dev::Scheduler::Signals _signals) override;
-		void UpdateDisasm(
-			const Addr _addr,
-			const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
-			const bool _updateSelection = true);
 	};
 
 };

@@ -1,3 +1,4 @@
+#include "core/display.h"
 #include "ui/display_window.h"
 #include "utils/imgui_utils.h"
 
@@ -17,6 +18,16 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 {
 	m_isGLInited = Init(_vtxShaderS, _fragShaderS);
 	SetExecutionSpeed(_execSpeed);
+
+	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
+										dev::Scheduler::Signals::HW_RUNNING |
+										dev::Scheduler::Signals::BREAK);
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			signals,
+			std::bind(&dev::DisplayWindow::UpdateData,
+					this, std::placeholders::_1),
+			m_visible));
 }
 
 bool dev::DisplayWindow::Init(const std::string& _vtxShaderS,
@@ -70,30 +81,6 @@ bool dev::DisplayWindow::Init(const std::string& _vtxShaderS,
 void dev::DisplayWindow::Draw(const dev::Scheduler::Signals _signals)
 {
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
-/*
-	// TODO: DEBUG test to tune the display settings
-	int paletteCommitTime = m_hardware.Request(Hardware::Req::GET_IO_PALETTE_COMMIT_TIME)->at("paletteCommitTime");
-	if (ImGui::InputInt("paletteCommitTime", &paletteCommitTime, 1, 2000) )
-	{
-		m_hardware.Request(Hardware::Req::SET_IO_PALETTE_COMMIT_TIME, { {"paletteCommitTime", paletteCommitTime}});
-	};
-
-	int borderLeft = m_hardware.Request(Hardware::Req::GET_DISPLAY_BORDER_LEFT)->at("borderLeft");
-	if (ImGui::InputInt("Border Left", &borderLeft, 1, 2000))
-	{
-		m_hardware.Request(Hardware::Req::SET_DISPLAY_BORDER_LEFT, { {"borderLeft", borderLeft} });
-
-		m_bordsLRTB.x = borderLeft * FRAME_PXL_SIZE_W;
-		m_bordsLRTB.y = (borderLeft + Display::ACTIVE_AREA_W) * FRAME_PXL_SIZE_W;
-	};
-
-	int irqCommitPxl = m_hardware.Request(Hardware::Req::GET_DISPLAY_IRQ_COMMIT_PXL)->at("irqCommitPxl");
-	if (ImGui::InputInt("irqCommitPxl", &irqCommitPxl, 1, 2000))
-	{
-		m_hardware.Request(Hardware::Req::SET_DISPLAY_IRQ_COMMIT_PXL, { {"irqCommitPxl", irqCommitPxl} });
-	};
-	// TODO: DEBUG test end
-*/
 	m_windowFocused = ImGui::IsWindowFocused();
 
 	// switch the border type
@@ -107,7 +94,6 @@ void dev::DisplayWindow::Draw(const dev::Scheduler::Signals _signals)
 		DrawTooltipTimer(m_displaySizeAS[(int)(m_displaySize)]);
 	}
 
-	UpdateData(isRunning);
 	DrawContextMenu();
 	DrawDisplay();
 	DrawTooltipTimer();
@@ -118,26 +104,20 @@ bool dev::DisplayWindow::IsFocused() const
 	return m_windowFocused;
 }
 
-void dev::DisplayWindow::UpdateData(const bool _isRunning)
+void dev::DisplayWindow::UpdateData(const dev::Scheduler::Signals _signals)
 {
 	//ReqHandling();
-
-	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
-	auto ccDiff = cc - m_ccLast;
-	m_ccLastRun = ccDiff == 0 ? m_ccLastRun : ccDiff;
-	m_ccLast = cc;
+	bool _isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
 	m_scrollV_crtXY_highlightMul.w = 1.0f;
 
 	if (!_isRunning)
 	{
-		if (ccDiff)
-		{
-			auto res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
-			const auto& displayData = *res;
-			m_rasterPixel = displayData["rasterPixel"];
-			m_rasterLine = displayData["rasterLine"];
-		}
+		auto res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
+		const auto& displayData = *res;
+		m_rasterPixel = displayData["rasterPixel"];
+		m_rasterLine = displayData["rasterLine"];
+
 		if (!m_displayIsHovered)
 		{
 			m_scrollV_crtXY_highlightMul.y = (float)m_rasterPixel * FRAME_PXL_SIZE_W;

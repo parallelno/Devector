@@ -14,57 +14,65 @@ dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 {
 	Init();
 
-	dev::Scheduler::Signals runtime_signals = (dev::Scheduler::Signals)(
+	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
 										dev::Scheduler::Signals::HW_RUNNING |
 										dev::Scheduler::Signals::BREAK);
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
-			runtime_signals,
+			signals,
 			std::bind(&dev::HardwareStatsWindow::UpdateRegs,
-						this, std::placeholders::_1), 1000ms));
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
-			runtime_signals,
+			signals,
 			std::bind(&dev::HardwareStatsWindow::UpdateStack,
-						this, std::placeholders::_1), 1000ms));
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
-			runtime_signals,
+			signals,
 			std::bind(&dev::HardwareStatsWindow::UpdateHardware,
-						this, std::placeholders::_1), 1000ms));
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
-			runtime_signals,
+			signals,
 			std::bind(&dev::HardwareStatsWindow::UpdatePorts,
-						this, std::placeholders::_1), 1000ms));
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
-			runtime_signals,
+			signals,
 			std::bind(&dev::HardwareStatsWindow::UpdatePeripheral,
-						this, std::placeholders::_1), 1000ms));
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
-			runtime_signals,
+			signals,
 			std::bind(&dev::HardwareStatsWindow::UpdateFdc,
-						this, std::placeholders::_1), 1000ms));
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
-			runtime_signals,
+			signals,
 			std::bind(&dev::HardwareStatsWindow::UpdateTime,
-						this, std::placeholders::_1), 1000ms));
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
-			runtime_signals,
+			signals,
 			std::bind(&dev::HardwareStatsWindow::UpdatePalette,
-						this, std::placeholders::_1), 100ms));
+						this, std::placeholders::_1),
+			m_visible, 100ms));
 }
 
 void dev::HardwareStatsWindow::Draw(const dev::Scheduler::Signals _signals)

@@ -38,8 +38,12 @@ namespace dev
 		static constexpr int FRAME_W = 768;					// a frame resolution including borders
 		static constexpr int FRAME_H = 312;					// a frame resolution including borders
 		static constexpr int FRAME_LEN = FRAME_W * FRAME_H;	// the size of a frame buffer
-		
-		static constexpr auto VSYC_DELAY = 19968us; // For the realtime emulation it should be called every 0.019968 sec by 3000000/59904 Mz timer
+
+		// For the realtime emulation it should be called
+		//  every 0.019968 seconds by 3000000/59904 Mz timer
+		static constexpr auto VSYC_DELAY = 19968us;
+
+		static constexpr auto FRAMES_PER_SECOND = 50;
 
 		static constexpr int SCAN_VSYNC = 24;
 		static constexpr int SCAN_VBLANK_TOP = 16;
@@ -61,7 +65,7 @@ namespace dev
 		static constexpr int FULL_PALLETE_LEN = 256;
 
 		using FrameBuffer = std::array <ColorI, FRAME_LEN>;
-		
+
 		enum class Buffer { FRAME_BUFFER, BACK_BUFFER, GPU_BUFFER};
 		using BuffUpdateFunc = std::function<void(const Buffer _buffer)>;
 

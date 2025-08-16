@@ -11,37 +11,27 @@ dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger),
 	m_reqUI(_reqUI)
-{}
+{
+	dev::Scheduler::Signals signals = dev::Scheduler::Signals::BREAK;
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			signals,
+			std::bind(&dev::TraceLogWindow::UpdateData,
+					this, std::placeholders::_1),
+			m_visible));
+}
 
 void dev::TraceLogWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	// static bool visible = false;
-
-	// if (visible && !m_visible) {
-	// 	m_traceLogP = m_debugger.GetTraceLog().GetDisasm(
-	// 							TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
-
-	// 	m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
-	// }
-	// visible = m_visible;
-
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
-
-	UpdateData(isRunning);
 	DrawLog(isRunning);
 }
 
-void dev::TraceLogWindow::UpdateData(const bool _isRunning)
+void dev::TraceLogWindow::UpdateData(const dev::Scheduler::Signals _signals)
 {
-	if (_isRunning) return;
+	m_traceLogP = m_debugger.GetTraceLog().GetDisasm(
+		TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
 
-	// check if the hardware updated its state
-	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
-	auto ccDiff = cc - m_ccLast;
-	if (ccDiff == 0) return;
-	m_ccLast = cc;
-
-	m_traceLogP = m_debugger.GetTraceLog().GetDisasm(TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
 	m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
 }
 

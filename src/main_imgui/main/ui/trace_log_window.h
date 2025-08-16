@@ -59,14 +59,15 @@ namespace dev
 		Hardware& m_hardware;
 		Debugger& m_debugger;
 		ReqUI& m_reqUI;
-		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		const TraceLog::Lines* m_traceLogP = nullptr;
 		uint8_t m_disasmFilter = 0;
 		int m_selectedLineIdx = 0;
 		size_t m_disasmLinesLen = 0;
 
-		void UpdateData(const bool _isRunning);
+		void UpdateData(const dev::Scheduler::Signals _signals);
+
+		void Draw(const dev::Scheduler::Signals _signals) override;
 		void DrawLog(const bool _isRunning);
 		void DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu);
 		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
@@ -78,6 +79,5 @@ namespace dev
 		TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI);
-		void Draw(const dev::Scheduler::Signals _signals) override;
 	};
 };

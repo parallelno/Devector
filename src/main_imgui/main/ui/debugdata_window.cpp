@@ -13,18 +13,21 @@ dev::DebugDataWindow::DebugDataWindow(Hardware& _hardware, Debugger& _debugger,
 		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger),
 	m_reqUI(_reqUI)
-{}
+{
+	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
+									dev::Scheduler::Signals::HW_RUNNING |
+									dev::Scheduler::Signals::BREAK);
+
+	_scheduler.AddSignal(
+		dev::Scheduler::Receiver(
+			signals,
+			std::bind(&dev::DebugDataWindow::UpdateData,
+						this, std::placeholders::_1),
+			m_visible, 1000ms));
+}
 
 void dev::DebugDataWindow::Draw(const dev::Scheduler::Signals _signals)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
-	UpdateData(isRunning);
-	DrawContext(isRunning);
-}
-
-void dev::DebugDataWindow::DrawContext(const bool _isRunning)
-{
-	// three tabs: consts, labels, comments
 	if (ImGui::BeginTabBar("ElementsTabs"))
 	{
 		if (ImGui::BeginTabItem("Labels"))
@@ -80,17 +83,9 @@ void dev::DebugDataWindow::DrawContext(const bool _isRunning)
 	}
 }
 
-void dev::DebugDataWindow::UpdateData(const bool _isRunning)
+void dev::DebugDataWindow::UpdateData(const dev::Scheduler::Signals _signals)
 {
-	/*
-	// check if the hardware updated its state
-	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
-	auto ccDiff = cc - m_ccLast;
-	if (ccDiff == 0) return;
-	m_ccLast = cc;
-
-	// update the data
-	*/
+	// TODO: move the data update here
 }
 
 void dev::DebugDataWindow::UpdateAndDrawFilteredElements(

@@ -18,12 +18,6 @@ void dev::SearchWindow::Draw(const dev::Scheduler::Signals _signals)
 {
 	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
 
-	UpdateData(isRunning);
-	DrawContext(isRunning);
-}
-
-void dev::SearchWindow::DrawContext(const bool _isRunning)
-{
 	if (m_searchEnabled) ImGui::BeginDisabled();
 
 	if (ImGui::InputInt("Start Address", &m_searchStartAddr, 1, 100, ImGuiInputTextFlags_CharsHexadecimal))
@@ -112,15 +106,4 @@ void dev::SearchWindow::DrawContext(const bool _isRunning)
 	}
 
 	if (!m_searchEnabled) ImGui::EndDisabled();
-}
-
-void dev::SearchWindow::UpdateData(const bool _isRunning)
-{
-	// check if the hardware updated its state
-	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
-	auto ccDiff = cc - m_ccLast;
-	if (ccDiff == 0) return;
-	m_ccLast = cc;
-
-	// update
 }

@@ -18,8 +18,8 @@ void dev::Scheduler::Update(dev::Hardware& _hardware, Debugger& _debugger)
 					(isRunning ? Signals::HW_RUNNING : Signals::NONE));
 
 	m_activeSignals = (Signals)(m_activeSignals |
-						(isRunning != m_isRunning ?
-						Signals::RUN_PAUSE : Signals::NONE));
+						(isRunning != m_isRunning && isRunning?
+						Signals::START : Signals::NONE));
 
 	m_activeSignals = (Signals)(m_activeSignals |
 						(isRunning != m_isRunning && !isRunning?
@@ -37,7 +37,11 @@ void dev::Scheduler::Update(dev::Hardware& _hardware, Debugger& _debugger)
 
 void dev::Scheduler::Receiver::TryCall(const Signals _activeSignals)
 {
-	if ((flags & _activeSignals) == Signals::NONE) return;
+	if ((flags & _activeSignals) == Signals::NONE ||
+		!active)
+		{
+			return;
+		}
 
 	if (_activeSignals & Signals::HW_RUNNING &&
 		hw_running_delay > 0ms)

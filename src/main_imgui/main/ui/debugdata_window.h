@@ -16,8 +16,6 @@ namespace dev
 		Debugger& m_debugger;
 		ReqUI& m_reqUI;
 
-		int64_t m_ccLast = -1; // to force the first stats update
-
 		DebugData::UpdateId m_labelsUpdates = 0;
 		DebugData::UpdateId m_constsUpdates = 0;
 		DebugData::UpdateId m_commentsUpdates = 0;
@@ -77,8 +75,7 @@ namespace dev
 		};
 		ContextMenu m_contextMenu;
 
-		void UpdateData(const bool _isRunning);
-
+		void UpdateData(const dev::Scheduler::Signals _signals);
 		void UpdateAndDrawFilteredElements(
 			DebugData::FilteredElements& _filteredElements,
 			DebugData::UpdateId& _filteredUpdateId,
@@ -86,6 +83,8 @@ namespace dev
 			std::string& _filter,
 			ElementType _elementType);
 
+
+		void Draw(const dev::Scheduler::Signals _signals) override;
 		void DrawContextMenu(ContextMenu& _contextMenu);
 
 	public:
@@ -93,7 +92,5 @@ namespace dev
 			dev::Scheduler& _scheduler,
 			bool& _visible, const float* const _dpiScaleP,
 			ReqUI& _reqUI);
-		void Draw(const dev::Scheduler::Signals _signals) override;
-		void DrawContext(const bool _isRunning);
 	};
 };

@@ -8,6 +8,7 @@
 #include "utils/result.h"
 #include "core/hardware.h"
 #include "core/debugger.h"
+#include "core/memory_consts.h"
 #include "utils/gl_utils.h"
 #include "scheduler.h"
 
@@ -28,12 +29,12 @@ namespace dev
 		static constexpr int RAM_TEXTURES = Memory::MEMORY_GLOBAL_LEN / Memory::MEM_64K;
 		static constexpr int RAM_TEXTURE_W = 256;
 		static constexpr int RAM_TEXTURE_H = Memory::MEMORY_MAIN_LEN / 256;
+		static constexpr int MEM_TABS = RAM_DISK_MAX + 1;
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
 		ReqUI& m_reqUI;
 
-		int64_t m_ccLast = -1; // to force the first stats update
 		float m_scale = 1.0f;
 
 		GLUtils& m_glUtils;
@@ -56,11 +57,21 @@ namespace dev
 		Debugger::MemLastRW* m_lastRWIdxsP;
 		bool m_isGLInited = false;
 
-		void DrawDisplay();
-		void UpdateData(const bool _isRunning);
-		void ScaleView();
+		int m_selectedTab = 0;
+
 		bool Init(const std::string& _vtxShaderS,
 				const std::string& _fragShaderS);
+
+		void UpdateData(const dev::Scheduler::Signals _signals);
+		void ScaleView();
+		void Draw(const dev::Scheduler::Signals _signals) override;
+		void DrawSelector();
+		void DrawMemoryTabs();
+		void DrawTooltip(
+			const int _img_hovered_idx,
+			const ImVec2& _img_pixel_pos);
+
+		auto PixelPosToAddr(ImVec2 _pos, float _scale) -> Addr;
 
 	public:
 		MemDisplayWindow(Hardware& _hardware,
@@ -72,8 +83,6 @@ namespace dev
 			ReqUI& _reqUI,
 			const std::string& _vtxShaderS,
 			const std::string& _fragShaderS);
-
-		void Draw(const dev::Scheduler::Signals _signals) override;
 	};
 
 };

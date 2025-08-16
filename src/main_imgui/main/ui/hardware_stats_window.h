@@ -14,7 +14,6 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_W = 600;
 		static constexpr int DEFAULT_WINDOW_H = 400;
 
-		int64_t m_ccLast = -1; // to force the first stats update
 		int64_t m_ccLastRun = 0;
 		Hardware& m_hardware;
 		bool& m_ruslat;
@@ -97,6 +96,9 @@ namespace dev
 		// stats end
 		////////////////////
 
+		void Init();
+
+		void Draw(const dev::Scheduler::Signals _signals) override;
 		void DrawRegs() const;
 		void DrawStack() const;
 		void DrawHardware(const bool _isRunning) const;
@@ -106,7 +108,6 @@ namespace dev
 			const PortsDataColors& _colors,
 			const char* _hint = nullptr) const;
 
-		void UpdateData(const dev::Scheduler::Signals _signals);
 		void UpdateRegs(const dev::Scheduler::Signals _signals);
 		void UpdateStack(const dev::Scheduler::Signals _signals);
 		void UpdateHardware(const dev::Scheduler::Signals _signals);
@@ -116,16 +117,12 @@ namespace dev
 		void UpdateTime(const dev::Scheduler::Signals _signals);
 		void UpdatePalette(const dev::Scheduler::Signals _signals);
 
-		void Init();
-
 	public:
 
 		HardwareStatsWindow(Hardware& _hardware,
 			dev::Scheduler& _scheduler,
 			bool& _visible, const float* const _dpiScaleP,
 			bool& _ruslat);
-
-		void Draw(const dev::Scheduler::Signals _signals) override;
 	};
 
 };
