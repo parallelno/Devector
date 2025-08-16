@@ -15,14 +15,14 @@ namespace dev
 	{
 	public:
 		static constexpr int FRAMES_PER_SEC = 50;
-		static constexpr int STATES_LEN = FRAMES_PER_SEC * 600;
+		static constexpr int RECORD_FRAMES_MAX = FRAMES_PER_SEC * 60;
 		using MemUpdates = std::vector<uint8_t>;
 		using GlobalAddrs = std::vector<GlobalAddr>;
 
 		static constexpr int STATUS_RESET = 0;	// erase the data, stores the first state
 		static constexpr int STATUS_UPDATE = 1;	// enables updating
 		static constexpr int STATUS_RESTORE = 2; // restore the last state
-		// file format version 
+		// file format version
 		static constexpr uint32_t VERSION = 1;
 		// it checks only first 8 bits of a version
 		static constexpr uint32_t VERSION_MASK = 0xff;
@@ -40,7 +40,11 @@ namespace dev
 		};
 #pragma pack(pop)
 
-		using HwStates = std::array<HwState, STATES_LEN>; // one state per frame
+		using HwStates = std::vector<HwState>; // one state per frame
+
+		int m_recordFrames;
+
+		Recorder(const int _recordFrames);
 
 		void Update(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
@@ -53,13 +57,13 @@ namespace dev
 		void CleanMemUpdates(Display::State* _displayStateP);
 		auto GetStateRecorded() const -> size_t { return m_stateRecorded; };
 		auto GetStateCurrent() const -> size_t { return m_stateCurrent; };
-		void Deserialize(const std::vector<uint8_t>& _data, 
+		void Deserialize(const std::vector<uint8_t>& _data,
 			CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
 		auto Serialize() const -> const std::vector<uint8_t>;
 
 	private:
-		void StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState, 
+		void StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState,
 			const IO::State& _ioState, const Display::State& _displayState);
 		void StoreMemoryDiff(const Memory::State& _memState);
 		void RestoreState(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
@@ -67,7 +71,7 @@ namespace dev
 		void GetStatesSize();
 
 		size_t m_stateIdx = 0; // idx of the last stored state in a circular buffer
-		size_t m_stateRecorded = 0; // the amount of recorded states from 1 to STATES_LEN
+		size_t m_stateRecorded = 0; // the amount of recorded states from 1 to RECORD_FRAMES_MAX
 		size_t m_stateCurrent = 0; // the number of current state from 1 to m_stateRecorded included
 		bool m_lastRecord = true; // false means we at the end of recorded state + memory writes
 		HwStates m_states;

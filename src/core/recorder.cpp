@@ -1,12 +1,19 @@
 #include "core/recorder.h"
 #include "utils/utils.h"
 
+
+dev::Recorder::Recorder(const int _recordFrames)
+	:
+	m_recordFrames(dev::Min(_recordFrames, RECORD_FRAMES_MAX)),
+	m_states(m_recordFrames)
+{}
+
 void dev::Recorder::Reset(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {
 	m_stateIdx = m_stateRecorded = m_stateCurrent = 0;
 	m_lastRecord = true;
-	m_frameNum = _displayStateP->update.frameNum; 
+	m_frameNum = _displayStateP->update.frameNum;
 	StoreState(*_cpuStateP, *_memStateP, *_ioStateP, *_displayStateP);
 }
 
@@ -26,7 +33,7 @@ void dev::Recorder::CleanMemUpdates(Display::State* _displayStateP)
 
 void dev::Recorder::Update(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 	IO::State* _ioStateP, Display::State* _displayStateP)
-{	
+{
 	if (!m_lastRecord) CleanMemUpdates(_displayStateP);
 
 	if (_memStateP->debug.writeLen) StoreMemoryDiff(*_memStateP);
@@ -40,7 +47,7 @@ void dev::Recorder::Update(CpuI8080::State* _cpuStateP, Memory::State* _memState
 void dev::Recorder::StoreMemoryDiff(const Memory::State& _memState)
 {
 	auto& state = m_states[m_stateIdx];
-	
+
 	for (int i = 0; i < _memState.debug.writeLen; i++)
 	{
 		state.memBeforeWrites.push_back(_memState.debug.beforeWrite[i]);
@@ -49,12 +56,12 @@ void dev::Recorder::StoreMemoryDiff(const Memory::State& _memState)
 	}
 }
 
-void dev::Recorder::StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState, 
+void dev::Recorder::StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState,
 	const IO::State& _ioState, const Display::State& _displayState)
 {
 	// prepare for the next state
-	m_stateIdx = (m_stateIdx + 1) % STATES_LEN;
-	m_stateCurrent = dev::Min(m_stateCurrent + 1, STATES_LEN);
+	m_stateIdx = (m_stateIdx + 1) % m_recordFrames;
+	m_stateCurrent = dev::Min(m_stateCurrent + 1, m_recordFrames);
 	m_stateRecorded = m_stateCurrent;
 
 	auto& nextState = m_states[m_stateIdx];
@@ -90,7 +97,7 @@ void dev::Recorder::PlayForward(const int _frames, CpuI8080::State* _cpuStateP, 
 {
 	for (int i = 0; i < _frames; i++)
 	{
-		
+
 		if (m_stateCurrent == m_stateRecorded)
 		{
 			m_lastRecord = false; // we play forward only to the start of the frame
@@ -108,7 +115,7 @@ void dev::Recorder::PlayForward(const int _frames, CpuI8080::State* _cpuStateP, 
 			ram[globalAddr] = val;
 		}
 
-		m_stateIdx = (m_stateIdx + 1) % STATES_LEN;
+		m_stateIdx = (m_stateIdx + 1) % m_recordFrames;
 		m_stateCurrent++;
 
 		// restore the HW state of the next frame (+ one executed intruction)
@@ -136,7 +143,7 @@ void dev::Recorder::PlayReverse(const int _frames, CpuI8080::State* _cpuStateP,
 			m_lastRecord = false;
 		}
 		else {
-			m_stateIdx = (m_stateIdx - 1) % STATES_LEN;
+			m_stateIdx = (m_stateIdx - 1) % m_recordFrames;
 			m_stateCurrent--;
 		}
 
@@ -164,7 +171,7 @@ void dev::Recorder::GetStatesSize()
 	m_statesMemSize = 0;
 	for (int i = 0; i < m_stateRecorded; i++)
 	{
-		auto& state = m_states[(m_stateIdx - i) % STATES_LEN];
+		auto& state = m_states[(m_stateIdx - i) % m_recordFrames];
 		m_statesMemSize += sizeof(state);
 		m_statesMemSize += state.memBeforeWrites.size();
 		m_statesMemSize += state.globalAddrs.size() * sizeof(GlobalAddr);
@@ -173,8 +180,8 @@ void dev::Recorder::GetStatesSize()
 
 // on loads
 // requires Reset() after calling it
-void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data, 
-	CpuI8080::State* _cpuStateP, Memory::State* _memStateP, 
+void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data,
+	CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {
 	size_t dataOffset = 0;
@@ -191,10 +198,10 @@ void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data,
 	// m_stateRecorded
 	m_stateRecorded = *(size_t*)(&_data[dataOffset]);
 	dataOffset += sizeof(m_stateRecorded);
-	
+
 	// m_stateIdx
 	m_stateIdx = m_stateRecorded - 1;
-	
+
 	// m_stateCurrent
 	m_stateCurrent = *(size_t*)(&_data[dataOffset]);
 	dataOffset += sizeof(m_stateCurrent);
@@ -206,7 +213,7 @@ void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data,
 	// states
 	for (int stateIdx = 0; stateIdx < m_stateRecorded; stateIdx++)
 	{
-		auto& state = m_states[stateIdx % STATES_LEN];
+		auto& state = m_states[stateIdx % m_recordFrames];
 
 		state.cpuState = *(CpuI8080::State*)(&_data[dataOffset]);
 		dataOffset += sizeof(CpuI8080::State);
@@ -226,7 +233,7 @@ void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data,
 		if (memUpdates == 0) continue;
 
 		// mem updates
-		
+
 		state.memWrites.assign(_data.begin() + dataOffset, _data.begin() + dataOffset + memUpdates);
 		dataOffset += memUpdates;
 
@@ -273,11 +280,11 @@ auto dev::Recorder::Serialize() const
 		reinterpret_cast<const uint8_t*>(&m_lastRecord + 1));
 
 	// states
-	int firstStateIdx = (m_stateIdx - m_stateRecorded + 1) % STATES_LEN;
+	int firstStateIdx = (m_stateIdx - m_stateRecorded + 1) % m_recordFrames;
 
 	for (int stateIdx = firstStateIdx; stateIdx < firstStateIdx + m_stateRecorded; stateIdx++)
 	{
-		const auto& state = m_states[stateIdx % STATES_LEN];
+		const auto& state = m_states[stateIdx % m_recordFrames];
 
 		result.insert(result.end(), reinterpret_cast<const uint8_t*>(&state.cpuState),
 		 	reinterpret_cast<const uint8_t*>(&state.cpuState + 1));

@@ -264,7 +264,8 @@ void dev::MemDisplayWindow::DrawMemoryTabs()
 	}
 	ImGui::EndTabBar();
 
-	// ScaleView();
+	ScaleView();
+
 	if (hovered_bank_idx >= 0)
 		DrawTooltip(hovered_bank_idx, img_pixel_pos);
 }
