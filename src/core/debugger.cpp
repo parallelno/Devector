@@ -8,21 +8,33 @@
 #include "utils/str_utils.h"
 #include "utils/utils.h"
 
-dev::Debugger::Debugger(Hardware& _hardware)
+dev::Debugger::Debugger(Hardware& _hardware, const int _recordFrames)
 	:
 	m_hardware(_hardware),
 	m_lastReadsAddrs(), m_lastWritesAddrs(),
 	m_memLastRW(),
-	m_lastReadsAddrsOld(), m_lastWritesAddrsOld(), 
+	m_lastReadsAddrsOld(), m_lastWritesAddrsOld(),
 	m_debugData(_hardware), m_disasm(_hardware, m_debugData),
 	m_traceLog(m_debugData),
-	m_lastRWAddrsOut()
+	m_lastRWAddrsOut(),
+	m_recorder(_recordFrames)
 {
 
-	Hardware::DebugFunc debugFunc = std::bind(&Debugger::Debug, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+	Hardware::DebugFunc debugFunc = std::bind
+		(&Debugger::Debug, this,
+		std::placeholders::_1,
+		std::placeholders::_2,
+		std::placeholders::_3,
+		std::placeholders::_4);
 
-	Hardware::DebugReqHandlingFunc debugReqHandlingFunc = std::bind(&Debugger::DebugReqHandling, this,
-		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6);
+	Hardware::DebugReqHandlingFunc debugReqHandlingFunc = std::bind(
+		&Debugger::DebugReqHandling, this,
+		std::placeholders::_1,
+		std::placeholders::_2,
+		std::placeholders::_3,
+		std::placeholders::_4,
+		std::placeholders::_5,
+		std::placeholders::_6);
 
 	m_hardware.AttachDebugFuncs(debugFunc, debugReqHandlingFunc);
 }
@@ -34,9 +46,10 @@ dev::Debugger::~Debugger()
 }
 
 // Hardware thread.
-// Has to be called after Hardware Reset, loading the rom file, fdd immage, attach/dettach debugger, 
-// and other operations that change the Hardware states because this func stores the last state of Hardware
-void dev::Debugger::Reset(bool _resetRecorder, 
+// Has to be called after Hardware Reset, loading the rom file, fdd immage,
+// attach/dettach debugger, and other operations that change the Hardware
+// states because this func stores the last state of Hardware
+void dev::Debugger::Reset(bool _resetRecorder,
 	CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {
@@ -49,7 +62,8 @@ void dev::Debugger::Reset(bool _resetRecorder,
 	m_memLastRW.fill(0);
 
 	m_traceLog.Reset();
-	if (_resetRecorder) m_recorder.Reset(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
+	if (_resetRecorder) m_recorder.Reset(
+		_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 }
 
 //////////////////////////////////////////////////////////////
@@ -115,8 +129,9 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	auto break_ = false;
 
 	// check scripts
-	break_ |= m_debugData.GetScripts().Check(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
-	
+	break_ |= m_debugData.GetScripts().Check(
+		_cpuStateP, _memStateP, _ioStateP, _displayStateP);
+
 	// check watchpoint status
 	break_ |= m_debugData.GetWatchpoints().CheckBreak();
 
@@ -124,7 +139,7 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	break_ |= m_debugData.GetBreakpoints().Check(*_cpuStateP, *_memStateP);
 
 	// tracelog
-	m_traceLog.Update(*_cpuStateP, *_memStateP);	
+	m_traceLog.Update(*_cpuStateP, *_memStateP);
 
 	// recorder
 	m_recorder.Update(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
@@ -146,21 +161,23 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		Reset(_reqDataJ["resetRecorder"], _cpuStateP, _memStateP, _ioStateP, _displayStateP);
 		break;
 	//////////////////
-	// 
+	//
 	// Recorder
 	//
 	/////////////////
-	
+
 	case Hardware::Req::DEBUG_RECORDER_RESET:
 		m_recorder.Reset(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 		break;
 
 	case Hardware::Req::DEBUG_RECORDER_PLAY_FORWARD:
-		m_recorder.PlayForward(_reqDataJ["frames"], _cpuStateP, _memStateP, _ioStateP, _displayStateP);
+		m_recorder.PlayForward(_reqDataJ["frames"], _cpuStateP, _memStateP,
+								_ioStateP, _displayStateP);
 		break;
 
 	case Hardware::Req::DEBUG_RECORDER_PLAY_REVERSE:
-		m_recorder.PlayReverse(_reqDataJ["frames"], _cpuStateP, _memStateP, _ioStateP, _displayStateP);
+		m_recorder.PlayReverse(_reqDataJ["frames"], _cpuStateP, _memStateP,
+								_ioStateP, _displayStateP);
 		break;
 
 	case Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED:
@@ -178,14 +195,16 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	}
 	case Hardware::Req::DEBUG_RECORDER_DESERIALIZE: {
 
-		nlohmann::json::binary_t binaryData = _reqDataJ["data"].get<nlohmann::json::binary_t>();
+		nlohmann::json::binary_t binaryData =
+			_reqDataJ["data"].get<nlohmann::json::binary_t>();
+
 		std::vector<uint8_t> data(binaryData.begin(), binaryData.end());
 
 		m_recorder.Deserialize(data, _cpuStateP, _memStateP, _ioStateP, _displayStateP);
 		break;
 	}
 	//////////////////
-	// 
+	//
 	// Breakpoints
 	//
 	/////////////////
@@ -197,46 +216,57 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	case Hardware::Req::DEBUG_BREAKPOINT_DEL:
 		m_debugData.GetBreakpoints().Del(_reqDataJ["addr"]);
 		break;
-		
+
 	case Hardware::Req::DEBUG_BREAKPOINT_ADD: {
-		Breakpoint::Data bpData{ _reqDataJ["data0"], _reqDataJ["data1"], _reqDataJ["data2"] };
+		Breakpoint::Data bpData{
+			_reqDataJ["data0"], _reqDataJ["data1"], _reqDataJ["data2"] };
 		m_debugData.GetBreakpoints().Add({ std::move(bpData), _reqDataJ["comment"] });
 		break;
 	}
 	case Hardware::Req::DEBUG_BREAKPOINT_SET_STATUS:
-		m_debugData.GetBreakpoints().SetStatus( _reqDataJ["addr"], _reqDataJ["status"] );
+		m_debugData.GetBreakpoints().SetStatus(
+			 _reqDataJ["addr"], _reqDataJ["status"] );
 		break;
 
 	case Hardware::Req::DEBUG_BREAKPOINT_ACTIVE:
-		m_debugData.GetBreakpoints().SetStatus(_reqDataJ["addr"], Breakpoint::Status::ACTIVE);
+		m_debugData.GetBreakpoints().SetStatus(
+			_reqDataJ["addr"], Breakpoint::Status::ACTIVE);
 		break;
 
 	case Hardware::Req::DEBUG_BREAKPOINT_DISABLE:
-		m_debugData.GetBreakpoints().SetStatus(_reqDataJ["addr"], Breakpoint::Status::DISABLED);
+		m_debugData.GetBreakpoints().SetStatus(
+			_reqDataJ["addr"], Breakpoint::Status::DISABLED);
 		break;
 
 	case Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS:
-		out = nlohmann::json{ {"status", static_cast<uint64_t>(m_debugData.GetBreakpoints().GetStatus(_reqDataJ["addr"])) } };
+		out = nlohmann::json{{
+				"status",
+				static_cast<uint64_t>(
+				m_debugData.GetBreakpoints().GetStatus(_reqDataJ["addr"]))
+			}};
 		break;
 
 	case Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES:
-		out = nlohmann::json{ {"updates", static_cast<uint64_t>(m_debugData.GetBreakpoints().GetUpdates()) } };
+		out = nlohmann::json{ {
+			"updates",
+			static_cast<uint64_t>(m_debugData.GetBreakpoints().GetUpdates())
+		}};
 		break;
 
 	case Hardware::Req::DEBUG_BREAKPOINT_GET_ALL:
 		for(const auto& [addr, bp] : m_debugData.GetBreakpoints().GetAll())
 		{
 			out.push_back( {
-					{"data0", bp.data.data0}, 
-					{"data1", bp.data.data1}, 
-					{"data2", bp.data.data2}, 
+					{"data0", bp.data.data0},
+					{"data1", bp.data.data1},
+					{"data2", bp.data.data2},
 					{"comment", bp.comment}
 			});
 		}
 		break;
 
 	//////////////////
-	// 
+	//
 	// Watchpoints
 	//
 	/////////////////
@@ -270,7 +300,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		break;
 
 	//////////////////
-	// 
+	//
 	// Memory Edits
 	//
 	/////////////////
@@ -286,7 +316,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	case Hardware::Req::DEBUG_MEMORY_EDIT_ADD:
 		m_debugData.SetMemoryEdit(_reqDataJ);
 		break;
-	
+
 	case Hardware::Req::DEBUG_MEMORY_EDIT_GET:
 	{
 		auto memEdit = m_debugData.GetMemoryEdit(_reqDataJ["addr"]);
@@ -302,7 +332,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		break;
 
 	//////////////////
-	// 
+	//
 	// Code Perfs
 	//
 	/////////////////
@@ -318,7 +348,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	case Hardware::Req::DEBUG_CODE_PERF_ADD:
 		m_debugData.SetCodePerf(_reqDataJ);
 		break;
-	
+
 	case Hardware::Req::DEBUG_CODE_PERF_GET:
 	{
 		auto codePerf = m_debugData.GetCodePerf(_reqDataJ["addr"]);
@@ -334,7 +364,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		break;
 
 	//////////////////
-	// 
+	//
 	// Scripts
 	//
 	/////////////////
@@ -361,7 +391,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 			out.push_back(script.ToJson());
 		}
 		break;
-	
+
 	default:
 		break;
 	}
@@ -375,9 +405,10 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 //
 //////////////////////////////////////////////////////////////
 
-// _instructionOffset defines the start address of the m_disasm. 
-// _instructionOffset = 0 means the start address is the _addr, 
-// _instructionOffset = -5 means the start address is 5 instructions prior the _addr, and vise versa.
+// _instructionOffset defines the start address of the m_disasm.
+// _instructionOffset = 0 means the start address is the _addr,
+// _instructionOffset = -5 means the start address is 5 instructions
+// 						prior the _addr, and vise versa.
 // UI thread
 void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const int _instructionOffset)
 {
@@ -414,7 +445,9 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 		m_disasm.AddLabes(addr);
 
 		uint32_t cmd = m_hardware.Request(Hardware::Req::GET_THREE_BYTES_RAM, { { "addr", addr } })->at("data");
-		GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", addr } })->at("data");
+		GlobalAddr globalAddr = m_hardware.Request(
+			Hardware::Req::GET_GLOBAL_ADDR_RAM,
+			{ { "addr", addr } })->at("data");
 
 		auto breakpointStatus = m_debugData.GetBreakpoints().GetStatus(globalAddr);
 
@@ -444,10 +477,12 @@ void dev::Debugger::UpdateLastRW()
 	std::lock_guard<std::mutex> mlock(m_lastRWMutex);
 	uint16_t readsIdx = m_lastReadsIdx;
 	for (auto globalAddr : m_lastReadsAddrs){
-		if (globalAddr != LAST_RW_NO_DATA) 
+		if (globalAddr != LAST_RW_NO_DATA)
 		{
 			auto val = m_memLastRW[globalAddr] & 0xFFFF0000; // remove reads, keep writes
-			m_memLastRW[globalAddr] = val | static_cast<uint16_t>(LAST_RW_MAX - readsIdx) % LAST_RW_MAX;
+			m_memLastRW[globalAddr] =
+				val |
+				static_cast<uint16_t>(LAST_RW_MAX - readsIdx) % LAST_RW_MAX;
 		}
 		readsIdx--;
 	}
@@ -455,14 +490,16 @@ void dev::Debugger::UpdateLastRW()
 	// copy new writes stats
 	uint16_t writesIdx = m_lastWritesIdx;
 	for (auto globalAddr : m_lastWritesAddrs){
-		if (globalAddr != LAST_RW_NO_DATA) 
+		if (globalAddr != LAST_RW_NO_DATA)
 		{
 			auto val = m_memLastRW[globalAddr] & 0x0000FFFF; // remove writes, keep reads
-			m_memLastRW[globalAddr] = val | (static_cast<uint16_t>(LAST_RW_MAX - writesIdx) % LAST_RW_MAX)<<16;
+			m_memLastRW[globalAddr] =
+				val |
+				(static_cast<uint16_t>(LAST_RW_MAX - writesIdx) % LAST_RW_MAX)<<16;
 		}
 		writesIdx--;
 	}
-	
+
 	m_lastReadsAddrsOld = m_lastReadsAddrs;
 	m_lastWritesAddrsOld = m_lastWritesAddrs;
 }

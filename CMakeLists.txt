@@ -153,6 +153,7 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/main.cpp
 	${DEVECTOR_DIR}/main/devector_app.h
 	${DEVECTOR_DIR}/main/devector_app.cpp
+	${DEVECTOR_DIR}/main/devector_app_shaders.h
 
 	${DEVECTOR_DIR}/main/imgui_app.h
 	${DEVECTOR_DIR}/main/imgui_app.cpp

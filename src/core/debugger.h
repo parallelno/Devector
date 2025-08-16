@@ -29,16 +29,16 @@ namespace dev
 		using MemLastRW = std::array<uint32_t, Memory::MEMORY_GLOBAL_LEN>;
 		using LastRWAddrs = std::array<uint32_t, LAST_RW_MAX>;
 
-		Debugger(Hardware& _hardware);
+		Debugger(Hardware& _hardware, const int _recordFrames);
 		~Debugger();
 
-		void Reset(bool _resetRecorder, 
+		void Reset(bool _resetRecorder,
 			CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
 
-		bool Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP, 
+		bool Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP);
-		auto DebugReqHandling(Hardware::Req _req, nlohmann::json _reqDataJ, 
+		auto DebugReqHandling(Hardware::Req _req, nlohmann::json _reqDataJ,
 			CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 			IO::State* _ioStateP, Display::State* _displayStateP) -> nlohmann::json;
 
