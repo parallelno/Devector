@@ -114,7 +114,7 @@ void dev::MemDisplayWindow::DrawSelector()
 		"Blue highlights represent reads.\n"
 		"Red highlights represent writes.\n"
 		"The brighter the color, the more recent the change.\n"
-		"Left Alt + Mouse Wheel - zoom.\n"
+		"Left Ctrl + Mouse Wheel - zoom.\n"
 		"The Left Mouse Button to navigate the address in the Hex Window."
 		);
 
@@ -264,10 +264,11 @@ void dev::MemDisplayWindow::DrawMemoryTabs()
 	}
 	ImGui::EndTabBar();
 
-	ScaleView();
 
-	if (hovered_bank_idx >= 0)
+	if (hovered_bank_idx >= 0){
+		ScaleView();
 		DrawTooltip(hovered_bank_idx, img_pixel_pos);
+	}
 }
 
 
@@ -318,21 +319,18 @@ auto dev::MemDisplayWindow::PixelPosToAddr(ImVec2 _pos, float _scale)
 // check the keys, scale the view
 void dev::MemDisplayWindow::ScaleView()
 {
-	if (ImGui::IsWindowHovered())
+	if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
 	{
-		if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
-		{
-			float scaleAdjusted = m_scale < 1.0f ? SCALE_INC : m_scale * SCALE_INC;
+		float scaleAdjusted = m_scale < 1.0f ? SCALE_INC : m_scale * SCALE_INC;
 
-			if (ImGui::GetIO().MouseWheel > 0.0f){
-				m_scale = dev::Min( m_scale + scaleAdjusted, SCALE_MAX);
-			}
-			else if (ImGui::GetIO().MouseWheel < 0.0f) {
-				m_scale = dev::Max(m_scale - scaleAdjusted, SCALE_MIN);
-			}
-			if (ImGui::GetIO().MouseWheel != 0.0f) {
-				DrawTooltipTimer(std::format("Zoom: {}", m_scale).c_str());
-			}
+		if (ImGui::GetIO().MouseWheel > 0.0f){
+			m_scale = dev::Min( m_scale + scaleAdjusted, SCALE_MAX);
+		}
+		else if (ImGui::GetIO().MouseWheel < 0.0f) {
+			m_scale = dev::Max(m_scale - scaleAdjusted, SCALE_MIN);
+		}
+		if (ImGui::GetIO().MouseWheel != 0.0f) {
+			DrawTooltipTimer(std::format("Zoom: {}", m_scale).c_str());
 		}
 	}
 }
