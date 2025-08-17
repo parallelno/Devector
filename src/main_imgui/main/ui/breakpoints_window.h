@@ -18,7 +18,6 @@ namespace dev
 		Hardware& m_hardware;
 		ReqUI& m_reqUI;
 		Breakpoints::BpMap m_breakpoints;
-		size_t m_updates = 0; // stores the updates to prevent extra Debug data fetching
 
 		void CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
 			const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup);

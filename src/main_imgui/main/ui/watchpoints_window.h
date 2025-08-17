@@ -17,7 +17,6 @@ namespace dev
 		Hardware& m_hardware;
 		ReqUI& m_reqUI;
 		Watchpoints::WpMap m_watchpoints;
-		size_t m_updates = 0; // stores the watchpoint data updates to prevent extra Debug data fetching
 
 		void CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
 			const int _id, int& _editedWatchpointId, ReqPopup& _reqPopup);

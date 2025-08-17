@@ -12,15 +12,14 @@ dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
 	m_reqUI(_reqUI)
 {
 	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-									dev::Scheduler::Signals::HW_RUNNING |
-									dev::Scheduler::Signals::BREAK);
+									dev::Scheduler::Signals::WATCHPOINTS);
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
 			signals,
 			std::bind(&dev::WatchpointsWindow::UpdateWatchpoints,
 						this, std::placeholders::_1),
-			m_visible, 1000ms));
+			m_visible));
 }
 
 void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
@@ -412,13 +411,6 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 void dev::WatchpointsWindow::UpdateWatchpoints(
 	const dev::Scheduler::Signals _signals)
 {
-	size_t updates = m_hardware.Request(
-		Hardware::Req::DEBUG_WATCHPOINT_GET_UPDATES)->at("updates");
-
-	if (updates == m_updates) return;
-
-	m_updates = updates;
-
 	m_watchpoints.clear();
 	auto watchpointsJ = m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_GET_ALL);
 	if (watchpointsJ)

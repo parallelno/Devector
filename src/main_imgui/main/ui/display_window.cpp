@@ -20,8 +20,7 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 	SetExecutionSpeed(_execSpeed);
 
 	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-										dev::Scheduler::Signals::HW_RUNNING |
-										dev::Scheduler::Signals::BREAK);
+										dev::Scheduler::Signals::UI_DRAW);
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
 			signals,
@@ -106,13 +105,24 @@ bool dev::DisplayWindow::IsFocused() const
 
 void dev::DisplayWindow::UpdateData(const dev::Scheduler::Signals _signals)
 {
-	//ReqHandling();
-	bool _isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	bool new_frame = dev::Scheduler::Signals::FRAME & _signals;
+
+	if (isRunning && !new_frame) return;
 
 	m_scrollV_crtXY_highlightMul.w = 1.0f;
 
-	if (!_isRunning)
+	// init hovering highlight
+	if (!isRunning)
 	{
+		static bool hovered = false;
+		bool hovering_updated = hovered != m_displayIsHovered;
+		hovered = m_displayIsHovered;
+
+		bool break_ = dev::Scheduler::Signals::BREAK & _signals;
+
+		if (!hovering_updated && !break_) return;
+
 		auto res = m_hardware.Request(Hardware::Req::GET_DISPLAY_DATA);
 		const auto& displayData = *res;
 		m_rasterPixel = displayData["rasterPixel"];
@@ -126,18 +136,17 @@ void dev::DisplayWindow::UpdateData(const dev::Scheduler::Signals _signals)
 		}
 	}
 
-	// update
+	// render the frame texture
 	if (m_isGLInited)
 	{
-		//uint8_t scrollVert = (m_hardware.Request(Hardware::Req::GET_SCROLL_VERT)->at("scrollVert") + 1; // adding +1 offset because the default is 255
-		m_scrollV_crtXY_highlightMul.x = 0;//FRAME_PXL_SIZE_H* scrollVert;
+		m_scrollV_crtXY_highlightMul.x = 0;
 
 		// update params
 		m_glUtils.UpdateMaterialParam(m_vramMatId, m_matParamId_scrollV_crtXY_highlightMul, m_scrollV_crtXY_highlightMul);
 		m_glUtils.UpdateMaterialParam(m_vramMatId, m_matParamId_bordsLRTB, m_bordsLRTB);
 		m_glUtils.UpdateMaterialParam(m_vramMatId, m_matParamId_activeArea_pxlSize, m_activeArea_pxlSize);
 
-		auto frameP = m_hardware.GetFrame(_isRunning);
+		auto frameP = m_hardware.GetFrame(isRunning);
 		m_glUtils.UpdateTexture(m_vramTexId, (uint8_t*)frameP->data());
 		m_glUtils.Draw(m_vramMatId);
 	}
@@ -354,23 +363,11 @@ void dev::DisplayWindow::DrawContextMenu()
 		ImGui::EndPopup();
 	}
 }
-/*
-void dev::DisplayWindow::ReqHandling()
-{
-	if (m_reqUI.type == ReqUI::Type::NONE) return;
 
-	switch (m_reqUI.type)
-	{
-	case ReqUI::Type::DISPLAY_FRAME_BUFF_UPDATE: {
-		m_reqUI.type = ReqUI::Type::NONE;
-		//
-	}
-	}
-}
-*/
 
 void dev::DisplayWindow::SetExecutionSpeed(const Hardware::ExecSpeed _execSpeed)
 {
 	m_execSpeed = _execSpeed;
-	m_hardware.Request(Hardware::Req::SET_CPU_SPEED, { {"speed", int(m_execSpeed)} });
+	m_hardware.Request(Hardware::Req::SET_CPU_SPEED, {
+		{"speed", int(m_execSpeed)} });
 };

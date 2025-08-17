@@ -14,15 +14,15 @@ dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
 	m_hardware(_hardware), m_reqUI(_reqUI)
 {
 	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-									dev::Scheduler::Signals::HW_RUNNING |
-									dev::Scheduler::Signals::BREAK);
+		dev::Scheduler::Signals::BREAKPOINTS
+		);
 
 	_scheduler.AddSignal(
 		dev::Scheduler::Receiver(
 			signals,
 			std::bind(&dev::BreakpointsWindow::UpdateBreakpoints,
 						this, std::placeholders::_1),
-			m_visible, 1000ms));
+			m_visible));
 }
 
 void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
@@ -408,13 +408,6 @@ void dev::BreakpointsWindow::DrawPopup(
 void dev::BreakpointsWindow::UpdateBreakpoints(
 	const dev::Scheduler::Signals _signals)
 {
-	size_t updates = m_hardware.Request(
-		Hardware::Req::DEBUG_BREAKPOINT_GET_UPDATES)->at("updates");
-
-	if (updates == m_updates) return;
-
-	m_updates = updates;
-
 	m_breakpoints.clear();
 	auto breakpointsJ = m_hardware.Request(
 		Hardware::Req::DEBUG_BREAKPOINT_GET_ALL);

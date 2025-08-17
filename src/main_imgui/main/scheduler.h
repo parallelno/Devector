@@ -38,7 +38,8 @@ namespace dev
 			BREAKPOINTS	= 1 << 3,
 			WATCHPOINTS	= 1 << 4,
 			UI_DRAW		= 1 << 5,
-			BREAK		= 1 << 6
+			BREAK		= 1 << 6,
+			FRAME		= 1 << 7, // new frame started
 		};
 		using CallFunc = std::function<void(Signals)>;
 
@@ -76,7 +77,10 @@ namespace dev
 
 		bool m_inited = false;
 		uint64_t m_id = 0;
-		bool m_isRunning = false;
+		uint64_t m_cc = 0;
+		uint64_t m_bpUpdates = 0;
+		uint64_t m_wpUpdates = 0;
+		uint64_t m_frameNum = 0;
 		Signals m_activeSignals = Signals::NONE;
 
 		std::list<Receiver> m_receivers;
