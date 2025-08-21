@@ -2,32 +2,32 @@
 
 dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP,
-	ReqUI& _reqUI)
+	bool& _visible, const float* const _dpiScaleP)
 	:
 	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
-	m_hardware(_hardware), m_debugger(_debugger),
-	m_reqUI(_reqUI)
+	m_hardware(_hardware), m_debugger(_debugger)
 {
-	dev::Scheduler::Signals signals = dev::Scheduler::Signals::BREAK;
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			signals,
-			std::bind(&dev::TraceLogWindow::UpdateData,
-					this, std::placeholders::_1),
+
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::BREAK,
+			std::bind(&dev::TraceLogWindow::CallbackUpdateData,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible));
 }
 
-void dev::TraceLogWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::TraceLogWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 	DrawLog(isRunning);
 }
 
-void dev::TraceLogWindow::UpdateData(const dev::Scheduler::Signals _signals)
+void dev::TraceLogWindow::CallbackUpdateData(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	m_traceLogP = m_debugger.GetTraceLog().GetDisasm(
 		TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
@@ -36,7 +36,7 @@ void dev::TraceLogWindow::UpdateData(const dev::Scheduler::Signals _signals)
 }
 
 void dev::TraceLogWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
-	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// the addr column
 	ImGui::TableNextColumn();
@@ -47,8 +47,7 @@ void dev::TraceLogWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Li
 	switch (mouseAction)
 	{
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
-		_reqUI.globalAddr = _line.addr;
+		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (Addr)_line.addr});
 		break;
 	case UIItemMouseAction::RIGHT:
 		_contextMenu.Init(_line.addr, _line.GetAddrS());
@@ -57,7 +56,7 @@ void dev::TraceLogWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Li
 }
 
 void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// draw code
 	ImGui::TableNextColumn();
@@ -67,8 +66,7 @@ void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Li
 	{
 	// any case below means that the immediate addr was at least hovered
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
-		_reqUI.globalAddr = _line.imm;
+		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (Addr)_line.imm});
 		break;
 	case UIItemMouseAction::RIGHT: // init the immediate value as an addr to let the context menu copy it
 		//_contextMenu.Init(_line.imm, _line.GetImmediateS(), true);
@@ -162,8 +160,10 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 				const auto& line = m_traceLogP->at(lineIdx);
 				int addr = line.addr;
 
-				DrawDisasmAddr(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
-				DrawDisasmCode(_isRunning, line, m_reqUI, m_contextMenu, m_addrHighlight);
+				DrawDisasmAddr(
+					_isRunning, line, m_contextMenu, m_addrHighlight);
+				DrawDisasmCode(
+					_isRunning, line, m_contextMenu, m_addrHighlight);
 				DrawDisasmConsts(line, MAX_DISASM_LABELS);
 
 			}
@@ -195,7 +195,11 @@ void dev::TraceLogWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _conte
 		ImGui::SeparatorText("");
 		if (ImGui::MenuItem("Add/Remove Beakpoint"))
 		{
-			Breakpoint::Status bpStatus = static_cast<Breakpoint::Status>(m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS, { {"addr", m_contextMenu.addr} })->at("status"));
+			Breakpoint::Status bpStatus =
+				static_cast<Breakpoint::Status>(
+					m_hardware.Request(
+						Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS,
+						{ {"addr", m_contextMenu.addr} })->at("status"));
 
 			if (bpStatus == Breakpoint::Status::DELETED) {
 				Breakpoint::Data bpData { m_contextMenu.addr };
@@ -209,7 +213,6 @@ void dev::TraceLogWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _conte
 			else {
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", m_contextMenu.addr} });
 			}
-			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
 		}
 		ImGui::EndPopup();
 	}

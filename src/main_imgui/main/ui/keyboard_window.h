@@ -16,7 +16,6 @@ namespace dev
 		static constexpr float KEYBOARD_IMG_ASPECT =  682.0f / 1280.0f;
 
 		Hardware& m_hardware;
-		ReqUI& m_reqUI;
 		std::string m_pathImgKeyboard;
 
 		bool m_isGLInited = false;
@@ -38,8 +37,10 @@ namespace dev
 		KeyboardWindow(Hardware& _hardware,
 			dev::Scheduler& _scheduler,
 			bool& _visible, const float* const _dpiScaleP,
-			GLUtils& _glUtils, ReqUI& _reqUI, const std::string& _pathImgKeyboard);
-		void Draw(const dev::Scheduler::Signals _signals) override;
+			GLUtils& _glUtils, const std::string& _pathImgKeyboard);
+		void Draw(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
 		void DrawContext(const bool _isRunning);
 		bool IsFocused() const;
 	};

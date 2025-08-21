@@ -14,70 +14,70 @@ dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 {
 	Init();
 
-	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-										dev::Scheduler::Signals::HW_RUNNING |
-										dev::Scheduler::Signals::BREAK);
+	dev::Signals signals = dev::Signals::HW_RUNNING |
+										dev::Signals::BREAK;
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
 			signals,
-			std::bind(&dev::HardwareStatsWindow::UpdateRegs,
-						this, std::placeholders::_1),
+			std::bind(&dev::HardwareStatsWindow::CallbackUpdateRegs,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
 			signals,
-			std::bind(&dev::HardwareStatsWindow::UpdateStack,
-						this, std::placeholders::_1),
+			std::bind(&dev::HardwareStatsWindow::CallbackUpdateStack,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
 			signals,
-			std::bind(&dev::HardwareStatsWindow::UpdateHardware,
-						this, std::placeholders::_1),
+			std::bind(&dev::HardwareStatsWindow::CallbackUpdateHardware,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
 			signals,
-			std::bind(&dev::HardwareStatsWindow::UpdatePorts,
-						this, std::placeholders::_1),
+			std::bind(&dev::HardwareStatsWindow::CallbackUpdatePorts,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
 			signals,
-			std::bind(&dev::HardwareStatsWindow::UpdatePeripheral,
-						this, std::placeholders::_1),
+			std::bind(&dev::HardwareStatsWindow::CallbackUpdatePeripheral,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
 			signals,
-			std::bind(&dev::HardwareStatsWindow::UpdateFdc,
-						this, std::placeholders::_1),
+			std::bind(&dev::HardwareStatsWindow::CallbackUpdateFdc,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
 			signals,
-			std::bind(&dev::HardwareStatsWindow::UpdateTime,
-						this, std::placeholders::_1),
+			std::bind(&dev::HardwareStatsWindow::CallbackUpdateTime,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
 			signals,
-			std::bind(&dev::HardwareStatsWindow::UpdatePalette,
-						this, std::placeholders::_1),
+			std::bind(&dev::HardwareStatsWindow::CallbackUpdatePalette,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 100ms));
 }
 
-void dev::HardwareStatsWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::HardwareStatsWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5.0f, 0.0f });
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
@@ -282,7 +282,8 @@ void dev::HardwareStatsWindow::DrawPeripheral() const
 }
 
 
-void dev::HardwareStatsWindow::UpdateRegs(const dev::Scheduler::Signals _signals)
+void dev::HardwareStatsWindow::CallbackUpdateRegs(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& data = *res;
@@ -352,7 +353,8 @@ void dev::HardwareStatsWindow::UpdateRegs(const dev::Scheduler::Signals _signals
 }
 
 
-void dev::HardwareStatsWindow::UpdateStack(const dev::Scheduler::Signals _signals)
+void dev::HardwareStatsWindow::CallbackUpdateStack(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& data = *res;
@@ -397,8 +399,8 @@ void dev::HardwareStatsWindow::UpdateStack(const dev::Scheduler::Signals _signal
 }
 
 
-void dev::HardwareStatsWindow::UpdateHardware(
-	const dev::Scheduler::Signals _signals)
+void dev::HardwareStatsWindow::CallbackUpdateHardware(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto res = m_hardware.Request(Hardware::Req::GET_REGS);
 	const auto& data = *res;
@@ -443,8 +445,8 @@ void dev::HardwareStatsWindow::UpdateHardware(
 }
 
 
-void dev::HardwareStatsWindow::UpdatePalette(
-	const dev::Scheduler::Signals _signals)
+void dev::HardwareStatsWindow::CallbackUpdatePalette(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto res = m_hardware.Request(Hardware::Req::GET_IO_PALETTE);
 	const auto& paletteDataJ = *res;
@@ -453,7 +455,8 @@ void dev::HardwareStatsWindow::UpdatePalette(
 }
 
 
-void dev::HardwareStatsWindow::UpdatePorts(const dev::Scheduler::Signals _signals)
+void dev::HardwareStatsWindow::CallbackUpdatePorts(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	// ports IN data
 	auto res = m_hardware.Request(Hardware::Req::GET_IO_PORTS_IN_DATA);
@@ -497,8 +500,8 @@ void dev::HardwareStatsWindow::UpdatePorts(const dev::Scheduler::Signals _signal
 }
 
 
-void dev::HardwareStatsWindow::UpdatePeripheral(
-	const dev::Scheduler::Signals _signals)
+void dev::HardwareStatsWindow::CallbackUpdatePeripheral(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto res = m_hardware.Request(Hardware::Req::GET_MEMORY_MAPPING);
 	Memory::Mapping mapping { res->at("mapping") };
@@ -513,7 +516,8 @@ void dev::HardwareStatsWindow::UpdatePeripheral(
 }
 
 
-void dev::HardwareStatsWindow::UpdateFdc(const dev::Scheduler::Signals _signals)
+void dev::HardwareStatsWindow::CallbackUpdateFdc(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	// FDC
 	static const std::string diskNames[] = {
@@ -545,7 +549,8 @@ void dev::HardwareStatsWindow::UpdateFdc(const dev::Scheduler::Signals _signals)
 }
 
 
-void dev::HardwareStatsWindow::UpdateTime(const dev::Scheduler::Signals _signals)
+void dev::HardwareStatsWindow::CallbackUpdateTime(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	// update the up time
 	uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");

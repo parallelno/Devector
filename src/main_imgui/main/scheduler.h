@@ -4,9 +4,12 @@
 #include <chrono>
 #include <functional>
 #include <list>
+#include <optional>
+#include <variant>
+#include <deque>
 
+#include "signals.h"
 #include "utils/types.h"
-
 #include "core/hardware.h"
 #include "core/debugger.h"
 
@@ -28,29 +31,28 @@ namespace dev
 		using Delay = std::chrono::duration<int64_t, std::milli>;
 
 	public:
-		using Clk = std::chrono::time_point<std::chrono::steady_clock>;
-
-		enum Signals : uint32_t{
-			NONE		= 0,
-			HW_RESET	= 1 << 0,
-			HW_RUNNING	= 1 << 1, // cpu is ticking
-			START		= 1 << 2, // hardware starts after break
-			BREAKPOINTS	= 1 << 3,
-			WATCHPOINTS	= 1 << 4,
-			UI_DRAW		= 1 << 5,
-			BREAK		= 1 << 6,
-			FRAME		= 1 << 7, // new frame started
+		struct GlobalAddrLen {
+			GlobalAddr globalAddr;
+			uint16_t len;
 		};
-		using CallFunc = std::function<void(Signals)>;
+		using SignalData = std::optional<std::variant<
+			GlobalAddr,
+			GlobalAddrLen,
+			bool>>;
 
-		struct Receiver {
+		using Clk = std::chrono::time_point<std::chrono::steady_clock>;
+		using CallFunc = std::function<void(const Signals, SignalData)>;
+
+		struct Callback {
 		public:
-			Signals flags;
 			CallFunc func;
 			Delay hw_running_delay;
+			Clk lastTimePoint;
+			Signals flags;
 			bool& active;
 
-			Receiver(const Signals _signals,
+			Callback(
+				const Signals _signals,
 				CallFunc _func,
 				bool& _active,
 				const Delay hw_running_delay = 0ms)
@@ -63,26 +65,30 @@ namespace dev
 					double(hw_running_delay.count()) * std::rand() / RAND_MAX)
 					)}
 				{}
+		};
 
-			auto GetLastTimePoint() const -> const Clk& { return lastTimePoint; }
-			void TryCall(const Signals _activeSignals);
-		private:
-			Clk lastTimePoint;
+		struct PendingSignal {
+			Signals signals = Signals::NONE;
+			SignalData data = std::nullopt;
+			int postponed = 1; // signal can be postponed this many times
 		};
 
 		void Update(dev::Hardware& _hardware, Debugger& _debugger);
-		auto AddSignal(Receiver&& _receiver) -> uint64_t;
+		void AddCallback(Callback&& _callback);
+		void AddSignal(PendingSignal&& _pendingSignals);
+		void CallPendingSignals();
 
 	private:
+		bool CallCallbacks(
+			const Signals _signals, SignalData _data = std::nullopt);
 
-		bool m_inited = false;
-		uint64_t m_id = 0;
 		uint64_t m_cc = 0;
 		uint64_t m_bpUpdates = 0;
 		uint64_t m_wpUpdates = 0;
 		uint64_t m_frameNum = 0;
 		Signals m_activeSignals = Signals::NONE;
 
-		std::list<Receiver> m_receivers;
+		std::list<Callback> m_callbacks;
+		std::deque<PendingSignal> m_pendingSignals;
 	};
 }

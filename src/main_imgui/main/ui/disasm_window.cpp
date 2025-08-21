@@ -7,31 +7,34 @@
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
 		dev::Scheduler& _scheduler,
-		bool& _visible, const float* const _dpiScale,
-		ReqUI& _reqUI)
+		bool& _visible, const float* const _dpiScale)
 	:
 	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScale),
 	m_hardware(_hardware),
 	m_debugger(_debugger),
-	m_fontCommentP(fontComment),
-	m_reqUI(_reqUI)
+	m_fontCommentP(fontComment)
 {
-	dev::Scheduler::Signals signals = dev::Scheduler::Signals::BREAK;
-
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			signals,
-			std::bind(&dev::DisasmWindow::UpdateData,
-						this, std::placeholders::_1),
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::BREAK |
+			dev::Signals::BREAKPOINTS,
+			std::bind(&dev::DisasmWindow::CallbackUpdateAtCC,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
+
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::DISASM_UPDATE,
+			std::bind(&dev::DisasmWindow::CallbackUpdateAtAddr,
+				this, std::placeholders::_1, std::placeholders::_2),
+			m_visible));
 }
 
-void dev::DisasmWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::DisasmWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
-
-	ReqHandling(); // should be before UpdateDisasm and DrawDisasm
+	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 
 	DrawDebugControls(isRunning);
 	DrawSearch(isRunning);
@@ -99,9 +102,7 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	ImGui::SameLine();
 	if (ImGui::Button("Reset"))
 	{
-		m_reqUI.type = ReqUI::Type::RELOAD_ROM_FDD_REC;
-		m_hardware.Request(Hardware::Req::STOP);
-		m_debugger.GetDebugData().SaveDebugData();
+		m_scheduler.AddSignal({dev::Signals::RELOAD});
 	}
 
 	ImGui::SameLine();
@@ -210,7 +211,7 @@ void dev::DisasmWindow::DrawDisasmIcons(
 				{ {"addr", _line.addr} });
 			break;
 		}
-		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 	}
 
 	// draw program counter icon
@@ -224,7 +225,7 @@ void dev::DisasmWindow::DrawDisasmIcons(
 
 void dev::DisasmWindow::DrawDisasmAddr(
 	const bool _isRunning, const Disasm::Line& _line,
-	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// the addr column
 	ImGui::TableNextColumn();
@@ -236,8 +237,7 @@ void dev::DisasmWindow::DrawDisasmAddr(
 	switch (mouseAction)
 	{
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
-		_reqUI.globalAddr = _line.addr;
+		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (Addr)_line.addr});
 		break;
 	case UIItemMouseAction::RIGHT:
 		_contextMenu.Init(
@@ -248,7 +248,7 @@ void dev::DisasmWindow::DrawDisasmAddr(
 
 void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning,
 	const Disasm::Line& _line,
-	ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
 {
 	// draw code
 	ImGui::TableNextColumn();
@@ -258,8 +258,7 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning,
 	{
 	// any case below means that the immediate addr was at least hovered
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
-		_reqUI.globalAddr = _line.imm;
+		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (Addr)_line.imm});
 		break;
 
 	// init the immediate value as an addr to let the context menu copy it
@@ -415,9 +414,9 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					DrawAddrLinks(_isRunning, lineIdx, hoveredLineIdx == lineIdx);
 					DrawNextExecutedLineHighlight(_isRunning, line, regPC);
 					DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
-					DrawDisasmAddr(_isRunning, line, m_reqUI, m_contextMenu,
+					DrawDisasmAddr(_isRunning, line, m_contextMenu,
 						m_addrHighlight);
-					DrawDisasmCode(_isRunning, line, m_reqUI, m_contextMenu,
+					DrawDisasmCode(_isRunning, line, m_contextMenu,
 						m_addrHighlight);
 
 					DrawDisasmStats(line);
@@ -504,51 +503,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	if (_isRunning) ImGui::EndDisabled();
 }
 
-
-void dev::DisasmWindow::UpdateData(const dev::Scheduler::Signals _signals)
-{
-	// update
-	Addr addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-	UpdateDisasm(addr);
-}
-
-void dev::DisasmWindow::ReqHandling()
-{
-	if (m_reqUI.type == ReqUI::Type::NONE) return;
-
-	switch (m_reqUI.type)
-	{
-	case ReqUI::Type::DISASM_UPDATE:
-	{
-		m_reqUI.type = ReqUI::Type::NONE;
-		UpdateDisasm(m_disasmAddr, DISASM_INSTRUCTION_OFFSET, false);
-	}
-	break;
-
-	case ReqUI::Type::DISASM_UPDATE_ADDR:
-		m_reqUI.type = ReqUI::Type::NONE;
-		UpdateDisasm(m_reqUI.globalAddr);
-		break;
-
-	case ReqUI::Type::DISASM_NAVIGATE_TO_ADDR:
-		m_reqUI.type = ReqUI::Type::NONE;
-		if (m_navigateAddrsIdx == 0)
-		{
-			auto disasmPP = m_debugger.GetDisasm().GetLines();
-			if (!disasmPP || !*disasmPP) return;
-			m_navigateAddrs[m_navigateAddrsIdx] =
-				(*disasmPP)->at(DISASM_INSTRUCTION_OFFSET).addr;
-			m_navigateAddrsSize++;
-		}
-		if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN) {
-			m_navigateAddrs[++m_navigateAddrsIdx] = m_reqUI.globalAddr;
-			m_navigateAddrsSize = m_navigateAddrsIdx + 1;
-		}
-		UpdateDisasm(m_reqUI.globalAddr);
-		break;
-	}
-}
-
 void dev::DisasmWindow::UpdateDisasm(
 	const Addr _addr, const int _instructionsOffset,
 	const bool _updateSelection)
@@ -609,47 +563,80 @@ void dev::DisasmWindow::DrawContextMenu(
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL,
 					{ {"addr", m_contextMenu.addr} });
 			}
-			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 		}
 		if (ImGui::MenuItem("Remove All Beakpoints")) {
 			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL_ALL);
-			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 		};
 
 		ImGui::SeparatorText("");
 
-		if (ImGui::MenuItem("Add/Edit Label")) {
-			m_reqUI.type = _contextMenu.labelExists ?
-				ReqUI::Type::LABEL_EDIT_WINDOW_EDIT :
-				ReqUI::Type::LABEL_EDIT_WINDOW_ADD;
+		if (ImGui::MenuItem("Add/Edit Label"))
+		{
+			if (_contextMenu.labelExists)
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::LABEL_EDIT_WINDOW_EDIT,
+					(Addr)_contextMenu.addr});
+			}
+			else
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::LABEL_EDIT_WINDOW_ADD,
+					(Addr)_contextMenu.addr});
+			}
 
-			m_reqUI.globalAddr = _contextMenu.addr;
 		};
 
-		if (_contextMenu.immHovered && ImGui::MenuItem("Add/Edit Const")) {
-			m_reqUI.type = _contextMenu.constExists ?
-				ReqUI::Type::CONST_EDIT_WINDOW_EDIT :
-				ReqUI::Type::CONST_EDIT_WINDOW_ADD;
-
-			m_reqUI.globalAddr = _contextMenu.addr;
+		if (_contextMenu.immHovered && ImGui::MenuItem("Add/Edit Const"))
+		{
+			if (_contextMenu.constExists)
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::CONST_EDIT_WINDOW_EDIT,
+					(Addr)_contextMenu.addr});
+			}
+			else
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::CONST_EDIT_WINDOW_ADD,
+					(Addr)_contextMenu.addr});
+			}
 		};
 
-		if (ImGui::MenuItem("Add/Edit Comment")) {
-			m_reqUI.type = _contextMenu.commentExists ?
-				ReqUI::Type::COMMENT_EDIT_WINDOW_EDIT :
-				ReqUI::Type::COMMENT_EDIT_WINDOW_ADD;
-
-			m_reqUI.globalAddr = _contextMenu.addr;
+		if (ImGui::MenuItem("Add/Edit Comment"))
+		{
+			if (_contextMenu.commentExists)
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::COMMENT_EDIT_WINDOW_EDIT,
+					(Addr)_contextMenu.addr});
+			}
+			else
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::COMMENT_EDIT_WINDOW_ADD,
+					(Addr)_contextMenu.addr});
+			}
 		};
 
 		ImGui::SeparatorText("");
 
-		if (ImGui::MenuItem("Edit Memory")) {
-			m_reqUI.type = _contextMenu.editMemoryExists ?
-				ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_EDIT :
-				ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_ADD;
-
-			m_reqUI.globalAddr = _contextMenu.addr;
+		if (ImGui::MenuItem("Edit Memory"))
+		{
+			if (_contextMenu.editMemoryExists)
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::MEMORY_EDIT_WINDOW_EDIT,
+					(Addr)_contextMenu.addr});
+			}
+			else
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::MEMORY_EDIT_WINDOW_ADD,
+					(Addr)_contextMenu.addr});
+			}
 		}
 
 		if (_contextMenu.editMemoryExists && ImGui::MenuItem(
@@ -659,15 +646,23 @@ void dev::DisasmWindow::DrawContextMenu(
 				Hardware::Req::DEBUG_MEMORY_EDIT_DEL,
 				{ {"addr", _contextMenu.addr} });
 
-			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 		}
 
-		if (ImGui::MenuItem("Code Perf")) {
-			m_reqUI.type = _contextMenu.codePerfExists ?
-				ReqUI::Type::CODE_PERFS_EDIT_WINDOW_EDIT :
-				ReqUI::Type::CODE_PERFS_EDIT_WINDOW_ADD;
-
-			m_reqUI.globalAddr = _contextMenu.addr;
+		if (ImGui::MenuItem("Code Perf"))
+		{
+			if (_contextMenu.codePerfExists)
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::CODE_PERF_EDIT_WINDOW_EDIT,
+					(Addr)_contextMenu.addr});
+			}
+			else
+			{
+				m_scheduler.AddSignal({
+					dev::Signals::CODE_PERF_EDIT_WINDOW_ADD,
+					(Addr)_contextMenu.addr});
+			}
 		}
 
 		ImGui::EndPopup();
@@ -731,5 +726,43 @@ void dev::DisasmWindow::DrawAddrLinks(
 		auto b = ImVec2(center.x - 0.750f * r, center.y + 0.866f * r);
 		auto c = ImVec2(center.x - 0.750f * r, center.y - 0.866f * r);
 		ImGui::GetForegroundDrawList()->AddTriangleFilled(a, b, c, linkColor);
+	}
+}
+
+
+void dev::DisasmWindow::CallbackUpdateAtCC(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
+{
+	// update
+	Addr addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
+	UpdateDisasm(addr);
+}
+
+
+void dev::DisasmWindow::CallbackUpdateAtAddr(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
+{
+    if (_data.has_value() && std::holds_alternative<GlobalAddr>(*_data))
+	{
+        auto addr = Addr(std::get<GlobalAddr>(*_data));
+
+		UpdateDisasm(addr);
+
+		if (m_navigateAddrsIdx == 0)
+		{
+			auto disasmPP = m_debugger.GetDisasm().GetLines();
+			if (!disasmPP || !*disasmPP) return;
+			m_navigateAddrs[m_navigateAddrsIdx] =
+				(*disasmPP)->at(DISASM_INSTRUCTION_OFFSET).addr;
+			m_navigateAddrsSize++;
+		}
+		if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN)
+		{
+			m_navigateAddrs[++m_navigateAddrsIdx] = addr;
+			m_navigateAddrsSize = m_navigateAddrsIdx + 1;
+		}
+	}
+	else{
+		UpdateDisasm(m_disasmAddr, DISASM_INSTRUCTION_OFFSET, false);
 	}
 }

@@ -33,7 +33,6 @@ namespace dev
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
-		ReqUI& m_reqUI;
 
 		float m_scale = 1.0f;
 
@@ -62,9 +61,14 @@ namespace dev
 		bool Init(const std::string& _vtxShaderS,
 				const std::string& _fragShaderS);
 
-		void UpdateData(const dev::Scheduler::Signals _signals);
+		void CallbackUpdateData(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
 		void ScaleView();
-		void Draw(const dev::Scheduler::Signals _signals) override;
+
+		void Draw(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
 		void DrawSelector();
 		void DrawMemoryTabs();
 		void DrawTooltip(
@@ -80,7 +84,6 @@ namespace dev
 			bool& _visible,
 			const float* const _dpiScaleP,
 			GLUtils& _glUtils,
-			ReqUI& _reqUI,
 			const std::string& _vtxShaderS,
 			const std::string& _fragShaderS);
 	};

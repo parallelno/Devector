@@ -4,34 +4,47 @@
 
 dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI)
+	bool& _visible, const float* const _dpiScaleP)
 	:
 	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
-	m_hardware(_hardware), m_debugger(_debugger), m_ram(), m_reqUI(_reqUI)
+	m_hardware(_hardware), m_debugger(_debugger), m_ram()
 {
-	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-										dev::Scheduler::Signals::HW_RUNNING |
-										dev::Scheduler::Signals::BREAK);
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			signals,
-			std::bind(&dev::HexViewerWindow::UpdateData,
-						this, std::placeholders::_1),
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::HW_RUNNING | dev::Signals::BREAK,
+			std::bind(&dev::HexViewerWindow::CallbackUpdateData,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
+
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::HEX_HIGHLIGHT_ON,
+			std::bind(&dev::HexViewerWindow::CallbackHighlightOn,
+				this, std::placeholders::_1, std::placeholders::_2),
+			m_visible));
+
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::HEX_HIGHLIGHT_OFF,
+			std::bind(&dev::HexViewerWindow::CallbackHighlightOff,
+				this, std::placeholders::_1, std::placeholders::_2),
+			m_visible));
 }
 
-void dev::HexViewerWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::HexViewerWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 
 	DrawHex(isRunning);
 }
 
-void dev::HexViewerWindow::UpdateData(const dev::Scheduler::Signals _signals)
+void dev::HexViewerWindow::CallbackUpdateData(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	// update
 	auto memP = m_hardware.GetRam()->data();
@@ -77,9 +90,12 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 			memPageIdxChanged = m_searchAddr >> 16 != m_memPageIdx;
 			m_memPageIdx = m_searchAddr >> 16;
 
-			m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-			m_reqUI.globalAddr = m_searchAddr;
-			m_reqUI.len = 1;
+			// m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
+			// m_reqUI.globalAddr = m_searchAddr;
+			// m_reqUI.len = 1;
+			m_scheduler.AddSignal(
+				{dev::Signals::HEX_HIGHLIGHT_ON,
+					Scheduler::GlobalAddrLen{(GlobalAddr)m_searchAddr, 1}});
 		}
 
 		ImGui::SameLine();
@@ -151,33 +167,12 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 			}
 		}
 
-		// Set the scroll position to the selected watchpoint addr or
-		// clicked addr in the Memory Display window
-		if (m_reqUI.type == ReqUI::Type::HEX_HIGHLIGHT_ON)
+
+		// scroll to the highlighted addr
+		if (m_table_scroll_y >= 0)
 		{
-
-
-		}
-		switch (m_reqUI.type)
-		{
-		case ReqUI::Type::HEX_HIGHLIGHT_ON:
-		{
-			m_reqUI.type = ReqUI::Type::NONE;
-			m_status = Status::HIGHLIGHT;
-			m_memPageIdx = m_reqUI.globalAddr >> 16;
-			m_highlightAddr = m_reqUI.globalAddr & 0xFFFF;
-			m_highlightAddrLen = m_reqUI.len;
-
-			float cellPaddingY = ImGui::GetStyle().CellPadding.y;
-			float offset = 2.0f;
-
-			ImGui::SetScrollY((m_highlightAddr >> 4) * (ImGui::GetFontSize() + cellPaddingY + offset) * (*m_dpiScaleP));
-			break;
-		}
-		case ReqUI::Type::HEX_HIGHLIGHT_OFF:
-			m_reqUI.type = ReqUI::Type::NONE;
-			m_status = Status::NONE;
-			break;
+			ImGui::SetScrollY(m_table_scroll_y);
+			m_table_scroll_y = -1;
 		}
 
 		// addr & data
@@ -273,4 +268,31 @@ void dev::HexViewerWindow::DrawHex(const bool _isRunning)
 		}
 		ImGui::EndTable();
 	}
+}
+
+
+void dev::HexViewerWindow::CallbackHighlightOn(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
+{
+	using GlobalAddrLen = dev::Scheduler::GlobalAddrLen;
+
+	auto addr_len = std::get<GlobalAddrLen>(*_data);
+
+	m_status = Status::HIGHLIGHT;
+	m_memPageIdx = addr_len.globalAddr >> 16;
+	m_highlightAddr = addr_len.globalAddr & 0xFFFF;
+	m_highlightAddrLen = addr_len.len;
+
+	float cellPaddingY = ImGui::GetStyle().CellPadding.y;
+	float offset = 2.0f;
+
+	m_table_scroll_y = (m_highlightAddr >> 4) *
+		(ImGui::GetFontSize() + cellPaddingY + offset) * (*m_dpiScaleP);
+}
+
+
+void dev::HexViewerWindow::CallbackHighlightOff(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
+{
+	m_status = Status::NONE;
 }

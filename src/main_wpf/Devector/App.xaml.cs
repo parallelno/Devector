@@ -209,7 +209,7 @@ namespace Devector
 			m_mountRecentFddImg = GetSettingsBool("m_mountRecentFddImg", true);
 			if (m_mountRecentFddImg) {
 				// TODO: fix it
-				//m_reqUI.type = ReqUI::Type::LOAD_RECENT_FDD_IMG;
+				// send a Signal::MOUNT_RECENT_FDD_IMG;
 			}
 
 			m_pathBootData = GetSettingsString("bootPath", "boot//boot.bin");
@@ -370,7 +370,7 @@ namespace Devector
 		private void PrintLoadingError(int? res, string path)
 		{
 			if (res == null || !File.Exists(path)) return;
-			
+
 			ErrCode errCode = (ErrCode)res;
 
 			var fileSize = File.GetAttributes(path);
@@ -436,7 +436,7 @@ namespace Devector
 			Load(m_recentFilePaths.First(), false);
 		}
 
-		
+
 		// Open the file dialog
 		public void OpenFile()
 		{

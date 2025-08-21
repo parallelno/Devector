@@ -5,28 +5,25 @@
 
 dev::RecorderWindow::RecorderWindow(Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP,
-	ReqUI& _reqUI)
+	bool& _visible, const float* const _dpiScaleP)
 	:
 	BaseWindow("Recorder", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger),
-	m_reqUI(_reqUI)
+	m_hardware(_hardware), m_debugger(_debugger)
 {
-	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-										dev::Scheduler::Signals::HW_RUNNING |
-										dev::Scheduler::Signals::BREAK);
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			signals,
-			std::bind(&dev::RecorderWindow::UpdateData,
-					this, std::placeholders::_1),
+
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::HW_RUNNING | dev::Signals::BREAK,
+			std::bind(&dev::RecorderWindow::CallbackUpdateData,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 300ms));
 }
 
-void dev::RecorderWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::RecorderWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 
 	ImGui::Text("State current / recorded: %d / %d", m_stateCurrent, m_stateRecorded);
 
@@ -88,7 +85,8 @@ void dev::RecorderWindow::Draw(const dev::Scheduler::Signals _signals)
 	dev::PopStyleCompact();
 }
 
-void dev::RecorderWindow::UpdateData(const dev::Scheduler::Signals _signals)
+void dev::RecorderWindow::CallbackUpdateData(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	m_stateRecorded = m_hardware.Request(
 		Hardware::Req::DEBUG_RECORDER_GET_STATE_RECORDED)->at("states");

@@ -10,12 +10,12 @@
 dev::KeyboardWindow::KeyboardWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
 	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
-	ReqUI& _reqUI, const std::string& _pathImgKeyboard)
+	const std::string& _pathImgKeyboard)
 	:
 	BaseWindow("Keyboard", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP),
-	m_hardware(_hardware), m_glUtils(_glUtils),
-	m_reqUI(_reqUI), m_pathImgKeyboard(_pathImgKeyboard)
+	m_hardware(_hardware),
+	m_glUtils(_glUtils), m_pathImgKeyboard(_pathImgKeyboard)
 {
 	m_isGLInited = Init();
 }
@@ -39,9 +39,10 @@ bool dev::KeyboardWindow::Init()
 	return true;
 }
 
-void dev::KeyboardWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::KeyboardWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 
 	m_windowFocused = ImGui::IsWindowFocused();
 

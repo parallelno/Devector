@@ -14,7 +14,6 @@ namespace dev
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
-		ReqUI& m_reqUI;
 
 		bool m_searchEnabled = false;
 		int m_searchStartAddr = 0x0;
@@ -23,12 +22,13 @@ namespace dev
 
 		std::vector<GlobalAddr> m_searchResults;
 
-		void Draw(const dev::Scheduler::Signals _signals) override;
+		void Draw(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
 
 	public:
 		SearchWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP,
-			ReqUI& _reqUI);
+			bool& _visible, const float* const _dpiScaleP);
 	};
 };

@@ -153,13 +153,13 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/main.cpp
 	${DEVECTOR_DIR}/main/devector_app.h
 	${DEVECTOR_DIR}/main/devector_app.cpp
-	${DEVECTOR_DIR}/main/devector_app_shaders.h
 
 	${DEVECTOR_DIR}/main/imgui_app.h
 	${DEVECTOR_DIR}/main/imgui_app.cpp
 
 	${DEVECTOR_DIR}/main/scheduler.h
 	${DEVECTOR_DIR}/main/scheduler.cpp
+	${DEVECTOR_DIR}/main/signals.h
 
 	${DEVECTOR_DIR}/main/ui/about_window.cpp
 	${DEVECTOR_DIR}/main/ui/about_window.h
@@ -191,9 +191,21 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/ui/search_window.h
 	${DEVECTOR_DIR}/main/ui/debugdata_window.cpp
 	${DEVECTOR_DIR}/main/ui/debugdata_window.h
+	${DEVECTOR_DIR}/main/ui/label_edit_window.h
+	${DEVECTOR_DIR}/main/ui/label_edit_window.cpp
+	${DEVECTOR_DIR}/main/ui/const_edit_window.h
+	${DEVECTOR_DIR}/main/ui/const_edit_window.cpp
+	${DEVECTOR_DIR}/main/ui/comment_edit_window.h
+	${DEVECTOR_DIR}/main/ui/comment_edit_window.cpp
+	${DEVECTOR_DIR}/main/ui/memory_edit_window.h
+	${DEVECTOR_DIR}/main/ui/memory_edit_window.cpp
+	${DEVECTOR_DIR}/main/ui/code_perf_edit_window.h
+	${DEVECTOR_DIR}/main/ui/code_perf_edit_window.cpp
+	${DEVECTOR_DIR}/main/ui/script_edit_window.h
+	${DEVECTOR_DIR}/main/ui/script_edit_window.cpp
 
-	${DEVECTOR_DIR}/utils/imgui_utils.cpp
 	${DEVECTOR_DIR}/utils/imgui_utils.h
+	${DEVECTOR_DIR}/utils/imgui_utils.cpp
 )
 
 # Executable

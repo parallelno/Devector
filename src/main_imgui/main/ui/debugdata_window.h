@@ -14,7 +14,6 @@ namespace dev
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
-		ReqUI& m_reqUI;
 
 		DebugData::UpdateId m_labelsUpdates = 0;
 		DebugData::UpdateId m_constsUpdates = 0;
@@ -75,7 +74,8 @@ namespace dev
 		};
 		ContextMenu m_contextMenu;
 
-		void UpdateData(const dev::Scheduler::Signals _signals);
+		void CallbackUpdateData(const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
 		void UpdateAndDrawFilteredElements(
 			DebugData::FilteredElements& _filteredElements,
 			DebugData::UpdateId& _filteredUpdateId,
@@ -84,13 +84,14 @@ namespace dev
 			ElementType _elementType);
 
 
-		void Draw(const dev::Scheduler::Signals _signals) override;
+		void Draw(const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
+
 		void DrawContextMenu(ContextMenu& _contextMenu);
 
 	public:
 		DebugDataWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP,
-			ReqUI& _reqUI);
+			bool& _visible, const float* const _dpiScaleP);
 	};
 };

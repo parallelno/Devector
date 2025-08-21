@@ -14,18 +14,20 @@ namespace dev
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
-		ReqUI& m_reqUI;
 
 		int m_stateRecorded = 0;
 		int m_stateCurrent = 0;
 
-		void UpdateData(const dev::Scheduler::Signals _signals);
-		void Draw(const dev::Scheduler::Signals _signals) override;
+		void CallbackUpdateData(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void Draw(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
 
 	public:
 		RecorderWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP,
-			ReqUI& _reqUI);
+			bool& _visible, const float* const _dpiScaleP);
 	};
 };

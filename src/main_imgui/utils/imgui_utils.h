@@ -13,7 +13,7 @@
 #include "core/disasm.h"
 #include "core/debug_data.h"
 
-namespace dev 
+namespace dev
 {
 	enum class ButtonAction{
 		NONE = 0, PRESSED, RELEASED
@@ -77,7 +77,7 @@ namespace dev
 	static constexpr ImVec4 DASM_CLR_NUMBER_HIGHLIGHT = dev::IM_VEC4(0xFFFFFFFF);
 	static constexpr ImVec4 DASM_CLR_REG = dev::IM_VEC4(0x1ECF44FF);
 	static constexpr ImVec4 DASM_CLR_CONST = dev::IM_VEC4(0x8BE0E9FF);
-	static constexpr ImVec4 DASM_CLR_WARNING = dev::IM_VEC4(0xFF2020FF);	
+	static constexpr ImVec4 DASM_CLR_WARNING = dev::IM_VEC4(0xFF2020FF);
 	static constexpr ImVec4 CLR_NUM_UPDATED = dev::IM_VEC4(0xD0902FFF);
 	static constexpr ImU32 CLR_URL_HOVERED = dev::IM_U32(0x2081FFFF);
 	static constexpr ImU32 CLR_URL = dev::IM_U32(0x1080F0FF);
@@ -94,9 +94,11 @@ namespace dev
 	void ColumnClippingEnable(const float _dpiScale = 1.0f);
 	void ColumnClippingDisable();
 
+	void DeleteByIndex(dev::Disasm::LabelList& _labels, int& _idx);
+
 
 	void DrawTextSelectable(const char* _label, const std::string& _text);
-	//void DrawTextSelectableColored(const ImVec4& col, const std::string& _text); 
+	//void DrawTextSelectableColored(const ImVec4& col, const std::string& _text);
 	template <typename... Args>
 	void DrawTextSelectableColored(const ImVec4& col, const std::string& _fmt, Args&&... args)
 	{
@@ -129,51 +131,44 @@ namespace dev
 	void DrawHelpMarker(const char* _text);
 	bool HyperLink(const char* label, bool underlineWhenHoveredOnly = true);
 	void DrawPopup(const char* _title, const char* _text);
-	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right, 
+	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right,
 		const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
-	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, 
+	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale,
 		const float _posXOffset = -0.2f, const bool _itemHasSize = false);
 	void DrawProperty2(const char* _name, const char* _valueH,
 		const char* _hint = nullptr, const ImVec4& _valColor = CLR_WHITE);
 	void DrawProperty2RegPair(const char* _name, const char* _valueH, const char* _valueL,
-		const char* _hint = nullptr, 
+		const char* _hint = nullptr,
 		const ImVec4& _valHColor = CLR_WHITE, const ImVec4& _valLColor = CLR_WHITE);
 	void DrawSeparator2(const char* _text);
-	bool DrawProperty2EditableI(const char* _name, const char* _label, int* _value, 
+	bool DrawProperty2EditableI(const char* _name, const char* _label, int* _value,
 		const char* _help = nullptr, const ImGuiInputTextFlags _flags = 0);
-	bool DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value, 
-			const char* _hint = nullptr, const char* _help = nullptr, 
+	bool DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value,
+			const char* _hint = nullptr, const char* _help = nullptr,
 		const ImGuiInputTextFlags _flags = ImGuiInputTextFlags_EnterReturnsTrue,
 		bool* _delButtonPressed = nullptr);
 	void DrawProperty2Combo(const char* _name, const char* _label, int* _currentItem,
 		const char* const _items[], int _itemsCount, const char* _help = nullptr);
-	void DrawProperty2EditableCheckBox(const char* _name, const char* _label, 
+	void DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 		bool* _val, const char* _help = nullptr);
-	void DrawProperty2EditableCheckBox4(const char* _name, 
+	void DrawProperty2EditableCheckBox4(const char* _name,
 		const char* _label0, const char* _label1, const char* _label2, const char* _label3,
 		bool* _val0, bool* _val1, bool* _val2, bool* _val3, const char* _help);
-	void DrawProperty2RadioButtons(const char* _name, int* _currentItem, 
-		const char* const _items[], int _itemsCount, const float _space = 15.0f, 
+	void DrawProperty2RadioButtons(const char* _name, int* _currentItem,
+		const char* const _items[], int _itemsCount, const float _space = 15.0f,
 		const char* _help = nullptr);
 	auto DrawPropertyMemoryMapping(Breakpoint::MemPages _memPages) -> Breakpoint::MemPages;
 
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
 	auto DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab) -> UIItemMouseAction;
 	void DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels = 20);
-	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color, 
+	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color,
 		const ImVec4& _highlightColor, bool _forceHighlight = false) -> UIItemMouseAction;
 	void DrawTooltipTimer(const char* _text = nullptr, const float _timer = 0.7f);
-	auto DrawTransparentButtonWithBorder(const char* _label, 
+	auto DrawTransparentButtonWithBorder(const char* _label,
 		const ImVec2& _pos, const ImVec2& _size, const char* _hint = nullptr) -> const ButtonAction;
-	
-	void DrawEditLabelWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
-	void DrawEditConstWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
-	void DrawEditCommentWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
-	void DrawEditMemEditWindow(Hardware& _hardware, const DebugData& _debugData, ReqUI& _reqUI);
-	void DrawEditCodePerfWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
-	void DrawEditScriptWindow(Hardware& _hardware, DebugData& _debugData, ReqUI& _reqUI);
 
-	inline auto CursorPosToScreenPos(const ImVec2& _cursorPos)	
+	inline auto CursorPosToScreenPos(const ImVec2& _cursorPos)
 	-> ImVec2
 	{
 		auto winPos = ImGui::GetWindowPos();

@@ -21,6 +21,13 @@
 #include "ui/keyboard_window.h"
 #include "ui/search_window.h"
 #include "ui/debugdata_window.h"
+#include "ui/label_edit_window.h"
+#include "ui/const_edit_window.h"
+#include "ui/comment_edit_window.h"
+#include "ui/memory_edit_window.h"
+#include "ui/code_perf_edit_window.h"
+#include "ui/script_edit_window.h"
+
 
 #include "core/hardware.h"
 #include "core/debugger.h"
@@ -91,6 +98,7 @@ namespace dev
 		};
 		LoadingRes m_loadingRes; // loading resource info
 
+		// windows
 		std::unique_ptr <dev::Hardware> m_hardwareP;
 		std::unique_ptr <dev::Debugger> m_debuggerP;
 		std::unique_ptr <dev::BreakpointsWindow>m_breakpointsWindowP;
@@ -107,7 +115,15 @@ namespace dev
 		std::unique_ptr <dev::KeyboardWindow> m_keyboardWindowP;
 		std::unique_ptr <dev::SearchWindow> m_searchWindowP;
 		std::unique_ptr <dev::DebugDataWindow> m_debugdataWindowP;
+		// popup edit debug data windows
+		std::unique_ptr <dev::LabelEditWindow> m_labelEditWindowP;
+		std::unique_ptr <dev::ConstEditWindow> m_constEditWindowP;
+		std::unique_ptr <dev::CommentEditWindow> m_commentEditWindowP;
+		std::unique_ptr <dev::MemoryEditWindow> m_memoryEditWindowP;
+		std::unique_ptr <dev::CodePerfEditWindow> m_codePerfEditWindowP;
+		std::unique_ptr <dev::ScriptEditWindow> m_scriptEditWindowP;
 
+		// windows
 		bool m_displayWindowVisible = false;
 		bool m_disasmWindowVisible = false;
 		bool m_hardwareStatsWindowVisible = false;
@@ -122,6 +138,14 @@ namespace dev
 		bool m_keyboardWindowVisible = false;
 		bool m_searchWindowVisible = false;
 		bool m_debugdataWindowVisible = false;
+
+		// popup edit debug data windows
+		bool m_labelEditWindowVisible = true;
+		bool m_constEditWindowVisible = true;
+		bool m_commentEditWindowVisible = true;
+		bool m_memoryEditWindowVisible = true;
+		bool m_codePerfEditWindowVisible = true;
+		bool m_scriptEditWindowVisible = true;
 
 		std::string m_pathImgKeyboard;
 
@@ -139,10 +163,10 @@ namespace dev
 		using RecentFiles = std::list<RecentFile>;
 		RecentFiles m_recentFilePaths;
 
-		ReqUI m_reqUI;
 		GLUtils m_glUtils;
 
 		Scheduler m_scheduler;
+		bool m_active = true;
 		std::string m_memdisplay_vtxShader = "";
 		std::string m_memdisplay_fragShader = "";
 		std::string m_display_vtxShader = "";
@@ -171,7 +195,9 @@ namespace dev
 		void LoadRom(const std::string& _path);
 		void LoadFdd(const std::string& _path, const int _driveIdx, const bool _autoBoot);
 		void LoadRecording(const std::string& _path);
-		void Reload();
+		void CallbackReload(
+			const dev::Signals _signals = dev::Signals::NONE,
+			dev::Scheduler::SignalData _data = std::nullopt);
 		static bool EventFilter(void* _userdata, SDL_Event* _event);
 		void DrawSaveDiscardFddPopup();
 		void CheckMountedFdd();
@@ -181,10 +207,11 @@ namespace dev
 		void SaveFile();
 		void DrawSelectDrivePopup();
 		void LoadingResStatusHandling();
-		void ReqUIHandling();
 		void DebugAttach();
 		void RestartOnLoadFdd();
-		void MountRecentFddImg();
+		void CallbackLoadRecentFddImg(
+			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 		void LoadDroppedFile();
+		void SchedulingInit();
 	};
 }

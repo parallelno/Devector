@@ -4,26 +4,25 @@
 
 dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI)
+	bool& _visible, const float* const _dpiScaleP)
 	:
 	BaseWindow("Watchpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP),
-	m_hardware(_hardware),
-	m_reqUI(_reqUI)
+	m_hardware(_hardware)
 {
-	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-									dev::Scheduler::Signals::WATCHPOINTS);
 
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			signals,
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::WATCHPOINTS,
 			std::bind(&dev::WatchpointsWindow::UpdateWatchpoints,
-						this, std::placeholders::_1),
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible));
 }
 
-void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::WatchpointsWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
+	// Draw a table
 	static int selectedAddr = 0;
 	bool showItemContextMenu = false;
 	static int editedWatchpointId = -1;
@@ -35,22 +34,33 @@ void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
 
 	static ImGuiTableFlags flags =
-		ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_ScrollY |
+		ImGuiTableFlags_NoPadInnerX |
+		ImGuiTableFlags_NoPadOuterX |
+		ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Hideable;
+		ImGuiTableFlags_Resizable |
+		ImGuiTableFlags_BordersOuter |
+		ImGuiTableFlags_Hideable;
+
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
-		ImGui::TableSetupColumn("###WpActive", ImGuiTableColumnFlags_WidthFixed, 25);
-		ImGui::TableSetupColumn("GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110);
-		ImGui::TableSetupColumn("Access", ImGuiTableColumnFlags_WidthFixed, 50);
-		ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 110);
-		ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableSetupColumn(
+			"###WpActive", ImGuiTableColumnFlags_WidthFixed, 25);
+		ImGui::TableSetupColumn(
+			"GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110);
+		ImGui::TableSetupColumn(
+			"Access", ImGuiTableColumnFlags_WidthFixed, 50);
+		ImGui::TableSetupColumn(
+			"Condition", ImGuiTableColumnFlags_WidthFixed, 110);
+		ImGui::TableSetupColumn(
+			"Comment", ImGuiTableColumnFlags_WidthStretch);
 
 		ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 		for (int column = 0; column < COLUMNS_COUNT; column++)
 		{
 			ImGui::TableSetColumnIndex(column);
-			const char* column_name = ImGui::TableGetColumnName(column); // Retrieve the name passed to TableSetupColumn()
+			// Retrieve the name passed to TableSetupColumn()
+			const char* column_name = ImGui::TableGetColumnName(column);
 			if (column == 0) {
 				DrawHelpMarker(
 					"Define address(es) and conditions; halts execution\n"
@@ -82,9 +92,10 @@ void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 				m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_ADD,
 					{ {"data0", wp.data.data0}, {"data1", wp.data.data1}, {"comment", wp.comment} });
 
-				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-				m_reqUI.globalAddr = globalAddr;
-				m_reqUI.len = wp.data.len;
+				m_scheduler.AddSignal(
+					{dev::Signals::HEX_HIGHLIGHT_ON,
+					Scheduler::GlobalAddrLen{
+						(GlobalAddr)globalAddr, (uint16_t)wp.data.len}});
 			}
 			// GlobalAddr
 			ImGui::TableNextColumn();
@@ -93,9 +104,10 @@ void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 			if (ImGui::Selectable(std::format("0x{:05X}", globalAddr).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
 				selectedAddr = globalAddr;
-				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-				m_reqUI.globalAddr = selectedAddr;
-				m_reqUI.len = wp.data.len;
+				m_scheduler.AddSignal(
+					{dev::Signals::HEX_HIGHLIGHT_ON,
+					Scheduler::GlobalAddrLen{
+						(GlobalAddr)selectedAddr, (uint16_t)wp.data.len}});
 			}
 
 			ImVec2 rowMin = ImGui::GetItemRectMin();
@@ -119,12 +131,14 @@ void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 			}
 			condS = std::format("{} l:{}", condS, wp.data.len);
 			DrawProperty(condS);
-			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
+			CheckIfItemClicked(
+				rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
 
 
 			// Comment
 			DrawProperty(wp.GetComment());
-			CheckIfItemClicked(rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
+			CheckIfItemClicked(
+				rowMin, showItemContextMenu, id, editedWatchpointId, reqPopup);
 
 			// Show the tooltip if the item is hovered
 			ImVec2 rowMax = ImGui::GetItemRectMax();
@@ -178,7 +192,7 @@ void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 			}
 			else if (ImGui::MenuItem("Delete All")) {
 				m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_DEL_ALL);
-				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_OFF;
+				m_scheduler.AddSignal({dev::Signals::HEX_HIGHLIGHT_OFF});
 			};
 			ImGui::EndPopup();
 		}
@@ -197,14 +211,15 @@ void dev::WatchpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 					m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_ADD,
 						{ {"data0", wp.data.data0}, {"data1", wp.data.data1}, {"comment", wp.comment} });
 
-					m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-					m_reqUI.globalAddr = wp.data.globalAddr;
-					m_reqUI.len = wp.data.len;
+					m_scheduler.AddSignal(
+						{dev::Signals::HEX_HIGHLIGHT_ON,
+						Scheduler::GlobalAddrLen{
+							(GlobalAddr)wp.data.globalAddr, (uint16_t)wp.data.len}});
 				}
 				if (ImGui::MenuItem("Delete"))
 				{
 					m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_DEL, { {"id", editedWatchpointId} });
-					m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_OFF;
+					m_scheduler.AddSignal({dev::Signals::HEX_HIGHLIGHT_OFF});
 				}
 				else if (ImGui::MenuItem("Edit")) {
 					reqPopup = ReqPopup::INIT_EDIT;
@@ -390,9 +405,10 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 				m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_ADD,
 					{ {"data0", wpData.data0}, {"data1", wpData.data1}, {"comment", comment} });
 
-				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-				m_reqUI.globalAddr = globalAddr;
-				m_reqUI.len = len;
+				m_scheduler.AddSignal(
+					{dev::Signals::HEX_HIGHLIGHT_ON,
+					Scheduler::GlobalAddrLen{
+						(GlobalAddr)globalAddr, (uint16_t)len}});
 				ImGui::CloseCurrentPopup();
 			}
 			if (!warningS.empty()) ImGui::EndDisabled();
@@ -409,7 +425,7 @@ void dev::WatchpointsWindow::DrawPopup(ReqPopup& _reqPopup, const Watchpoints::W
 }
 
 void dev::WatchpointsWindow::UpdateWatchpoints(
-	const dev::Scheduler::Signals _signals)
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	m_watchpoints.clear();
 	auto watchpointsJ = m_hardware.Request(Hardware::Req::DEBUG_WATCHPOINT_GET_ALL);

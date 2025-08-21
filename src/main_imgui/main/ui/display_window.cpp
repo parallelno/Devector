@@ -6,7 +6,7 @@
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
 	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
-	ReqUI& _reqUI, Scripts& _scripts,
+	Scripts& _scripts,
 	const Hardware::ExecSpeed _execSpeed,
 	const std::string& _vtxShaderS,
 	const std::string& _fragShaderS)
@@ -14,18 +14,17 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP),
 	m_hardware(_hardware), m_glUtils(_glUtils),
-	m_reqUI(_reqUI), m_scripts(_scripts)
+	m_scripts(_scripts)
 {
 	m_isGLInited = Init(_vtxShaderS, _fragShaderS);
 	SetExecutionSpeed(_execSpeed);
 
-	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-										dev::Scheduler::Signals::UI_DRAW);
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			signals,
-			std::bind(&dev::DisplayWindow::UpdateData,
-					this, std::placeholders::_1),
+
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::UI_DRAW,
+			std::bind(&dev::DisplayWindow::CallbackUpdateData,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible));
 }
 
@@ -77,9 +76,9 @@ bool dev::DisplayWindow::Init(const std::string& _vtxShaderS,
 	return true;
 }
 
-void dev::DisplayWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::DisplayWindow::Draw(const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
+	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 	m_windowFocused = ImGui::IsWindowFocused();
 
 	// switch the border type
@@ -103,10 +102,10 @@ bool dev::DisplayWindow::IsFocused() const
 	return m_windowFocused;
 }
 
-void dev::DisplayWindow::UpdateData(const dev::Scheduler::Signals _signals)
+void dev::DisplayWindow::CallbackUpdateData(const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	bool isRunning = dev::Scheduler::Signals::HW_RUNNING & _signals;
-	bool new_frame = dev::Scheduler::Signals::FRAME & _signals;
+	bool isRunning = dev::Signals::HW_RUNNING & _signals;
+	bool new_frame = dev::Signals::FRAME & _signals;
 
 	if (isRunning && !new_frame) return;
 
@@ -119,7 +118,7 @@ void dev::DisplayWindow::UpdateData(const dev::Scheduler::Signals _signals)
 		bool hovering_updated = hovered != m_displayIsHovered;
 		hovered = m_displayIsHovered;
 
-		bool break_ = dev::Scheduler::Signals::BREAK & _signals;
+		bool break_ = dev::Signals::BREAK & _signals;
 
 		if (!hovering_updated && !break_) return;
 

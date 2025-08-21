@@ -98,7 +98,9 @@ namespace dev
 
 		void Init();
 
-		void Draw(const dev::Scheduler::Signals _signals) override;
+		void Draw(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
 		void DrawRegs() const;
 		void DrawStack() const;
 		void DrawHardware(const bool _isRunning) const;
@@ -108,14 +110,30 @@ namespace dev
 			const PortsDataColors& _colors,
 			const char* _hint = nullptr) const;
 
-		void UpdateRegs(const dev::Scheduler::Signals _signals);
-		void UpdateStack(const dev::Scheduler::Signals _signals);
-		void UpdateHardware(const dev::Scheduler::Signals _signals);
-		void UpdatePorts(const dev::Scheduler::Signals _signals);
-		void UpdatePeripheral(const dev::Scheduler::Signals _signals);
-		void UpdateFdc(const dev::Scheduler::Signals _signals);
-		void UpdateTime(const dev::Scheduler::Signals _signals);
-		void UpdatePalette(const dev::Scheduler::Signals _signals);
+		void CallbackUpdateRegs(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackUpdateStack(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackUpdateHardware(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackUpdatePorts(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackUpdatePeripheral(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackUpdateFdc(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackUpdateTime(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackUpdatePalette(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
 
 	public:
 

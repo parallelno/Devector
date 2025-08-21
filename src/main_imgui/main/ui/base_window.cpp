@@ -6,32 +6,54 @@ dev::BaseWindow::BaseWindow(const std::string& _name,
 	dev::Scheduler& _scheduler,
 	bool& _visible,
 	const  float* const _dpiScaleP,
-	ImGuiWindowFlags _flags)
+	ImGuiWindowFlags _flags,
+	BaseWindow::Type _type)
 	:
 	m_name(_name), m_defaultW(_defaultW), m_defaultH(_defaultH),
 	m_visible(_visible), m_dpiScaleP(_dpiScaleP),
-	m_flags(_flags)
+	m_flags(_flags), m_scheduler(_scheduler), m_type(_type)
 {
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			dev::Scheduler::Signals::UI_DRAW,
-			std::bind(&dev::BaseWindow::Update, this, std::placeholders::_1),
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::UI_DRAW,
+			std::bind(&dev::BaseWindow::CallbackUpdate, this,
+				std::placeholders::_1, std::placeholders::_2),
 			m_visible));
 };
 
 
-void dev::BaseWindow::Update(const dev::Scheduler::Signals _signals)
+void dev::BaseWindow::CallbackUpdate(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	if (!m_default_pos_set){
 		SetWindowDefaultPosSize();
 		m_default_pos_set = true;
 	}
 
-	if (ImGui::Begin(m_name.c_str(), &m_visible, m_flags))
-	{
-		Draw(_signals);
+	switch (m_type){
+		case Type::Window:{
+			if (ImGui::Begin(m_name.c_str(), &m_visible, m_flags))
+			{
+				Draw(_signals, std::nullopt);
+			}
+			ImGui::End();
+			break;
+		}
+		case Type::Popup:{
+			ImVec2 winPos = ImGui::GetMousePos();
+			ImGui::SetNextWindowPos(
+				winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+			if (ImGui::BeginPopupModal(m_name.c_str(), NULL, m_flags))
+			{
+				Draw(_signals, std::nullopt);
+				ImGui::EndPopup();
+			}
+			break;
+		}
+		default:
+			break;
 	}
-	ImGui::End();
 }
 
 void dev::BaseWindow::SetWindowDefaultPosSize()

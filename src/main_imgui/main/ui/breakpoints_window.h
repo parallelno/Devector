@@ -16,14 +16,17 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_H = 300;
 
 		Hardware& m_hardware;
-		ReqUI& m_reqUI;
 		Breakpoints::BpMap m_breakpoints;
 
 		void CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
 			const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup);
-		void UpdateBreakpoints(const dev::Scheduler::Signals _signals);
+		void CallbackUpdateBreakpoints(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
 
-		void Draw(const dev::Scheduler::Signals _signals) override;
+		void Draw(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
 		void DrawPopup(ReqPopup& _reqPopup, const Breakpoints::BpMap& _pbs,
 			const int _addr);
 		void DrawProperty(const std::string& _name,
@@ -32,7 +35,7 @@ namespace dev
 	public:
 		BreakpointsWindow(Hardware& _hardware,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI);
+			bool& _visible, const float* const _dpiScaleP);
 	};
 
 };

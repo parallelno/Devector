@@ -7,26 +7,24 @@
 
 dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI)
+	bool& _visible, const float* const _dpiScaleP)
 	:
 	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP),
-	m_hardware(_hardware), m_reqUI(_reqUI)
+	m_hardware(_hardware)
 {
-	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-		dev::Scheduler::Signals::BREAKPOINTS
-		);
-
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			signals,
-			std::bind(&dev::BreakpointsWindow::UpdateBreakpoints,
-						this, std::placeholders::_1),
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::BREAKPOINTS,
+			std::bind(&dev::BreakpointsWindow::CallbackUpdateBreakpoints,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible));
 }
 
-void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::BreakpointsWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
+	// Draw a table
 	static int selectedAddr = -1;
 	bool showItemContextMenu = false;
 	static int editedBreakpointAddr = -1;
@@ -91,18 +89,19 @@ void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_SET_STATUS,
 					{ {"addr", addr},
 					{"status", static_cast<uint8_t>(newStatus)}});
-				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			// Addr
 			ImGui::TableNextColumn();
 			ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
 			const bool isSelected = selectedAddr == (int)addr;
 			if (ImGui::Selectable(bp.GetAddrMappingS(),
-				isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
+				isSelected,
+				ImGuiSelectableFlags_SpanAllColumns |
+				ImGuiSelectableFlags_AllowDoubleClick))
 			{
 				selectedAddr = addr;
-				m_reqUI.type = ReqUI::Type::DISASM_UPDATE_ADDR;
-				m_reqUI.globalAddr = addr;
+				m_scheduler.AddSignal(
+					{dev::Signals::DISASM_UPDATE, (Addr)addr});
 			}
 			ImVec2 rowMin = ImGui::GetItemRectMin();
 			CheckIfItemClicked(rowMin, showItemContextMenu, addr,
@@ -151,12 +150,10 @@ void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 					m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DISABLE,
 						{ {"addr", addr} });
 				}
-				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			else if (ImGui::MenuItem("Delete All"))
 			{
 				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL_ALL);
-				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 			}
 			ImGui::EndPopup();
 		}
@@ -175,7 +172,6 @@ void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 							Hardware::Req::DEBUG_BREAKPOINT_DISABLE,
 							{ {"addr", editedBreakpointAddr} });
 
-						m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 					}
 				}
 				else {
@@ -183,14 +179,12 @@ void dev::BreakpointsWindow::Draw(const dev::Scheduler::Signals _signals)
 						m_hardware.Request(
 							Hardware::Req::DEBUG_BREAKPOINT_ACTIVE,
 							{ {"addr", editedBreakpointAddr} });
-						m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 					}
 				}
 				if (ImGui::MenuItem("Delete")) {
 					m_hardware.Request(
 						Hardware::Req::DEBUG_BREAKPOINT_DEL,
 						{ {"addr", editedBreakpointAddr}});
-					m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				}
 				else if (ImGui::MenuItem("Edit")) {
 					reqPopup = ReqPopup::INIT_EDIT;
@@ -384,7 +378,6 @@ void dev::BreakpointsWindow::DrawPopup(
 					{"data2", bpData.data2 },
 					{"comment", comment}
 				});
-				m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
 				ImGui::CloseCurrentPopup();
 				_reqPopup = ReqPopup::NONE;
 			}
@@ -405,8 +398,8 @@ void dev::BreakpointsWindow::DrawPopup(
 	}
 }
 
-void dev::BreakpointsWindow::UpdateBreakpoints(
-	const dev::Scheduler::Signals _signals)
+void dev::BreakpointsWindow::CallbackUpdateBreakpoints(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	m_breakpoints.clear();
 	auto breakpointsJ = m_hardware.Request(

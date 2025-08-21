@@ -4,29 +4,25 @@
 #include "utils/str_utils.h"
 #include "imgui_stdlib.h"
 
-dev::DebugDataWindow::DebugDataWindow(Hardware& _hardware, Debugger& _debugger,
+dev::DebugDataWindow::DebugDataWindow(
+	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP,
-	ReqUI& _reqUI)
+	bool& _visible, const float* const _dpiScaleP)
 	:
 	BaseWindow("Debug Data", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visible, _dpiScaleP),
-	m_hardware(_hardware), m_debugger(_debugger),
-	m_reqUI(_reqUI)
+	m_hardware(_hardware), m_debugger(_debugger)
 {
-	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-									dev::Scheduler::Signals::HW_RUNNING |
-									dev::Scheduler::Signals::BREAK);
-
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			signals,
-			std::bind(&dev::DebugDataWindow::UpdateData,
-						this, std::placeholders::_1),
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::HW_RUNNING | dev::Signals::BREAK,
+			std::bind(&dev::DebugDataWindow::CallbackUpdateData,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 1000ms));
 }
 
-void dev::DebugDataWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::DebugDataWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	if (ImGui::BeginTabBar("ElementsTabs"))
 	{
@@ -83,7 +79,8 @@ void dev::DebugDataWindow::Draw(const dev::Scheduler::Signals _signals)
 	}
 }
 
-void dev::DebugDataWindow::UpdateData(const dev::Scheduler::Signals _signals)
+void dev::DebugDataWindow::CallbackUpdateData(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	// TODO: move the data update here
 }
@@ -200,16 +197,18 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 				{
 					if ( ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 					{
-						const auto& [element, selectedAddr, selectedAddrS] = _filteredElements.at(m_selectedLineIdx);
-						m_reqUI.globalAddr = selectedAddr;
+						const auto& [element, selectedAddr, selectedAddrS] =
+								_filteredElements.at(m_selectedLineIdx);
 
 						if (ImGui::GetIO().KeyCtrl)
 						{
-							m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-							m_reqUI.len = 1;
+							m_scheduler.AddSignal(
+								{dev::Signals::HEX_HIGHLIGHT_ON,
+								dev::Scheduler::GlobalAddrLen(selectedAddr, 1)});
 						}
 						else{
-							m_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
+							m_scheduler.AddSignal(
+								{dev::Signals::DISASM_UPDATE, (Addr)selectedAddr});
 						}
 					}
 
@@ -257,16 +256,18 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 
 			ImGui::SeparatorText("");
 
-			if (ImGui::MenuItem("Locate in the Disasm Window")) {
-				m_reqUI.type = ReqUI::Type::DISASM_NAVIGATE_TO_ADDR;
-				m_reqUI.globalAddr = _contextMenu.addr;
+			if (ImGui::MenuItem("Locate in the Disasm Window"))
+			{
+				m_scheduler.AddSignal(
+					{dev::Signals::DISASM_UPDATE, (Addr)_contextMenu.addr});
 				ImGui::CloseCurrentPopup();
 			}
 
-			if (ImGui::MenuItem("Locate in the Hex WIndow")) {
-				m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-				m_reqUI.globalAddr = _contextMenu.addr;
-				m_reqUI.len = 1;
+			if (ImGui::MenuItem("Locate in the Hex WIndow"))
+			{
+				m_scheduler.AddSignal(
+					{dev::Signals::HEX_HIGHLIGHT_ON,
+					dev::Scheduler::GlobalAddrLen(_contextMenu.addr, 1)});
 				ImGui::CloseCurrentPopup();
 			}
 
@@ -277,28 +278,30 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 		{
 			ImGui::CloseCurrentPopup();
 
+			dev::Signals signals = dev::Signals::NONE;
+
 			switch (_contextMenu.elementType)
 			{
 			case ElementType::LABEL:
-				m_reqUI.type = ReqUI::Type::LABEL_EDIT_WINDOW_ADD;
+				signals = dev::Signals::LABEL_EDIT_WINDOW_ADD;
 				break;
 			case ElementType::CONST:
-				m_reqUI.type = ReqUI::Type::CONST_EDIT_WINDOW_ADD;
+				signals = dev::Signals::CONST_EDIT_WINDOW_ADD;
 				break;
 			case ElementType::COMMENT:
-				m_reqUI.type = ReqUI::Type::COMMENT_EDIT_WINDOW_ADD;
+				signals = dev::Signals::COMMENT_EDIT_WINDOW_ADD;
 				break;
 			case ElementType::MEMORY_EDIT:
-				m_reqUI.type = ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_ADD;
+				signals = dev::Signals::MEMORY_EDIT_WINDOW_ADD;
 				break;
 			case ElementType::CODE_PERFS:
-				m_reqUI.type = ReqUI::Type::CODE_PERFS_EDIT_WINDOW_ADD;
+				signals = dev::Signals::CODE_PERF_EDIT_WINDOW_ADD;
 				break;
 			case ElementType::SCRIPTS:
-				m_reqUI.type = ReqUI::Type::SCRIPTS_EDIT_WINDOW_ADD;
+				signals = dev::Signals::SCRIPT_EDIT_WINDOW_ADD;
 				break;
 			}
-			m_reqUI.globalAddr = 0;
+			m_scheduler.AddSignal({signals, (Addr)0});
 		}
 
 		if (_contextMenu.itemHovered)
@@ -307,28 +310,30 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 			{
 				ImGui::CloseCurrentPopup();
 
+				dev::Signals signals = dev::Signals::NONE;
+
 				switch (_contextMenu.elementType)
 				{
 				case ElementType::LABEL:
-					m_reqUI.type = ReqUI::Type::LABEL_EDIT_WINDOW_EDIT;
+					signals = dev::Signals::LABEL_EDIT_WINDOW_EDIT;
 					break;
 				case ElementType::CONST:
-					m_reqUI.type = ReqUI::Type::CONST_EDIT_WINDOW_EDIT;
+					signals = dev::Signals::CONST_EDIT_WINDOW_EDIT;
 					break;
 				case ElementType::COMMENT:
-					m_reqUI.type = ReqUI::Type::COMMENT_EDIT_WINDOW_EDIT;
+					signals = dev::Signals::COMMENT_EDIT_WINDOW_EDIT;
 					break;
 				case ElementType::MEMORY_EDIT:
-					m_reqUI.type = ReqUI::Type::MEMORY_EDIT_EDIT_WINDOW_EDIT;
+					signals = dev::Signals::MEMORY_EDIT_WINDOW_EDIT;
 					break;
 				case ElementType::CODE_PERFS:
-					m_reqUI.type = ReqUI::Type::CODE_PERFS_EDIT_WINDOW_EDIT;
+					signals = dev::Signals::CODE_PERF_EDIT_WINDOW_EDIT;
 					break;
 				case ElementType::SCRIPTS:
-					m_reqUI.type = ReqUI::Type::SCRIPTS_EDIT_WINDOW_EDIT;
+					signals = dev::Signals::SCRIPT_EDIT_WINDOW_EDIT;
 					break;
 				}
-				m_reqUI.globalAddr = _contextMenu.addr;
+				m_scheduler.AddSignal({signals, (Addr)_contextMenu.addr});
 			}
 
 			if (ImGui::MenuItem("Delete"))
@@ -363,7 +368,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 				default:
 					break;
 				}
-				m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
+				m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 				ImGui::CloseCurrentPopup();
 			}
 
@@ -401,7 +406,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 				break;
 			}
 
-			m_reqUI.type = dev::ReqUI::Type::DISASM_UPDATE;
+			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 			ImGui::CloseCurrentPopup();
 		}
 

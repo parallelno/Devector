@@ -18,7 +18,8 @@ dev::FeedbackWindow::FeedbackWindow(
 }
 
 
-void dev::FeedbackWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::FeedbackWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	SetWindowPos(WinPosPreset::CENTER);
 

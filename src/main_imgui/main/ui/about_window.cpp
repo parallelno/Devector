@@ -14,7 +14,8 @@ dev::AboutWindow::AboutWindow(
 		ImGuiWindowFlags_NoCollapse)
 {}
 
-void dev::AboutWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::AboutWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	SetWindowPos(WinPosPreset::CENTER);
 	DrawContext();

@@ -27,25 +27,33 @@ namespace dev
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
-		ReqUI& m_reqUI;
 
 		std::array<uint8_t, Memory::MEMORY_MAIN_LEN> m_ram;
 		int m_searchAddr = 0;
 
 		enum class Status { NONE = 0, HIGHLIGHT };
 		Status m_status = Status::NONE;
-		int m_memPageIdx = 0;
+		int m_table_scroll_y = 0;
+		int m_memPageIdx = 0; // applied if >=0
 		GlobalAddr m_highlightAddr = 0;
 		GlobalAddr m_highlightAddrLen = 0;
 
-		void UpdateData(const dev::Scheduler::Signals _signals);
+		void CallbackUpdateData(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackHighlightOn(
+			const dev::Signals _signals, dev::Scheduler::SignalData _data);
+		void CallbackHighlightOff(
+			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
 		void DrawHex(const bool _isRunning);
-		void Draw(const dev::Scheduler::Signals _signals) override;
+		void Draw(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
 
 	public:
 		HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP, ReqUI& _reqUI);
+			bool& _visible, const float* const _dpiScaleP);
 	};
 };

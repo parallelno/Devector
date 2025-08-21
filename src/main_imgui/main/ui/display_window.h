@@ -61,15 +61,18 @@ namespace dev
 		bool m_isGLInited = false;
 		bool m_displayIsHovered = false;
 		const char* m_contextMenuName = "##displayCMenu";
-		ReqUI& m_reqUI;
 		Scripts& m_scripts;
 
 		bool Init(const std::string& m_display_vtxShader,
 				const std::string& m_display_fragShader);
 
-		void UpdateData(const dev::Scheduler::Signals _signals);
+		void CallbackUpdateData(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
 
-		void Draw(const dev::Scheduler::Signals _signals) override;
+		void Draw(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
 		void DrawDisplay();
 		void DrawContextMenu();
 		void CreateTexture(const bool _vsync);
@@ -83,7 +86,6 @@ namespace dev
 			bool& _visible,
 			const float* const _dpiScaleP,
 			GLUtils& _glUtils,
-			ReqUI& _reqUI,
 			Scripts& _scripts,
 			const Hardware::ExecSpeed _execSpeed,
 			const std::string& _vtxShaderS,

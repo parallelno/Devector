@@ -7,7 +7,6 @@ dev::MemDisplayWindow::MemDisplayWindow(
 	Debugger& _debugger,
 	dev::Scheduler& _scheduler,
 	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
-	ReqUI& _reqUI,
 	const std::string& _vtxShaderS,
 	const std::string& _fragShaderS)
 	:
@@ -15,19 +14,16 @@ dev::MemDisplayWindow::MemDisplayWindow(
 		_scheduler, _visible, _dpiScaleP,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
-	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils),
-	m_reqUI(_reqUI)
+	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils)
 {
 	m_isGLInited = Init(_vtxShaderS, _fragShaderS);
 
-	dev::Scheduler::Signals signals = (dev::Scheduler::Signals)(
-										dev::Scheduler::Signals::HW_RUNNING |
-										dev::Scheduler::Signals::BREAK);
-	_scheduler.AddSignal(
-		dev::Scheduler::Receiver(
-			signals,
-			std::bind(&dev::MemDisplayWindow::UpdateData,
-					this, std::placeholders::_1),
+
+	_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::HW_RUNNING | dev::Signals::BREAK,
+			std::bind(&dev::MemDisplayWindow::CallbackUpdateData,
+				this, std::placeholders::_1, std::placeholders::_2),
 			m_visible, 10ms));
 }
 
@@ -96,7 +92,8 @@ bool dev::MemDisplayWindow::Init(
 	return true;
 }
 
-void dev::MemDisplayWindow::Draw(const dev::Scheduler::Signals _signals)
+void dev::MemDisplayWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	DrawSelector();
 	DrawMemoryTabs();
@@ -247,12 +244,12 @@ void dev::MemDisplayWindow::DrawMemoryTabs()
 					// if clicked, show the addr in the Hex Window
 					if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
 					{
-						Addr addr = PixelPosToAddr(img_pixel_pos, m_scale);
-						m_reqUI.type = ReqUI::Type::HEX_HIGHLIGHT_ON;
-						m_reqUI.globalAddr =
-							addr + hovered_bank_idx * Memory::MEM_64K;
+						GlobalAddr globalAddr = PixelPosToAddr(img_pixel_pos, m_scale) +
+							hovered_bank_idx * Memory::MEM_64K;
 
-						m_reqUI.len = 1;
+						m_scheduler.AddSignal(
+							{dev::Signals::HEX_HIGHLIGHT_ON,
+							dev::Scheduler::GlobalAddrLen(globalAddr, 1)});
 					}
 				}
 
@@ -337,7 +334,8 @@ void dev::MemDisplayWindow::ScaleView()
 
 
 
-void dev::MemDisplayWindow::UpdateData(const dev::Scheduler::Signals _signals)
+void dev::MemDisplayWindow::CallbackUpdateData(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	// update
 	if (m_isGLInited)

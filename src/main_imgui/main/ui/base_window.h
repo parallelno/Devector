@@ -13,15 +13,24 @@ namespace dev
 		int m_defaultH;
 
 	protected:
+		ImVec2 buttonSize = { 65.0f, 25.0f };
+
+		enum class Type {
+			Window,
+			Popup
+		};
+
 		const float* const m_dpiScaleP = nullptr;
 		bool& m_visible;
 		bool m_default_pos_set = false;
 		ImGuiWindowFlags m_flags = 0;
+		Type m_type = Type::Window;
 
 		enum class WinPosPreset {
 			NONE,
 			CENTER
 		};
+		dev::Scheduler& m_scheduler;
 
 		void SetWindowPos(const WinPosPreset _preset);
 
@@ -33,10 +42,13 @@ namespace dev
 			dev::Scheduler& _scheduler,
 			bool& _visible,
 			const  float* const _dpiScaleP,
-			ImGuiWindowFlags _flags = ImGuiWindowFlags_NoCollapse);
+			ImGuiWindowFlags _flags = ImGuiWindowFlags_NoCollapse,
+			BaseWindow::Type _type = BaseWindow::Type::Window);
 
-		void Update(const dev::Scheduler::Signals _signals);
-		virtual void Draw(const dev::Scheduler::Signals _signals) = 0;
+		void CallbackUpdate(
+			const dev::Signals _signals, dev::Scheduler::SignalData _data);
+		virtual void Draw(
+			const dev::Signals _signals, dev::Scheduler::SignalData _data) = 0;
 		void SetWindowDefaultPosSize();
 	};
 }

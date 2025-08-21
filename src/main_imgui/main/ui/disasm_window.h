@@ -92,7 +92,6 @@ namespace dev
 		Hardware& m_hardware;
 		Debugger& m_debugger;
 		ImFont* m_fontCommentP = nullptr;
-		ReqUI& m_reqUI;
 		char m_searchText[255] = "";
 		Addr m_disasmAddr = 0;
 		int m_disasmLines = Disasm::DISASM_LINES_MAX;
@@ -110,7 +109,9 @@ namespace dev
 		// without moving back.
 		int m_navigateAddrsSize = 0;
 
-		void Draw(const dev::Scheduler::Signals _signals) override;
+		void Draw(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data) override;
 		void DrawDebugControls(const bool _isRunning);
 		void DrawSearch(const bool _isRunning);
 		void DrawDisasm(const bool _isRunning);
@@ -118,9 +119,9 @@ namespace dev
 			const bool _isRunning, const Disasm::Line& _line,
 			const int _lineIdx, const Addr _regPC);
 		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
-			ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
+			ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
 		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-			ReqUI& _reqUI, ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
+			ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
 		void DrawDisasmComment(const Disasm::Line& _line);
 		void DrawDisasmLabels(const Disasm::Line& _line);
 		void DrawDisasmStats(const Disasm::Line& _line);
@@ -132,13 +133,16 @@ namespace dev
 			const Disasm::Line& _line,
 			const Addr _regPC);
 
-		void UpdateData(const dev::Scheduler::Signals _signals);
+		void CallbackUpdateAtCC(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackUpdateAtAddr(
+			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 		void UpdateDisasm(
 			const Addr _addr,
 			const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
 			const bool _updateSelection = true);
 
-		void ReqHandling();
 		bool IsDisasmTableOutOfWindow() const;
 		auto GetVisibleLines() const -> int;
 
@@ -147,8 +151,7 @@ namespace dev
 		DisasmWindow(Hardware& _hardware, Debugger& _debugger,
 			ImFont* fontComment,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP,
-			ReqUI& _reqUI);
+			bool& _visible, const float* const _dpiScaleP);
 	};
 
 };

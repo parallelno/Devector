@@ -1,4 +1,6 @@
-﻿#include <vector>
+﻿#include "devector_app.h"
+
+#include <vector>
 #include <string>
 #include <chrono>
 #include <filesystem>
@@ -9,12 +11,10 @@
 #include <codecvt>
 #include "tinyfiledialogs.h"
 
-#include "devector_app.h"
-#include "devector_app_shaders.h"
-
 #include "utils/utils.h"
 #include "utils/json_utils.h"
 #include "utils/str_utils.h"
+#include "utils/shaders.h"
 #include "core/fdd_consts.h"
 
 dev::DevectorApp::DevectorApp(
@@ -34,6 +34,7 @@ void dev::DevectorApp::Init(const std::string& _rom_fdd_recPath)
 	SettingsInit();
 	HardwareInit();
 	WindowsInit();
+	SchedulingInit();
 	Load(_rom_fdd_recPath);
 
 	// Set up the event callback function
@@ -106,7 +107,10 @@ void dev::DevectorApp::SettingsInit()
 	RecentFilesInit();
 
 	m_mountRecentFddImg = GetSettingsBool("m_mountRecentFddImg", true);
-	if (m_mountRecentFddImg) m_reqUI.type = ReqUI::Type::LOAD_RECENT_FDD_IMG;
+	if (m_mountRecentFddImg)
+	{
+		m_scheduler.AddSignal({dev::Signals::LOAD_RECENT_FDD_IMG});
+	}
 
 	SettingsInitDisplayShaders();
 	SettingsInitMemDisplayShaders();
@@ -147,34 +151,34 @@ void dev::DevectorApp::WindowsInit()
 
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(
 		*m_hardwareP, *m_debuggerP, m_fontItalic,
-		m_scheduler, m_disasmWindowVisible, &m_dpiScale, m_reqUI);
+		m_scheduler, m_disasmWindowVisible, &m_dpiScale);
 
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(
 		*m_hardwareP, m_scheduler,
-		m_displayWindowVisible, &m_dpiScale, m_glUtils, m_reqUI,
+		m_displayWindowVisible, &m_dpiScale, m_glUtils,
 		m_debuggerP->GetDebugData().GetScripts(), executionSpeed,
 		m_display_vtxShader, m_display_fragShader);
 
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(
 		*m_hardwareP, m_scheduler, m_breakpointsWindowVisisble,
-		&m_dpiScale, m_reqUI);
+		&m_dpiScale);
 
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(
 		*m_hardwareP, m_scheduler, m_watchpointsWindowVisible,
-		&m_dpiScale, m_reqUI);
+		&m_dpiScale);
 
 	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, m_memDisplayWindowVisible,
-		&m_dpiScale, m_glUtils, m_reqUI,
+		&m_dpiScale, m_glUtils,
 		m_memdisplay_vtxShader, m_memdisplay_fragShader);
 
 	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, m_hexViewerWindowVisible,
-		&m_dpiScale, m_reqUI);
+		&m_dpiScale);
 
 	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, m_traceLogWindowVisible,
-		&m_dpiScale, m_reqUI);
+		&m_dpiScale);
 
 	m_aboutWindowP = std::make_unique<dev::AboutWindow>(
 		m_scheduler, m_aboutWindowVisible, &m_dpiScale);
@@ -184,19 +188,43 @@ void dev::DevectorApp::WindowsInit()
 
 	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, m_recorderWindowVisible,
-		&m_dpiScale, m_reqUI);
+		&m_dpiScale);
 
 	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(
 		*m_hardwareP, m_scheduler, m_keyboardWindowVisible,
-		&m_dpiScale, m_glUtils, m_reqUI, m_pathImgKeyboard);
+		&m_dpiScale, m_glUtils, m_pathImgKeyboard);
 
 	m_searchWindowP = std::make_unique<dev::SearchWindow>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, m_searchWindowVisible,
-		&m_dpiScale, m_reqUI);
+		&m_dpiScale);
 
 	m_debugdataWindowP = std::make_unique<dev::DebugDataWindow>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, m_debugdataWindowVisible,
-		&m_dpiScale, m_reqUI);
+		&m_dpiScale);
+
+	m_labelEditWindowP = std::make_unique<dev::LabelEditWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_labelEditWindowVisible,
+		&m_dpiScale);
+
+	m_constEditWindowP = std::make_unique<dev::ConstEditWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_constEditWindowVisible,
+		&m_dpiScale);
+
+	m_commentEditWindowP = std::make_unique<dev::CommentEditWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_commentEditWindowVisible,
+		&m_dpiScale);
+
+	m_memoryEditWindowP = std::make_unique<dev::MemoryEditWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_memoryEditWindowVisible,
+		&m_dpiScale);
+
+	m_codePerfEditWindowP = std::make_unique<dev::CodePerfEditWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_codePerfEditWindowVisible,
+		&m_dpiScale);
+
+	m_scriptEditWindowP = std::make_unique<dev::ScriptEditWindow>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, m_scriptEditWindowVisible,
+		&m_dpiScale);
 }
 
 
@@ -231,7 +259,7 @@ void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 	}
 
 	RecentFilesStore();
-	Reload();
+	CallbackReload();
 
 	if (isRunning) m_hardwareP->Request(Hardware::Req::RUN);
 }
@@ -241,8 +269,6 @@ void dev::DevectorApp::Update()
 {
 	LoadDroppedFile();
 
-	ReqUIHandling();
-
 	MainMenuUpdate();
 
 	DebugAttach();
@@ -250,15 +276,6 @@ void dev::DevectorApp::Update()
 	LoadingResStatusHandling();
 
 	m_scheduler.Update(*m_hardwareP, *m_debuggerP);
-
-	// context menues to edit the debug data
-	DrawEditLabelWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
-	DrawEditConstWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
-	DrawEditCommentWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
-	DrawEditMemEditWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
-	DrawEditCodePerfWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
-	DrawEditScriptWindow(*m_hardwareP, m_debuggerP->GetDebugData(), m_reqUI);
-
 
 	if (m_status == AppStatus::REQ_PREPARE_FOR_EXIT)
 	{
@@ -291,7 +308,9 @@ void dev::DevectorApp::RestartOnLoadFdd()
 	m_ruslat = (m_ruslatHistory & 0b1000) != 0;
 }
 
-void dev::DevectorApp::Reload()
+void dev::DevectorApp::CallbackReload(
+	const dev::Signals _signals,
+	dev::Scheduler::SignalData _data)
 {
 	if (m_recentFilePaths.empty()) return;
 	// get latest recent path
@@ -895,22 +914,6 @@ void dev::DevectorApp::DrawSelectDrivePopup()
 	}
 }
 
-void dev::DevectorApp::ReqUIHandling()
-{
-	switch (m_reqUI.type)
-	{
-	case ReqUI::Type::RELOAD_ROM_FDD_REC:
-		Reload();
-		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
-		break;
-
-	case ReqUI::Type::LOAD_RECENT_FDD_IMG:
-		MountRecentFddImg();
-		m_reqUI.type = ReqUI::Type::NONE;
-		break;
-	}
-}
-
 
 void dev::DevectorApp::LoadRom(const std::string& _path)
 {
@@ -930,7 +933,7 @@ void dev::DevectorApp::LoadRom(const std::string& _path)
 
 	m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", true}}); // has to be called after Hardware loading Rom because it stores the last state of Hardware
 	m_debuggerP->GetDebugData().LoadDebugData(_path);
-	m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+	m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 	m_hardwareP->Request(Hardware::Req::RUN);
 
 	Log("File loaded: {}", _path);
@@ -969,7 +972,7 @@ void dev::DevectorApp::LoadFdd(const std::string& _path, const int _driveIdx, co
 	{
 		m_hardwareP->Request(Hardware::Req::RESET);
 		m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", true} }); // has to be called after Hardware loading FDD image because it stores the last state of Hardware
-		m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 		m_hardwareP->Request(Hardware::Req::RUN);
 	}
 
@@ -993,7 +996,7 @@ void dev::DevectorApp::LoadRecording(const std::string& _path)
 
 	m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", false} }); // has to be called after Hardware loading Rom because it stores the last state of Hardware
 	m_debuggerP->GetDebugData().LoadDebugData(_path);
-	m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+	m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 
 	Log("File loaded: {}", _path);
 }
@@ -1017,7 +1020,7 @@ void dev::DevectorApp::DebugAttach()
 			// because Hardware state was changed
 			m_hardwareP->Request(Hardware::Req::DEBUG_RESET,
 				{ {"resetRecorder", true} });
-			m_reqUI.type = ReqUI::Type::DISASM_UPDATE;
+			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 		}
 
 		m_hardwareP->Request(Hardware::Req::DEBUG_ATTACH,
@@ -1025,7 +1028,8 @@ void dev::DevectorApp::DebugAttach()
 	}
 }
 
-void dev::DevectorApp::MountRecentFddImg()
+void dev::DevectorApp::CallbackLoadRecentFddImg(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	for (const auto& [fileType, path, driveIdx, autoBoot] : m_recentFilePaths)
 	{
@@ -1044,4 +1048,22 @@ void dev::DevectorApp::LoadDroppedFile()
 	Load(droppedFilePath);
 
 	ResetDroppedFilePath();
+}
+
+
+void dev::DevectorApp::SchedulingInit()
+{
+	m_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::RELOAD,
+			std::bind(&dev::DevectorApp::CallbackReload,
+				this, std::placeholders::_1, std::placeholders::_2),
+			m_active));
+
+	m_scheduler.AddCallback(
+		dev::Scheduler::Callback(
+			dev::Signals::LOAD_RECENT_FDD_IMG,
+			std::bind(&dev::DevectorApp::CallbackLoadRecentFddImg,
+				this, std::placeholders::_1, std::placeholders::_2),
+			m_active));
 }
