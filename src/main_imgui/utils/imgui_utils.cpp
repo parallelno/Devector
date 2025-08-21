@@ -779,3 +779,16 @@ auto dev::DrawTransparentButtonWithBorder(const char* _label, const ImVec2& _pos
 
 	return out;
 }
+
+
+void dev::DeleteByIndex(dev::Disasm::LabelList& _labels, int& _idx)
+{
+	// delete by index or clear if only one
+	if (_labels.size() > 1) {
+		_labels.erase(_labels.begin() + _idx);
+	} else {
+		_labels[_idx].clear();
+	}
+
+	_idx = 0;
+}
