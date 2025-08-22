@@ -4,10 +4,10 @@
 
 dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP,
+		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger), m_ram()
@@ -18,21 +18,21 @@ dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Signals::HW_RUNNING | dev::Signals::BREAK,
 			std::bind(&dev::HexViewerWindow::CallbackUpdateData,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible, 1000ms));
+			m_visibleP, 1000ms));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::HEX_HIGHLIGHT_ON,
 			std::bind(&dev::HexViewerWindow::CallbackHighlightOn,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+			m_visibleP));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::HEX_HIGHLIGHT_OFF,
 			std::bind(&dev::HexViewerWindow::CallbackHighlightOff,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+			m_visibleP));
 }
 
 void dev::HexViewerWindow::Draw(

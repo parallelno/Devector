@@ -8,10 +8,10 @@
 dev::CodePerfEditWindow::CodePerfEditWindow(
 	Hardware& m_hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Code Perf Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP,
+		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
 		BaseWindow::Type::Popup),
 	m_hardware(m_hardware), m_debugger(_debugger)
@@ -21,15 +21,13 @@ dev::CodePerfEditWindow::CodePerfEditWindow(
 		dev::Scheduler::Callback(
 			dev::Signals::CODE_PERF_EDIT_WINDOW_ADD,
 			std::bind(&dev::CodePerfEditWindow::CallbackAdd, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::CODE_PERF_EDIT_WINDOW_EDIT,
 			std::bind(&dev::CodePerfEditWindow::CallbackEdit, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 }
 
 void dev::CodePerfEditWindow::CallbackAdd(
@@ -43,7 +41,6 @@ void dev::CodePerfEditWindow::CallbackAdd(
 	m_addrEnd = globalAddr + 0x100;
 	m_codePerf.Erase();
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 
@@ -59,7 +56,6 @@ void dev::CodePerfEditWindow::CallbackEdit(
 	m_codePerf = *currentCodePerf;
 	m_addrEnd = m_codePerf.addrEnd;
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 

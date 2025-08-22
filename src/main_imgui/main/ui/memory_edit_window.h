@@ -34,7 +34,7 @@ namespace dev
 		MemoryEditWindow(
 			Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible,
+			bool* _visibleP,
 			const float* const _dpiScaleP);
 	};
 };

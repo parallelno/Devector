@@ -12,8 +12,15 @@
 void dev::PushStyleCompact(const float _paddingMulX, const float _paddingMulY)
 {
 	ImGuiStyle& style = ImGui::GetStyle();
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(style.FramePadding.x * _paddingMulX, style.FramePadding.y * _paddingMulY));
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(style.ItemSpacing.x * _paddingMulX, style.ItemSpacing.y * _paddingMulY));
+	ImGui::PushStyleVar(
+		ImGuiStyleVar_FramePadding,
+		ImVec2(style.FramePadding.x * _paddingMulX,
+				style.FramePadding.y * _paddingMulY));
+
+	ImGui::PushStyleVar(
+		ImGuiStyleVar_ItemSpacing,
+		ImVec2(style.ItemSpacing.x * _paddingMulX,
+				style.ItemSpacing.y * _paddingMulY));
 }
 
 void dev::PopStyleCompact()
@@ -48,12 +55,15 @@ void dev::ColumnClippingDisable()
 
 void dev::DrawTextSelectable(const char* _label, const std::string& _text)
 {
-	ImVec2 text_size = ImGui::CalcTextSize(_text.c_str(), _text.c_str() + _text.size());
+	ImVec2 text_size = ImGui::CalcTextSize(
+		_text.c_str(), _text.c_str() + _text.size());
 	text_size.x = -FLT_MIN; // fill width (suppresses label)
 	text_size.y += ImGui::GetStyle().FramePadding.y; // single pad
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 }); // make align with text height
-	ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0.f, 0.f, 0.f, 0.f }); // remove text input box
+	ImGui::PushStyleVar(
+		ImGuiStyleVar_FramePadding, { 0, 0 }); // make align with text height
+	ImGui::PushStyleColor(
+		ImGuiCol_FrameBg, { 0.f, 0.f, 0.f, 0.f }); // remove text input box
 
 	ImGui::InputTextMultiline(
 		"",
@@ -90,7 +100,9 @@ bool dev::HyperLink(const char* label, bool underlineWhenHoveredOnly)
 	ImGuiWindow* const window = ImGui::GetCurrentWindow();
 	ImDrawList* const draw = ImGui::GetWindowDrawList();
 
-	const ImVec2 pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
+	const ImVec2 pos(
+		window->DC.CursorPos.x,
+		window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
 	const ImVec2 size = ImGui::CalcTextSize(label);
 	ImRect bb(pos, { pos.x + size.x, pos.y + size.y });
 
@@ -102,7 +114,9 @@ bool dev::HyperLink(const char* label, bool underlineWhenHoveredOnly)
 	const bool isClicked = ImGui::ButtonBehavior(bb, id, &isHovered, nullptr);
 	const bool isFocused = ImGui::IsItemFocused();
 
-	const ImU32 color = isHovered ? linkHoverColor : isFocused ? linkFocusColor : linkColor;
+	const ImU32 color = isHovered ?
+		linkHoverColor :
+		isFocused ? linkFocusColor : linkColor;
 
 	draw->AddText(bb.Min, color, label);
 
@@ -127,8 +141,15 @@ void dev::DrawPopup(const char* _title, const char* _text)
 	}
 }
 
-static inline ImVec2 operator+(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
-static inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
+static inline ImVec2 operator+(const ImVec2& lhs, const ImVec2& rhs)
+{
+	return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y);
+}
+
+static inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs)
+{
+	return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y);
+}
 
 void dev::TextAligned(const char* _text, const ImVec2& _aligment)
 {
@@ -145,7 +166,10 @@ void dev::TextAligned(const char* _text, const ImVec2& _aligment)
 
 	ImVec2 pos = window->DC.CursorPos;
 
-	ImVec2 size = ImGui::CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+	ImVec2 size = ImGui::CalcItemSize(
+		size_arg,
+		label_size.x + style.FramePadding.x * 2.0f,
+		label_size.y + style.FramePadding.y * 2.0f);
 
 	const ImRect bb(pos, pos + size);
 	ImGui::ItemSize(size, style.FramePadding.y);
@@ -157,7 +181,9 @@ void dev::TextAligned(const char* _text, const ImVec2& _aligment)
 		bb.Max - style.FramePadding, _text, NULL, &label_size, _aligment, &bb);
 }
 
-void dev::DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir, const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
+void dev::DrawProgramCounter(
+	const ImU32 _color, const ImGuiDir _dir,
+	const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
 {
 	ImGuiWindow* window = ImGui::GetCurrentWindow();
 	if (window->SkipItems)
@@ -181,7 +207,11 @@ void dev::DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir, const floa
 	ImGui::RenderArrow(window->DrawList, drawPos, _color, _dir);
 }
 
-bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
+bool dev::DrawBreakpoint(
+	const char* label,
+	Breakpoint::Status* _statusP,
+	const float _dpiScale,
+	const float _posXOffset, const bool _itemHasSize)
 {
 	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT = dev::IM_U32(0xFF2828A0);
 	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT_HOVER = dev::IM_U32(0xFFD010C0);
@@ -234,21 +264,31 @@ bool dev::DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const 
 		ImGui::MarkItemEdited(id);
 	}
 
-	ImU32 color = *_statusP == Breakpoint::Status::ACTIVE ? DISASM_TBL_COLOR_BREAKPOINT : DISASM_TBL_COLOR_BREAKPOINT_DISABLED;
-	auto drawPos = bb.Min + ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
+	ImU32 color = *_statusP == Breakpoint::Status::ACTIVE ?
+		DISASM_TBL_COLOR_BREAKPOINT :
+		DISASM_TBL_COLOR_BREAKPOINT_DISABLED;
+
+	auto drawPos = bb.Min +
+		ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
 
 	// render the hover highlight
 	if (hovered)
-		window->DrawList->AddCircleFilled(drawPos, g.FontSize * DISASM_TBL_BREAKPOINT_SIZE_HOVERED * _dpiScale, DISASM_TBL_COLOR_BREAKPOINT_HOVER, 8);
+		window->DrawList->AddCircleFilled(drawPos,
+			g.FontSize * DISASM_TBL_BREAKPOINT_SIZE_HOVERED * _dpiScale,
+			DISASM_TBL_COLOR_BREAKPOINT_HOVER, 8);
 
 	// render the breakpoint
 	if (*_statusP != Breakpoint::Status::DELETED)
-		window->DrawList->AddCircleFilled(drawPos, g.FontSize * DISASM_TBL_BREAKPOINT_SIZE * _dpiScale, color, 8);
+		window->DrawList->AddCircleFilled(
+			drawPos,
+			g.FontSize * DISASM_TBL_BREAKPOINT_SIZE * _dpiScale, color, 8);
 
 	return pressed && hovered;
 }
 
-void dev::DrawProperty2(const char* _name, const char* _value, const char* _hint, const ImVec4& _valColor)
+void dev::DrawProperty2(
+	const char* _name, const char* _value,
+	const char* _hint, const ImVec4& _valColor)
 {
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
@@ -269,7 +309,11 @@ void dev::DrawProperty2(const char* _name, const char* _value, const char* _hint
 	}
 }
 
-void dev::DrawProperty2RegPair(const char* _name, const char* _valueH, const char* _valueL, const char* _hint, const ImVec4& _valHColor, const ImVec4& _valLColor)
+void dev::DrawProperty2RegPair(
+	const char* _name,
+	const char* _valueH, const char* _valueL,
+	const char* _hint,
+	const ImVec4& _valHColor, const ImVec4& _valLColor)
 {
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
@@ -303,7 +347,8 @@ void dev::DrawSeparator2(const char* _text)
 	ImGui::SeparatorText("");
 }
 
-bool dev::DrawProperty2EditableI(const char* _name, const char* _label, int* _value,
+bool dev::DrawProperty2EditableI(
+	const char* _name, const char* _label, int* _value,
 	const char* _help, const ImGuiInputTextFlags _flags)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
@@ -325,8 +370,10 @@ bool dev::DrawProperty2EditableI(const char* _name, const char* _label, int* _va
 	return valEntered;
 }
 
-bool dev::DrawProperty2EditableS(const char* _name, const char* _label, std::string* _value,
-	const char* _hint, const char* _help, const ImGuiInputTextFlags _flags, bool* _delButtonPressed)
+bool dev::DrawProperty2EditableS(
+	const char* _name, const char* _label, std::string* _value,
+	const char* _hint, const char* _help,
+	const ImGuiInputTextFlags _flags, bool* _delButtonPressed)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
 	ImGui::TableNextColumn();
@@ -364,8 +411,10 @@ bool dev::DrawProperty2EditableS(const char* _name, const char* _label, std::str
 	return entered;
 }
 
-void dev::DrawProperty2Combo(const char* _name, const char* _label,
-	int* _currentItem, const char* const _items[], int _itemsCount, const char* _help)
+void dev::DrawProperty2Combo(
+	const char* _name, const char* _label,
+	int* _currentItem, const char* const _items[],
+	int _itemsCount, const char* _help)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
 	ImGui::TableNextColumn();
@@ -384,7 +433,8 @@ void dev::DrawProperty2Combo(const char* _name, const char* _label,
 	}
 }
 
-void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
+void dev::DrawProperty2EditableCheckBox(
+	const char* _name, const char* _label,
 	bool* _val, const char* _help)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
@@ -406,8 +456,10 @@ void dev::DrawProperty2EditableCheckBox(const char* _name, const char* _label,
 }
 
 // draws four checkbox in a line
-void dev::DrawProperty2EditableCheckBox4(const char* _name,
-	const char* _label0, const char* _label1, const char* _label2, const char* _label3,
+void dev::DrawProperty2EditableCheckBox4(
+	const char* _name,
+	const char* _label0, const char* _label1,
+	const char* _label2, const char* _label3,
 	bool* _val0, bool* _val1, bool* _val2, bool* _val3, const char* _help)
 {
 	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
@@ -502,15 +554,32 @@ auto dev::DrawPropertyMemoryMapping(Breakpoint::MemPages _memPages)
 	bool rd72 = _memPages.rdisk7page2;
 	bool rd73 = _memPages.rdisk7page3;
 
-	DrawProperty2EditableCheckBox("Ram", "##BPContextAccessRam", &ram, "To check the main ram");
-	DrawProperty2EditableCheckBox4("Ram Disk 1", "##BPCARD0P0", "##BPCARD0P1", "##BPCARD0P2", "##BPCARD0P3", &rd00, &rd01, &rd02, &rd03, "To check the RAM Disk1 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 2", "##BPCARD1P0", "##BPCARD1P1", "##BPCARD1P2", "##BPCARD1P3", &rd10, &rd11, &rd12, &rd13, "To check the RAM Disk2 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 3", "##BPCARD2P0", "##BPCARD2P1", "##BPCARD2P2", "##BPCARD2P3", &rd20, &rd21, &rd22, &rd23, "To check the RAM Disk3 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 4", "##BPCARD3P0", "##BPCARD3P1", "##BPCARD3P2", "##BPCARD3P3", &rd30, &rd31, &rd32, &rd33, "To check the RAM Disk4 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 5", "##BPCARD4P0", "##BPCARD4P1", "##BPCARD4P2", "##BPCARD4P3", &rd40, &rd41, &rd42, &rd43, "To check the RAM Disk5 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 6", "##BPCARD5P0", "##BPCARD5P1", "##BPCARD5P2", "##BPCARD5P3", &rd50, &rd51, &rd52, &rd53, "To check the RAM Disk6 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 7", "##BPCARD6P0", "##BPCARD6P1", "##BPCARD6P2", "##BPCARD6P3", &rd60, &rd61, &rd62, &rd63, "To check the RAM Disk7 pages 0,1,2,3");
-	DrawProperty2EditableCheckBox4("Ram Disk 8", "##BPCARD7P0", "##BPCARD7P1", "##BPCARD7P2", "##BPCARD7P3", &rd70, &rd71, &rd72, &rd73, "To check the RAM Disk8 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox(
+		"Ram", "##BPContextAccessRam", &ram, "To check the main ram");
+	DrawProperty2EditableCheckBox4(
+		"Ram Disk 1", "##BPCARD0P0", "##BPCARD0P1", "##BPCARD0P2", "##BPCARD0P3",
+		&rd00, &rd01, &rd02, &rd03, "To check the RAM Disk1 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4(
+		"Ram Disk 2", "##BPCARD1P0", "##BPCARD1P1", "##BPCARD1P2", "##BPCARD1P3",
+		&rd10, &rd11, &rd12, &rd13, "To check the RAM Disk2 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4(
+		"Ram Disk 3", "##BPCARD2P0", "##BPCARD2P1", "##BPCARD2P2", "##BPCARD2P3",
+		&rd20, &rd21, &rd22, &rd23, "To check the RAM Disk3 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4(
+		"Ram Disk 4", "##BPCARD3P0", "##BPCARD3P1", "##BPCARD3P2", "##BPCARD3P3",
+		&rd30, &rd31, &rd32, &rd33, "To check the RAM Disk4 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4(
+		"Ram Disk 5", "##BPCARD4P0", "##BPCARD4P1", "##BPCARD4P2", "##BPCARD4P3",
+		&rd40, &rd41, &rd42, &rd43, "To check the RAM Disk5 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4(
+		"Ram Disk 6", "##BPCARD5P0", "##BPCARD5P1", "##BPCARD5P2", "##BPCARD5P3",
+		&rd50, &rd51, &rd52, &rd53, "To check the RAM Disk6 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4(
+		"Ram Disk 7", "##BPCARD6P0", "##BPCARD6P1", "##BPCARD6P2", "##BPCARD6P3",
+		&rd60, &rd61, &rd62, &rd63, "To check the RAM Disk7 pages 0,1,2,3");
+	DrawProperty2EditableCheckBox4(
+		"Ram Disk 8", "##BPCARD7P0", "##BPCARD7P1", "##BPCARD7P2", "##BPCARD7P3",
+		&rd70, &rd71, &rd72, &rd73, "To check the RAM Disk8 pages 0,1,2,3");
 
 	_memPages.ram = ram;
 	_memPages.rdisk0page0 = rd00;
@@ -564,14 +633,19 @@ auto dev::DrawAddr(const bool _isRunning,
 		textPos = ImGui::GetCursorScreenPos();
 		textSize = ImGui::CalcTextSize(_operandS);
 
-		if (ImGui::IsMouseHoveringRect(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
+		if (ImGui::IsMouseHoveringRect(textPos,
+			ImVec2(textPos.x + textSize.x, textPos.y + textSize.y)))
 		{
 			mouseAction = UIItemMouseAction::HOVERED;
 			_forceHighlight = true;
 
 			// if it's clicked, scroll the disasm to highlighted addr
-			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) mouseAction = UIItemMouseAction::LEFT;
-			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) mouseAction = UIItemMouseAction::RIGHT;
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+				mouseAction = UIItemMouseAction::LEFT;
+			}
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+				mouseAction = UIItemMouseAction::RIGHT;
+			}
 		}
 	}
 
@@ -579,7 +653,10 @@ auto dev::DrawAddr(const bool _isRunning,
 	if (_forceHighlight)
 	{
 		ImGui::GetWindowDrawList()->
-			AddRectFilled(textPos, ImVec2(textPos.x + textSize.x, textPos.y + textSize.y), DASM_BG_CLR_ADDR_HIGHLIGHT);
+			AddRectFilled(
+				textPos,
+				ImVec2(textPos.x + textSize.x, textPos.y + textSize.y),
+				DASM_BG_CLR_ADDR_HIGHLIGHT);
 	}
 	// draw a hexadecimal literal
 	ImGui::TextColored(_forceHighlight ? _highlightColor : _color, _operandS);
@@ -605,7 +682,8 @@ void dev::DrawTooltipTimer(const char* _text, const float _timer)
 	}
 
 	static auto lastTime = std::chrono::system_clock::now();
-	std::chrono::duration<double, std::milli> elapsedTime = std::chrono::system_clock::now() - lastTime;
+	using Tm = std::chrono::duration<double, std::milli>;
+	Tm elapsedTime = std::chrono::system_clock::now() - lastTime;
 	lastTime = std::chrono::system_clock::now();
 	timer -= elapsedTime.count() / 1000.0f;
 
@@ -616,7 +694,8 @@ void dev::DrawTooltipTimer(const char* _text, const float _timer)
 	ImGui::EndTooltip();
 }
 
-auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab)
+auto dev::DrawCodeLine(
+	const bool _isRunning, const Disasm::Line& _line, const bool _tab)
 -> UIItemMouseAction
 {
 	auto uiItemMouseAction = UIItemMouseAction::NONE;
@@ -678,7 +757,10 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 		ImGui::TextColored(*colorP, str, mnemonic[i]);
 
 		// draw an operand separator
-		if (i == 1 && (mnemonicLen == 3 || immType == CMD_IB_OFF1 || immType == CMD_IW_OFF1)) {
+		if (i == 1 &&
+			(mnemonicLen == 3 ||
+			immType == CMD_IB_OFF1 || immType == CMD_IW_OFF1))
+		{
 			ImGui::SameLine();
 			ImGui::TextColored(DASM_CLR_NUMBER, ",");
 		}
@@ -695,13 +777,16 @@ auto dev::DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const b
 		if (immType == CMD_IW_OFF1 && !_line.labels.empty())
 		{
 				operand = _line.GetFirstLabel();
-				color = operand.size() >= 1 && operand[0] == '@' ? &DASM_CLR_LABEL_LOCAL_IMM  : &DASM_CLR_LABEL_GLOBAL_IMM;
+				color = operand.size() >= 1 && operand[0] == '@' ?
+					&DASM_CLR_LABEL_LOCAL_IMM  :
+					&DASM_CLR_LABEL_GLOBAL_IMM;
 		}
 		bool immLabel = !operand.empty();
 
 		color = immLabel ? color : &DASM_CLR_NUMBER;
 		operand = immLabel ? operand : _line.GetImmediateS();
-		uiItemMouseAction = DrawAddr(_isRunning, operand.c_str(), *color, DASM_CLR_NUMBER_HIGHLIGHT, 0);
+		uiItemMouseAction = DrawAddr(
+			_isRunning, operand.c_str(), *color, DASM_CLR_NUMBER_HIGHLIGHT, 0);
 
 		if (immLabel && uiItemMouseAction != UIItemMouseAction::NONE) {
 			ImGui::BeginTooltip();
@@ -735,15 +820,20 @@ void dev::DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels
 	}
 }
 
-auto dev::DrawTransparentButtonWithBorder(const char* _label, const ImVec2& _pos, const ImVec2& _size, const char* _hint)
+auto dev::DrawTransparentButtonWithBorder(
+	const char* _label, const ImVec2& _pos,
+	const ImVec2& _size, const char* _hint)
 -> const ButtonAction
 {
 	ButtonAction out = ButtonAction::NONE;
 
 	// Set a transparent background color for the button (RGBA with 0.0 alpha)
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));          // Transparent background
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0.3));   // Transparent when hovered
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));    // Transparent when clicked
+	// Transparent background
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+	// Transparent when hovered
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0.3));
+	// Transparent when clicked
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
 
 	// Set a border color (e.g., white)
 	ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));  // White border
@@ -763,9 +853,10 @@ auto dev::DrawTransparentButtonWithBorder(const char* _label, const ImVec2& _pos
 		out = ButtonAction::PRESSED;
 	}
 
-	// Restore the previous style
-	ImGui::PopStyleVar();           // Pop FrameBorderSize
-	ImGui::PopStyleColor(4);        // Pop all colors (Button, Hovered, Active, Border)
+	// Pop FrameBorderSize
+	ImGui::PopStyleVar();
+	// Pop all colors (Button, Hovered, Active, Border)
+	ImGui::PopStyleColor(4);
 
 	if (_hint && ImGui::IsItemHovered()) {
 		if (ImGui::BeginItemTooltip())

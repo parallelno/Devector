@@ -41,7 +41,7 @@ namespace Devector
 		private readonly object _settingsLock = new object();
 
 		// Window visibility
-		bool m_breakpointsWindowVisisble = false;
+		bool m_breakpointsWindowVisible = false;
 		bool m_hardwareStatsWindowVisible = false;
 		bool m_disasmWindowVisible = false;
 		bool m_watchpointsWindowVisible = false;
@@ -143,7 +143,7 @@ namespace Devector
 			_halDisplayUpdateTmer?.Stop();
 			_halDisplayUpdateTmer = null;
 
-			SettingsUpdate("breakpointsWindowVisisble", m_breakpointsWindowVisisble);
+			SettingsUpdate("breakpointsWindowVisisble", m_breakpointsWindowVisible);
 			SettingsUpdate("hardwareStatsWindowVisible", m_hardwareStatsWindowVisible);
 			SettingsUpdate("disasmWindowVisible", m_disasmWindowVisible);
 			SettingsUpdate("watchpointsWindowVisible", m_watchpointsWindowVisible);
@@ -192,7 +192,7 @@ namespace Devector
 
 		private void SettingsInit()
 		{
-			m_breakpointsWindowVisisble = GetSettingsBool("breakpointsWindowVisisble", false);
+			m_breakpointsWindowVisible = GetSettingsBool("breakpointsWindowVisisble", false);
 			m_hardwareStatsWindowVisible = GetSettingsBool("hardwareStatsWindowVisible", false);
 			m_disasmWindowVisible = GetSettingsBool("disasmWindowVisible", false);
 			m_watchpointsWindowVisible = GetSettingsBool("watchpointsWindowVisible", false);

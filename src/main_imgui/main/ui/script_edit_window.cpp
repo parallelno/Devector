@@ -8,10 +8,10 @@
 dev::ScriptEditWindow::ScriptEditWindow(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Script Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP,
+		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
 		BaseWindow::Type::Popup),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -21,15 +21,13 @@ dev::ScriptEditWindow::ScriptEditWindow(
 		dev::Scheduler::Callback(
 			dev::Signals::SCRIPT_EDIT_WINDOW_ADD,
 			std::bind(&dev::ScriptEditWindow::CallbackAdd, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::SCRIPT_EDIT_WINDOW_EDIT,
 			std::bind(&dev::ScriptEditWindow::CallbackEdit, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 }
 
 void dev::ScriptEditWindow::CallbackAdd(
@@ -42,7 +40,6 @@ void dev::ScriptEditWindow::CallbackAdd(
 	m_script = Script();
 	m_code[0] = '\0'; // erase the m_code buffer
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 
@@ -60,7 +57,6 @@ void dev::ScriptEditWindow::CallbackEdit(
 	m_script = *currentScript;
 	strcpy(m_code, m_script.code.c_str());
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 

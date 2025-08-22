@@ -2,10 +2,10 @@
 
 dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP,
+		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -16,7 +16,7 @@ dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Signals::BREAK,
 			std::bind(&dev::TraceLogWindow::CallbackUpdateData,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+			m_visibleP));
 }
 
 void dev::TraceLogWindow::Draw(
@@ -68,18 +68,21 @@ void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Li
 	case UIItemMouseAction::LEFT: // Navigate to the address
 		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (Addr)_line.imm});
 		break;
-	case UIItemMouseAction::RIGHT: // init the immediate value as an addr to let the context menu copy it
+	 // init the immediate value as an addr to let the context menu copy it
+	case UIItemMouseAction::RIGHT:
+		// TODO: check if it's needed
 		//_contextMenu.Init(_line.imm, _line.GetImmediateS(), true);
 		break;
 	}
-
-	//// set the addr highlight when
-	//if (mouseAction != UIItemMouseAction::NONE) {
-	//	_addrHighlight.Init(_line.imm);
-	//}
 }
 
-const char* filterNames[] = { "c*", "+ call", "+ j*", "+ jmp", "+ r*", "+ ret", "+ pchl", "+ rst", "all" };
+const char* filterNames[] = {
+	 "c*", "+ call",
+	 "+ j*", "+ jmp",
+	 "+ r*", "+ ret",
+	 "+ pchl",
+	 "+ rst",
+	 "all" };
 
 void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 {

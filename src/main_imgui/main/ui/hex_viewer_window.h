@@ -54,6 +54,6 @@ namespace dev
 	public:
 		HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP);
+			bool* _visibleP, const float* const _dpiScaleP);
 	};
 };

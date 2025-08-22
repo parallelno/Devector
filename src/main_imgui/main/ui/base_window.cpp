@@ -4,13 +4,13 @@
 dev::BaseWindow::BaseWindow(const std::string& _name,
 	const int _defaultW, const int _defaultH,
 	dev::Scheduler& _scheduler,
-	bool& _visible,
+	bool* _visibleP,
 	const  float* const _dpiScaleP,
 	ImGuiWindowFlags _flags,
 	BaseWindow::Type _type)
 	:
 	m_name(_name), m_defaultW(_defaultW), m_defaultH(_defaultH),
-	m_visible(_visible), m_dpiScaleP(_dpiScaleP),
+	m_visibleP(_visibleP), m_dpiScaleP(_dpiScaleP),
 	m_flags(_flags), m_scheduler(_scheduler), m_type(_type)
 {
 	_scheduler.AddCallback(
@@ -18,7 +18,7 @@ dev::BaseWindow::BaseWindow(const std::string& _name,
 			dev::Signals::UI_DRAW,
 			std::bind(&dev::BaseWindow::CallbackUpdate, this,
 				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+			m_visibleP));
 };
 
 
@@ -32,7 +32,7 @@ void dev::BaseWindow::CallbackUpdate(
 
 	switch (m_type){
 		case Type::Window:{
-			if (ImGui::Begin(m_name.c_str(), &m_visible, m_flags))
+			if (ImGui::Begin(m_name.c_str(), m_visibleP, m_flags))
 			{
 				Draw(_signals, std::nullopt);
 			}

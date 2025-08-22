@@ -4,10 +4,10 @@
 
 dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Watchpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP),
+		_scheduler, _visibleP, _dpiScaleP),
 	m_hardware(_hardware)
 {
 
@@ -16,7 +16,7 @@ dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
 			dev::Signals::WATCHPOINTS,
 			std::bind(&dev::WatchpointsWindow::UpdateWatchpoints,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+			m_visibleP));
 }
 
 void dev::WatchpointsWindow::Draw(

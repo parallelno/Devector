@@ -49,16 +49,16 @@ namespace dev
 			Delay hw_running_delay;
 			Clk lastTimePoint;
 			Signals flags;
-			bool& active;
+			bool* activeP = nullptr;
 
 			Callback(
 				const Signals _signals,
 				CallFunc _func,
-				bool& _active,
+				bool* _activeP = nullptr,
 				const Delay hw_running_delay = 0ms)
 				:
 				flags{_signals}, func{std::move(_func)},
-				active{_active},
+				activeP{_activeP},
 				hw_running_delay{hw_running_delay},
 				lastTimePoint{std::chrono::steady_clock::now() +
 				Delay(int64_t(

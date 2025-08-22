@@ -33,7 +33,7 @@ namespace dev
 		CommentEditWindow(
 			dev::Hardware& _hardware, dev::Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible,
+			bool* _visibleP,
 			const float* const _dpiScaleP);
 	};
 };

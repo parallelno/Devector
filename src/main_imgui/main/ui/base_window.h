@@ -21,7 +21,8 @@ namespace dev
 		};
 
 		const float* const m_dpiScaleP = nullptr;
-		bool& m_visible;
+		// Use nullptr for popups
+		bool* m_visibleP = nullptr;
 		bool m_default_pos_set = false;
 		ImGuiWindowFlags m_flags = 0;
 		Type m_type = Type::Window;
@@ -40,7 +41,7 @@ namespace dev
 		BaseWindow(const std::string& _name,
 			const int _defaultW, const int _defaultH,
 			dev::Scheduler& _scheduler,
-			bool& _visible,
+			bool* _visibleP = nullptr,
 			const  float* const _dpiScaleP,
 			ImGuiWindowFlags _flags = ImGuiWindowFlags_NoCollapse,
 			BaseWindow::Type _type = BaseWindow::Type::Window);

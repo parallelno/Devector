@@ -8,10 +8,10 @@
 dev::LabelEditWindow::LabelEditWindow(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Label Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP,
+		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
 		BaseWindow::Type::Popup),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -21,15 +21,13 @@ dev::LabelEditWindow::LabelEditWindow(
 		dev::Scheduler::Callback(
 			dev::Signals::LABEL_EDIT_WINDOW_ADD,
 			std::bind(&dev::LabelEditWindow::CallbackAdd, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::LABEL_EDIT_WINDOW_EDIT,
 			std::bind(&dev::LabelEditWindow::CallbackEdit, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 }
 
 void dev::LabelEditWindow::CallbackAdd(
@@ -46,7 +44,6 @@ void dev::LabelEditWindow::CallbackAdd(
 	m_selectedItemIdx = 0;
 	m_editLabel = false;
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 
@@ -66,7 +63,6 @@ void dev::LabelEditWindow::CallbackEdit(
 	m_selectedItemIdx = 0;
 	m_editLabel = true;
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 

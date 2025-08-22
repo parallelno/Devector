@@ -47,7 +47,7 @@ dev::DevectorApp::~DevectorApp()
 {
 	m_debuggerP->GetDebugData().SaveDebugData();
 
-	SettingsUpdate("breakpointsWindowVisisble", m_breakpointsWindowVisisble);
+	SettingsUpdate("breakpointsWindowVisisble", m_breakpointsWindowVisible);
 	SettingsUpdate("hardwareStatsWindowVisible", m_hardwareStatsWindowVisible);
 	SettingsUpdate("disasmWindowVisible", m_disasmWindowVisible);
 	SettingsUpdate("watchpointsWindowVisible", m_watchpointsWindowVisible);
@@ -88,7 +88,7 @@ void dev::DevectorApp::SettingsInit()
 	Request(Req::LOAD_FONT);
 	AppStyleInit();
 
-	m_breakpointsWindowVisisble = GetSettingsBool("breakpointsWindowVisisble", false);
+	m_breakpointsWindowVisible = GetSettingsBool("breakpointsWindowVisisble", false);
 	m_hardwareStatsWindowVisible = GetSettingsBool("hardwareStatsWindowVisible", false);
 	m_disasmWindowVisible = GetSettingsBool("disasmWindowVisible", false);
 	m_watchpointsWindowVisible = GetSettingsBool("watchpointsWindowVisible", false);
@@ -146,84 +146,84 @@ void dev::DevectorApp::WindowsInit()
 
 
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(
-		*m_hardwareP, m_scheduler, m_hardwareStatsWindowVisible,
+		*m_hardwareP, m_scheduler, &m_hardwareStatsWindowVisible,
 		&m_dpiScale, m_ruslat);
 
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(
-		*m_hardwareP, *m_debuggerP, m_fontItalic,
-		m_scheduler, m_disasmWindowVisible, &m_dpiScale);
+		*m_hardwareP, *m_debuggerP,
+		m_fontItalic, m_scheduler, &m_disasmWindowVisible, &m_dpiScale);
 
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(
-		*m_hardwareP, m_scheduler,
-		m_displayWindowVisible, &m_dpiScale, m_glUtils,
+		*m_hardwareP, m_scheduler, &m_displayWindowVisible,
+		&m_dpiScale, m_glUtils,
 		m_debuggerP->GetDebugData().GetScripts(), executionSpeed,
 		m_display_vtxShader, m_display_fragShader);
 
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(
-		*m_hardwareP, m_scheduler, m_breakpointsWindowVisisble,
+		*m_hardwareP, m_scheduler, &m_breakpointsWindowVisible,
 		&m_dpiScale);
 
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(
-		*m_hardwareP, m_scheduler, m_watchpointsWindowVisible,
+		*m_hardwareP, m_scheduler, &m_watchpointsWindowVisible,
 		&m_dpiScale);
 
 	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_memDisplayWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_memDisplayWindowVisible,
 		&m_dpiScale, m_glUtils,
 		m_memdisplay_vtxShader, m_memdisplay_fragShader);
 
 	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_hexViewerWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_hexViewerWindowVisible,
 		&m_dpiScale);
 
 	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_traceLogWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_traceLogWindowVisible,
 		&m_dpiScale);
 
 	m_aboutWindowP = std::make_unique<dev::AboutWindow>(
-		m_scheduler, m_aboutWindowVisible, &m_dpiScale);
+		m_scheduler, &m_aboutWindowVisible, &m_dpiScale);
 
 	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(
-		m_scheduler, m_feedbackWindowVisible, &m_dpiScale);
+		m_scheduler, &m_feedbackWindowVisible, &m_dpiScale);
 
 	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_recorderWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_recorderWindowVisible,
 		&m_dpiScale);
 
 	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(
-		*m_hardwareP, m_scheduler, m_keyboardWindowVisible,
+		*m_hardwareP, m_scheduler, &m_keyboardWindowVisible,
 		&m_dpiScale, m_glUtils, m_pathImgKeyboard);
 
 	m_searchWindowP = std::make_unique<dev::SearchWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_searchWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_searchWindowVisible,
 		&m_dpiScale);
 
 	m_debugdataWindowP = std::make_unique<dev::DebugDataWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_debugdataWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_debugdataWindowVisible,
 		&m_dpiScale);
 
 	m_labelEditWindowP = std::make_unique<dev::LabelEditWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_labelEditWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
 	m_constEditWindowP = std::make_unique<dev::ConstEditWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_constEditWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
 	m_commentEditWindowP = std::make_unique<dev::CommentEditWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_commentEditWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
 	m_memoryEditWindowP = std::make_unique<dev::MemoryEditWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_memoryEditWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
 	m_codePerfEditWindowP = std::make_unique<dev::CodePerfEditWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_codePerfEditWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
 	m_scriptEditWindowP = std::make_unique<dev::ScriptEditWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, m_scriptEditWindowVisible,
+		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 }
 
@@ -399,7 +399,7 @@ void dev::DevectorApp::MainMenuUpdate()
 
 			if (m_breakpointsWindowP){
 				ImGui::MenuItem(m_breakpointsWindowP->m_name.c_str(),
-								NULL, &m_breakpointsWindowVisisble);
+								NULL, &m_breakpointsWindowVisible);
 			}
 
 			if (m_watchpointsWindowP){
@@ -1005,7 +1005,7 @@ void dev::DevectorApp::LoadRecording(const std::string& _path)
 void dev::DevectorApp::DebugAttach()
 {
 	bool requiresDebugger = m_disasmWindowVisible ||
-		m_breakpointsWindowVisisble ||
+		m_breakpointsWindowVisible ||
 		m_watchpointsWindowVisible ||
 		m_hexViewerWindowVisible ||
 		m_traceLogWindowVisible ||
@@ -1057,13 +1057,11 @@ void dev::DevectorApp::SchedulingInit()
 		dev::Scheduler::Callback(
 			dev::Signals::RELOAD,
 			std::bind(&dev::DevectorApp::CallbackReload,
-				this, std::placeholders::_1, std::placeholders::_2),
-			m_active));
+				this, std::placeholders::_1, std::placeholders::_2)));
 
 	m_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::LOAD_RECENT_FDD_IMG,
 			std::bind(&dev::DevectorApp::CallbackLoadRecentFddImg,
-				this, std::placeholders::_1, std::placeholders::_2),
-			m_active));
+				this, std::placeholders::_1, std::placeholders::_2)));
 }

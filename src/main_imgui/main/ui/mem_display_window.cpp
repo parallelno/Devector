@@ -6,12 +6,12 @@ dev::MemDisplayWindow::MemDisplayWindow(
 	Hardware& _hardware,
 	Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
+	bool* _visibleP, const float* const _dpiScaleP, GLUtils& _glUtils,
 	const std::string& _vtxShaderS,
 	const std::string& _fragShaderS)
 	:
 	BaseWindow("Memory Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP,
+		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils)
@@ -24,7 +24,7 @@ dev::MemDisplayWindow::MemDisplayWindow(
 			dev::Signals::HW_RUNNING | dev::Signals::BREAK,
 			std::bind(&dev::MemDisplayWindow::CallbackUpdateData,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible, 10ms));
+			m_visibleP, 10ms));
 }
 
 bool dev::MemDisplayWindow::Init(

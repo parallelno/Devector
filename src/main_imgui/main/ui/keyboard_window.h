@@ -36,7 +36,7 @@ namespace dev
 	public:
 		KeyboardWindow(Hardware& _hardware,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP,
+			bool* _visibleP, const float* const _dpiScaleP,
 			GLUtils& _glUtils, const std::string& _pathImgKeyboard);
 		void Draw(
 			const dev::Signals _signals,

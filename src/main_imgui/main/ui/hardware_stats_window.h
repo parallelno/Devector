@@ -139,7 +139,7 @@ namespace dev
 
 		HardwareStatsWindow(Hardware& _hardware,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP,
+			bool* _visibleP, const float* const _dpiScaleP,
 			bool& _ruslat);
 	};
 

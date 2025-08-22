@@ -35,7 +35,7 @@ namespace dev
 		CodePerfEditWindow(
 			Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible,
+			bool* _visibleP,
 			const float* const _dpiScaleP);
 	};
 };

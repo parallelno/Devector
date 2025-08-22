@@ -8,10 +8,10 @@
 dev::ConstEditWindow::ConstEditWindow(
 	dev::Hardware& _hardware, dev::Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Const Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP,
+		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
 		BaseWindow::Type::Popup),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -21,15 +21,13 @@ dev::ConstEditWindow::ConstEditWindow(
 		dev::Scheduler::Callback(
 			dev::Signals::CONST_EDIT_WINDOW_ADD,
 			std::bind(&dev::ConstEditWindow::CallbackAdd, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::CONST_EDIT_WINDOW_EDIT,
 			std::bind(&dev::ConstEditWindow::CallbackEdit, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 }
 
 void dev::ConstEditWindow::CallbackAdd(
@@ -46,7 +44,6 @@ void dev::ConstEditWindow::CallbackAdd(
 	m_selectedItemIdx = 0;
 	m_editConst = false;
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 
@@ -66,7 +63,6 @@ void dev::ConstEditWindow::CallbackEdit(
 	m_selectedItemIdx = 0;
 	m_editConst = true;
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 

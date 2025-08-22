@@ -62,7 +62,7 @@ bool dev::Scheduler::CallCallbacks(const Signals _signals, SignalData _data)
 
 	for (auto& callback : m_callbacks)
 	{
-		if (!callback.active) continue;
+		if (callback.activeP && !*callback.activeP) continue;
 
 		if ((callback.flags & _signals) == Signals::NONE){
 			continue;

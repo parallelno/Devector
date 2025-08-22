@@ -17,7 +17,7 @@ namespace dev
 
 	public:
 		AboutWindow(dev::Scheduler& _scheduler,
-			bool& _visible,
+			bool* _visibleP,
 			const float* const _dpiScaleP);
 		void Draw(
 			const dev::Signals _signals,

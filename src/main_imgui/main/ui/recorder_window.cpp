@@ -5,10 +5,10 @@
 
 dev::RecorderWindow::RecorderWindow(Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Recorder", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP),
+		_scheduler, _visibleP, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
 
@@ -17,7 +17,7 @@ dev::RecorderWindow::RecorderWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Signals::HW_RUNNING | dev::Signals::BREAK,
 			std::bind(&dev::RecorderWindow::CallbackUpdateData,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible, 300ms));
+			m_visibleP, 300ms));
 }
 
 void dev::RecorderWindow::Draw(

@@ -3,11 +3,11 @@
 #include "utils/str_utils.h"
 
 dev::FeedbackWindow::FeedbackWindow(
-	dev::Scheduler& _scheduler, bool& _visible,
+	dev::Scheduler& _scheduler, bool* _visibleP,
 	const float* const _dpiScaleP)
 	:
 	BaseWindow("Send Feedback", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP,
+		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize |
 		ImGuiWindowFlags_NoDocking |
 		ImGuiWindowFlags_NoSavedSettings |

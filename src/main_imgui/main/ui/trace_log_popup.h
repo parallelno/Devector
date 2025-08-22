@@ -6,19 +6,13 @@
 
 namespace dev
 {
-	class ScriptEditWindow : public BaseWindow
+	class CommentEditWindow : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
-		static constexpr int CODE_LEN_MAX = 10000;
 
-		Hardware& m_hardware;
-		Debugger& m_debugger;
-
-		bool m_enterPressed = false;
-		bool m_setFocus = false;
-		Script m_script;
-		char m_code[CODE_LEN_MAX];
+		dev::Hardware& m_hardware;
+		dev::Debugger& m_debugger;
 
 		void Draw(
 			const dev::Signals _signals,
@@ -30,8 +24,8 @@ namespace dev
 			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
 	public:
-		ScriptEditWindow(
-			Hardware& _hardware, Debugger& _debugger,
+		CommentEditWindow(
+			dev::Hardware& _hardware, dev::Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP,
 			const float* const _dpiScaleP);

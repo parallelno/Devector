@@ -127,7 +127,7 @@ namespace dev
 		bool m_displayWindowVisible = false;
 		bool m_disasmWindowVisible = false;
 		bool m_hardwareStatsWindowVisible = false;
-		bool m_breakpointsWindowVisisble = false;
+		bool m_breakpointsWindowVisible = false;
 		bool m_watchpointsWindowVisible = false;
 		bool m_memDisplayWindowVisible = false;
 		bool m_hexViewerWindowVisible = false;
@@ -138,14 +138,6 @@ namespace dev
 		bool m_keyboardWindowVisible = false;
 		bool m_searchWindowVisible = false;
 		bool m_debugdataWindowVisible = false;
-
-		// popup edit debug data windows
-		bool m_labelEditWindowVisible = true;
-		bool m_constEditWindowVisible = true;
-		bool m_commentEditWindowVisible = true;
-		bool m_memoryEditWindowVisible = true;
-		bool m_codePerfEditWindowVisible = true;
-		bool m_scriptEditWindowVisible = true;
 
 		std::string m_pathImgKeyboard;
 

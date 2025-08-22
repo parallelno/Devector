@@ -7,10 +7,10 @@
 
 dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP),
+		_scheduler, _visibleP, _dpiScaleP),
 	m_hardware(_hardware)
 {
 	_scheduler.AddCallback(
@@ -18,7 +18,7 @@ dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
 			dev::Signals::BREAKPOINTS,
 			std::bind(&dev::BreakpointsWindow::CallbackUpdateBreakpoints,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+			m_visibleP));
 }
 
 void dev::BreakpointsWindow::Draw(

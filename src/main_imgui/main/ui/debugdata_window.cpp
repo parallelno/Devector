@@ -7,10 +7,10 @@
 dev::DebugDataWindow::DebugDataWindow(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Debug Data", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP),
+		_scheduler, _visibleP, _dpiScaleP),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
 	_scheduler.AddCallback(
@@ -18,7 +18,7 @@ dev::DebugDataWindow::DebugDataWindow(
 			dev::Signals::HW_RUNNING | dev::Signals::BREAK,
 			std::bind(&dev::DebugDataWindow::CallbackUpdateData,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible, 1000ms));
+			m_visibleP, 1000ms));
 }
 
 void dev::DebugDataWindow::Draw(

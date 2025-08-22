@@ -9,11 +9,11 @@
 
 dev::KeyboardWindow::KeyboardWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
+	bool* _visibleP, const float* const _dpiScaleP, GLUtils& _glUtils,
 	const std::string& _pathImgKeyboard)
 	:
 	BaseWindow("Keyboard", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP),
+		_scheduler, _visibleP, _dpiScaleP),
 	m_hardware(_hardware),
 	m_glUtils(_glUtils), m_pathImgKeyboard(_pathImgKeyboard)
 {

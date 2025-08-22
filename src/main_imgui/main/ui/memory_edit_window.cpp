@@ -8,10 +8,10 @@
 dev::MemoryEditWindow::MemoryEditWindow(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP)
+	bool* _visibleP, const float* const _dpiScaleP)
 	:
 	BaseWindow("Memory Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP,
+		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
 		BaseWindow::Type::Popup),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -21,15 +21,13 @@ dev::MemoryEditWindow::MemoryEditWindow(
 		dev::Scheduler::Callback(
 			dev::Signals::MEMORY_EDIT_WINDOW_ADD,
 			std::bind(&dev::MemoryEditWindow::CallbackAdd, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::MEMORY_EDIT_WINDOW_EDIT,
 			std::bind(&dev::MemoryEditWindow::CallbackEdit, this,
-				std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+				std::placeholders::_1, std::placeholders::_2)));
 }
 
 void dev::MemoryEditWindow::CallbackAdd(
@@ -43,7 +41,6 @@ void dev::MemoryEditWindow::CallbackAdd(
 	m_edit.Erase();
 	m_value = 0;
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 
@@ -59,7 +56,6 @@ void dev::MemoryEditWindow::CallbackEdit(
 	m_edit = *currentEdit;
 	m_value = m_edit.value;
 
-	m_visible = true;
 	ImGui::OpenPopup(m_name.c_str());
 }
 

@@ -5,14 +5,14 @@
 
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
-	bool& _visible, const float* const _dpiScaleP, GLUtils& _glUtils,
+	bool* _visibleP, const float* const _dpiScaleP, GLUtils& _glUtils,
 	Scripts& _scripts,
 	const Hardware::ExecSpeed _execSpeed,
 	const std::string& _vtxShaderS,
 	const std::string& _fragShaderS)
 	:
 	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScaleP),
+		_scheduler, _visibleP, _dpiScaleP),
 	m_hardware(_hardware), m_glUtils(_glUtils),
 	m_scripts(_scripts)
 {
@@ -25,7 +25,7 @@ dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 			dev::Signals::UI_DRAW,
 			std::bind(&dev::DisplayWindow::CallbackUpdateData,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+			m_visibleP));
 }
 
 bool dev::DisplayWindow::Init(const std::string& _vtxShaderS,

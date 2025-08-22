@@ -7,10 +7,10 @@
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
 		dev::Scheduler& _scheduler,
-		bool& _visible, const float* const _dpiScale)
+		bool* _visibleP, const float* const _dpiScale)
 	:
 	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visible, _dpiScale),
+		_scheduler, _visibleP, _dpiScale),
 	m_hardware(_hardware),
 	m_debugger(_debugger),
 	m_fontCommentP(fontComment)
@@ -21,14 +21,14 @@ dev::DisasmWindow::DisasmWindow(
 			dev::Signals::BREAKPOINTS,
 			std::bind(&dev::DisasmWindow::CallbackUpdateAtCC,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible, 1000ms));
+			m_visibleP, 1000ms));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::DISASM_UPDATE,
 			std::bind(&dev::DisasmWindow::CallbackUpdateAtAddr,
 				this, std::placeholders::_1, std::placeholders::_2),
-			m_visible));
+			m_visibleP));
 }
 
 void dev::DisasmWindow::Draw(
@@ -109,10 +109,13 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	dev::DrawHelpMarker(
 		"Break/Run stops and continues the execution.\n"
 		"Step executes one command.\n"
-		"Step Over executes the next command without entering it. For example, stepping over a Call, stops the progamm at the next instruction after Call.\n"
+		"Step Over executes the next command without entering it. "
+			"For example, stepping over a Call, stops the progamm at the "
+			"next instruction after Call.\n"
 		"Step 0x100 executes 256 instructions.\n"
 		"Step Frame executes until RST7 (the next frame start).\n"
-		"Reset relaods the ROM/FDD file and reset the hardware keeping all brealpoints intact."
+			"Reset relaods the ROM/FDD file and reset the hardware keeping "
+			"all brealpoints intact."
 		);
 }
 
@@ -194,7 +197,9 @@ void dev::DisasmWindow::DrawDisasmIcons(
 	// draw breakpoints
 	ImGui::SameLine();
 	auto bpStatus = _line.breakpointStatus;
-	if (dev::DrawBreakpoint(std::format("##BpAddr{:04d}", _lineIdx).c_str(), &bpStatus, *m_dpiScaleP))
+	if (dev::DrawBreakpoint(
+		std::format("##BpAddr{:04d}", _lineIdx).c_str(),
+		&bpStatus, *m_dpiScaleP))
 	{
 		switch (bpStatus)
 		{

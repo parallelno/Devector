@@ -23,7 +23,10 @@ namespace dev
 		static constexpr int MAX_DISASM_LABELS = 4;
 
 		struct ContextMenu {
-			enum class Status { NONE = 0, INIT_CONTEXT_MENU, INIT_COMMENT_EDIT, INIT_LABEL_EDIT, INIT_CONST_EDIT };
+			enum class Status {
+				NONE = 0,
+				INIT_CONTEXT_MENU,
+			};
 			Status status = Status::NONE;
 			Addr addr = 0;
 			std::string str;
@@ -81,6 +84,6 @@ namespace dev
 	public:
 		TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool& _visible, const float* const _dpiScaleP);
+			bool* _visibleP, const float* const _dpiScaleP);
 	};
 };
