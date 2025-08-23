@@ -1,11 +1,11 @@
-﻿#include "ui/comment_edit_window.h"
+﻿#include "ui/comment_edit_modal.h"
 
 #include <format>
 
 #include "utils/str_utils.h"
 #include "utils/imgui_utils.h"
 
-dev::CommentEditWindow::CommentEditWindow(
+dev::CommentEditModal::CommentEditModal(
 	dev::Hardware& _hardware, dev::Debugger& _debugger,
 	dev::Scheduler& _scheduler,
 	bool* _visibleP, const float* const _dpiScaleP)
@@ -13,24 +13,24 @@ dev::CommentEditWindow::CommentEditWindow(
 	BaseWindow("Comment Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
-		dev::BaseWindow::Type::Popup),
+		dev::BaseWindow::Type::Modal),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::COMMENT_EDIT_WINDOW_ADD,
-			std::bind(&dev::CommentEditWindow::CallbackAdd, this,
+			std::bind(&dev::CommentEditModal::CallbackAdd, this,
 				std::placeholders::_1, std::placeholders::_2)));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::COMMENT_EDIT_WINDOW_EDIT,
-			std::bind(&dev::CommentEditWindow::CallbackEdit, this,
+			std::bind(&dev::CommentEditModal::CallbackEdit, this,
 				std::placeholders::_1, std::placeholders::_2)));
 }
 
-void dev::CommentEditWindow::CallbackAdd(
+void dev::CommentEditModal::CallbackAdd(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
@@ -44,7 +44,7 @@ void dev::CommentEditWindow::CallbackAdd(
 	ImGui::OpenPopup(m_name.c_str());
 }
 
-void dev::CommentEditWindow::CallbackEdit(
+void dev::CommentEditModal::CallbackEdit(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
@@ -59,7 +59,7 @@ void dev::CommentEditWindow::CallbackEdit(
 	ImGui::OpenPopup(m_name.c_str());
 }
 
-void dev::CommentEditWindow::Draw(
+void dev::CommentEditModal::Draw(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	static ImGuiTableFlags flags =

@@ -1,11 +1,11 @@
-﻿#include "ui/code_perf_edit_window.h"
+﻿#include "ui/code_perf_edit_modal.h"
 
 #include <format>
 
 #include "utils/str_utils.h"
 #include "utils/imgui_utils.h"
 
-dev::CodePerfEditWindow::CodePerfEditWindow(
+dev::CodePerfEditModal::CodePerfEditModal(
 	Hardware& m_hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
 	bool* _visibleP, const float* const _dpiScaleP)
@@ -13,24 +13,24 @@ dev::CodePerfEditWindow::CodePerfEditWindow(
 	BaseWindow("Code Perf Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
-		BaseWindow::Type::Popup),
+		BaseWindow::Type::Modal),
 	m_hardware(m_hardware), m_debugger(_debugger)
 {
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::CODE_PERF_EDIT_WINDOW_ADD,
-			std::bind(&dev::CodePerfEditWindow::CallbackAdd, this,
+			std::bind(&dev::CodePerfEditModal::CallbackAdd, this,
 				std::placeholders::_1, std::placeholders::_2)));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::CODE_PERF_EDIT_WINDOW_EDIT,
-			std::bind(&dev::CodePerfEditWindow::CallbackEdit, this,
+			std::bind(&dev::CodePerfEditModal::CallbackEdit, this,
 				std::placeholders::_1, std::placeholders::_2)));
 }
 
-void dev::CodePerfEditWindow::CallbackAdd(
+void dev::CodePerfEditModal::CallbackAdd(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
@@ -44,7 +44,7 @@ void dev::CodePerfEditWindow::CallbackAdd(
 	ImGui::OpenPopup(m_name.c_str());
 }
 
-void dev::CodePerfEditWindow::CallbackEdit(
+void dev::CodePerfEditModal::CallbackEdit(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
@@ -59,7 +59,7 @@ void dev::CodePerfEditWindow::CallbackEdit(
 	ImGui::OpenPopup(m_name.c_str());
 }
 
-void dev::CodePerfEditWindow::Draw(
+void dev::CodePerfEditModal::Draw(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	static ImGuiTableFlags flags =

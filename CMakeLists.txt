@@ -191,18 +191,24 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/ui/search_window.h
 	${DEVECTOR_DIR}/main/ui/debugdata_window.cpp
 	${DEVECTOR_DIR}/main/ui/debugdata_window.h
-	${DEVECTOR_DIR}/main/ui/label_edit_window.h
-	${DEVECTOR_DIR}/main/ui/label_edit_window.cpp
-	${DEVECTOR_DIR}/main/ui/const_edit_window.h
-	${DEVECTOR_DIR}/main/ui/const_edit_window.cpp
-	${DEVECTOR_DIR}/main/ui/comment_edit_window.h
-	${DEVECTOR_DIR}/main/ui/comment_edit_window.cpp
-	${DEVECTOR_DIR}/main/ui/memory_edit_window.h
-	${DEVECTOR_DIR}/main/ui/memory_edit_window.cpp
-	${DEVECTOR_DIR}/main/ui/code_perf_edit_window.h
-	${DEVECTOR_DIR}/main/ui/code_perf_edit_window.cpp
-	${DEVECTOR_DIR}/main/ui/script_edit_window.h
-	${DEVECTOR_DIR}/main/ui/script_edit_window.cpp
+	${DEVECTOR_DIR}/main/ui/label_edit_modal.h
+	${DEVECTOR_DIR}/main/ui/label_edit_modal.cpp
+	${DEVECTOR_DIR}/main/ui/const_edit_modal.h
+	${DEVECTOR_DIR}/main/ui/const_edit_modal.cpp
+	${DEVECTOR_DIR}/main/ui/comment_edit_modal.h
+	${DEVECTOR_DIR}/main/ui/comment_edit_modal.cpp
+	${DEVECTOR_DIR}/main/ui/memory_edit_modal.h
+	${DEVECTOR_DIR}/main/ui/memory_edit_modal.cpp
+	${DEVECTOR_DIR}/main/ui/code_perf_edit_modal.h
+	${DEVECTOR_DIR}/main/ui/code_perf_edit_modal.cpp
+	${DEVECTOR_DIR}/main/ui/script_edit_modal.h
+	${DEVECTOR_DIR}/main/ui/script_edit_modal.cpp
+	${DEVECTOR_DIR}/main/ui/trace_log_popup.h
+	${DEVECTOR_DIR}/main/ui/trace_log_popup.cpp
+	${DEVECTOR_DIR}/main/ui/breakpoints_popup.h
+	${DEVECTOR_DIR}/main/ui/breakpoints_popup.cpp
+	${DEVECTOR_DIR}/main/ui/watchpoints_popup.h
+	${DEVECTOR_DIR}/main/ui/watchpoints_popup.cpp
 
 	${DEVECTOR_DIR}/utils/imgui_utils.h
 	${DEVECTOR_DIR}/utils/imgui_utils.cpp

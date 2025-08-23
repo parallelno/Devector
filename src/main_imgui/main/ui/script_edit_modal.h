@@ -6,21 +6,19 @@
 
 namespace dev
 {
-	class LabelEditWindow : public BaseWindow
+	class ScriptEditModal : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
+		static constexpr int CODE_LEN_MAX = 10000;
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
 
 		bool m_enterPressed = false;
 		bool m_setFocus = false;
-		int m_addr = 0;
-		int m_oldAddr = 0;
-		DebugData::LabelList m_labels;
-		int m_selectedItemIdx = 0;
-		bool m_editLabel = false;
+		Script m_script;
+		char m_code[CODE_LEN_MAX];
 
 		void Draw(
 			const dev::Signals _signals,
@@ -32,7 +30,7 @@ namespace dev
 			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
 	public:
-		LabelEditWindow(
+		ScriptEditModal(
 			Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP,

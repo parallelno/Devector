@@ -21,12 +21,15 @@
 #include "ui/keyboard_window.h"
 #include "ui/search_window.h"
 #include "ui/debugdata_window.h"
-#include "ui/label_edit_window.h"
-#include "ui/const_edit_window.h"
-#include "ui/comment_edit_window.h"
-#include "ui/memory_edit_window.h"
-#include "ui/code_perf_edit_window.h"
-#include "ui/script_edit_window.h"
+#include "ui/label_edit_modal.h"
+#include "ui/const_edit_modal.h"
+#include "ui/comment_edit_modal.h"
+#include "ui/memory_edit_modal.h"
+#include "ui/code_perf_edit_modal.h"
+#include "ui/script_edit_modal.h"
+#include "ui/trace_log_popup.h"
+#include "ui/breakpoints_popup.h"
+#include "ui/watchpoints_popup.h"
 
 
 #include "core/hardware.h"
@@ -116,12 +119,15 @@ namespace dev
 		std::unique_ptr <dev::SearchWindow> m_searchWindowP;
 		std::unique_ptr <dev::DebugDataWindow> m_debugdataWindowP;
 		// popup edit debug data windows
-		std::unique_ptr <dev::LabelEditWindow> m_labelEditWindowP;
-		std::unique_ptr <dev::ConstEditWindow> m_constEditWindowP;
-		std::unique_ptr <dev::CommentEditWindow> m_commentEditWindowP;
-		std::unique_ptr <dev::MemoryEditWindow> m_memoryEditWindowP;
-		std::unique_ptr <dev::CodePerfEditWindow> m_codePerfEditWindowP;
-		std::unique_ptr <dev::ScriptEditWindow> m_scriptEditWindowP;
+		std::unique_ptr <dev::LabelEditModal> m_labelEditPopupP;
+		std::unique_ptr <dev::ConstEditModal> m_constEditPopupP;
+		std::unique_ptr <dev::CommentEditModal> m_commentEditPopupP;
+		std::unique_ptr <dev::MemoryEditWindow> m_memoryEditPopupP;
+		std::unique_ptr <dev::CodePerfEditModal> m_codePerfEditPopupP;
+		std::unique_ptr <dev::ScriptEditModal> m_scriptEditPopupP;
+		std::unique_ptr <dev::TraceLogPopup> m_traceLogPopupP;
+		std::unique_ptr <dev::BreakpointsPopup> m_breakpoints_popupP;
+		std::unique_ptr <dev::WatchpointsPopup> m_watchpoints_popupP;
 
 		// windows
 		bool m_displayWindowVisible = false;

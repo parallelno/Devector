@@ -6,7 +6,7 @@
 
 namespace dev
 {
-	class TraceLogPopup : public BaseWindow
+	class BreakpointsPopup : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
@@ -14,18 +14,29 @@ namespace dev
 		dev::Hardware& m_hardware;
 		dev::Debugger& m_debugger;
 
-		Addr m_addr = 0;
-		std::string m_str = "";
+		dev::Signals m_signal = dev::Signals::NONE;
+		bool m_isActive = true;
+		Breakpoint::MemPages m_memPages = Breakpoint::MAPPING_PAGES_ALL;
+		int m_addr = 0;
+		Addr m_addrOld = 0xFF;
+		int m_val = 0;
+		bool m_isAutoDel = false;
+		int m_selectedOp = 0;
+		int m_selectedCond = 0;
+		std::string m_comment = "";
+
 
 		void Draw(
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data) override;
 
-		void CallbackOpen(
+		void CallbackAdd(
+			const dev::Signals _signals, dev::Scheduler::SignalData _data);
+		void CallbackEdit(
 			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
 	public:
-		TraceLogPopup(
+		BreakpointsPopup(
 			dev::Hardware& _hardware, dev::Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP,

@@ -39,12 +39,24 @@ void dev::BaseWindow::CallbackUpdate(
 			ImGui::End();
 			break;
 		}
-		case Type::Popup:{
+		case Type::Modal:{
 			ImVec2 winPos = ImGui::GetMousePos();
 			ImGui::SetNextWindowPos(
 				winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
 			if (ImGui::BeginPopupModal(m_name.c_str(), NULL, m_flags))
+			{
+				Draw(_signals, std::nullopt);
+				ImGui::EndPopup();
+			}
+			break;
+		}
+		case Type::Popup:{
+			ImVec2 winPos = ImGui::GetMousePos();
+			ImGui::SetNextWindowPos(
+				winPos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+			if (ImGui::BeginPopup(m_name.c_str()))
 			{
 				Draw(_signals, std::nullopt);
 				ImGui::EndPopup();

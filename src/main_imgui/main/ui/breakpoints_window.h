@@ -19,7 +19,7 @@ namespace dev
 		Breakpoints::BpMap m_breakpoints;
 
 		void CheckIfItemClicked(const ImVec2& _rowMin, bool& _showItemContextMenu,
-			const int _addr, int& _editedBreakpointAddr, ReqPopup& _reqPopup);
+			const int _addr, int& _editedBreakpointAddr);
 		void CallbackUpdateBreakpoints(
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data);
@@ -27,8 +27,6 @@ namespace dev
 		void Draw(
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data) override;
-		void DrawPopup(ReqPopup& _reqPopup, const Breakpoints::BpMap& _pbs,
-			const int _addr);
 		void DrawProperty(const std::string& _name,
 						const ImVec2& _aligment = { 0.0f, 0.5f });
 

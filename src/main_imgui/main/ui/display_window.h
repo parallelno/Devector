@@ -27,7 +27,6 @@ namespace dev
 
 		GLuint m_frameTextureId = 0;
 		Hardware& m_hardware;
-		int64_t m_ccLastRun = 0;
 		std::atomic_bool m_windowFocused = false;
 		int m_rasterPixel = 0;
 		int m_rasterLine = 0;

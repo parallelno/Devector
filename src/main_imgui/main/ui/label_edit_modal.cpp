@@ -1,36 +1,36 @@
-﻿#include "ui/const_edit_window.h"
+﻿#include "ui/label_edit_modal.h"
 
 #include <format>
 
 #include "utils/str_utils.h"
 #include "utils/imgui_utils.h"
 
-dev::ConstEditWindow::ConstEditWindow(
-	dev::Hardware& _hardware, dev::Debugger& _debugger,
+dev::LabelEditModal::LabelEditModal(
+	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
 	bool* _visibleP, const float* const _dpiScaleP)
 	:
-	BaseWindow("Const Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+	BaseWindow("Label Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
-		BaseWindow::Type::Popup),
+		BaseWindow::Type::Modal),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
-			dev::Signals::CONST_EDIT_WINDOW_ADD,
-			std::bind(&dev::ConstEditWindow::CallbackAdd, this,
+			dev::Signals::LABEL_EDIT_WINDOW_ADD,
+			std::bind(&dev::LabelEditModal::CallbackAdd, this,
 				std::placeholders::_1, std::placeholders::_2)));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
-			dev::Signals::CONST_EDIT_WINDOW_EDIT,
-			std::bind(&dev::ConstEditWindow::CallbackEdit, this,
+			dev::Signals::LABEL_EDIT_WINDOW_EDIT,
+			std::bind(&dev::LabelEditModal::CallbackEdit, this,
 				std::placeholders::_1, std::placeholders::_2)));
 }
 
-void dev::ConstEditWindow::CallbackAdd(
+void dev::LabelEditModal::CallbackAdd(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
@@ -39,15 +39,15 @@ void dev::ConstEditWindow::CallbackAdd(
 	m_setFocus = true;
 	m_addr = globalAddr;
 	m_oldAddr = globalAddr;
-	m_consts.clear();
-	m_consts.push_back("");
+	m_labels.clear();
+	m_labels.push_back("");
 	m_selectedItemIdx = 0;
-	m_editConst = false;
+	m_editLabel = false;
 
 	ImGui::OpenPopup(m_name.c_str());
 }
 
-void dev::ConstEditWindow::CallbackEdit(
+void dev::LabelEditModal::CallbackEdit(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
@@ -56,17 +56,17 @@ void dev::ConstEditWindow::CallbackEdit(
 	m_setFocus = true;
 	m_addr = globalAddr;
 	m_oldAddr = globalAddr;
-	auto constsP = m_debugger.GetDebugData().GetConsts(globalAddr);
-	if (constsP) {
-		m_consts = std::move(*constsP);
+	auto labelsP = m_debugger.GetDebugData().GetLabels(globalAddr);
+	if (labelsP) {
+		m_labels = std::move(*labelsP);
 	}
 	m_selectedItemIdx = 0;
-	m_editConst = true;
+	m_editLabel = true;
 
 	ImGui::OpenPopup(m_name.c_str());
 }
 
-void dev::ConstEditWindow::Draw(
+void dev::LabelEditModal::Draw(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	static ImGuiTableFlags flags =
@@ -83,31 +83,30 @@ void dev::ConstEditWindow::Draw(
 
 		// Comment
 		bool delPressed = false;
-		if (dev::DrawProperty2EditableS(
-			"Name", "##ContextComment",
-			&(m_consts[m_selectedItemIdx]),
-			"name", "empty string means delete the const",
-			ImGuiInputTextFlags_CharsUppercase, &delPressed))
+		if (DrawProperty2EditableS(
+				"Name", "##ContextComment",
+				&(m_labels[m_selectedItemIdx]),
+				"name", "empty string means delete the label",
+				0, &delPressed))
 		{
 			// replace spaces with '_' in the name
 			std::replace(
-				m_consts[m_selectedItemIdx].begin(),
-				m_consts[m_selectedItemIdx].end(), ' ', '_');
+				m_labels[m_selectedItemIdx].begin(),
+				m_labels[m_selectedItemIdx].end(), ' ', '_');
 		}
 		if (delPressed)
 		{
-			dev::DeleteByIndex(m_consts, m_selectedItemIdx);
+			dev::DeleteByIndex(m_labels, m_selectedItemIdx);
 		}
 
 		// Global Addr
-		if (m_setFocus) {
-			ImGui::SetKeyboardFocusHere(); m_setFocus = false;
-		}
-		DrawProperty2EditableI(
-			"Global Address", "##EMContextAddress", &m_addr,
+		if (m_setFocus) { ImGui::SetKeyboardFocusHere(); m_setFocus = false; }
+
+		DrawProperty2EditableI("Global Address", "##EMContextAddress", &m_addr,
 			"A hexademical address in the format FF",
 			ImGuiInputTextFlags_CharsHexadecimal |
 			ImGuiInputTextFlags_AutoSelectAll);
+
 		m_enterPressed |= ImGui::IsKeyPressed(ImGuiKey_Enter);
 
 
@@ -117,28 +116,27 @@ void dev::ConstEditWindow::Draw(
 		ImGui::TableNextColumn();
 		ImGui::SeparatorText("");
 
-		// list all m_consts
+		// list all m_labels
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
 		ImGui::TableNextColumn();
 
-		if (m_consts.size() > 1)
+		if (m_labels.size() > 1)
 		{
 			if (ImGui::BeginListBox("##LListBox"))
 			{
-				for (int constIdx = 0;
-					constIdx < m_consts.size(); constIdx++)
+				for (int labelIdx = 0; labelIdx < m_labels.size(); labelIdx++)
 				{
-					auto& const_ = m_consts[constIdx];
+					auto& label = m_labels[labelIdx];
 
-					if (const_.empty()) continue;
+					if (label.empty()) continue;
 
-					const bool is_selected = (m_selectedItemIdx == constIdx);
+					const bool is_selected = (m_selectedItemIdx == labelIdx);
 					if (ImGui::Selectable(
-							std::format("{}##{}", const_, constIdx).c_str(),
+							std::format("{}##{}", label, labelIdx).c_str(),
 							is_selected))
 					{
-						m_selectedItemIdx = constIdx;
+						m_selectedItemIdx = labelIdx;
 					}
 
 					// Set the initial focus when opening the combo
@@ -155,8 +153,8 @@ void dev::ConstEditWindow::Draw(
 			ImGui::SameLine();
 
 			dev::DrawHelpMarker(
-				"This list contains all m_consts with the same value.\n"
-				"Specify which const_ fits this context best.");
+				"This list contains all m_labels with the same value.\n"
+				"Specify which label fits this context best.");
 			ImGui::SeparatorText("");
 		}
 
@@ -185,39 +183,35 @@ void dev::ConstEditWindow::Draw(
 
 		// OK button
 		if (warning) ImGui::BeginDisabled();
+
 		if (ImGui::Button("Ok", buttonSize) || m_enterPressed)
 		{
-			// remove empty m_consts
-			m_consts.erase(
-				std::remove_if(m_consts.begin(), m_consts.end(),
-				[](const std::string& const_) { return const_.empty(); }),
-				m_consts.end());
+			// remove empty m_labels
+			m_labels.erase(std::remove_if(m_labels.begin(), m_labels.end(),
+				[](const std::string& label) { return label.empty(); }), m_labels.end());
 
 			// empty list of strings means a req to delete the entity
-			if (m_editConst && (m_consts.empty() || m_addr != m_oldAddr))
+			if (m_editLabel && (m_labels.empty() || m_addr != m_oldAddr))
 			{
-				m_debugger.GetDebugData().DelConsts(m_oldAddr);
+				m_debugger.GetDebugData().DelLabels(m_oldAddr);
 			}
 
-			// merge edited m_consts with existing m_consts
-			if (!m_editConst || m_addr != m_oldAddr)
+			// merge edited m_labels with existing m_labels
+			if (!m_editLabel || m_addr != m_oldAddr)
 			{
-				auto constsP = m_debugger.GetDebugData().GetConsts(m_addr);
-				if (constsP) {
-					for (auto& const_ : *constsP)
-					{
-						if (std::find(m_consts.begin(),
-							m_consts.end(), const_) == m_consts.end())
-						{
-							m_consts.push_back(const_);
+				auto labelsP = m_debugger.GetDebugData().GetLabels(m_addr);
+				if (labelsP) {
+					for (auto& label : *labelsP) {
+						if (std::find(m_labels.begin(), m_labels.end(), label) == m_labels.end()) {
+							m_labels.push_back(label);
 						}
 					}
 				}
 			}
 
-			// store m_consts
-			if (!m_consts.empty()) {
-				m_debugger.GetDebugData().SetConsts(m_addr, m_consts);
+			// store m_labels
+			if (!m_labels.empty()) {
+				m_debugger.GetDebugData().SetLabels(m_addr, m_labels);
 			}
 
 			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});

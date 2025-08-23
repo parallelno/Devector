@@ -1,4 +1,4 @@
-﻿#include "ui/memory_edit_window.h"
+﻿#include "ui/memory_edit_modal.h"
 
 #include <format>
 
@@ -13,7 +13,7 @@ dev::MemoryEditWindow::MemoryEditWindow(
 	BaseWindow("Memory Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
-		BaseWindow::Type::Popup),
+		BaseWindow::Type::Modal),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
 

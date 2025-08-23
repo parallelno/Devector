@@ -208,7 +208,7 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 						}
 						else{
 							m_scheduler.AddSignal(
-								{dev::Signals::DISASM_UPDATE, (Addr)selectedAddr});
+								{dev::Signals::DISASM_UPDATE, (GlobalAddr)selectedAddr});
 						}
 					}
 
@@ -259,7 +259,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 			if (ImGui::MenuItem("Locate in the Disasm Window"))
 			{
 				m_scheduler.AddSignal(
-					{dev::Signals::DISASM_UPDATE, (Addr)_contextMenu.addr});
+					{dev::Signals::DISASM_UPDATE, (GlobalAddr)_contextMenu.addr});
 				ImGui::CloseCurrentPopup();
 			}
 

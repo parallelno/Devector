@@ -1,150 +1,68 @@
-﻿#include "ui/comment_edit_window.h"
+﻿#include "ui/trace_log_popup.h"
 
 #include <format>
 
 #include "utils/str_utils.h"
 #include "utils/imgui_utils.h"
 
-dev::CommentEditWindow::CommentEditWindow(
+dev::TraceLogPopup::TraceLogPopup(
 	dev::Hardware& _hardware, dev::Debugger& _debugger,
 	dev::Scheduler& _scheduler,
 	bool* _visibleP, const float* const _dpiScaleP)
 	:
-	BaseWindow("Comment Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
+	BaseWindow("#Tracelog Popup", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visibleP, _dpiScaleP,
-		ImGuiWindowFlags_AlwaysAutoResize,
+		ImGuiWindowFlags_None,
 		dev::BaseWindow::Type::Popup),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
-			dev::Signals::COMMENT_EDIT_WINDOW_ADD,
-			std::bind(&dev::CommentEditWindow::CallbackAdd, this,
-				std::placeholders::_1, std::placeholders::_2)));
-
-	_scheduler.AddCallback(
-		dev::Scheduler::Callback(
-			dev::Signals::COMMENT_EDIT_WINDOW_EDIT,
-			std::bind(&dev::CommentEditWindow::CallbackEdit, this,
+			dev::Signals::TRACE_LOG_POPUP_OPEN,
+			std::bind(&dev::TraceLogPopup::CallbackOpen, this,
 				std::placeholders::_1, std::placeholders::_2)));
 }
 
-void dev::CommentEditWindow::CallbackAdd(
+void dev::TraceLogPopup::CallbackOpen(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
-
-	m_enterPressed = false;
-	m_setFocus = true;
-	m_addr = globalAddr;
-	m_oldAddr = globalAddr;
-	m_comment = "";
+	m_addr = Addr(std::get<GlobalAddr>(*_data));
+	m_str = std::format("0x{:04x}", m_addr);
 
 	ImGui::OpenPopup(m_name.c_str());
 }
 
-void dev::CommentEditWindow::CallbackEdit(
+
+void dev::TraceLogPopup::Draw(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
+	if (ImGui::MenuItem("Copy")) {
+		dev::CopyToClipboard(m_str);
+	}
 
-	m_enterPressed = false;
-	m_setFocus = true;
-	m_addr = globalAddr;
-	m_oldAddr = globalAddr;
-	auto commentP = m_debugger.GetDebugData().GetComment(globalAddr);
-	m_comment = commentP ? *commentP : "";
-
-	ImGui::OpenPopup(m_name.c_str());
-}
-
-void dev::CommentEditWindow::Draw(
-	const dev::Signals _signals, dev::Scheduler::SignalData _data)
-{
-	static ImGuiTableFlags flags =
-		ImGuiTableFlags_ScrollY |
-		ImGuiTableFlags_SizingStretchSame |
-		ImGuiTableFlags_ContextMenuInBody;
-
-	if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
+	ImGui::SeparatorText("");
+	if (ImGui::MenuItem("Add/Remove Beakpoint"))
 	{
-		ImGui::TableSetupColumn(
-			"##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150);
-		ImGui::TableSetupColumn(
-			"##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 200);
+		Breakpoint::Status bpStatus =
+			static_cast<Breakpoint::Status>(
+				m_hardware.Request(
+					Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS,
+					{ {"addr", m_addr} })->at("status"));
 
-		// Comment
-		bool delPressed = false;
-		DrawProperty2EditableS(
-			"Comment", "##ContextComment",
-			&m_comment,
-			"m_comment", "empty string means delete the m_comment",
-			0, &delPressed);
-
-		// Global Addr
-		if (m_setFocus) {
-			ImGui::SetKeyboardFocusHere(); m_setFocus = false;
+		if (bpStatus == Breakpoint::Status::DELETED) {
+			Breakpoint::Data bpData { m_addr };
+			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
+				{"data0", bpData.data0 },
+				{"data1", bpData.data1 },
+				{"data2", bpData.data2 },
+				{"comment", ""}
+				});
 		}
-		DrawProperty2EditableI(
-			"Global Address", "##EMContextAddress", &m_addr,
-			"A hexademical address in the format FF",
-			ImGuiInputTextFlags_CharsHexadecimal |
-			ImGuiInputTextFlags_AutoSelectAll);
-
-		m_enterPressed |= ImGui::IsKeyPressed(ImGuiKey_Enter);
-
-		ImGui::TableNextRow();
-		ImGui::TableNextColumn();
-		ImGui::TableNextColumn();
-
-		// Warnings
-		const char* warning = nullptr;
-
-		if (m_addr >= Memory::MEMORY_MAIN_LEN) {
-			warning = "Too large address";
+		else {
+			m_hardware.Request(
+				Hardware::Req::DEBUG_BREAKPOINT_DEL,
+				{ {"addr", m_addr} });
 		}
-		else if (m_addr < 0) {
-			warning = "Too low address";
-		}
-
-		if (warning) {
-			ImGui::TextColored(DASM_CLR_WARNING, warning);
-		}
-
-		ImGui::TableNextRow();
-		ImGui::TableNextColumn();
-		ImGui::TableNextColumn();
-
-		// OK button
-		if (warning) ImGui::BeginDisabled();
-		if (ImGui::Button("Ok", buttonSize) || m_enterPressed)
-		{
-			// empty string means a req to delete the entity
-			if (m_comment.empty() || m_addr != m_oldAddr)
-			{
-				m_debugger.GetDebugData().DelComment(m_oldAddr);
-			}
-			if (!m_comment.empty()) {
-				m_debugger.GetDebugData().SetComment(m_addr, m_comment);
-			}
-
-			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
-			ImGui::CloseCurrentPopup();
-		}
-		if (warning) ImGui::EndDisabled();
-
-		// Cancel button
-		ImGui::SameLine();
-		ImGui::Text(" ");
-		ImGui::SameLine();
-
-		if (ImGui::Button("Cancel", buttonSize) |
-			ImGui::IsKeyReleased(ImGuiKey_Escape))
-		{
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::EndTable();
 	}
 }

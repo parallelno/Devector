@@ -6,7 +6,7 @@
 
 namespace dev
 {
-	class CommentEditWindow : public BaseWindow
+	class WatchpointsPopup : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
@@ -14,10 +14,15 @@ namespace dev
 		dev::Hardware& m_hardware;
 		dev::Debugger& m_debugger;
 
-		bool m_enterPressed = false;
-		bool m_setFocus = false;
-		int m_addr = 0;
-		int m_oldAddr = 0;
+		dev::Signals m_signal = dev::Signals::NONE;
+		bool m_isActive = true;
+		int m_oldId = -1;
+		int m_globalAddr = 0xFF;
+		int m_access = static_cast<int>(Watchpoint::Access::RW);
+		int m_cond = static_cast<int>(dev::Condition::ANY);
+		int m_val = 0;
+		int m_type = static_cast<int>(Watchpoint::Type::LEN);
+		int m_len = 1;
 		std::string m_comment = "";
 
 		void Draw(
@@ -30,7 +35,7 @@ namespace dev
 			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
 	public:
-		CommentEditWindow(
+		WatchpointsPopup(
 			dev::Hardware& _hardware, dev::Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP,

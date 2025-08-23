@@ -29,13 +29,6 @@ namespace dev
 #define DEV_COL32_B_SHIFT    8
 #define DEV_COL32_A_SHIFT    0
 
-	enum class ReqPopup : int {
-		NONE = 0,
-		INIT_ADD,
-		INIT_EDIT,
-		ADD,
-		EDIT
-	};
 
 	// 0xRRGGBBAA to Vec4(r,g,b,a)
 	static constexpr ImVec4 IM_VEC4(const uint32_t _color)
@@ -130,7 +123,6 @@ namespace dev
 
 	void DrawHelpMarker(const char* _text);
 	bool HyperLink(const char* label, bool underlineWhenHoveredOnly = true);
-	void DrawPopup(const char* _title, const char* _text);
 	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right,
 		const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
 	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale,

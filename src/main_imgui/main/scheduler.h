@@ -36,8 +36,9 @@ namespace dev
 			uint16_t len;
 		};
 		using SignalData = std::optional<std::variant<
-			GlobalAddr,
+			dev::GlobalAddr,
 			GlobalAddrLen,
+			dev::Id,
 			bool>>;
 
 		using Clk = std::chrono::time_point<std::chrono::steady_clock>;

@@ -17,7 +17,8 @@ namespace dev
 
 		enum class Type {
 			Window,
-			Popup
+			Popup,
+			Modal,
 		};
 
 		const float* const m_dpiScaleP = nullptr;
@@ -42,7 +43,7 @@ namespace dev
 			const int _defaultW, const int _defaultH,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP = nullptr,
-			const  float* const _dpiScaleP,
+			const  float* const _dpiScaleP = nullptr,
 			ImGuiWindowFlags _flags = ImGuiWindowFlags_NoCollapse,
 			BaseWindow::Type _type = BaseWindow::Type::Window);
 

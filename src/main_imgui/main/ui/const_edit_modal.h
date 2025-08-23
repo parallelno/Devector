@@ -6,7 +6,7 @@
 
 namespace dev
 {
-	class TraceLogPopup : public BaseWindow
+	class ConstEditModal : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
@@ -14,18 +14,26 @@ namespace dev
 		dev::Hardware& m_hardware;
 		dev::Debugger& m_debugger;
 
-		Addr m_addr = 0;
-		std::string m_str = "";
+		bool m_enterPressed = false;
+		bool m_setFocus = false;
+		int m_addr = 0;
+		int m_oldAddr = 0;
+		DebugData::LabelList m_consts;
+		int m_selectedItemIdx = 0;
+		bool m_editConst = false;
+
 
 		void Draw(
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data) override;
 
-		void CallbackOpen(
+		void CallbackAdd(
+			const dev::Signals _signals, dev::Scheduler::SignalData _data);
+		void CallbackEdit(
 			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
 	public:
-		TraceLogPopup(
+		ConstEditModal(
 			dev::Hardware& _hardware, dev::Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP,

@@ -202,27 +202,39 @@ void dev::DevectorApp::WindowsInit()
 		*m_hardwareP, *m_debuggerP, m_scheduler, &m_debugdataWindowVisible,
 		&m_dpiScale);
 
-	m_labelEditWindowP = std::make_unique<dev::LabelEditWindow>(
+	m_labelEditPopupP = std::make_unique<dev::LabelEditModal>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
-	m_constEditWindowP = std::make_unique<dev::ConstEditWindow>(
+	m_constEditPopupP = std::make_unique<dev::ConstEditModal>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
-	m_commentEditWindowP = std::make_unique<dev::CommentEditWindow>(
+	m_commentEditPopupP = std::make_unique<dev::CommentEditModal>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
-	m_memoryEditWindowP = std::make_unique<dev::MemoryEditWindow>(
+	m_memoryEditPopupP = std::make_unique<dev::MemoryEditWindow>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
-	m_codePerfEditWindowP = std::make_unique<dev::CodePerfEditWindow>(
+	m_codePerfEditPopupP = std::make_unique<dev::CodePerfEditModal>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 
-	m_scriptEditWindowP = std::make_unique<dev::ScriptEditWindow>(
+	m_scriptEditPopupP = std::make_unique<dev::ScriptEditModal>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
+		&m_dpiScale);
+
+	m_traceLogPopupP = std::make_unique<dev::TraceLogPopup>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
+		&m_dpiScale);
+
+	m_breakpoints_popupP = std::make_unique<dev::BreakpointsPopup>(
+		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
+		&m_dpiScale);
+
+	m_watchpoints_popupP = std::make_unique<dev::WatchpointsPopup>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
 		&m_dpiScale);
 }

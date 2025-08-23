@@ -3,24 +3,23 @@
 #include "utils/imgui_utils.h"
 #include "ui/base_window.h"
 #include "scheduler.h"
+#include "core/code_perf.h"
 
 namespace dev
 {
-	class ConstEditWindow : public BaseWindow
+	class CodePerfEditModal : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
 
-		dev::Hardware& m_hardware;
-		dev::Debugger& m_debugger;
+		Hardware& m_hardware;
+		Debugger& m_debugger;
 
 		bool m_enterPressed = false;
 		bool m_setFocus = false;
-		int m_addr = 0;
-		int m_oldAddr = 0;
-		DebugData::LabelList m_consts;
-		int m_selectedItemIdx = 0;
-		bool m_editConst = false;
+		int m_addrStart = 0;
+		int m_addrEnd = 0;
+		dev::CodePerf m_codePerf;
 
 
 		void Draw(
@@ -33,8 +32,8 @@ namespace dev
 			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
 	public:
-		ConstEditWindow(
-			dev::Hardware& _hardware, dev::Debugger& _debugger,
+		CodePerfEditModal(
+			Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP,
 			const float* const _dpiScaleP);

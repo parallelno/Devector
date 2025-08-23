@@ -22,27 +22,6 @@ namespace dev
 
 		static constexpr int MAX_DISASM_LABELS = 4;
 
-		struct ContextMenu {
-			enum class Status {
-				NONE = 0,
-				INIT_CONTEXT_MENU,
-			};
-			Status status = Status::NONE;
-			Addr addr = 0;
-			std::string str;
-			bool immHovered = false; // the context menu was opened on the immediate operand
-			const char* contextMenuName = "DisasmItemMenu";
-
-			void Init(Addr _addr, const std::string& _lineS, const bool _immHovered = false)
-			{
-				immHovered = _immHovered;
-				status = Status::INIT_CONTEXT_MENU;
-				addr = _addr;
-				str = _lineS;
-			}
-		};
-		ContextMenu m_contextMenu;
-
 		struct AddrHighlight
 		{
 			int addr = -1; // -1 means disabled
@@ -61,7 +40,6 @@ namespace dev
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
-		int64_t m_ccLastRun = 0;
 		const TraceLog::Lines* m_traceLogP = nullptr;
 		uint8_t m_disasmFilter = 0;
 		int m_selectedLineIdx = 0;
@@ -75,11 +53,10 @@ namespace dev
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data) override;
 		void DrawLog(const bool _isRunning);
-		void DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu);
 		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-			ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
+			AddrHighlight& _addrHighlight);
 		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
-			ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
+			AddrHighlight& _addrHighlight);
 
 	public:
 		TraceLogWindow(Hardware& _hardware, Debugger& _debugger,

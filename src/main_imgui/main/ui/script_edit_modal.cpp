@@ -1,11 +1,11 @@
-﻿#include "ui/script_edit_window.h"
+﻿#include "ui/script_edit_modal.h"
 
 #include <format>
 
 #include "utils/str_utils.h"
 #include "utils/imgui_utils.h"
 
-dev::ScriptEditWindow::ScriptEditWindow(
+dev::ScriptEditModal::ScriptEditModal(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
 	bool* _visibleP, const float* const _dpiScaleP)
@@ -13,24 +13,24 @@ dev::ScriptEditWindow::ScriptEditWindow(
 	BaseWindow("Script Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visibleP, _dpiScaleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
-		BaseWindow::Type::Popup),
+		BaseWindow::Type::Modal),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::SCRIPT_EDIT_WINDOW_ADD,
-			std::bind(&dev::ScriptEditWindow::CallbackAdd, this,
+			std::bind(&dev::ScriptEditModal::CallbackAdd, this,
 				std::placeholders::_1, std::placeholders::_2)));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
 			dev::Signals::SCRIPT_EDIT_WINDOW_EDIT,
-			std::bind(&dev::ScriptEditWindow::CallbackEdit, this,
+			std::bind(&dev::ScriptEditModal::CallbackEdit, this,
 				std::placeholders::_1, std::placeholders::_2)));
 }
 
-void dev::ScriptEditWindow::CallbackAdd(
+void dev::ScriptEditModal::CallbackAdd(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
@@ -43,7 +43,7 @@ void dev::ScriptEditWindow::CallbackAdd(
 	ImGui::OpenPopup(m_name.c_str());
 }
 
-void dev::ScriptEditWindow::CallbackEdit(
+void dev::ScriptEditModal::CallbackEdit(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
@@ -60,7 +60,7 @@ void dev::ScriptEditWindow::CallbackEdit(
 	ImGui::OpenPopup(m_name.c_str());
 }
 
-void dev::ScriptEditWindow::Draw(
+void dev::ScriptEditModal::Draw(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	static ImGuiTableFlags flags =

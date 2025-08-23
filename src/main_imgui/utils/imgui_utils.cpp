@@ -128,28 +128,18 @@ bool dev::HyperLink(const char* label, bool underlineWhenHoveredOnly)
 	return isClicked;
 }
 
-void dev::DrawPopup(const char* _title, const char* _text)
-{
-	ImGui::OpenPopup(_title);
-
-	if (ImGui::BeginPopupModal(_title, NULL))
-	{
-		ImGui::Text(_text);
-		if (ImGui::Button("Close"))
-			ImGui::CloseCurrentPopup();
-		ImGui::EndPopup();
-	}
-}
 
 static inline ImVec2 operator+(const ImVec2& lhs, const ImVec2& rhs)
 {
 	return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y);
 }
 
+
 static inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs)
 {
 	return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y);
 }
+
 
 void dev::TextAligned(const char* _text, const ImVec2& _aligment)
 {
@@ -555,7 +545,7 @@ auto dev::DrawPropertyMemoryMapping(Breakpoint::MemPages _memPages)
 	bool rd73 = _memPages.rdisk7page3;
 
 	DrawProperty2EditableCheckBox(
-		"Ram", "##BPContextAccessRam", &ram, "To check the main ram");
+		"Ram", "##BPContextAccessRam", &ram, "To check the main RAM");
 	DrawProperty2EditableCheckBox4(
 		"Ram Disk 1", "##BPCARD0P0", "##BPCARD0P1", "##BPCARD0P2", "##BPCARD0P3",
 		&rd00, &rd01, &rd02, &rd03, "To check the RAM Disk1 pages 0,1,2,3");

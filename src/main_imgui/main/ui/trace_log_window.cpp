@@ -1,6 +1,7 @@
 #include "ui/trace_log_window.h"
 
-dev::TraceLogWindow::TraceLogWindow(Hardware& _hardware, Debugger& _debugger,
+dev::TraceLogWindow::TraceLogWindow(
+	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
 	bool* _visibleP, const float* const _dpiScaleP)
 	:
@@ -35,47 +36,6 @@ void dev::TraceLogWindow::CallbackUpdateData(
 	m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
 }
 
-void dev::TraceLogWindow::DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
-	ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
-{
-	// the addr column
-	ImGui::TableNextColumn();
-	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
-
-	auto mouseAction = DrawAddr(_isRunning, _line.GetAddrS(),
-		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF), _addrHighlight.IsEnabled(_line.addr));
-	switch (mouseAction)
-	{
-	case UIItemMouseAction::LEFT: // Navigate to the address
-		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (Addr)_line.addr});
-		break;
-	case UIItemMouseAction::RIGHT:
-		_contextMenu.Init(_line.addr, _line.GetAddrS());
-		break;
-	}
-}
-
-void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-	ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
-{
-	// draw code
-	ImGui::TableNextColumn();
-	auto mouseAction = dev::DrawCodeLine(_isRunning, _line, false);
-	// when a user did action to the immediate operand
-	switch (mouseAction)
-	{
-	// any case below means that the immediate addr was at least hovered
-	case UIItemMouseAction::LEFT: // Navigate to the address
-		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (Addr)_line.imm});
-		break;
-	 // init the immediate value as an addr to let the context menu copy it
-	case UIItemMouseAction::RIGHT:
-		// TODO: check if it's needed
-		//_contextMenu.Init(_line.imm, _line.GetImmediateS(), true);
-		break;
-	}
-}
-
 const char* filterNames[] = {
 	 "c*", "+ call",
 	 "+ j*", "+ jmp",
@@ -100,11 +60,13 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 			const bool is_selected = (m_disasmFilter == n);
 			if (ImGui::Selectable(filterNames[n], is_selected)) {
 				m_disasmFilter = n;
-				m_traceLogP = m_debugger.GetTraceLog().GetDisasm(TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
+				m_traceLogP = m_debugger.GetTraceLog().GetDisasm(
+					TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
 				m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
 			}
 
-			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			// Set the initial focus when opening the combo
+			// (scrolling + keyboard navigation focus)
 			if (is_selected)
 				ImGui::SetItemDefaultFocus();
 		}
@@ -117,7 +79,9 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 	const char* tableName = "##TLTable";
 	int hoveredLineIdx = -1;
 	ImVec2 selectionMin = ImGui::GetCursorScreenPos();
-	ImVec2 selectionMax = ImVec2(selectionMin.x + ImGui::GetWindowWidth(), selectionMin.y);
+	ImVec2 selectionMax = ImVec2(
+		selectionMin.x + ImGui::GetWindowWidth(),
+		selectionMin.y);
 
 	if (_isRunning) ImGui::BeginDisabled();
 
@@ -132,24 +96,35 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 		ImGuiTableFlags_Resizable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
-		ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, 0);
-		ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize, ADDR_W);
-		ImGui::TableSetupColumn("command", ImGuiTableColumnFlags_WidthFixed, CODE_W);
+		ImGui::TableSetupColumn("",
+			ImGuiTableColumnFlags_WidthFixed |
+			ImGuiTableColumnFlags_NoResize, 0);
+		ImGui::TableSetupColumn("Addr",
+			ImGuiTableColumnFlags_WidthFixed |
+			ImGuiTableColumnFlags_NoResize, ADDR_W);
+		ImGui::TableSetupColumn("command",
+			ImGuiTableColumnFlags_WidthFixed, CODE_W);
 		ImGui::TableSetupColumn("consts");
 
 		ImGuiListClipper clipper;
 		clipper.Begin(int(m_disasmLinesLen));
 		while (clipper.Step())
 		{
-			for (int lineIdx = clipper.DisplayStart; lineIdx < clipper.DisplayEnd; lineIdx++)
+			for (int lineIdx = clipper.DisplayStart;
+				lineIdx < clipper.DisplayEnd;
+				lineIdx++)
 			{
 				ImGui::TableNextRow();
 
 				// the line selection/highlight
 				ImGui::TableNextColumn();
-				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
+				ImGui::TableSetBgColor(
+					ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
 				const bool isSelected = m_selectedLineIdx == lineIdx;
-				if (ImGui::Selectable(std::format("##TLLineId{:04d}", lineIdx).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
+
+				if (ImGui::Selectable(
+					std::format("##TLLineId{:04d}", lineIdx).c_str(),
+					isSelected, ImGuiSelectableFlags_SpanAllColumns))
 				{
 					m_selectedLineIdx = lineIdx;
 				}
@@ -157,16 +132,19 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 				{
 					selectionMin.y = ImGui::GetItemRectMin().y;
 					selectionMax.y = ImGui::GetItemRectMax().y;
-					hoveredLineIdx = ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ? lineIdx : hoveredLineIdx;
+					hoveredLineIdx = ImGui::IsMouseHoveringRect(
+						selectionMin, selectionMax) ?
+						lineIdx :
+						hoveredLineIdx;
 				}
 
 				const auto& line = m_traceLogP->at(lineIdx);
 				int addr = line.addr;
 
 				DrawDisasmAddr(
-					_isRunning, line, m_contextMenu, m_addrHighlight);
+					_isRunning, line, m_addrHighlight);
 				DrawDisasmCode(
-					_isRunning, line, m_contextMenu, m_addrHighlight);
+					_isRunning, line, m_addrHighlight);
 				DrawDisasmConsts(line, MAX_DISASM_LABELS);
 
 			}
@@ -174,7 +152,6 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 		ImGui::EndTable();
 	}
 	Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-	DrawContextMenu(regPC, m_contextMenu);
 
 	ImGui::PopStyleVar(2);
 
@@ -182,41 +159,49 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 }
 
 
-void dev::TraceLogWindow::DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu)
+void dev::TraceLogWindow::DrawDisasmAddr(
+	const bool _isRunning, const Disasm::Line& _line,
+	AddrHighlight& _addrHighlight)
 {
-	if (_contextMenu.status == ContextMenu::Status::INIT_CONTEXT_MENU) {
-		ImGui::OpenPopup(_contextMenu.contextMenuName);
-		_contextMenu.status = ContextMenu::Status::NONE;
-	}
+	// the addr column
+	ImGui::TableNextColumn();
+	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 
-	if (ImGui::BeginPopup(_contextMenu.contextMenuName))
+	auto mouseAction = DrawAddr(_isRunning, _line.GetAddrS(),
+		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF),
+		_addrHighlight.IsEnabled(_line.addr));
+
+	switch (mouseAction)
 	{
-		if (ImGui::MenuItem("Copy")) {
-			dev::CopyToClipboard(_contextMenu.str);
-		}
+	case UIItemMouseAction::LEFT: // Navigate to the address
+		m_scheduler.AddSignal(
+			{dev::Signals::DISASM_UPDATE, (GlobalAddr)_line.addr});
+		break;
+	case UIItemMouseAction::RIGHT:
+		m_scheduler.AddSignal(
+			{dev::Signals::TRACE_LOG_POPUP_OPEN, (GlobalAddr)_line.addr});
+		break;
+	}
+}
 
-		ImGui::SeparatorText("");
-		if (ImGui::MenuItem("Add/Remove Beakpoint"))
-		{
-			Breakpoint::Status bpStatus =
-				static_cast<Breakpoint::Status>(
-					m_hardware.Request(
-						Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS,
-						{ {"addr", m_contextMenu.addr} })->at("status"));
+void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
+	AddrHighlight& _addrHighlight)
+{
+	// draw code
+	ImGui::TableNextColumn();
+	auto mouseAction = dev::DrawCodeLine(_isRunning, _line, false);
 
-			if (bpStatus == Breakpoint::Status::DELETED) {
-				Breakpoint::Data bpData { m_contextMenu.addr };
-				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
-					{"data0", bpData.data0 },
-					{"data1", bpData.data1 },
-					{"data2", bpData.data2 },
-					{"comment", ""}
-					});
-			}
-			else {
-				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL, { {"addr", m_contextMenu.addr} });
-			}
-		}
-		ImGui::EndPopup();
+	// when a user did action to the immediate operand
+	switch (mouseAction)
+	{
+	// any case below means that the immediate addr was at least hovered
+	case UIItemMouseAction::LEFT: // Navigate to the address
+		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (GlobalAddr)_line.imm});
+		break;
+	// init the immediate value as an addr to let the context menu copy it
+	case UIItemMouseAction::RIGHT:
+		m_scheduler.AddSignal(
+			{dev::Signals::TRACE_LOG_POPUP_OPEN, (GlobalAddr)_line.imm});
+		break;
 	}
 }

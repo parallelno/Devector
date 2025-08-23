@@ -3,11 +3,10 @@
 #include "utils/imgui_utils.h"
 #include "ui/base_window.h"
 #include "scheduler.h"
-#include "core/code_perf.h"
 
 namespace dev
 {
-	class CodePerfEditWindow : public BaseWindow
+	class LabelEditModal : public BaseWindow
 	{
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
@@ -17,10 +16,11 @@ namespace dev
 
 		bool m_enterPressed = false;
 		bool m_setFocus = false;
-		int m_addrStart = 0;
-		int m_addrEnd = 0;
-		dev::CodePerf m_codePerf;
-
+		int m_addr = 0;
+		int m_oldAddr = 0;
+		DebugData::LabelList m_labels;
+		int m_selectedItemIdx = 0;
+		bool m_editLabel = false;
 
 		void Draw(
 			const dev::Signals _signals,
@@ -32,7 +32,7 @@ namespace dev
 			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
 	public:
-		CodePerfEditWindow(
+		LabelEditModal(
 			Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP,

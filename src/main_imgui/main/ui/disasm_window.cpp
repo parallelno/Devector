@@ -242,7 +242,7 @@ void dev::DisasmWindow::DrawDisasmAddr(
 	switch (mouseAction)
 	{
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (Addr)_line.addr});
+		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (GlobalAddr)_line.addr});
 		break;
 	case UIItemMouseAction::RIGHT:
 		_contextMenu.Init(
@@ -263,7 +263,7 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning,
 	{
 	// any case below means that the immediate addr was at least hovered
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (Addr)_line.imm});
+		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (GlobalAddr)_line.imm});
 		break;
 
 	// init the immediate value as an addr to let the context menu copy it

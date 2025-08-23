@@ -97,7 +97,6 @@ namespace dev
 		int m_disasmLines = Disasm::DISASM_LINES_MAX;
 		const Disasm::ImmAddrLinks* m_immLinksP = nullptr;
 		size_t m_immLinksNum = 0;
-		int64_t m_ccLastRun = 0;
 		int m_selectedLineAddr = 0;
 		static constexpr int NAVIGATE_ADDRS_LEN = 256;
 		// contains addr where the user navigated to
