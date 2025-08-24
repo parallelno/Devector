@@ -45,6 +45,8 @@ namespace dev
 		BREAKPOINTS_POPUP_EDIT		= 1 << 27,
 		WATCHPOINTS_POPUP_ADD		= 1 << 28,
 		WATCHPOINTS_POPUP_EDIT		= 1 << 29,
+
+		HEX_VIEWER_DATA_UPDATE		= 1 << 30,
 	};
 
 	// Conversion operator (as free function)
