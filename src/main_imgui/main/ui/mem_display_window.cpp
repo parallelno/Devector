@@ -1,4 +1,5 @@
 #include "ui/mem_display_window.h"
+#include "ui/mem_display_window_consts.h"
 #include "utils/imgui_utils.h"
 
 
@@ -134,54 +135,6 @@ void dev::MemDisplayWindow::DrawSelector()
 	}
 }
 
-static const char* separatorsS[] = {
-	"Main Ram",
-	"RAM Disk 1 Page 0",
-	"RAM Disk 1 Page 1",
-	"RAM Disk 1 Page 2",
-	"RAM Disk 1 Page 3",
-	"RAM Disk 2 Page 0",
-	"RAM Disk 2 Page 1",
-	"RAM Disk 2 Page 2",
-	"RAM Disk 2 Page 3",
-	"RAM Disk 3 Page 0",
-	"RAM Disk 3 Page 1",
-	"RAM Disk 3 Page 2",
-	"RAM Disk 3 Page 3",
-	"RAM Disk 4 Page 0",
-	"RAM Disk 4 Page 1",
-	"RAM Disk 4 Page 2",
-	"RAM Disk 4 Page 3",
-	"RAM Disk 5 Page 0",
-	"RAM Disk 5 Page 1",
-	"RAM Disk 5 Page 2",
-	"RAM Disk 5 Page 3",
-	"RAM Disk 6 Page 0",
-	"RAM Disk 6 Page 1",
-	"RAM Disk 6 Page 2",
-	"RAM Disk 6 Page 3",
-	"RAM Disk 7 Page 0",
-	"RAM Disk 7 Page 1",
-	"RAM Disk 7 Page 2",
-	"RAM Disk 7 Page 3",
-	"RAM Disk 8 Page 0",
-	"RAM Disk 8 Page 1",
-	"RAM Disk 8 Page 2",
-	"RAM Disk 8 Page 3"
-};
-
-
-static const char* tab_names[] = {
-	"Main Ram",
-	"RAM Disk 1",
-	"RAM Disk 2",
-	"RAM Disk 3",
-	"RAM Disk 4",
-	"RAM Disk 5",
-	"RAM Disk 6",
-	"RAM Disk 7",
-	"RAM Disk 8"
-};
 
 void dev::MemDisplayWindow::DrawMemoryTabs()
 {
@@ -195,7 +148,7 @@ void dev::MemDisplayWindow::DrawMemoryTabs()
 	{
 		for (int tab_idx = 0; tab_idx < MEM_TABS; tab_idx++)
 		{
-			if (ImGui::BeginTabItem(tab_names[tab_idx]))
+			if (ImGui::BeginTabItem(MemDisplay::tab_names[tab_idx]))
 			{
 				m_selectedTab = tab_idx;
 
@@ -222,7 +175,7 @@ void dev::MemDisplayWindow::DrawMemoryTabs()
 					bank_idx < bank_idx_start + banks_len;
 					bank_idx++)
 				{
-					ImGui::SeparatorText(separatorsS[bank_idx]);
+					ImGui::SeparatorText(MemDisplay::separatorsS[bank_idx]);
 					ImVec2 imagePos = ImGui::GetCursorScreenPos();
 
 					auto framebufferTex = m_glUtils.GetFramebufferTexture(
@@ -283,7 +236,7 @@ void dev::MemDisplayWindow::DrawTooltip(
 			{ { "globalAddr", globalAddr } })->at("data");
 
 		ImGui::Text("0x%06X (0x%02X), %s",
-			globalAddr, val, separatorsS[_img_hovered_idx]);
+			globalAddr, val, MemDisplay::separatorsS[_img_hovered_idx]);
 
 		ImGui::EndTooltip();
 	}
