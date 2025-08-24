@@ -7,6 +7,7 @@
 #include "utils/json_utils.h"
 #include "utils/consts.h"
 #include "devector_app.h"
+#include "version.h"
 
 int main(int argc, char** argv)
 {
@@ -14,21 +15,30 @@ int main(int argc, char** argv)
 	auto executableDir = dev::GetExecutableDir();
 	auto settingsPath = executableDir + "settings.json";
 
-	// if it's only one valid path as an argument, use it as a path to the rom/fdd/rec file
+	// if it's only one valid path as an argument,
+	// use it as a path to the rom/fdd/rec file
 	if (argc == 2)
 	{
-		auto path = std::string(argv[1]);
-		if (dev::IsFileExist(path))
+		auto arg = std::string(argv[1]);
+		if (dev::IsFileExist(arg))
 		{
-			rom_fdd_recPath = path;
+			rom_fdd_recPath = arg;
+		}
+		else if (arg == "--version" || arg == "-v")
+		{
+			std::string version = std::format(
+				"Build details: version {}, built on {}", APP_VERSION, __DATE__);
+
+			dev::Log(version);
+			return 0;
 		}
 	}
-	
+
 	if (rom_fdd_recPath.empty())
 	{
 		dev::ArgsParser argsParser(argc, argv,
 			"This is an emulator of the Soviet personal computer Vector06C. It has built-in debugger functionality.");
-		
+
 		auto settingsPath = argsParser.GetString("settingsPath",
 			"The path to the settings.", false, executableDir + "settings.json");
 
@@ -49,7 +59,8 @@ int main(int argc, char** argv)
 	nlohmann::json settingsJ;
 	if (dev::IsFileExist(settingsPath) == false)
 	{
-		dev::Log("The settings wasn't found. Created new default settings: {}", settingsPath);
+		dev::Log("The settings wasn't found. "
+			"Created new default settings: {}", settingsPath);
 	}
 	else {
 		try
@@ -58,7 +69,8 @@ int main(int argc, char** argv)
 		}
 		catch (const std::exception& e)
 		{
-			dev::Log("The settings file is corrupted. Created new default settings: {}", settingsPath);
+			dev::Log("The settings file is corrupted. "
+				"Created new default settings: {}", settingsPath);
 		}
 	}
 

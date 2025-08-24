@@ -1,10 +1,12 @@
 ﻿#include <format>
 #include "ui/about_window.h"
 #include "utils/str_utils.h"
+#include "version.h"
 
 dev::AboutWindow::AboutWindow(
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP,
+	const float* const _dpiScaleP)
 	:
 	BaseWindow("About Devector", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visibleP, _dpiScaleP,
@@ -70,5 +72,6 @@ void dev::AboutWindow::DrawContext()
 	ImGui::Separator();
 	ImGui::Dummy({ 1, 5 });
 	ImGui::Text("Developed by Alexander Fedotovskikh");
-	ImGui::Text("Build details: %s", compilation_date.c_str());
+	ImGui::Text("Build details:\n"
+				"version %s, built on %s", APP_VERSION , __DATE__);
 }

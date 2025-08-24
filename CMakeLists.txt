@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
 
-project(devector)
+project(devector VERSION 9.3.1)
 
 # Prevent in-source build
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
@@ -141,6 +141,16 @@ set(STB_IMAGE_SRC
 	${STB_IMAGE_DIR}/stb_image.h
 )
 
+# ----- Version header (generated into build dir) -----
+set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${GENERATED_INCLUDE_DIR}")
+
+configure_file(
+    "${DEVECTOR_DIR}/version.h.in"
+    "${GENERATED_INCLUDE_DIR}/version.h"
+    @ONLY
+)
+
 # devector source files
 file(GLOB_RECURSE CORE_SRC ${CORE_DIR}/*.cpp ${CORE_DIR}/*.h)
 file(GLOB_RECURSE UTILS_SRC ${UTILS_DIR}/*.cpp ${UTILS_DIR}/*.h)
@@ -214,6 +224,8 @@ set(SOURCES
 
 	${DEVECTOR_DIR}/utils/imgui_utils.h
 	${DEVECTOR_DIR}/utils/imgui_utils.cpp
+
+	${GENERATED_INCLUDE_DIR}/version.h
 )
 
 # Executable
@@ -265,6 +277,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	${DEVECTOR_DIR}
 	${DEVECTOR_DIR}/main
 	${DEVECTOR_DIR}/main/ui
+	${GENERATED_INCLUDE_DIR}
 )
 
 if(UNIX AND NOT APPLE)

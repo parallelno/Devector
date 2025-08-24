@@ -11,8 +11,6 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 300;
 
-		const std::string compilation_date = __DATE__;
-
 		void DrawContext();
 
 	public:

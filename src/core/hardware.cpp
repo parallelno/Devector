@@ -462,7 +462,9 @@ void dev::Hardware::ReqHandling(const std::chrono::duration<int64_t, std::nano> 
 
 	case Req::KEY_HANDLING:
 	{
-		auto op = m_io.GetKeyboard().KeyHandling(dataJ["scancode"], dataJ["action"]);
+		auto op = m_io.GetKeyboard().KeyHandling(
+			dataJ["scancode"], dataJ["action"]);
+
 		if (op == Keyboard::Operation::RESET) {
 			Reset();
 		}
