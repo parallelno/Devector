@@ -8,17 +8,26 @@ dev::Keyboard::Keyboard()
 }
 
 // Hardware thread
-void dev::Keyboard::KeyHandling(int _scancode, int _action)
+auto dev::Keyboard::KeyHandling(int _scancode, int _action)
+-> Operation
 {
 	int row, column;
 
 	switch (_scancode)
 	{
-		// BLK + VVOD functionality. key F11 checked in disasm_window
+	// BLK + VVOD functionality
+	case SDL_SCANCODE_F11:
+		if (_action == SDL_EVENT_KEY_UP) {
+			return Operation::RESET;
+		}
+		break;
 
-
-		// BLK + SBR functionality.  key F12 checked in disasm_window
-
+		// BLK + SBR functionality
+	case SDL_SCANCODE_F12:
+		if (_action == SDL_EVENT_KEY_UP) {
+			return Operation::RESTART;
+		}
+		break;
 
 		// SS (shift) key
 	case SDL_SCANCODE_LSHIFT: [[fallthrough]];
@@ -60,6 +69,8 @@ void dev::Keyboard::KeyHandling(int _scancode, int _action)
 		}
 		break;
 	}
+
+	return Operation::NONE;
 };
 
 auto dev::Keyboard::Read(int _rows)

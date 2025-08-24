@@ -32,7 +32,7 @@ namespace dev
 
 		Keyboard();
 
-		void KeyHandling(int _scancode, int _action);
+		auto KeyHandling(int _scancode, int _action) -> Operation;
 		auto Read(int _rows) -> uint8_t;
 
 	private:

@@ -462,10 +462,15 @@ void dev::Hardware::ReqHandling(const std::chrono::duration<int64_t, std::nano> 
 
 	case Req::KEY_HANDLING:
 	{
-		m_io.GetKeyboard().KeyHandling(dataJ["scancode"], dataJ["action"]);
-	}
+		auto op = m_io.GetKeyboard().KeyHandling(dataJ["scancode"], dataJ["action"]);
+		if (op == Keyboard::Operation::RESET) {
+			Reset();
+		}
+		else if (op == Keyboard::Operation::RESTART) {
+			Restart();
+		}
 		break;
-
+	}
 	case Req::GET_SCROLL_VERT:
 		out = {
 			{"scrollVert", m_display.GetScrollVert()}

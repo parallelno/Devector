@@ -102,14 +102,9 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	if (_isRunning) ImGui::EndDisabled();
 
 	ImGui::SameLine();
-	if (ImGui::Button("Reset") | ImGui::IsKeyPressed(ImGuiKey_F10))
+	if (ImGui::Button("Reset"))
 	{
 		m_scheduler.AddSignal({dev::Signals::RELOAD});
-	}
-
-	if (ImGui::IsKeyPressed(ImGuiKey_F11))
-	{
-		m_hardware.Request(Hardware::Req::RESTART);
 	}
 
 	ImGui::SameLine();
