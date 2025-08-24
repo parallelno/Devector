@@ -87,8 +87,12 @@ namespace dev
 			int driveIdxUpdated = 0;
 			FileType fileType = FileType::ROM;
 
-			void Init(const State& _state, const Type _type = Type::OPEN_FILE_DIALOG, FileType _fileType = FileType::UNDEFINED, const std::string& _path = "",
-				const int _driveIdx = INVALID_ID, bool _autoBoot = false)
+			void Init(const State& _state,
+				const Type _type = Type::OPEN_FILE_DIALOG,
+				FileType _fileType = FileType::UNDEFINED,
+				const std::string& _path = "",
+				const int _driveIdx = INVALID_ID,
+				bool _autoBoot = false)
 			{
 				if (state == LoadingRes::State::EXIT) return;
 				fileType = _fileType;
@@ -186,12 +190,15 @@ namespace dev
 		void SettingsInitMemDisplayShaders();
 		void RecentFilesInit();
 		void RecentFilesStore();
-		void RecentFilesUpdate(const FileType _fileType, const std::string& _path, const int _driveIdx = INVALID_ID, const bool _autoBoot = false);
+		void RecentFilesUpdate(const FileType _fileType,
+			const std::string& _path, const int _driveIdx = INVALID_ID,
+			const bool _autoBoot = false);
 		void AppStyleInit();
 		void MainMenuUpdate();
 		void Load(const std::string& _path);
 		void LoadRom(const std::string& _path);
-		void LoadFdd(const std::string& _path, const int _driveIdx, const bool _autoBoot);
+		void LoadFdd(const std::string& _path, const int _driveIdx,
+			const bool _autoBoot);
 		void LoadRecording(const std::string& _path);
 		void CallbackReload(
 			const dev::Signals _signals = dev::Signals::NONE,

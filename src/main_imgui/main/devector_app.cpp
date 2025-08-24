@@ -303,7 +303,9 @@ void dev::DevectorApp::Update()
 void dev::DevectorApp::RestartOnLoadFdd()
 {
 	// ruslat
-	auto ruslatHistoryJ = *m_hardwareP->Request(Hardware::Req::GET_RUSLAT_HISTORY);
+	auto ruslatHistoryJ = *m_hardwareP->Request(
+		Hardware::Req::GET_RUSLAT_HISTORY);
+
 	auto m_ruslatHistory = ruslatHistoryJ["data"].get<uint32_t>();
 	bool newRusLat = (m_ruslatHistory & 0b1000) != 0;
 
@@ -311,7 +313,9 @@ void dev::DevectorApp::RestartOnLoadFdd()
 		if (m_rustLatSwitched++ > 2)
 		{
 			m_rustLatSwitched = 0;
-			auto romEnabledJ = *m_hardwareP->Request(Hardware::Req::IS_MEMROM_ENABLED);
+			auto romEnabledJ = *m_hardwareP->Request(
+				Hardware::Req::IS_MEMROM_ENABLED);
+
 			if (romEnabledJ["data"]) {
 				m_hardwareP->Request(Hardware::Req::RESTART);
 			}
@@ -357,7 +361,8 @@ void dev::DevectorApp::MainMenuUpdate()
 			}
 			if (ImGui::BeginMenu("Recent Files"))
 			{
-				for (const auto& [fileType, path, driveIdx, autoBoot] : m_recentFilePaths)
+				for (const auto& [fileType, path, driveIdx, autoBoot] :
+					m_recentFilePaths)
 				{
 					std::string itemS = path;
 					if (fileType == FileType::FDD)
@@ -458,7 +463,8 @@ void dev::DevectorApp::MainMenuUpdate()
 
 		if (ImGui::BeginMenu("Help"))
 		{
-			//ImGui::MenuItem(m_feedbackWindowP->m_name.c_str(), NULL, &m_feedbackWindowVisible);
+			//ImGui::MenuItem(m_feedbackWindowP->m_name.c_str(),
+				//NULL, &m_feedbackWindowVisible);
 			if (ImGui::MenuItem("zx-pk.ru: Vector06C Development"))
 			{
 				dev::OsOpenInShell(
@@ -569,7 +575,10 @@ void dev::DevectorApp::LoadingResStatusHandling()
 			LoadRom(m_loadingRes.path);
 			break;
 		case FileType::FDD:
-			LoadFdd(m_loadingRes.path, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
+			LoadFdd(m_loadingRes.path,
+				m_loadingRes.driveIdx,
+				m_loadingRes.autoBoot);
+
 			m_prepare_for_exit = true;
 			break;
 		case FileType::REC:
@@ -581,7 +590,8 @@ void dev::DevectorApp::LoadingResStatusHandling()
 		break;
 	}
 	case LoadingRes::State::UPDATE_RECENT:
-		RecentFilesUpdate(m_loadingRes.fileType, m_loadingRes.path, m_loadingRes.driveIdx, m_loadingRes.autoBoot);
+		RecentFilesUpdate(m_loadingRes.fileType, m_loadingRes.path,
+			m_loadingRes.driveIdx, m_loadingRes.autoBoot);
 		RecentFilesStore();
 		m_loadingRes.state = LoadingRes::State::NONE;
 		break;
@@ -596,7 +606,9 @@ void dev::DevectorApp::RecentFilesInit()
 	auto recentFiles = GetSettingsObject("recentFiles");
 	for (const auto& fileType_path_driveIdx_autoBoot : recentFiles)
 	{
-		FileType fileType = static_cast<FileType>(fileType_path_driveIdx_autoBoot[0]);
+		FileType fileType = static_cast<FileType>(
+			fileType_path_driveIdx_autoBoot[0]);
+
 		auto path = fileType_path_driveIdx_autoBoot[1];
 		int driveIdx = fileType_path_driveIdx_autoBoot[2];
 		bool autoBoot = fileType_path_driveIdx_autoBoot[3];
@@ -618,7 +630,11 @@ void dev::DevectorApp::RecentFilesStore()
 	SettingsSave(m_settingsPath);
 }
 
-void dev::DevectorApp::RecentFilesUpdate(const FileType _fileType, const std::string& _path, const int _driveIdx, const bool _autoBoot)
+void dev::DevectorApp::RecentFilesUpdate(
+	const FileType _fileType,
+	const std::string& _path,
+	const int _driveIdx,
+	const bool _autoBoot)
 {
 	// remove if it contains
 	m_recentFilePaths.remove_if(
@@ -757,19 +773,25 @@ void dev::DevectorApp::SaveDiscardFdd()
 	}
 	else {
 		auto discardFddChanges = GetSettingsBool("discardFddChanges", true);
-		m_loadingRes.state = discardFddChanges ? LoadingRes::State::OPEN_FILE : LoadingRes::State::SAVE;
+		m_loadingRes.state = discardFddChanges ?
+			LoadingRes::State::OPEN_FILE :
+			LoadingRes::State::SAVE;
 	}
 }
 
 // Popup. Save or Discard mounted updated fdd image?
 void dev::DevectorApp::DrawSaveDiscardFddPopup()
 {
-	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
+	// Always center this window when appearing
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal(m_loadingRes.POPUP_SAVE_DISCARD, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal(
+		m_loadingRes.POPUP_SAVE_DISCARD, NULL,
+		ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		static const char* diskNames[] = { "A", "B", "C", "D" };
-		ImGui::Text("Previously mounted disk %s was updated. Save or discard changes?",
+		ImGui::Text(
+			"Previously mounted disk %s was updated. Save or discard changes?",
 			diskNames[m_loadingRes.driveIdxUpdated]);
 		ImGui::Text(m_loadingRes.pathFddUpdated.c_str());
 
@@ -866,7 +888,8 @@ void dev::DevectorApp::SaveFile()
 {
 	m_loadingRes.state = LoadingRes::State::NONE;
 
-	bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
+	bool isRunning = m_hardwareP->Request(
+		Hardware::Req::IS_RUNNING)->at("isRunning");
 	if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
 
 	switch (m_loadingRes.fileType)
@@ -875,14 +898,16 @@ void dev::DevectorApp::SaveFile()
 	{
 		const char* filters[] = {"*.rom", "*.fdd", "*.rec"};
 		const char* filename = tinyfd_saveFileDialog(
-			"Save File", "file_name.rec", sizeof(filters)/sizeof(const char*), filters, nullptr);
+			"Save File", "file_name.rec",
+			sizeof(filters)/sizeof(const char*), filters, nullptr);
 
 		if (filename)
 		{
 			auto result = m_hardwareP->Request(Hardware::Req::DEBUG_RECORDER_SERIALIZE);
 			if (result)
 			{
-				nlohmann::json::binary_t binaryData = result->at("data").get<nlohmann::json::binary_t>();
+				nlohmann::json::binary_t binaryData =
+					result->at("data").get<nlohmann::json::binary_t>();
 				std::vector<uint8_t> data(binaryData.begin(), binaryData.end());
 
 				std::string path = std::string(filename);
@@ -899,19 +924,25 @@ void dev::DevectorApp::SaveFile()
 
 void dev::DevectorApp::DrawSelectDrivePopup()
 {
-	ImVec2 center = ImGui::GetMainViewport()->GetCenter(); 	// Always center this window when appearing
+	// Always center this window when appearing
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal(m_loadingRes.POPUP_SELECT_DRIVE, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+
+	if (ImGui::BeginPopupModal(
+		m_loadingRes.POPUP_SELECT_DRIVE,
+		NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("Specify the drive to mount the FDD file as \nwell as the auto boot option if required.");
 		ImGui::Separator();
 		static int driveSelect = 0;
-		ImGui::Combo("##DriveSelect", &driveSelect, "Drive A Boot\0Drive A\0Drive B\0Drive C\0Drive D\0");
+		ImGui::Combo("##DriveSelect",
+			&driveSelect, "Drive A Boot\0Drive A\0Drive B\0Drive C\0Drive D\0");
 
 		if (ImGui::Button("OK", ImVec2(120, 0)))
 		{
 			m_loadingRes.autoBoot = (driveSelect == 0);
-			m_loadingRes.driveIdx = dev::Max(driveSelect - 1, 0); // "0" and "1" are both associated with FDisk 0
+			// "0" and "1" are both associated with FDisk 0
+			m_loadingRes.driveIdx = dev::Max(driveSelect - 1, 0);
 			m_loadingRes.state = LoadingRes::State::LOAD;
 			ImGui::CloseCurrentPopup();
 		}
@@ -951,12 +982,14 @@ void dev::DevectorApp::LoadRom(const std::string& _path)
 	Log("File loaded: {}", _path);
 }
 
-void dev::DevectorApp::LoadFdd(const std::string& _path, const int _driveIdx, const bool _autoBoot)
+void dev::DevectorApp::LoadFdd(
+	const std::string& _path, const int _driveIdx, const bool _autoBoot)
 {
 	auto fddResult = dev::LoadFile(_path);
 	if (!fddResult || fddResult->empty()) {
 		dev::Log("Fdc1793 Error: loading error. "
-			"Ensure the file exists and its permissions are correct. Path: {}", _path);
+			"Ensure the file exists and its permissions "
+			"are correct. Path: {}", _path);
 		return;
 	}
 
@@ -965,7 +998,8 @@ void dev::DevectorApp::LoadFdd(const std::string& _path, const int _driveIdx, co
 
 	if (fddimg.size() > FDD_SIZE) {
 		dev::Log("Fdc1793 Warning: disk image is too big. "
-			"It size will be concatenated to {}. Original size: {} bytes, path: {}", FDD_SIZE, origSize, _path);
+			"It size will be concatenated to {}. "
+			"Original size: {} bytes, path: {}", FDD_SIZE, origSize, _path);
 		fddimg.resize(FDD_SIZE);
 	}
 
@@ -983,7 +1017,10 @@ void dev::DevectorApp::LoadFdd(const std::string& _path, const int _driveIdx, co
 	if (_autoBoot)
 	{
 		m_hardwareP->Request(Hardware::Req::RESET);
-		m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", true} }); // has to be called after Hardware loading FDD image because it stores the last state of Hardware
+		// has to be called after Hardware loading FDD
+		// image because it stores the last state of Hardware
+		m_hardwareP->Request(Hardware::Req::DEBUG_RESET,
+			{ {"resetRecorder", true} });
 		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 		m_hardwareP->Request(Hardware::Req::RUN);
 	}
@@ -996,7 +1033,8 @@ void dev::DevectorApp::LoadRecording(const std::string& _path)
 	auto result = dev::LoadFile(_path);
 	if (!result || result->empty()) {
 		dev::Log("Error occurred while loading the file. Path: {}. "
-			"Please ensure the file exists and you have the correct permissions to read it.", _path);
+			"Please ensure the file exists and you have the "
+			"correct permissions to read it.", _path);
 		return;
 	}
 
@@ -1004,9 +1042,14 @@ void dev::DevectorApp::LoadRecording(const std::string& _path)
 	m_hardwareP->Request(Hardware::Req::RESET);
 	m_hardwareP->Request(Hardware::Req::RESTART);
 
-	m_hardwareP->Request(Hardware::Req::DEBUG_RECORDER_DESERIALIZE, { {"data", nlohmann::json::binary(*result)} });
+	m_hardwareP->Request(
+		Hardware::Req::DEBUG_RECORDER_DESERIALIZE,
+		{ {"data", nlohmann::json::binary(*result)} });
 
-	m_hardwareP->Request(Hardware::Req::DEBUG_RESET, { {"resetRecorder", false} }); // has to be called after Hardware loading Rom because it stores the last state of Hardware
+	// has to be called after Hardware loading Rom
+	// because it stores the last state of Hardware
+	m_hardwareP->Request(Hardware::Req::DEBUG_RESET,
+		{ {"resetRecorder", false} });
 	m_debuggerP->GetDebugData().LoadDebugData(_path);
 	m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 
