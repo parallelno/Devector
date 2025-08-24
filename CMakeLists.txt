@@ -29,7 +29,7 @@ set(RES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 FetchContent_Declare(
   SDL3
   GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-  GIT_TAG main
+  GIT_TAG release-3.2.20
 )
 FetchContent_MakeAvailable(SDL3)
 
@@ -37,7 +37,7 @@ FetchContent_MakeAvailable(SDL3)
 FetchContent_Declare(
   ImGui
   GIT_REPOSITORY https://github.com/ocornut/imgui.git
-  GIT_TAG docking
+  GIT_TAG v1.92.2b-docking
 )
 FetchContent_MakeAvailable(ImGui)
 
@@ -45,7 +45,7 @@ FetchContent_MakeAvailable(ImGui)
 FetchContent_Declare(
   libtinyfiledialogs
   GIT_REPOSITORY https://github.com/native-toolkit/libtinyfiledialogs.git
-  GIT_TAG master
+  GIT_TAG 2.9.3
 )
 FetchContent_MakeAvailable(libtinyfiledialogs)
 
