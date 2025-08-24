@@ -177,6 +177,7 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/ui/hardware_stats_window.h
 	${DEVECTOR_DIR}/main/ui/hex_viewer_window.cpp
 	${DEVECTOR_DIR}/main/ui/hex_viewer_window.h
+	${DEVECTOR_DIR}/main/ui/hex_viewer_window_consts.h
 	${DEVECTOR_DIR}/main/ui/mem_display_window.cpp
 	${DEVECTOR_DIR}/main/ui/mem_display_window.h
 	${DEVECTOR_DIR}/main/ui/recorder_window.cpp

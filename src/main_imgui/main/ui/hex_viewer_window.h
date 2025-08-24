@@ -37,6 +37,7 @@ namespace dev
 		int m_memPageIdx = 0; // applied if >=0
 		GlobalAddr m_highlightAddr = 0;
 		GlobalAddr m_highlightAddrLen = 0;
+		int m_highlightMode = 0; // 0 - RW, 1 - R, 2 - W
 
 		void CallbackUpdateData(
 			const dev::Signals _signals,
@@ -46,7 +47,11 @@ namespace dev
 		void CallbackHighlightOff(
 			const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
-		void DrawHex(const bool _isRunning);
+
+		void DrawSearchBar();
+		void DrawMemPageSelector();
+		void DrawRWMode();
+		void DrawHexTable(const bool _isRunning);
 		void Draw(
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data) override;
