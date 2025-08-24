@@ -43,11 +43,13 @@ void dev::DisasmWindow::Draw(
 
 void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 {
-	if (!_isRunning && ImGui::Button(" Run "))
+	if (!_isRunning && ImGui::Button(" Run ")|
+		ImGui::IsKeyPressed(ImGuiKey_F5))
 	{
 		m_hardware.Request(Hardware::Req::RUN);
 	}
-	else if (_isRunning && ImGui::Button("Break"))
+	else if (_isRunning && ImGui::Button("Break")|
+		ImGui::IsKeyPressed(ImGuiKey_F6))
 	{
 		m_hardware.Request(Hardware::Req::STOP);
 	}
@@ -55,13 +57,13 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	if (_isRunning) ImGui::BeginDisabled();
 
 	 ImGui::SameLine();
-	if (ImGui::Button("Step"))
+	if (ImGui::Button("Step") | ImGui::IsKeyPressed(ImGuiKey_F7))
 	{
 		m_hardware.Request(Hardware::Req::STOP);
 		m_hardware.Request(Hardware::Req::EXECUTE_INSTR);
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Step Over"))
+	if (ImGui::Button("Step Over") | ImGui::IsKeyPressed(ImGuiKey_F8))
 	{
 		Addr addr = m_hardware.Request(
 			Hardware::Req::GET_STEP_OVER_ADDR)->at("data");
@@ -82,7 +84,7 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 		m_hardware.Request(Hardware::Req::RUN);
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Step 0x100"))
+	if (ImGui::Button("Step 0x100") | ImGui::IsKeyPressed(ImGuiKey_F9))
 	{
 		for (int i = 0; i < 0x100; i++)
 		{
@@ -91,7 +93,7 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 		}
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Step Frame"))
+	if (ImGui::Button("Step Frame") | ImGui::IsKeyPressed(ImGuiKey_F10))
 	{
 		m_hardware.Request(Hardware::Req::STOP);
 		m_hardware.Request(Hardware::Req::EXECUTE_FRAME_NO_BREAKS);
@@ -100,9 +102,14 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	if (_isRunning) ImGui::EndDisabled();
 
 	ImGui::SameLine();
-	if (ImGui::Button("Reset"))
+	if (ImGui::Button("Reset") | ImGui::IsKeyPressed(ImGuiKey_F10))
 	{
 		m_scheduler.AddSignal({dev::Signals::RELOAD});
+	}
+
+	if (ImGui::IsKeyPressed(ImGuiKey_F11))
+	{
+		m_hardware.Request(Hardware::Req::RESTART);
 	}
 
 	ImGui::SameLine();
@@ -534,7 +541,9 @@ void dev::DisasmWindow::DrawContextMenu(
 			UpdateDisasm(_regPC);
 		}
 		ImGui::SeparatorText("");
-		if (ImGui::MenuItem("Run To"))
+		if (ImGui::MenuItem("Run To") | (
+			ImGui::IsKeyPressed(ImGuiKey_F7) &&
+			ImGui::IsKeyDown(ImGuiKey_LeftCtrl)))
 		{
 			Breakpoint::Data bpData{
 				_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL,

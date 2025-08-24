@@ -31,8 +31,8 @@ namespace dev
 		Operation m_rebootType = Operation::NONE;
 
 		Keyboard();
-		
-		auto KeyHandling(int _scancode, int _action) -> Operation;
+
+		void KeyHandling(int _scancode, int _action);
 		auto Read(int _rows) -> uint8_t;
 
 	private:

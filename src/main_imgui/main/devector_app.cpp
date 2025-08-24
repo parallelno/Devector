@@ -670,7 +670,11 @@ bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 			auto keyboardFocused = appP->m_keyboardWindowP &&
 								appP->m_keyboardWindowP->IsFocused();
 
-			if (displayFocused || keyboardFocused)
+			if ((displayFocused || keyboardFocused) &&
+				scancode != SDL_SCANCODE_RCTRL &&
+				scancode < SDL_SCANCODE_F1 &&
+				scancode > SDL_SCANCODE_F12
+			)
 			{
 				appP->m_hardwareP->Request(Hardware::Req::KEY_HANDLING,
 					{ { "scancode", scancode }, { "action", action} });

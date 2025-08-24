@@ -8,33 +8,24 @@ dev::Keyboard::Keyboard()
 }
 
 // Hardware thread
-auto dev::Keyboard::KeyHandling(int _scancode, int _action)
--> Operation
+void dev::Keyboard::KeyHandling(int _scancode, int _action)
 {
 	int row, column;
 
 	switch (_scancode)
 	{
-		// BLK + VVOD functionality
-	case SDL_SCANCODE_F11:
-		if (_action == SDL_EVENT_KEY_UP) {
-			return Operation::RESET;
-		}
-		break;
+		// BLK + VVOD functionality. key F11 checked in disasm_window
 
-		// BLK + SBR functionality		
-	case SDL_SCANCODE_F12:
-		if (_action == SDL_EVENT_KEY_UP) {
-			return Operation::RESTART;
-		}
-		break;
-		
+
+		// BLK + SBR functionality.  key F12 checked in disasm_window
+
+
 		// SS (shift) key
 	case SDL_SCANCODE_LSHIFT: [[fallthrough]];
 	case SDL_SCANCODE_RSHIFT:
 		m_keySS = _action == SDL_EVENT_KEY_DOWN;
 		break;
-		
+
 		// US (ctrl) key
 	case SDL_SCANCODE_LCTRL:
 		m_keyUS = _action == SDL_EVENT_KEY_DOWN;
@@ -46,12 +37,12 @@ auto dev::Keyboard::KeyHandling(int _scancode, int _action)
 	case SDL_SCANCODE_F6:
 		m_keyRus = _action == SDL_EVENT_KEY_DOWN;
 		break;
-		
+
 		// Matrix keys
 	default:
 
 		auto it = m_keymap.find(_scancode);
-		if (it != m_keymap.end()) 
+		if (it != m_keymap.end())
 		{
 			auto rowColumn = it->second;
 			row = rowColumn >> 8;
@@ -69,8 +60,6 @@ auto dev::Keyboard::KeyHandling(int _scancode, int _action)
 		}
 		break;
 	}
-
-	return Operation::NONE;
 };
 
 auto dev::Keyboard::Read(int _rows)

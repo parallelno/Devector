@@ -2,7 +2,7 @@
 #include "utils/str_utils.h"
 #include "core/disasm.h"
 
-dev::Hardware::Hardware(const std::string& _pathBootData, 
+dev::Hardware::Hardware(const std::string& _pathBootData,
 		const std::string& _pathRamDiskData, const bool _ramDiskClearAfterRestart)
 	:
 	m_status(Status::STOP),
@@ -40,7 +40,7 @@ void dev::Hardware::Init()
 
 
 void dev::Hardware::AttachDebugFuncs(DebugFunc _debugFunc, DebugReqHandlingFunc _debugReqHandlingFunc)
-{ 
+{
 	Debug = _debugFunc;
 	DebugReqHandling = _debugReqHandlingFunc;
 }
@@ -82,7 +82,7 @@ bool dev::Hardware::ExecuteInstruction()
 // 3. aggregation of consts, labels, funcs with default names
 
 void dev::Hardware::Execution()
-{    
+{
 	while (m_status != Status::EXIT)
 	{
 		auto startCC = m_cpu.GetCC();
@@ -92,11 +92,11 @@ void dev::Hardware::Execution()
 		auto endFrameTime = std::chrono::system_clock::now();
 
 		while (m_status == Status::RUN)
-		{   
+		{
 			auto startFrameTime = std::chrono::system_clock::now();
 
 			auto frameNum = m_display.GetFrameNum();
-			
+
 			do // rasterizes a frame
 			{
 				if (ExecuteInstruction())
@@ -112,17 +112,17 @@ void dev::Hardware::Execution()
 			{
 				auto currentTime = std::chrono::system_clock::now();
     			auto frameExecutionDuration = currentTime - startFrameTime;
-				
+
 				auto targetFrameDuration = m_execDelays[static_cast<size_t>(m_execSpeed)];
 
 				using DurationType = decltype(frameExecutionDuration);
 				auto frameDuration = std::max<DurationType>(
 					frameExecutionDuration + m_reqHandlingTime,
 					targetFrameDuration
-				);				
-			
+				);
+
 				endFrameTime += frameDuration;
-			
+
 				while (std::chrono::system_clock::now() < endFrameTime)
 				{
 					// Use smaller time slice for request handling
@@ -372,7 +372,7 @@ void dev::Hardware::ReqHandling(const std::chrono::duration<int64_t, std::nano> 
 			};
 		break;
 	}
-	
+
 	case Req::GET_FDD_IMAGE:
 		out = {
 			{"data", m_fdc.GetFddImage(dataJ["driveIdx"])},
@@ -458,17 +458,11 @@ void dev::Hardware::ReqHandling(const std::chrono::duration<int64_t, std::nano> 
 		out = {
 			{"data", m_memory.IsRomEnabled() },
 			};
-		break;             
+		break;
 
 	case Req::KEY_HANDLING:
 	{
-		auto op = m_io.GetKeyboard().KeyHandling(dataJ["scancode"], dataJ["action"]);
-		if (op == Keyboard::Operation::RESET) {
-			Reset();
-		}
-		else if (op == Keyboard::Operation::RESTART) {
-			Restart();
-		}
+		m_io.GetKeyboard().KeyHandling(dataJ["scancode"], dataJ["action"]);
 	}
 		break;
 
@@ -589,12 +583,12 @@ static const int LINE_LEN_MAX = HEX_CHARS_IN_LINE + 1 + CHARS_IN_LINE + NEWLINE_
 
 static char hex_data[LINE_LEN_MAX * LINES_MAX + EOF_LEN] = { 0 };
 
-static bool init_hex_data() { 
-	for (int i = 0; i < sizeof(hex_data)-1; i++) 
+static bool init_hex_data() {
+	for (int i = 0; i < sizeof(hex_data)-1; i++)
 	{
 		int x = i % LINE_LEN_MAX;
 		int y = i / LINE_LEN_MAX;
-		
+
 		// end of line
 		hex_data[i] = x == LINE_LEN_MAX - 1 ? '\n' : ' ';
 	}
@@ -617,7 +611,7 @@ auto dev::Hardware::GetMemString(const nlohmann::json _dataJ)
 		auto c = m_memory.GetByteGlobal(globalAddr + addrOffset);
 		int x = addrOffset % BYTES_IN_LINE;
 		int y = addrOffset / BYTES_IN_LINE;
-		
+
 		// hex
 		int hex_idx = LINE_LEN_MAX * y + x * HEX_LEN;
 		uint8_t l = c & 0x0F;
@@ -625,7 +619,7 @@ auto dev::Hardware::GetMemString(const nlohmann::json _dataJ)
 		hex_data[hex_idx] = h < 10 ? ('0' + h) : ('A' + h - 10);
 		hex_data[hex_idx + 1] = l < 10 ? ('0' + l) : ('A' + l - 10);
 		hex_data[hex_idx + 2] = ' ';
-		
+
 		if (x == 0)
 		{
 			// a break between hex and chars
@@ -635,7 +629,7 @@ auto dev::Hardware::GetMemString(const nlohmann::json _dataJ)
 		// char
 		char_idx = LINE_LEN_MAX * y + HEX_LEN * line_len + SPACE_LEN + x;
 		hex_data[char_idx] = c > 31 && c < 127 ? (char)c : '.';
-		
+
 		// newline
 		if (x == LINE_LEN_MAX - 1){
 			int newline_idx = LINE_LEN_MAX * y + HEX_CHARS_IN_LINE + 1 + CHARS_IN_LINE;
@@ -727,7 +721,7 @@ auto dev::Hardware::GetStepOverAddr()
 	auto im_addr = m_memory.GetByte(pc + 2) << 8 | m_memory.GetByte(pc + 1);
 	auto next_pc = pc + dev::GetCmdLen(opcode);
 
-	switch (dev::GetOpcodeType(opcode)) 
+	switch (dev::GetOpcodeType(opcode))
 	{
 	case OPTYPE_JMP:
 		return im_addr;
@@ -751,7 +745,7 @@ auto dev::Hardware::GetStepOverAddr()
 		case CpuI8080::OPCODE_JPO:
 			return m_cpu.GetFlagP() ? next_pc : im_addr;
 		case CpuI8080::OPCODE_JPE:
-			return m_cpu.GetFlagP() ? im_addr : next_pc;			
+			return m_cpu.GetFlagP() ? im_addr : next_pc;
 		case CpuI8080::OPCODE_JP:
 			return m_cpu.GetFlagS() ? next_pc : im_addr;
 		case CpuI8080::OPCODE_JM:
