@@ -124,11 +124,13 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	}
 
 	// code perf
+	// TODO: check if the m_debugData window is open
 	m_debugData.CheckCodePerfs(_cpuStateP->regs.pc.word, _cpuStateP->cc);
 
 	auto break_ = false;
 
 	// check scripts
+	// TODO: check if the m_debugData window is open
 	break_ |= m_debugData.GetScripts().Check(
 		_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 
@@ -390,6 +392,20 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		{
 			out.push_back(script.ToJson());
 		}
+		break;
+
+	//////////////////
+	//
+	// Trace Log
+	//
+	/////////////////
+
+	case Hardware::Req::DEBUG_TRACE_LOG_ENABLE:
+		m_traceLog.SetSaveLog(true);
+		break;
+
+	case Hardware::Req::DEBUG_TRACE_LOG_DISABLE:
+		m_traceLog.SetSaveLog(false);
 		break;
 
 	default:

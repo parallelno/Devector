@@ -64,7 +64,7 @@ auto dev::StrWToStr(const std::wstring& _ws)
 	//const std::string s(_ws.begin(), _ws.end());
 	//return s;
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-    return converter.to_bytes(_ws);
+	return converter.to_bytes(_ws);
 }
 /*
 auto dev::Utf8ToStrW(const std::string& _s)
@@ -131,7 +131,7 @@ auto dev::TrimSpacesRight(std::wstring _str)
 {
 	_str.erase(
 		std::find_if(
-			_str.rbegin(), _str.rend(), [](int ch) { return !std::isspace(ch);} 
+			_str.rbegin(), _str.rend(), [](int ch) { return !std::isspace(ch);}
 		).base(), _str.end());
 
 	return _str;
@@ -176,7 +176,7 @@ void InitAddrsS()
 		sprintf_s(smallAddrS, 3, "%02X", addr);
 #else
 		sprintf(smallAddrS, "%02X", addr);
-#endif		
+#endif
 		smallAddrsS[i++] = '0';
 		smallAddrsS[i++] = 'x';
 		smallAddrsS[i++] = smallAddrS[0];
@@ -190,7 +190,29 @@ struct IniterAddrsS {
 };
 static IniterAddrsS initerAddrsS;
 
-auto dev::Uint16ToStrC0x(const uint16_t _addr) -> const char* { return addrsS + _addr * I16_ADDRS_LEN; }
-auto dev::Uint8ToStrC0x(const uint8_t _addr) -> const char* { return smallAddrsS + _addr * I8_ADDRS_LEN; }
-auto dev::Uint16ToStrC(const uint16_t _addr) -> const char* { return addrsS + _addr * I16_ADDRS_LEN + 2; }
-auto dev::Uint8ToStrC(const uint8_t _addr) -> const char* { return smallAddrsS + _addr * I8_ADDRS_LEN + 2; }
+
+auto dev::Uint16ToStrC0x(const uint16_t _addr)
+-> const char*
+{
+	return addrsS + _addr * I16_ADDRS_LEN;
+}
+
+auto dev::Uint8ToStrC0x(const uint8_t _addr)
+-> const char*
+{
+	return smallAddrsS + _addr * I8_ADDRS_LEN;
+}
+
+
+auto dev::Uint16ToStrC(const uint16_t _addr)
+-> const char*
+{
+	return addrsS + _addr * I16_ADDRS_LEN + 2;
+}
+
+
+auto dev::Uint8ToStrC(const uint8_t _addr)
+-> const char*
+{
+	return smallAddrsS + _addr * I8_ADDRS_LEN + 2;
+}

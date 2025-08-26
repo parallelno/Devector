@@ -1,5 +1,7 @@
 #include "ui/trace_log_window.h"
 
+#include "utils/utils.h"
+
 dev::TraceLogWindow::TraceLogWindow(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
@@ -14,26 +16,36 @@ dev::TraceLogWindow::TraceLogWindow(
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
-			dev::Signals::BREAK,
+			dev::Signals::BREAK |
+			dev::Signals::TRACE_LOG_DATA_UPDATE,
 			std::bind(&dev::TraceLogWindow::CallbackUpdateData,
 				this, std::placeholders::_1, std::placeholders::_2),
 			m_visibleP));
 }
 
+
 void dev::TraceLogWindow::Draw(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	bool isRunning = dev::Signals::HW_RUNNING & _signals;
-	DrawLog(isRunning);
+	DrawLogSave(isRunning);
+	DrawFilter(isRunning);
+	DrawTable(isRunning);
 }
 
-void dev::TraceLogWindow::CallbackUpdateData(
-	const dev::Signals _signals, dev::Scheduler::SignalData _data)
-{
-	m_traceLogP = m_debugger.GetTraceLog().GetDisasm(
-		TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
 
-	m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
+void dev::TraceLogWindow::DrawLogSave(const bool _isRunning)
+{
+	if (ImGui::Checkbox("Save Log", &m_saveLog))
+	{
+		if (m_saveLog)
+		{
+			Addr regPC = m_hardware.Request(Hardware::Req::DEBUG_TRACE_LOG_ENABLE);
+		}
+		else{
+			Addr regPC = m_hardware.Request(Hardware::Req::DEBUG_TRACE_LOG_DISABLE);
+		}
+	}
 }
 
 const char* filterNames[] = {
@@ -44,11 +56,10 @@ const char* filterNames[] = {
 	 "+ rst",
 	 "all" };
 
-void dev::TraceLogWindow::DrawLog(const bool _isRunning)
+void dev::TraceLogWindow::DrawFilter(const bool _isRunning)
 {
 	if (!m_traceLogP) return;
 
-	// filter mode
 	const char* filterName = filterNames[m_disasmFilter];
 
 	if (_isRunning) ImGui::BeginDisabled();
@@ -60,9 +71,8 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 			const bool is_selected = (m_disasmFilter == n);
 			if (ImGui::Selectable(filterNames[n], is_selected)) {
 				m_disasmFilter = n;
-				m_traceLogP = m_debugger.GetTraceLog().GetDisasm(
-					TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
-				m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
+
+				m_scheduler.AddSignal({dev::Signals::TRACE_LOG_DATA_UPDATE});
 			}
 
 			// Set the initial focus when opening the combo
@@ -73,8 +83,13 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 		ImGui::EndCombo();
 	}
 	if (_isRunning) ImGui::EndDisabled();
+}
 
-	// disasm table
+
+void dev::TraceLogWindow::DrawTable(const bool _isRunning)
+{
+	if (!m_traceLogP) return;
+
 	const int COLUMNS_COUNT = 4;
 	const char* tableName = "##TLTable";
 	int hoveredLineIdx = -1;
@@ -89,9 +104,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 
 	static ImGuiTableFlags flags =
-		//ImGuiTableFlags_NoPadOuterX |
 		ImGuiTableFlags_ScrollY |
-		//ImGuiTableFlags_NoClip |
 		ImGuiTableFlags_NoBordersInBodyUntilResize |
 		ImGuiTableFlags_Resizable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
@@ -108,6 +121,7 @@ void dev::TraceLogWindow::DrawLog(const bool _isRunning)
 
 		ImGuiListClipper clipper;
 		clipper.Begin(int(m_disasmLinesLen));
+
 		while (clipper.Step())
 		{
 			for (int lineIdx = clipper.DisplayStart;
@@ -184,7 +198,9 @@ void dev::TraceLogWindow::DrawDisasmAddr(
 	}
 }
 
-void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
+
+void dev::TraceLogWindow::DrawDisasmCode(
+	const bool _isRunning, const Disasm::Line& _line,
 	AddrHighlight& _addrHighlight)
 {
 	// draw code
@@ -196,7 +212,8 @@ void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Li
 	{
 	// any case below means that the immediate addr was at least hovered
 	case UIItemMouseAction::LEFT: // Navigate to the address
-		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (GlobalAddr)_line.imm});
+		m_scheduler.AddSignal(
+			{dev::Signals::DISASM_UPDATE, (GlobalAddr)_line.imm});
 		break;
 	// init the immediate value as an addr to let the context menu copy it
 	case UIItemMouseAction::RIGHT:
@@ -204,4 +221,14 @@ void dev::TraceLogWindow::DrawDisasmCode(const bool _isRunning, const Disasm::Li
 			{dev::Signals::TRACE_LOG_POPUP_OPEN, (GlobalAddr)_line.imm});
 		break;
 	}
+}
+
+
+void dev::TraceLogWindow::CallbackUpdateData(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
+{
+	m_traceLogP = m_debugger.GetTraceLog().GetDisasm(
+		TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
+
+	m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
 }

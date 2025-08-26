@@ -100,7 +100,8 @@ void dev::WatchpointsPopup::Draw(
 		DrawProperty2EditableI("Global Address", "##WpContextAddress",
 			&m_globalAddr,
 			"A hexademical address in the format FF",
-			ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+			ImGuiInputTextFlags_CharsHexadecimal |
+			ImGuiInputTextFlags_AutoSelectAll);
 
 		// Access
 		DrawProperty2RadioButtons("Access", &m_access,
@@ -112,7 +113,9 @@ void dev::WatchpointsPopup::Draw(
 			&m_cond, dev::ConditionsS, IM_ARRAYSIZE(dev::ConditionsS), "");
 
 		// Value
-		if (m_cond == static_cast<int>(dev::Condition::ANY)) ImGui::BeginDisabled();
+		if (m_cond == static_cast<int>(dev::Condition::ANY)) {
+			ImGui::BeginDisabled();
+		}
 		DrawProperty2EditableI("Value", "##WpContextValue", &m_val,
 			"A hexademical value in the format FF",
 			ImGuiInputTextFlags_CharsHexadecimal |
@@ -123,7 +126,8 @@ void dev::WatchpointsPopup::Draw(
 		}
 
 		// Type
-		DrawProperty2RadioButtons("Type", &m_type, wpTypesS, IM_ARRAYSIZE(wpTypesS), 15.0f,
+		DrawProperty2RadioButtons(
+			"Type", &m_type, wpTypesS, IM_ARRAYSIZE(wpTypesS), 15.0f,
 			"Byte - breaks if the condition succeeds for any bytes "
 			"in the defined range\n"
 			"Word - breaks if the condition succeeds for a word");
@@ -135,7 +139,8 @@ void dev::WatchpointsPopup::Draw(
 		}
 		DrawProperty2EditableI("Length", "##WpContextLen", &m_len,
 			"A hexademical value in the format FF",
-			ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
+			ImGuiInputTextFlags_CharsHexadecimal |
+			ImGuiInputTextFlags_AutoSelectAll);
 
 			if (m_type == static_cast<int>(Watchpoint::Type::WORD)) {
 			ImGui::EndDisabled();
@@ -181,7 +186,8 @@ void dev::WatchpointsPopup::Draw(
 				-1 :
 				m_oldId;
 
-			Watchpoint::Data wpData{ id, static_cast<Watchpoint::Access>(m_access),
+			Watchpoint::Data wpData{
+				id, static_cast<Watchpoint::Access>(m_access),
 				(GlobalAddr)m_globalAddr, static_cast<dev::Condition>(m_cond),
 				(uint16_t)m_val, static_cast<Watchpoint::Type>(m_type),
 				(GlobalAddr)m_len, m_isActive };

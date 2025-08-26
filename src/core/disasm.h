@@ -43,6 +43,10 @@ namespace dev
 	auto GetOpcodeType(const uint8_t _opcode) -> const uint8_t;
 	auto GetCmdLen(const uint8_t _opcode) -> const uint8_t;
 
+	auto GetDisasmLogLine(
+		const CpuI8080::State& _cpuState,
+		const Memory::State& _memState) -> const char*;
+
 	class Disasm
 	{
 	public:
@@ -92,7 +96,7 @@ namespace dev
 		using Lines = std::array<Line, DISASM_LINES_MAX>;
 
 		// each element is associated with the disasm lines.
-		// it represents a link between the immediate operand in this line 
+		// it represents a link between the immediate operand in this line
 		// and the another line with corresponding addr
 		struct Link {
 			int lineIdx = 0; // contains the index of the disasm line where the link goes. check IMM_NO_LINK, IMM_LINK_UP, IMM_LINK_DOWN
@@ -134,7 +138,7 @@ namespace dev
 		size_t m_immAddrlinkNum = 0; // the total number of links between the immediate operand and the corresponding address
 		Hardware& m_hardware;
 		DebugData& m_debugData;
-		
+
 		using MemStats = std::array<uint64_t, Memory::MEMORY_GLOBAL_LEN>;
 		MemStats m_memRuns;
 		MemStats m_memReads;

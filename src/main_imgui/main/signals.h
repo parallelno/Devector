@@ -47,6 +47,7 @@ namespace dev
 		WATCHPOINTS_POPUP_EDIT		= 1 << 29,
 
 		HEX_VIEWER_DATA_UPDATE		= 1 << 30,
+		TRACE_LOG_DATA_UPDATE		= 1ull << 31,
 	};
 
 	// Conversion operator (as free function)

@@ -48,7 +48,8 @@ namespace dev
 			bool editMemoryExists = false;
 			bool codePerfExists = false;
 
-			void Init(Addr _addr, const std::string& _lineS, const DebugData& _debugData, const bool _immHovered = false)
+			void Init(Addr _addr, const std::string& _lineS,
+				const DebugData& _debugData, const bool _immHovered = false)
 			{
 				openPopup = true;
 				immHovered = _immHovered;
@@ -108,6 +109,16 @@ namespace dev
 		// without moving back.
 		int m_navigateAddrsSize = 0;
 
+		void CallbackUpdateAtCC(
+			const dev::Signals _signals,
+			dev::Scheduler::SignalData _data);
+		void CallbackUpdateAtAddr(
+			const dev::Signals _signals, dev::Scheduler::SignalData _data);
+		void UpdateDisasm(
+			const Addr _addr,
+			const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
+			const bool _updateSelection = true);
+
 		void Draw(
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data) override;
@@ -131,16 +142,6 @@ namespace dev
 			const bool _isRunning,
 			const Disasm::Line& _line,
 			const Addr _regPC);
-
-		void CallbackUpdateAtCC(
-			const dev::Signals _signals,
-			dev::Scheduler::SignalData _data);
-		void CallbackUpdateAtAddr(
-			const dev::Signals _signals, dev::Scheduler::SignalData _data);
-		void UpdateDisasm(
-			const Addr _addr,
-			const int _instructionsOffset = DISASM_INSTRUCTION_OFFSET,
-			const bool _updateSelection = true);
 
 		bool IsDisasmTableOutOfWindow() const;
 		auto GetVisibleLines() const -> int;

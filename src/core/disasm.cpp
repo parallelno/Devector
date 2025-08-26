@@ -419,7 +419,7 @@ static const char** mnenomics[DISASM_CMDS] =
 
 const uint8_t T_CMD[1]		= {MNT_CMD};
 const uint8_t T_CMD_R[2]	= {MNT_CMD, MNT_REG};
-const uint8_t T_CMD_RR[3]	= {MNT_CMD, MNT_REG, MNT_REG}; 
+const uint8_t T_CMD_RR[3]	= {MNT_CMD, MNT_REG, MNT_REG};
 const uint8_t T_CMD_IM[2]	= {MNT_CMD, MNT_IMM};
 
 #define T_DB		T_CMD
@@ -754,6 +754,33 @@ static const uint8_t cmdImms[DISASM_CMDS] =
 	CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IW_OFF1, CMD_IB_OFF0, CMD_IB_OFF1, CMD_IM_NONE,
 };
 
+#define CM_ ","
+#define N_C ""
+// defines if a mnemonic has an immediate comma
+static const char* cmdComma[DISASM_CMDS] =
+{
+	N_C, CM_, N_C, N_C, N_C, N_C, CM_, N_C, N_C, N_C, N_C, N_C, N_C, N_C, CM_, N_C,
+	N_C, CM_, N_C, N_C, N_C, N_C, CM_, N_C, N_C, N_C, N_C, N_C, N_C, N_C, CM_, N_C,
+	N_C, CM_, N_C, N_C, N_C, N_C, CM_, N_C, N_C, N_C, N_C, N_C, N_C, N_C, CM_, N_C,
+	N_C, CM_, N_C, N_C, N_C, N_C, CM_, N_C, N_C, N_C, N_C, N_C, N_C, N_C, CM_, N_C,
+
+	CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_,
+	CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_,
+	CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_,
+	CM_, CM_, CM_, CM_, CM_, CM_, N_C, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_,
+
+	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
+	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
+	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
+	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
+
+	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
+	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
+	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
+	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
+
+};
+
 // mnemonics names lens. it defines how many element each mnemonic consists of
 static const uint8_t mnenomicLens[DISASM_CMDS] =
 {
@@ -781,7 +808,7 @@ static const uint8_t mnenomicLens[DISASM_CMDS] =
 // 0 - c*
 // 1 - call
 // 2 - j*
-// 3 - jmp 
+// 3 - jmp
 // 4 - r*
 // 5 - ret
 // 6 - pchl
@@ -817,6 +844,73 @@ auto dev::GetImmediateType(const uint8_t _opcode) -> uint8_t { return cmdImms[_o
 auto dev::GetOpcodeType(const uint8_t _opcode) -> const uint8_t { return opcodeTypes[_opcode]; }
 auto dev::GetCmdLen(const uint8_t _opcode) -> const uint8_t { return cmdLens[_opcode]; }
 
+
+#define CMD_S_LEN_MAX 11
+#define DISASM_LINE_MAX 127
+static char disasm_line_s[DISASM_LINE_MAX];
+static char disasm_line_end[1] = { '\0' };
+static char disasm_cmd_s[CMD_S_LEN_MAX+1];
+
+// IS NOT THREAD SAFE!
+// Disasm one command in a format:
+// 1234	12 34 56	lxi h, 5634	psw=1234 bc=2345 de=3456 hl=4567 sp=5678
+auto dev::GetDisasmLogLine(
+	const CpuI8080::State& _cpuState, const Memory::State& _memState)
+-> const char*
+{
+	auto buff = disasm_line_s;
+
+	auto globalAddr = _memState.debug.instrGlobalAddr;
+	auto opcode = _memState.debug.instr[0];
+	auto cmd_byte1 = _memState.debug.instr[1];
+	auto cmd_byte2 = _memState.debug.instr[2];
+
+	auto mnemonic = mnenomics[opcode];
+	auto mnemonicLen = mnenomicLens[opcode];
+	auto mnemonicType = mnenomicTypes[opcode];
+	auto immType = cmdImms[opcode];
+
+	auto cml_len = cmdLens[opcode];
+
+	// Bytes
+	const char* byte_s1 = dev::Uint8ToStrC(opcode);
+	const char* byte_s2 = cml_len > 1 ? dev::Uint8ToStrC(cmd_byte1) : "  ";
+	const char* byte_s3 = cml_len > 2 ? dev::Uint8ToStrC(cmd_byte2) : "  ";
+
+	// Mnemonic
+	const char* param1 = mnemonicLen >= 2 ? mnemonic[1] : "";
+	const char* param2 = mnemonicLen == 3 ? mnemonic[2] : "";
+	const char* imm = immType == CMD_IB_OFF1 || immType == CMD_IB_OFF1 ?
+		dev::Uint8ToStrC(cmd_byte1) :
+		immType == CMD_IW_OFF1 ?
+		dev::Uint16ToStrC((cmd_byte2 << 8) | cmd_byte1) : "";
+	const char* comma = cmdComma[opcode];
+
+	// Print the command
+	std::snprintf(
+		disasm_cmd_s, sizeof(disasm_cmd_s),
+		"%s %s%s%s%s",
+		mnemonic[0], param1, comma, param2, imm);
+
+	// Print the full disasm line
+	std::snprintf(
+		buff, disasm_line_end - buff,
+		"%06X	%s %s %s	%-11s	psw=%04X bc=%04X de=%04X hl=%04X sp=%04X\n",
+		globalAddr,
+		byte_s1,
+		byte_s2,
+		byte_s3,
+		disasm_cmd_s,
+		_cpuState.regs.psw.af.word,
+		_cpuState.regs.bc.word,
+		_cpuState.regs.de.word,
+		_cpuState.regs.hl.word,
+		_cpuState.regs.sp.word);
+
+    return disasm_line_s;
+}
+
+
 void dev::Disasm::Line::Init()
 {
 	type = Type::CODE;
@@ -833,9 +927,9 @@ void dev::Disasm::Line::Init()
 
 auto dev::Disasm::Line::GetImmediateS() const
 -> const char*
-{ 
-	return cmdImms[opcode] == CMD_IW_OFF1 ? 
-		Uint16ToStrC0x(imm) : Uint8ToStrC0x(static_cast<uint8_t>(imm));	
+{
+	return cmdImms[opcode] == CMD_IW_OFF1 ?
+		Uint16ToStrC0x(imm) : Uint8ToStrC0x(static_cast<uint8_t>(imm));
 };
 
 void dev::Disasm::AddLabes(const Addr _addr)
@@ -850,7 +944,7 @@ void dev::Disasm::AddLabes(const Addr _addr)
 
 	line.type = Line::Type::LABELS;
 	line.addr = _addr;
-	
+
 	line.labels = std::move(*labelsP);
 
 	m_lineIdx++;
@@ -894,10 +988,10 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 
 	switch (cmdLen)
 	{
-	case 1: 
+	case 1:
 		// if immType != CMD_IB_OFF0 means the instruction is single byte instruction.
 		// if immType == CMD_IB_OFF0 means the instruction is DB NN, where NN is the opcode that represent the data byte.
-		// if immType == CMD_IB_OFF0 and _cmd > 0xFF means the instruction is DB NN, where NN is the data byte. 
+		// if immType == CMD_IB_OFF0 and _cmd > 0xFF means the instruction is DB NN, where NN is the data byte.
 		// 		This is for the special case there are no valid instructions found to fit into the addr range addr - instructionOffset to addr.
 		line.imm = immType != CMD_IB_OFF0 ? 0 : _cmd > 0xFF ? (_cmd >> 8) & 0xFF : opcode;
 		break;
@@ -917,7 +1011,7 @@ auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
 
 	if (immType != CMD_IM_NONE && immType != CMD_IB_OFF0)
 	{
-		auto labelsP = m_debugData.GetLabels(line.imm); 
+		auto labelsP = m_debugData.GetLabels(line.imm);
 		line.labels = labelsP ? *labelsP : LabelList();
 		auto constsP = m_debugData.GetConsts(line.imm);
 		line.consts = constsP ? *constsP : LabelList();
@@ -970,7 +1064,7 @@ auto dev::Disasm::Line::GetStr() const
 		}
 		return out;
 	}
-	case Type::LABELS: 
+	case Type::LABELS:
 		for (auto& label : labels)
 		{
 			out += std::format("{} ", label);
@@ -997,7 +1091,7 @@ void dev::Disasm::Init(const LineIdx _linesNum)
 	m_immAddrlinkNum = 0;
 }
 
-void dev::Disasm::Reset() 
+void dev::Disasm::Reset()
 {
 	m_linesP = nullptr;
 
@@ -1008,8 +1102,8 @@ void dev::Disasm::Reset()
 	std::fill(m_lines.begin(), m_lines.end(), Line());
 }
 
-auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks* 
-{ 
+auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks*
+{
 	Addr addrMin = m_lines.at(0).addr;
 	Addr addrMax = m_lines.at(m_linesNum - 1).addr;
 	uint8_t linkIdx = 0;
@@ -1049,12 +1143,12 @@ auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks*
 		m_immAddrlinkNum++;
 	}
 
-	return &m_immAddrLinks; 
+	return &m_immAddrLinks;
 }
 
 // shifts the addr by _instructionsOffset instruction counter
 // if _instructionsOffset=3, it returns the addr of a third instruction after _addr, and vice versa
-#define MAX_ATTEMPTS 41 // max attemts to find an addr of an instruction before _addr 
+#define MAX_ATTEMPTS 41 // max attemts to find an addr of an instruction before _addr
 // check the perf of this func
 auto dev::Disasm::GetAddr(const Addr _addr, const int _instructionOffset) const
 -> Addr

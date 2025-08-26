@@ -44,6 +44,7 @@ namespace dev
 		uint8_t m_disasmFilter = 0;
 		int m_selectedLineIdx = 0;
 		size_t m_disasmLinesLen = 0;
+		bool m_saveLog = false;
 
 		void CallbackUpdateData(
 			const dev::Signals _signals,
@@ -52,7 +53,9 @@ namespace dev
 		void Draw(
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data) override;
-		void DrawLog(const bool _isRunning);
+		void DrawLogSave(const bool _isRunning);
+		void DrawFilter(const bool _isRunning);
+		void DrawTable(const bool _isRunning);
 		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
 			AddrHighlight& _addrHighlight);
 		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,

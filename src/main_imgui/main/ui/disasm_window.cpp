@@ -702,7 +702,9 @@ void dev::DisasmWindow::DrawAddrLinks(
 	ImU32 linkColor = _selected ? DIS_CLR_LINK_HIGHLIGHT : DIS_CLR_LINK;
 
 	if (minorLink)
-	{	// links to the addrs outside the disasm view
+	{
+		// TODO: check if it's needed
+		// links to the addrs outside the disasm view
 		/*
 		// horizontal line from the command
 		ImGui::GetForegroundDrawList()->AddLine(pos0, pos1, linkColor);
