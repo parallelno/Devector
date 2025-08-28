@@ -5,10 +5,10 @@
 
 dev::RecorderWindow::RecorderWindow(Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Recorder", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP),
+		_scheduler, _visibleP),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
 

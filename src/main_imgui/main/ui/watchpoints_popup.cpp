@@ -8,10 +8,10 @@
 dev::WatchpointsPopup::WatchpointsPopup(
 	dev::Hardware& _hardware, dev::Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("#Watchpoints Popup", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_None,
 		dev::BaseWindow::Type::Popup),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -86,10 +86,12 @@ void dev::WatchpointsPopup::Draw(
 
 	if (ImGui::BeginTable("##WpContextMenu", 2, flags))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn(
-			"##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150);
+			"##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150 * scale);
 		ImGui::TableSetupColumn(
-			"##WpContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 210);
+			"##WpContextMenuVal", ImGuiTableColumnFlags_WidthStretch);
 
 		// Status
 		DrawProperty2EditableCheckBox(
@@ -180,7 +182,7 @@ void dev::WatchpointsPopup::Draw(
 
 		// OK button
 		if (!warningS.empty()) ImGui::BeginDisabled();
-		if (ImGui::Button("Ok", buttonSize))
+		if (ImGui::Button("Ok", m_buttonSize))
 		{
 			int id = m_signal == dev::Signals::WATCHPOINTS_POPUP_ADD ?
 				-1 :
@@ -210,7 +212,7 @@ void dev::WatchpointsPopup::Draw(
 		ImGui::Text(" ");
 		ImGui::SameLine();
 
-		if (ImGui::Button("Cancel", buttonSize))
+		if (ImGui::Button("Cancel", m_buttonSize))
 		{
 			ImGui::CloseCurrentPopup();
 		}

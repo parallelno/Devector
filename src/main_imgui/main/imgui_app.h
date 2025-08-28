@@ -33,11 +33,14 @@ namespace dev {
 			EXIT,
 		};
 
-		ImGuiApp(nlohmann::json _settingsJ, const std::string& _settingsPath, const std::string& _title = "New Window");
+		ImGuiApp(nlohmann::json _settingsJ, const std::string& _settingsPath,
+				const std::string& _title = "New Window");
 		~ImGuiApp();
 
 		void Run();
-		bool IsInited() const { return m_status == AppStatus::INITED || m_status == AppStatus::RUN; };
+		bool IsInited() const {
+			return m_status == AppStatus::INITED || m_status == AppStatus::RUN;
+		};
 		auto GetStatus() const -> AppStatus { return m_status; };
 		auto GetError() const -> ErrCode { return m_error; };
 
@@ -65,20 +68,18 @@ namespace dev {
 		ImFont* m_fontItalic = nullptr;
 		float m_dpiScale = 1.0f;
 
-		enum class Req { LOAD_FONT, CHECK_WINDOW_SIZE_POS, };
-		TQueue <std::pair<Req, int64_t>> m_reqs; // request
-		std::thread m_autoUpdateThread;
-
 		bool m_prepare_for_exit = false;
 
 		// reqs
-		void AutoUpdate();
-		void Request(const Req _req, const int64_t _val = 0);
-		void ReqHandling();
+		bool IsDpiUpdated();
 		void LoadFonts();
+		bool IsOneSecTimerOver();
+		void CheckWindowSizePos();
 		void SettingsUpdate(const std::string& _fieldName, nlohmann::json _json);
 		void SettingsSave(const std::string& _path);
-		auto GetSettingsString(const std::string& _fieldName, const std::string& _defaultValue) -> std::string;
+		auto GetSettingsString(const std::string& _fieldName,
+			const std::string& _defaultValue) -> std::string;
+
 		auto GetSettingsObject(const std::string& _fieldName ) -> nlohmann::json;
 		int GetSettingsInt(const std::string& _fieldName, int _defaultValue);
 		bool GetSettingsBool(const std::string& _fieldName, bool _defaultValue);

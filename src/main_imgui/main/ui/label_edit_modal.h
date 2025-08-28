@@ -8,8 +8,8 @@ namespace dev
 {
 	class LabelEditModal : public BaseWindow
 	{
-		static constexpr int DEFAULT_WINDOW_W = 500;
-		static constexpr int DEFAULT_WINDOW_H = 300;
+		static constexpr int DEFAULT_WINDOW_W = 300;
+		static constexpr int DEFAULT_WINDOW_H = 180;
 
 		Hardware& m_hardware;
 		Debugger& m_debugger;
@@ -35,7 +35,6 @@ namespace dev
 		LabelEditModal(
 			Hardware& _hardware, Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool* _visibleP,
-			const float* const _dpiScaleP);
+			bool* _visibleP = nullptr);
 	};
 };

@@ -853,7 +853,7 @@ static char disasm_cmd_s[CMD_S_LEN_MAX+1];
 
 // IS NOT THREAD SAFE!
 // Disasm one command in a format:
-// 1234	12 34 56	lxi h, 5634	psw=1234 bc=2345 de=3456 hl=4567 sp=5678
+// 1234\t12 34 56\tlxi sp,5634\tpsw=1234 bc=2345 de=3456 hl=4567 sp=5678
 auto dev::GetDisasmLogLine(
 	const CpuI8080::State& _cpuState, const Memory::State& _memState)
 -> const char*

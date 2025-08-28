@@ -8,10 +8,10 @@
 dev::TraceLogPopup::TraceLogPopup(
 	dev::Hardware& _hardware, dev::Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("#Tracelog Popup", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_None,
 		dev::BaseWindow::Type::Popup),
 	m_hardware(_hardware), m_debugger(_debugger)

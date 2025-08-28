@@ -5,10 +5,10 @@
 dev::TraceLogWindow::TraceLogWindow(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Trace Log", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -28,6 +28,9 @@ void dev::TraceLogWindow::Draw(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	bool isRunning = dev::Signals::HW_RUNNING & _signals;
+
+	if (isRunning) ImGui::TextUnformatted("Break execution");
+
 	DrawLogSave(isRunning);
 	DrawFilter(isRunning);
 	DrawTable(isRunning);
@@ -36,6 +39,8 @@ void dev::TraceLogWindow::Draw(
 
 void dev::TraceLogWindow::DrawLogSave(const bool _isRunning)
 {
+	if (_isRunning) ImGui::BeginDisabled();
+
 	if (ImGui::Checkbox("Save Log", &m_saveLog))
 	{
 		if (m_saveLog)
@@ -46,6 +51,13 @@ void dev::TraceLogWindow::DrawLogSave(const bool _isRunning)
 			Addr regPC = m_hardware.Request(Hardware::Req::DEBUG_TRACE_LOG_DISABLE);
 		}
 	}
+	if (_isRunning) ImGui::EndDisabled();
+
+	ImGui::SameLine();
+	dev::DrawHelpMarker(
+		"Saves a trace log to a file in the Devector folder when \n"
+		"the emulation is running. This option is very IO intensive\n"
+		"and might slow down the emulation.");
 }
 
 const char* filterNames[] = {
@@ -58,8 +70,6 @@ const char* filterNames[] = {
 
 void dev::TraceLogWindow::DrawFilter(const bool _isRunning)
 {
-	if (!m_traceLogP) return;
-
 	const char* filterName = filterNames[m_disasmFilter];
 
 	if (_isRunning) ImGui::BeginDisabled();
@@ -83,6 +93,19 @@ void dev::TraceLogWindow::DrawFilter(const bool _isRunning)
 		ImGui::EndCombo();
 	}
 	if (_isRunning) ImGui::EndDisabled();
+
+	ImGui::SameLine();
+		dev::DrawHelpMarker(
+			"Select the type of instructions to display."
+			"\n\n"
+			"\"c*\" displays all conditional call instructions."
+			"\n\n"
+			"\"+ call\" displays all above + call instructions."
+			"\n\n"
+			"etc..."
+			"\n\n"
+			"\"all\" displays all instructions."
+		);
 }
 
 
@@ -109,14 +132,16 @@ void dev::TraceLogWindow::DrawTable(const bool _isRunning)
 		ImGuiTableFlags_Resizable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn("",
 			ImGuiTableColumnFlags_WidthFixed |
 			ImGuiTableColumnFlags_NoResize, 0);
 		ImGui::TableSetupColumn("Addr",
 			ImGuiTableColumnFlags_WidthFixed |
-			ImGuiTableColumnFlags_NoResize, ADDR_W);
+			ImGuiTableColumnFlags_NoResize, ADDR_W * scale);
 		ImGui::TableSetupColumn("command",
-			ImGuiTableColumnFlags_WidthFixed, CODE_W);
+			ImGuiTableColumnFlags_WidthFixed, CODE_W * scale);
 		ImGui::TableSetupColumn("consts");
 
 		ImGuiListClipper clipper;

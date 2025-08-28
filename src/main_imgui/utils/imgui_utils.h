@@ -84,7 +84,7 @@ namespace dev
 	void PushStyleCompact(const float _paddingMulX = 1.0f, const float _paddingMulY = 0.6f);
 	void PopStyleCompact();
 	void UpdatePropertyPrintStat(const char* _parameterName);
-	void ColumnClippingEnable(const float _dpiScale = 1.0f);
+	void ColumnClippingEnable();
 	void ColumnClippingDisable();
 
 	void DeleteByIndex(dev::Disasm::LabelList& _labels, int& _idx);
@@ -124,8 +124,8 @@ namespace dev
 	void DrawHelpMarker(const char* _text);
 	bool HyperLink(const char* label, bool underlineWhenHoveredOnly = true);
 	void DrawProgramCounter(const ImU32 _color, const ImGuiDir _dir = ImGuiDir_Right,
-		const float _dpiScale = 1.0f, const float _posXOffset = 0.6f, const bool _itemHasSize = false);
-	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP, const float _dpiScale,
+		const float _posXOffset = 0.6f, const bool _itemHasSize = false);
+	bool DrawBreakpoint(const char* label, Breakpoint::Status* _statusP,
 		const float _posXOffset = -0.2f, const bool _itemHasSize = false);
 	void DrawProperty2(const char* _name, const char* _valueH,
 		const char* _hint = nullptr, const ImVec4& _valColor = CLR_WHITE);

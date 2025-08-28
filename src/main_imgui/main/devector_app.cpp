@@ -85,7 +85,7 @@ void dev::DevectorApp::HardwareInit()
 
 void dev::DevectorApp::SettingsInit()
 {
-	Request(Req::LOAD_FONT);
+	LoadFonts();
 	AppStyleInit();
 
 	m_breakpointsWindowVisible = GetSettingsBool("breakpointsWindowVisisble", false);
@@ -147,96 +147,78 @@ void dev::DevectorApp::WindowsInit()
 
 	m_hardwareStatsWindowP = std::make_unique<dev::HardwareStatsWindow>(
 		*m_hardwareP, m_scheduler, &m_hardwareStatsWindowVisible,
-		&m_dpiScale, m_ruslat);
+		m_ruslat);
 
 	m_disasmWindowP = std::make_unique<dev::DisasmWindow>(
 		*m_hardwareP, *m_debuggerP,
-		m_fontItalic, m_scheduler, &m_disasmWindowVisible, &m_dpiScale);
+		m_fontItalic, m_scheduler, &m_disasmWindowVisible);
 
 	m_displayWindowP = std::make_unique<dev::DisplayWindow>(
 		*m_hardwareP, m_scheduler, &m_displayWindowVisible,
-		&m_dpiScale, m_glUtils,
-		m_debuggerP->GetDebugData().GetScripts(), executionSpeed,
-		m_display_vtxShader, m_display_fragShader);
+		m_glUtils, m_debuggerP->GetDebugData().GetScripts(),
+		executionSpeed, m_display_vtxShader, m_display_fragShader);
 
 	m_breakpointsWindowP = std::make_unique<dev::BreakpointsWindow>(
-		*m_hardwareP, m_scheduler, &m_breakpointsWindowVisible,
-		&m_dpiScale);
+		*m_hardwareP, m_scheduler, &m_breakpointsWindowVisible);
 
 	m_watchpointsWindowP = std::make_unique<dev::WatchpointsWindow>(
-		*m_hardwareP, m_scheduler, &m_watchpointsWindowVisible,
-		&m_dpiScale);
+		*m_hardwareP, m_scheduler, &m_watchpointsWindowVisible);
 
 	m_memDisplayWindowP = std::make_unique<dev::MemDisplayWindow>(
 		*m_hardwareP, *m_debuggerP, m_scheduler, &m_memDisplayWindowVisible,
-		&m_dpiScale, m_glUtils,
-		m_memdisplay_vtxShader, m_memdisplay_fragShader);
+		m_glUtils, m_memdisplay_vtxShader, m_memdisplay_fragShader);
 
 	m_hexViewerWindowP = std::make_unique<dev::HexViewerWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, &m_hexViewerWindowVisible,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_hexViewerWindowVisible);
 
 	m_traceLogWindowP = std::make_unique<dev::TraceLogWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, &m_traceLogWindowVisible,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_traceLogWindowVisible);
 
 	m_aboutWindowP = std::make_unique<dev::AboutWindow>(
-		m_scheduler, &m_aboutWindowVisible, &m_dpiScale);
+		m_scheduler, &m_aboutWindowVisible);
 
 	m_feedbackWindowP = std::make_unique<dev::FeedbackWindow>(
-		m_scheduler, &m_feedbackWindowVisible, &m_dpiScale);
+		m_scheduler, &m_feedbackWindowVisible);
 
 	m_recorderWindowP = std::make_unique<dev::RecorderWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, &m_recorderWindowVisible,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_recorderWindowVisible);
 
 	m_keyboardWindowP = std::make_unique<dev::KeyboardWindow>(
 		*m_hardwareP, m_scheduler, &m_keyboardWindowVisible,
-		&m_dpiScale, m_glUtils, m_pathImgKeyboard);
+		m_glUtils, m_pathImgKeyboard);
 
 	m_searchWindowP = std::make_unique<dev::SearchWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, &m_searchWindowVisible,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_searchWindowVisible);
 
 	m_debugdataWindowP = std::make_unique<dev::DebugDataWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, &m_debugdataWindowVisible,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler, &m_debugdataWindowVisible);
 
 	m_labelEditPopupP = std::make_unique<dev::LabelEditModal>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 
 	m_constEditPopupP = std::make_unique<dev::ConstEditModal>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 
 	m_commentEditPopupP = std::make_unique<dev::CommentEditModal>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 
 	m_memoryEditPopupP = std::make_unique<dev::MemoryEditWindow>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 
 	m_codePerfEditPopupP = std::make_unique<dev::CodePerfEditModal>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 
 	m_scriptEditPopupP = std::make_unique<dev::ScriptEditModal>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 
 	m_traceLogPopupP = std::make_unique<dev::TraceLogPopup>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 
 	m_breakpoints_popupP = std::make_unique<dev::BreakpointsPopup>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 
 	m_watchpoints_popupP = std::make_unique<dev::WatchpointsPopup>(
-		*m_hardwareP, *m_debuggerP, m_scheduler, nullptr,
-		&m_dpiScale);
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 }
 
 

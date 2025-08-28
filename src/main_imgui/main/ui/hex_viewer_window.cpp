@@ -6,10 +6,10 @@
 
 dev::HexViewerWindow::HexViewerWindow(Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Hex Viewer", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger), m_ram()
@@ -133,23 +133,25 @@ void dev::HexViewerWindow::DrawHexTable(const bool _isRunning)
 	{
 		ImGui::TableSetupScrollFreeze(0, 1);
 
+		auto scale = ImGui::GetWindowDpiScale();
+
 		// Addr
 		ImGui::TableSetupColumn("#hexviewe_addr",
-			ImGuiTableColumnFlags_WidthFixed, 40);
+			ImGuiTableColumnFlags_WidthFixed, 40 * scale);
 		// Data
 		for (const char* column_name : HexViewer::col_names1)
 		{
 			ImGui::TableSetupColumn(column_name,
-				ImGuiTableColumnFlags_WidthFixed, 18);
+				ImGuiTableColumnFlags_WidthFixed, 18 * scale);
 		}
 		// Gap
 		ImGui::TableSetupColumn("#hexviewe_gap",
-			ImGuiTableColumnFlags_WidthFixed, 4);
+			ImGuiTableColumnFlags_WidthFixed, 4 * scale);
 		// Chars
 		for (const char* column_name : HexViewer::col_names2)
 		{
 			ImGui::TableSetupColumn(column_name,
-				ImGuiTableColumnFlags_WidthFixed, 4);
+				ImGuiTableColumnFlags_WidthFixed, 6 * scale);
 		}
 
 		ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
@@ -329,7 +331,7 @@ void dev::HexViewerWindow::CallbackHighlightOn(
 	float offset = 2.0f;
 
 	m_table_scroll_y = (m_highlightAddr >> 4) *
-		(ImGui::GetFontSize() + cellPaddingY + offset) * (*m_dpiScaleP);
+		(ImGui::GetFontSize() + cellPaddingY + offset);
 }
 
 

@@ -22,7 +22,7 @@
 #include "utils/tqueue.h"
 #include "utils/json_utils.h"
 
-namespace dev 
+namespace dev
 {
 	class Hardware
 	{
@@ -46,30 +46,42 @@ namespace dev
 	public:
 		//enum class Req
 		#include "core/hardware_consts.h"
-		
+
 
 		using DebugFunc = std::function<bool(
 			CpuI8080::State* _cpuState, Memory::State* _memState,
 			IO::State* _ioState, Display::State* _displayState)>;
 
-		using DebugReqHandlingFunc = std::function<nlohmann::json(Req _req, nlohmann::json _reqDataJ,
+		using DebugReqHandlingFunc = std::function<nlohmann::json(
+			Req _req, nlohmann::json _reqDataJ,
 			CpuI8080::State* _cpuState, Memory::State* _memState,
 			IO::State* _ioState, Display::State* _displayState)>;
 
-		enum class ExecSpeed : int { _1PERCENT = 0, _20PERCENT, HALF, NORMAL, X2, MAX, LEN };
+		enum class ExecSpeed : int { _1PERCENT = 0,
+									_20PERCENT,
+									HALF,
+									NORMAL,
+									X2,
+									MAX,
+									LEN
+								};
 
-
-        Hardware(const std::string& _pathBootData, const std::string& _pathRamDiskData, 
+        Hardware(const std::string& _pathBootData,
+			const std::string& _pathRamDiskData,
 			const bool _ramDiskClearAfterRestart);
 		~Hardware();
-		auto Request(const Req _req, const nlohmann::json& _dataJ = {}) -> Result <nlohmann::json>;
+		auto Request(
+			const Req _req, const nlohmann::json& _dataJ = {})
+			-> Result <nlohmann::json>;
+
 		auto GetFrame(const bool _vsync) -> const Display::FrameBuffer*;
 		auto GetRam() const -> const Memory::Ram*;
 		auto GetCpuState() -> const CpuI8080::State& { return m_cpu.GetState(); }
 		auto GetMemState() -> const Memory::State& { return m_memory.GetState(); }
 		auto GetIoState() -> const IO::State& { return m_io.GetState(); }
 
-		void AttachDebugFuncs(DebugFunc _debugFunc, DebugReqHandlingFunc _debugReqHandlingFunc);
+		void AttachDebugFuncs(
+			DebugFunc _debugFunc, DebugReqHandlingFunc _debugReqHandlingFunc);
 
 
 	private:
@@ -81,27 +93,43 @@ namespace dev
 		std::thread m_reqHandlingThread;
 		std::atomic<Status> m_status;
 		TQueue <std::pair<Req, nlohmann::json>> m_reqs; // request
-		TQueue <nlohmann::json> m_reqRes;				// request's result sent back 
+		TQueue <nlohmann::json> m_reqRes;				// request's result sent back
 
 		static constexpr std::chrono::microseconds m_reqHandlingTime = 1ms;
 		ExecSpeed m_execSpeed = ExecSpeed::NORMAL;
-		std::chrono::microseconds m_execDelays[static_cast<int>(ExecSpeed::LEN)] = { 1996800us/*1%*/, 99840us/*20%*/, 39936us/*HALF*/, 19968us/*NORMAL*/, 9984us/*X2*/, 0us/*MAX*/ };
+		std::chrono::microseconds m_execDelays[static_cast<int>(ExecSpeed::LEN)] = {
+			1996800us/*1%*/,
+			99840us/*20%*/,
+			39936us/*HALF*/,
+			19968us/*NORMAL*/,
+			9984us/*X2*/,
+			0us/*MAX*/
+		};
 
 		void Init();
 		void Execution();
 		bool ExecuteInstruction();
 		void ExecuteFrameNoBreaks();
-		void ReqHandling(const std::chrono::duration<int64_t, std::nano> _waitTime = -1ns);
+		void ReqHandling(
+			const std::chrono::duration<int64_t, std::nano> _waitTime = -1ns);
 		void Reset();
 		void Restart();
 		void Stop();
 		void Run();
 		auto GetRegs() const -> nlohmann::json;
 		auto GetByteGlobal(const nlohmann::json _globalAddrJ) -> nlohmann::json;
-		auto GetByte(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
-		auto Get3Bytes(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
+
+		auto GetByte(const nlohmann::json _addrJ,
+					const Memory::AddrSpace _addrSpace) -> nlohmann::json;
+
+		auto Get3Bytes(const nlohmann::json _addrJ,
+					const Memory::AddrSpace _addrSpace) -> nlohmann::json;
+
 		auto GetMemString(const nlohmann::json _dataJ) -> nlohmann::json;
-		auto GetWord(const nlohmann::json _addrJ, const Memory::AddrSpace _addrSpace) -> nlohmann::json;
+
+		auto GetWord(const nlohmann::json _addrJ,
+					const Memory::AddrSpace _addrSpace) -> nlohmann::json;
+
 		auto GetStackSample(const nlohmann::json _addrJ) -> nlohmann::json;
 		auto GetFddInfo(const int _driveIdx) -> Fdc1793::DiskInfo;
 		auto GetFddImage(const int _driveIdx) -> const std::vector<uint8_t>;

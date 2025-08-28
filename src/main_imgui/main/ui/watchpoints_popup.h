@@ -8,8 +8,8 @@ namespace dev
 {
 	class WatchpointsPopup : public BaseWindow
 	{
-		static constexpr int DEFAULT_WINDOW_W = 500;
-		static constexpr int DEFAULT_WINDOW_H = 300;
+		static constexpr int DEFAULT_WINDOW_W = 420;
+		static constexpr int DEFAULT_WINDOW_H = 320;
 
 		dev::Hardware& m_hardware;
 		dev::Debugger& m_debugger;
@@ -38,7 +38,6 @@ namespace dev
 		WatchpointsPopup(
 			dev::Hardware& _hardware, dev::Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool* _visibleP,
-			const float* const _dpiScaleP);
+			bool* _visibleP = nullptr);
 	};
 };

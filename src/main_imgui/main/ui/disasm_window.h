@@ -151,7 +151,7 @@ namespace dev
 		DisasmWindow(Hardware& _hardware, Debugger& _debugger,
 			ImFont* fontComment,
 			dev::Scheduler& _scheduler,
-			bool* _visibleP, const float* const _dpiScaleP);
+			bool* _visibleP);
 	};
 
 };

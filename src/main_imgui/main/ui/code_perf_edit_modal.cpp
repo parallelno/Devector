@@ -8,10 +8,10 @@
 dev::CodePerfEditModal::CodePerfEditModal(
 	Hardware& m_hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Code Perf Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
 		BaseWindow::Type::Modal),
 	m_hardware(m_hardware), m_debugger(_debugger)
@@ -33,7 +33,7 @@ dev::CodePerfEditModal::CodePerfEditModal(
 void dev::CodePerfEditModal::CallbackAdd(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
+	auto globalAddr = std::get<GlobalAddr>(*_data);
 
 	m_enterPressed = false;
 	m_setFocus = true;
@@ -69,10 +69,12 @@ void dev::CodePerfEditModal::Draw(
 
 	if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn(
-			"##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150);
+			"##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150 * scale);
 		ImGui::TableSetupColumn(
-			"##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 200);
+			"##ContextMenuTblVal", ImGuiTableColumnFlags_WidthStretch);
 
 		// Label
 		bool delPressed = false;
@@ -137,7 +139,7 @@ void dev::CodePerfEditModal::Draw(
 
 		// OK button
 		if (warning) ImGui::BeginDisabled();
-		if (ImGui::Button("Ok", buttonSize) || m_enterPressed)
+		if (ImGui::Button("Ok", m_buttonSize) || m_enterPressed)
 		{
 			// global addr start
 			auto oldAddrStart = m_codePerf.addrStart;
@@ -165,7 +167,7 @@ void dev::CodePerfEditModal::Draw(
 		ImGui::Text(" ");
 		ImGui::SameLine();
 
-		if (ImGui::Button("Cancel", buttonSize) |
+		if (ImGui::Button("Cancel", m_buttonSize) |
 			ImGui::IsKeyReleased(ImGuiKey_Escape))
 		{
 			ImGui::CloseCurrentPopup();

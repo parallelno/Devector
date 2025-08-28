@@ -83,7 +83,6 @@ namespace dev
 		DisplayWindow(Hardware& _hardware,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP,
-			const float* const _dpiScaleP,
 			GLUtils& _glUtils,
 			Scripts& _scripts,
 			const Hardware::ExecSpeed _execSpeed,

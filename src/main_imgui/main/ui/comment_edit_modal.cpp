@@ -8,10 +8,10 @@
 dev::CommentEditModal::CommentEditModal(
 	dev::Hardware& _hardware, dev::Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Comment Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
 		dev::BaseWindow::Type::Modal),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -33,7 +33,7 @@ dev::CommentEditModal::CommentEditModal(
 void dev::CommentEditModal::CallbackAdd(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
+	auto globalAddr = std::get<GlobalAddr>(*_data);
 
 	m_enterPressed = false;
 	m_setFocus = true;
@@ -69,10 +69,12 @@ void dev::CommentEditModal::Draw(
 
 	if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn(
-			"##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150);
+			"##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150 * scale);
 		ImGui::TableSetupColumn(
-			"##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 200);
+			"##ContextMenuTblVal", ImGuiTableColumnFlags_WidthStretch);
 
 		// Comment
 		bool delPressed = false;
@@ -118,7 +120,7 @@ void dev::CommentEditModal::Draw(
 
 		// OK button
 		if (warning) ImGui::BeginDisabled();
-		if (ImGui::Button("Ok", buttonSize) || m_enterPressed)
+		if (ImGui::Button("Ok", m_buttonSize) || m_enterPressed)
 		{
 			// empty string means a req to delete the entity
 			if (m_comment.empty() || m_addr != m_oldAddr)
@@ -139,7 +141,7 @@ void dev::CommentEditModal::Draw(
 		ImGui::Text(" ");
 		ImGui::SameLine();
 
-		if (ImGui::Button("Cancel", buttonSize) |
+		if (ImGui::Button("Cancel", m_buttonSize) |
 			ImGui::IsKeyReleased(ImGuiKey_Escape))
 		{
 			ImGui::CloseCurrentPopup();

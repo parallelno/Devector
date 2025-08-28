@@ -8,10 +8,10 @@
 dev::ScriptEditModal::ScriptEditModal(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Script Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
 		BaseWindow::Type::Modal),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -33,7 +33,7 @@ dev::ScriptEditModal::ScriptEditModal(
 void dev::ScriptEditModal::CallbackAdd(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
-	auto globalAddr = Addr(std::get<GlobalAddr>(*_data));
+	auto globalAddr = std::get<GlobalAddr>(*_data);
 
 	m_enterPressed = false;
 	m_setFocus = true;
@@ -70,10 +70,12 @@ void dev::ScriptEditModal::Draw(
 
 	if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn(
-			"##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 80);
+			"##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 80 * scale);
 		ImGui::TableSetupColumn(
-			"##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 800);
+			"##ContextMenuTblVal", ImGuiTableColumnFlags_WidthStretch);
 
 		// Active
 		DrawProperty2EditableCheckBox(
@@ -94,13 +96,11 @@ void dev::ScriptEditModal::Draw(
 		ImGui::TableNextColumn();
 
 		ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
-		TextAligned("m_code", { 1.0f, 0.5f });
+		TextAligned("Code", { 1.0f, 0.5f });
 		ImGui::PopStyleColor();
 
 		ImGui::TableNextColumn();
-		ImVec2 codeSize = ImGui::GetContentRegionAvail();
-		codeSize.y -= ImGui::GetStyle().FramePadding.y * 2.0f;
-		codeSize.y -= ImGui::GetFrameHeightWithSpacing();
+		ImVec2 codeSize = { 800 * scale, 400 };
 
 		auto entered = ImGui::InputTextMultiline(
 			"##ContextCode",
@@ -129,7 +129,7 @@ void dev::ScriptEditModal::Draw(
 
 		// OK button
 		if (warning) ImGui::BeginDisabled();
-		if (ImGui::Button("Ok", buttonSize) || m_enterPressed)
+		if (ImGui::Button("Ok", m_buttonSize) || m_enterPressed)
 		{
 			m_script.code = std::string(m_code);
 			m_hardware.Request(
@@ -142,7 +142,7 @@ void dev::ScriptEditModal::Draw(
 
 		// Cancel button
 		ImGui::SameLine(); ImGui::Text(" "); ImGui::SameLine();
-		if (ImGui::Button("Cancel", buttonSize)) ImGui::CloseCurrentPopup();
+		if (ImGui::Button("Cancel", m_buttonSize)) ImGui::CloseCurrentPopup();
 
 		// ESC pressed
 		if (ImGui::IsKeyReleased(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();

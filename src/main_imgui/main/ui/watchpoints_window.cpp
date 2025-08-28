@@ -4,10 +4,10 @@
 
 dev::WatchpointsWindow::WatchpointsWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Watchpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP),
+		_scheduler, _visibleP),
 	m_hardware(_hardware)
 {
 
@@ -43,14 +43,16 @@ void dev::WatchpointsWindow::Draw(
 
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn(
-			"###WpActive", ImGuiTableColumnFlags_WidthFixed, 25);
+			"###WpActive", ImGuiTableColumnFlags_WidthFixed, 25 * scale);
 		ImGui::TableSetupColumn(
-			"GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110);
+			"GlobalAddr", ImGuiTableColumnFlags_WidthFixed, 110 * scale);
 		ImGui::TableSetupColumn(
-			"Access", ImGuiTableColumnFlags_WidthFixed, 50);
+			"Access", ImGuiTableColumnFlags_WidthFixed, 50 * scale);
 		ImGui::TableSetupColumn(
-			"Condition", ImGuiTableColumnFlags_WidthFixed, 110);
+			"Condition", ImGuiTableColumnFlags_WidthFixed, 110 * scale);
 		ImGui::TableSetupColumn(
 			"Comment", ImGuiTableColumnFlags_WidthStretch);
 

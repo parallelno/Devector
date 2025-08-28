@@ -5,14 +5,14 @@
 
 dev::DisplayWindow::DisplayWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP, GLUtils& _glUtils,
+	bool* _visibleP, GLUtils& _glUtils,
 	Scripts& _scripts,
 	const Hardware::ExecSpeed _execSpeed,
 	const std::string& _vtxShaderS,
 	const std::string& _fragShaderS)
 	:
 	BaseWindow("Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP),
+		_scheduler, _visibleP),
 	m_hardware(_hardware), m_glUtils(_glUtils),
 	m_scripts(_scripts)
 {
@@ -76,7 +76,8 @@ bool dev::DisplayWindow::Init(const std::string& _vtxShaderS,
 	return true;
 }
 
-void dev::DisplayWindow::Draw(const dev::Signals _signals, dev::Scheduler::SignalData _data)
+void dev::DisplayWindow::Draw(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 	m_windowFocused = ImGui::IsWindowFocused();
@@ -102,7 +103,8 @@ bool dev::DisplayWindow::IsFocused() const
 	return m_windowFocused;
 }
 
-void dev::DisplayWindow::CallbackUpdateData(const dev::Signals _signals, dev::Scheduler::SignalData _data)
+void dev::DisplayWindow::CallbackUpdateData(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 	bool new_frame = dev::Signals::FRAME & _signals;

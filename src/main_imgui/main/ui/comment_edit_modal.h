@@ -33,7 +33,6 @@ namespace dev
 		CommentEditModal(
 			dev::Hardware& _hardware, dev::Debugger& _debugger,
 			dev::Scheduler& _scheduler,
-			bool* _visibleP,
-			const float* const _dpiScaleP);
+			bool* _visibleP = nullptr);
 	};
 };

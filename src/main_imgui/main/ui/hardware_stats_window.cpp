@@ -4,11 +4,11 @@
 
 dev::HardwareStatsWindow::HardwareStatsWindow(Hardware& _hardware,
 		dev::Scheduler& _scheduler,
-		bool* _visibleP, const float* const _dpiScaleP,
+		bool* _visibleP,
 		bool& _ruslat)
 	:
 	BaseWindow("Hardware Stats", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP),
+		_scheduler, _visibleP),
 	m_hardware(_hardware),
 	m_ruslat(_ruslat)
 {
@@ -93,9 +93,11 @@ void dev::HardwareStatsWindow::Draw(
 		ImGuiTableFlags_ContextMenuInBody;
 	if (ImGui::BeginTable("Hardware Stats", 4, flags))
 	{
-		ImGui::TableSetupColumn("Regs", ImGuiTableColumnFlags_WidthFixed, 80);
-		ImGui::TableSetupColumn("Stack", ImGuiTableColumnFlags_WidthFixed, 76);
-		ImGui::TableSetupColumn("Hardware", ImGuiTableColumnFlags_WidthFixed, 140);
+		auto scale = ImGui::GetWindowDpiScale();
+
+		ImGui::TableSetupColumn("Regs", ImGuiTableColumnFlags_WidthFixed, 80 * scale);
+		ImGui::TableSetupColumn("Stack", ImGuiTableColumnFlags_WidthFixed, 76 * scale);
+		ImGui::TableSetupColumn("Hardware", ImGuiTableColumnFlags_WidthFixed, 140 * scale);
 		ImGui::TableSetupColumn("Peripheral", ImGuiTableColumnFlags_WidthStretch);
 		ImGui::TableHeadersRow();
 
@@ -130,7 +132,9 @@ void dev::HardwareStatsWindow::DrawRegs() const
 
 	if (ImGui::BeginTable("regs", 2, flags))
 	{
-		ImGui::TableSetupColumn("regsNames", ImGuiTableColumnFlags_WidthFixed, 30);
+		auto scale = ImGui::GetWindowDpiScale();
+
+		ImGui::TableSetupColumn("regsNames", ImGuiTableColumnFlags_WidthFixed, 30 * scale);
 
 		// regs
 		DrawProperty2RegPair("AF", Uint8ToStrC(m_cpuState.regs.psw.af.h), Uint8ToStrC(m_cpuState.regs.psw.af.l), nullptr, *m_regAColor, *m_regFColor);
@@ -164,7 +168,9 @@ void dev::HardwareStatsWindow::DrawStack() const
 
 	if (ImGui::BeginTable("stack", 2, flags))
 	{
-		ImGui::TableSetupColumn("stackAddrs", ImGuiTableColumnFlags_WidthFixed, 30);
+		auto scale = ImGui::GetWindowDpiScale();
+
+		ImGui::TableSetupColumn("stackAddrs", ImGuiTableColumnFlags_WidthFixed, 30 * scale);
 
 		// Stack
 		DrawProperty2("-10", m_dataAddrN10S.c_str());
@@ -193,7 +199,9 @@ void dev::HardwareStatsWindow::DrawHardware(const bool _isRunning) const
 
 	if (ImGui::BeginTable("hardware", 2, flags))
 	{
-		ImGui::TableSetupColumn("hwName", ImGuiTableColumnFlags_WidthFixed, 120);
+		auto scale = ImGui::GetWindowDpiScale();
+
+		ImGui::TableSetupColumn("hwName", ImGuiTableColumnFlags_WidthFixed, 120 * scale);
 
 		DrawProperty2("Up Time", m_upTimeS.c_str());
 		DrawProperty2("CPU Cycles", m_ccS.c_str());
@@ -257,7 +265,9 @@ void dev::HardwareStatsWindow::DrawPeripheral() const
 
 	if (ImGui::BeginTable("Peripheral", 2, tableFlags))
 	{
-		ImGui::TableSetupColumn("pfNames", ImGuiTableColumnFlags_WidthFixed, 110);
+		auto scale = ImGui::GetWindowDpiScale();
+
+		ImGui::TableSetupColumn("pfNames", ImGuiTableColumnFlags_WidthFixed, 110 * scale);
 
 		// RAM Disk 1 mapping
 		DrawSeparator2("RAM Disk:");

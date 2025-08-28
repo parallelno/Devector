@@ -82,7 +82,6 @@ namespace dev
 			Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP,
-			const float* const _dpiScaleP,
 			GLUtils& _glUtils,
 			const std::string& _vtxShaderS,
 			const std::string& _fragShaderS);

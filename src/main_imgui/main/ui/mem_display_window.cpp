@@ -7,12 +7,12 @@ dev::MemDisplayWindow::MemDisplayWindow(
 	Hardware& _hardware,
 	Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP, GLUtils& _glUtils,
+	bool* _visibleP, GLUtils& _glUtils,
 	const std::string& _vtxShaderS,
 	const std::string& _fragShaderS)
 	:
 	BaseWindow("Memory Display", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_HorizontalScrollbar),
 	m_hardware(_hardware), m_debugger(_debugger), m_glUtils(_glUtils)

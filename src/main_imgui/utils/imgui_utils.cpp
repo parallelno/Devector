@@ -36,7 +36,7 @@ void dev::UpdatePropertyPrintStat(const char* _parameterName)
 	ImGui::TableSetColumnIndex(1);
 }
 
-void dev::ColumnClippingEnable(const float _dpiScale)
+void dev::ColumnClippingEnable()
 {
 	ImGuiContext& g = *GImGui;
 
@@ -44,7 +44,8 @@ void dev::ColumnClippingEnable(const float _dpiScale)
 		ImGui::GetCursorScreenPos(),
 		ImVec2(
 			ImGui::GetCursorScreenPos().x + ImGui::GetColumnWidth(),
-			ImGui::GetCursorScreenPos().y + g.FontSize * _dpiScale
+			ImGui::GetCursorScreenPos().y +
+				g.FontSize * ImGui::GetWindowDpiScale()
 		), true);
 }
 
@@ -173,7 +174,7 @@ void dev::TextAligned(const char* _text, const ImVec2& _aligment)
 
 void dev::DrawProgramCounter(
 	const ImU32 _color, const ImGuiDir _dir,
-	const float _dpiScale, const float _posXOffset, const bool _itemHasSize)
+	const float _posXOffset, const bool _itemHasSize)
 {
 	ImGuiWindow* window = ImGui::GetCurrentWindow();
 	if (window->SkipItems)
@@ -200,7 +201,6 @@ void dev::DrawProgramCounter(
 bool dev::DrawBreakpoint(
 	const char* label,
 	Breakpoint::Status* _statusP,
-	const float _dpiScale,
 	const float _posXOffset, const bool _itemHasSize)
 {
 	constexpr ImU32 DISASM_TBL_COLOR_BREAKPOINT = dev::IM_U32(0xFF2828A0);
@@ -262,16 +262,18 @@ bool dev::DrawBreakpoint(
 		ImVec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f);
 
 	// render the hover highlight
+	auto scale = ImGui::GetWindowDpiScale();
+
 	if (hovered)
 		window->DrawList->AddCircleFilled(drawPos,
-			g.FontSize * DISASM_TBL_BREAKPOINT_SIZE_HOVERED * _dpiScale,
+			g.FontSize * DISASM_TBL_BREAKPOINT_SIZE_HOVERED * scale,
 			DISASM_TBL_COLOR_BREAKPOINT_HOVER, 8);
 
 	// render the breakpoint
 	if (*_statusP != Breakpoint::Status::DELETED)
 		window->DrawList->AddCircleFilled(
 			drawPos,
-			g.FontSize * DISASM_TBL_BREAKPOINT_SIZE * _dpiScale, color, 8);
+			g.FontSize * DISASM_TBL_BREAKPOINT_SIZE * scale, color, 8);
 
 	return pressed && hovered;
 }
@@ -341,7 +343,9 @@ bool dev::DrawProperty2EditableI(
 	const char* _name, const char* _label, int* _value,
 	const char* _help, const ImGuiInputTextFlags _flags)
 {
-	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	auto scale = ImGui::GetWindowDpiScale();
+
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f * scale);
 	ImGui::TableNextColumn();
 
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
@@ -365,7 +369,9 @@ bool dev::DrawProperty2EditableS(
 	const char* _hint, const char* _help,
 	const ImGuiInputTextFlags _flags, bool* _delButtonPressed)
 {
-	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	auto scale = ImGui::GetWindowDpiScale();
+
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f * scale);
 	ImGui::TableNextColumn();
 
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
@@ -406,7 +412,9 @@ void dev::DrawProperty2Combo(
 	int* _currentItem, const char* const _items[],
 	int _itemsCount, const char* _help)
 {
-	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	auto scale = ImGui::GetWindowDpiScale();
+
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f * scale);
 	ImGui::TableNextColumn();
 
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
@@ -427,7 +435,9 @@ void dev::DrawProperty2EditableCheckBox(
 	const char* _name, const char* _label,
 	bool* _val, const char* _help)
 {
-	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	auto scale = ImGui::GetWindowDpiScale();
+
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f * scale);
 	ImGui::TableNextColumn();
 
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
@@ -439,7 +449,7 @@ void dev::DrawProperty2EditableCheckBox(
 
 	if (_help && *_help != '\0') {
 		ImGui::SameLine();
-		ImGui::Dummy({ 80,10 });
+		ImGui::Dummy({ 80, 10 });
 		ImGui::SameLine();
 		dev::DrawHelpMarker(_help);
 	}
@@ -452,7 +462,9 @@ void dev::DrawProperty2EditableCheckBox4(
 	const char* _label2, const char* _label3,
 	bool* _val0, bool* _val1, bool* _val2, bool* _val3, const char* _help)
 {
-	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	auto scale = ImGui::GetWindowDpiScale();
+
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f * scale);
 	ImGui::TableNextColumn();
 
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
@@ -478,7 +490,9 @@ void dev::DrawProperty2RadioButtons(
 	const char* const _items[], int _itemsCount, const float _space,
 	const char* _help)
 {
-	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f);
+	auto scale = ImGui::GetWindowDpiScale();
+
+	ImGui::TableNextRow(ImGuiTableRowFlags_None, 30.0f * scale);
 	ImGui::TableNextColumn();
 
 	ImGui::PushStyleColor(ImGuiCol_Text, dev::IM_VEC4(0x909090FF));
@@ -493,14 +507,14 @@ void dev::DrawProperty2RadioButtons(
 		if (i != _itemsCount - 1)
 		{
 			ImGui::SameLine();
-			ImGui::Dummy(ImVec2{ _space, 5.0f });
+			ImGui::Dummy(ImVec2{ _space, 5.0f * scale });
 			ImGui::SameLine();
 		}
 	}
 
 	if (_help && *_help != '\0') {
 		ImGui::SameLine();
-		ImGui::Dummy({ 12,10 });
+		ImGui::Dummy({ 12, 10 });
 		ImGui::SameLine();
 		dev::DrawHelpMarker(_help);
 	}

@@ -8,10 +8,10 @@
 dev::BreakpointsPopup::BreakpointsPopup(
 	dev::Hardware& _hardware, dev::Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("#Breakpoints Popup", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_None,
 		dev::BaseWindow::Type::Popup),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -88,10 +88,12 @@ void dev::BreakpointsPopup::Draw(
 
 	if (ImGui::BeginTable("##BPContextMenu", 2, flags))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn(
-			"##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140);
+			"##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140 * scale);
 		ImGui::TableSetupColumn(
-			"##BPContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 210);
+			"##BPContextMenuVal", ImGuiTableColumnFlags_WidthStretch);
 
 		// status
 		DrawProperty2EditableCheckBox(
@@ -159,7 +161,7 @@ void dev::BreakpointsPopup::Draw(
 
 		if (!warningS.empty()) ImGui::BeginDisabled();
 		// OK button
-		if (ImGui::Button("Ok", buttonSize))
+		if (ImGui::Button("Ok", m_buttonSize))
 		{
 			if (m_signal == dev::Signals::BREAKPOINTS_POPUP_EDIT &&
 				m_addrOld != m_addr)
@@ -194,7 +196,7 @@ void dev::BreakpointsPopup::Draw(
 		ImGui::Text(" ");
 		ImGui::SameLine();
 
-		if (ImGui::Button("Cancel", buttonSize))
+		if (ImGui::Button("Cancel", m_buttonSize))
 		{
 			ImGui::CloseCurrentPopup();
 		}

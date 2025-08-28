@@ -8,10 +8,10 @@
 dev::MemoryEditWindow::MemoryEditWindow(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Memory Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP,
+		_scheduler, _visibleP,
 		ImGuiWindowFlags_AlwaysAutoResize,
 		BaseWindow::Type::Modal),
 	m_hardware(_hardware), m_debugger(_debugger)
@@ -69,10 +69,12 @@ void dev::MemoryEditWindow::Draw(
 
 	if (ImGui::BeginTable("##ContextMenuTbl", 2, flags))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn(
-			"##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150);
+			"##ContextMenuTblName", ImGuiTableColumnFlags_WidthFixed, 150 * scale);
 		ImGui::TableSetupColumn(
-			"##ContextMenuTblVal", ImGuiTableColumnFlags_WidthFixed, 200);
+			"##ContextMenuTblVal", ImGuiTableColumnFlags_WidthStretch);
 
 		// Comment
 		bool delPressed = false;
@@ -142,7 +144,7 @@ void dev::MemoryEditWindow::Draw(
 
 		// OK button
 		if (warning) ImGui::BeginDisabled();
-		if (ImGui::Button("Ok", buttonSize) || m_enterPressed)
+		if (ImGui::Button("Ok", m_buttonSize) || m_enterPressed)
 		{
 			auto oldAddr = m_edit.globalAddr;
 			m_edit.globalAddr = m_globalAddr;
@@ -176,7 +178,7 @@ void dev::MemoryEditWindow::Draw(
 		ImGui::Text(" ");
 		ImGui::SameLine();
 
-		if (ImGui::Button("Cancel", buttonSize) |
+		if (ImGui::Button("Cancel", m_buttonSize) |
 		ImGui::IsKeyReleased(ImGuiKey_Escape))
 		{
 			ImGui::CloseCurrentPopup();

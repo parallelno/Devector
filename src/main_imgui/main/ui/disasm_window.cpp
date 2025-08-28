@@ -7,10 +7,10 @@
 dev::DisasmWindow::DisasmWindow(
 		dev::Hardware& _hardware, Debugger& _debugger, ImFont* fontComment,
 		dev::Scheduler& _scheduler,
-		bool* _visibleP, const float* const _dpiScale)
+		bool* _visibleP)
 	:
 	BaseWindow("Disasm", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScale),
+		_scheduler, _visibleP),
 	m_hardware(_hardware),
 	m_debugger(_debugger),
 	m_fontCommentP(fontComment)
@@ -196,12 +196,13 @@ void dev::DisasmWindow::DrawDisasmIcons(
 	const Addr _regPC)
 {
 	if (_isRunning) return;
+
 	// draw breakpoints
 	ImGui::SameLine();
 	auto bpStatus = _line.breakpointStatus;
 	if (dev::DrawBreakpoint(
 		std::format("##BpAddr{:04d}", _lineIdx).c_str(),
-		&bpStatus, *m_dpiScaleP))
+		&bpStatus))
 	{
 		switch (bpStatus)
 		{
@@ -226,7 +227,7 @@ void dev::DisasmWindow::DrawDisasmIcons(
 	{
 		ImGui::SameLine();
 		dev::DrawProgramCounter(
-			DASM_CLR_PC, ImGuiDir_Right, *m_dpiScaleP, PC_ICON_OFFSET_X);
+			DASM_CLR_PC, ImGuiDir_Right, PC_ICON_OFFSET_X);
 	}
 }
 
@@ -330,7 +331,7 @@ void dev::DisasmWindow::DrawDisasmLabels(const Disasm::Line& _line)
 void dev::DisasmWindow::DrawDisasmStats(const Disasm::Line& _line)
 {
 	ImGui::TableNextColumn();
-	ColumnClippingEnable(*m_dpiScaleP); // enable clipping
+	ColumnClippingEnable(); // enable clipping
 	ImGui::TableSetBgColor(
 		ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DASM_BG_CLR_ADDR));
 	const ImVec4& statsColor = _line.accessed ?
@@ -364,16 +365,18 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		ImGuiTableFlags_Resizable
 	))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn("Brk",
 			ImGuiTableColumnFlags_WidthFixed |
-			ImGuiTableColumnFlags_NoResize, BRK_W);
+			ImGuiTableColumnFlags_NoResize, BRK_W * scale);
 		ImGui::TableSetupColumn("Addr",
 			ImGuiTableColumnFlags_WidthFixed |
-			ImGuiTableColumnFlags_NoResize, ADDR_W);
+			ImGuiTableColumnFlags_NoResize, ADDR_W * scale);
 		ImGui::TableSetupColumn("command",
-			ImGuiTableColumnFlags_WidthFixed, CODE_W);
+			ImGuiTableColumnFlags_WidthFixed, CODE_W * scale);
 		ImGui::TableSetupColumn("stats",
-			ImGuiTableColumnFlags_WidthFixed, STATS_W);
+			ImGuiTableColumnFlags_WidthFixed, STATS_W * scale);
 		ImGui::TableSetupColumn("consts");
 
 		m_disasmLines = dev::Min((int)disasm.size(), GetVisibleLines());
@@ -587,13 +590,13 @@ void dev::DisasmWindow::DrawContextMenu(
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::LABEL_EDIT_WINDOW_EDIT,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 			else
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::LABEL_EDIT_WINDOW_ADD,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 
 		};
@@ -604,13 +607,13 @@ void dev::DisasmWindow::DrawContextMenu(
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::CONST_EDIT_WINDOW_EDIT,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 			else
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::CONST_EDIT_WINDOW_ADD,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 		};
 
@@ -620,13 +623,13 @@ void dev::DisasmWindow::DrawContextMenu(
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::COMMENT_EDIT_WINDOW_EDIT,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 			else
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::COMMENT_EDIT_WINDOW_ADD,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 		};
 
@@ -638,13 +641,13 @@ void dev::DisasmWindow::DrawContextMenu(
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::MEMORY_EDIT_WINDOW_EDIT,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 			else
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::MEMORY_EDIT_WINDOW_ADD,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 		}
 
@@ -664,13 +667,13 @@ void dev::DisasmWindow::DrawContextMenu(
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::CODE_PERF_EDIT_WINDOW_EDIT,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 			else
 			{
 				m_scheduler.AddSignal({
 					dev::Signals::CODE_PERF_EDIT_WINDOW_ADD,
-					(Addr)_contextMenu.addr});
+					(GlobalAddr)_contextMenu.addr});
 			}
 		}
 

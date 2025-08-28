@@ -7,10 +7,10 @@
 
 dev::BreakpointsWindow::BreakpointsWindow(Hardware& _hardware,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Breakpoints", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP),
+		_scheduler, _visibleP),
 	m_hardware(_hardware)
 {
 	_scheduler.AddCallback(
@@ -44,9 +44,11 @@ void dev::BreakpointsWindow::Draw(
 		ImGuiTableFlags_Hideable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
-		ImGui::TableSetupColumn("##BPActive", ImGuiTableColumnFlags_WidthFixed, 25);
-		ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, 110);
-		ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 180);
+		auto scale = ImGui::GetWindowDpiScale();
+
+		ImGui::TableSetupColumn("##BPActive", ImGuiTableColumnFlags_WidthFixed, 25 * scale);
+		ImGui::TableSetupColumn("Addr", ImGuiTableColumnFlags_WidthFixed, 110 * scale);
+		ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthFixed, 180 * scale);
 		ImGui::TableSetupColumn("Comment", ImGuiTableColumnFlags_WidthStretch);
 
 		ImGui::TableNextRow(ImGuiTableRowFlags_Headers);

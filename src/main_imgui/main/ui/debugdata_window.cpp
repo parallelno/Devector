@@ -7,10 +7,10 @@
 dev::DebugDataWindow::DebugDataWindow(
 	Hardware& _hardware, Debugger& _debugger,
 	dev::Scheduler& _scheduler,
-	bool* _visibleP, const float* const _dpiScaleP)
+	bool* _visibleP)
 	:
 	BaseWindow("Debug Data", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
-		_scheduler, _visibleP, _dpiScaleP),
+		_scheduler, _visibleP),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
 	_scheduler.AddCallback(
@@ -152,10 +152,12 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 		ImGuiTableFlags_Resizable;
 	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
 	{
+		auto scale = ImGui::GetWindowDpiScale();
+
 		ImGui::TableSetupColumn("",
 			ImGuiTableColumnFlags_WidthFixed |
 			ImGuiTableColumnFlags_NoResize, 0); // for the line selection/highlight
-		ImGui::TableSetupColumn("consts", ImGuiTableColumnFlags_WidthFixed, 100);
+		ImGui::TableSetupColumn("consts", ImGuiTableColumnFlags_WidthFixed, 100 * scale);
 		ImGui::TableSetupColumn("Addr");
 
 		ImGuiListClipper clipper;
@@ -301,7 +303,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 				signals = dev::Signals::SCRIPT_EDIT_WINDOW_ADD;
 				break;
 			}
-			m_scheduler.AddSignal({signals, (Addr)0});
+			m_scheduler.AddSignal({signals, (GlobalAddr)0});
 		}
 
 		if (_contextMenu.itemHovered)
@@ -333,7 +335,7 @@ void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
 					signals = dev::Signals::SCRIPT_EDIT_WINDOW_EDIT;
 					break;
 				}
-				m_scheduler.AddSignal({signals, (Addr)_contextMenu.addr});
+				m_scheduler.AddSignal({signals, (GlobalAddr)_contextMenu.addr});
 			}
 
 			if (ImGui::MenuItem("Delete"))

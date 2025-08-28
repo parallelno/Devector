@@ -33,8 +33,6 @@ dev::ImGuiApp::ImGuiApp(
 	m_posX = dev::GetJsonInt(m_settingsJ, "mainWindowX", false, dev::MAIN_WINDOW_X);
 	m_posY = dev::GetJsonInt(m_settingsJ, "mainWindowY", false, dev::MAIN_WINDOW_Y);
 
-	m_autoUpdateThread = std::thread(&ImGuiApp::AutoUpdate, this);
-
 	// Setup SDL
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
 	{
@@ -55,7 +53,8 @@ dev::ImGuiApp::ImGuiApp(
 #elif defined(__APPLE__)
 	// GL 3.2 Core + GLSL 150
 	const char* glsl_version = "#version 150";
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
+	// Always required on Mac
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
@@ -72,7 +71,11 @@ dev::ImGuiApp::ImGuiApp(
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-	Uint32 window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+
+	Uint32 window_flags = SDL_WINDOW_OPENGL |
+						SDL_WINDOW_RESIZABLE |
+						SDL_WINDOW_HIDDEN |
+						SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
 	m_window = SDL_CreateWindow(_title.c_str(), m_width, m_height, window_flags);
 	if (m_window == nullptr)
@@ -97,15 +100,19 @@ dev::ImGuiApp::ImGuiApp(
 	static std::string iniPath = dev::GetExecutableDir() + "imgui.ini";
 	m_ioP->IniFilename = iniPath.c_str();
 
-	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	m_ioP->ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+	// Enable Keyboard Controls
+	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	// Enable Gamepad Controls
+	m_ioP->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+	// Enable Docking
+	m_ioP->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	m_ioP->BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
 
 	// it works unstable on Linux
 #if defined(_WIN32)
-	m_ioP->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+	// Enable Multi-Viewport / Platform Windows
+	m_ioP->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 #endif
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -134,12 +141,6 @@ void dev::ImGuiApp::Run()
 
 	while (m_status != AppStatus::EXIT)
 	{
-
-		// Poll and handle events (inputs, window resize, etc.)
-		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-		// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-		// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-		// Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
@@ -151,7 +152,7 @@ void dev::ImGuiApp::Run()
                 if (event.window.windowID == SDL_GetWindowID(m_window))
                 {
                     m_status = m_prepare_for_exit ?
-								AppStatus::REQ_PREPARE_FOR_EXIT : AppStatus::EXIT;
+							AppStatus::REQ_PREPARE_FOR_EXIT : AppStatus::EXIT;
                 }
                 break;
             case SDL_EVENT_DROP_FILE:
@@ -169,14 +170,22 @@ void dev::ImGuiApp::Run()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL3_NewFrame();
 
-		ReqHandling();
+		if (IsOneSecTimerOver())
+		{
+			CheckWindowSizePos();
+
+			if (IsDpiUpdated()){
+				LoadFonts();
+			}
+		}
 
 		ImGui::NewFrame();
 
 	   	// Setup docking
 		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar |
+										ImGuiWindowFlags_NoDocking;
 		{
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
 			ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -184,8 +193,13 @@ void dev::ImGuiApp::Run()
 			ImGui::SetNextWindowViewport(viewport->ID);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+			window_flags |= ImGuiWindowFlags_NoTitleBar |
+							ImGuiWindowFlags_NoCollapse |
+							ImGuiWindowFlags_NoResize |
+							ImGuiWindowFlags_NoMove |
+							ImGuiWindowFlags_NoBringToFrontOnFocus |
+							ImGuiWindowFlags_NoNavFocus;
 		}
 		// No padding
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -222,7 +236,6 @@ void dev::ImGuiApp::Run()
 		// Update and Render additional Platform Windows
 		// (Platform functions may change the current OpenGL context,
 		// so we save/restore it to make it easier to paste this code elsewhere.
-		// For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
 		if (m_ioP->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
             SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
@@ -236,11 +249,26 @@ void dev::ImGuiApp::Run()
 	}
 }
 
+
+bool dev::ImGuiApp::IsOneSecTimerOver()
+{
+	static auto lastOneSecTimer = std::chrono::system_clock::now();
+
+	auto currentTime = std::chrono::system_clock::now();
+
+	auto timeDiff = std::chrono::duration_cast<std::chrono::seconds>
+									(currentTime - lastOneSecTimer).count();
+
+	if (timeDiff >= 1){
+		lastOneSecTimer = currentTime;
+		return true;
+	}
+	return false;
+}
+
 dev::ImGuiApp::~ImGuiApp()
 {
 	SettingsSave(m_settingsPath);
-
-	m_autoUpdateThread.join();
 
 	if (m_status != AppStatus::NOT_INITED){
 		// Cleanup
@@ -254,75 +282,50 @@ dev::ImGuiApp::~ImGuiApp()
 	}
 }
 
-void dev::ImGuiApp::AutoUpdate()
-{
-	for (; m_status != AppStatus::EXIT;
-			dev::ThreadSleep(AUTO_UPDATE_COOLDOWN))
-	{
-		auto currendDpiScale = GetDpiScale();
-		bool isDpiUpdated = m_dpiScale != currendDpiScale;
-		if (isDpiUpdated)
-		{
-			Request(Req::LOAD_FONT);
-		}
 
-		Request(Req::CHECK_WINDOW_SIZE_POS);
-	}
+bool dev::ImGuiApp::IsDpiUpdated()
+{
+	auto currendDpiScale = GetDpiScale();
+	auto dpiUpdated = m_dpiScale != currendDpiScale;
+	m_dpiScale = currendDpiScale;
+
+	return dpiUpdated;
 }
 
-void dev::ImGuiApp::Request(const Req _req, const int64_t _val)
+
+void dev::ImGuiApp::CheckWindowSizePos()
 {
-	m_reqs.push({ _req, _val});
-}
+	auto width = GetSettingsInt("mainWindowWidth", dev::MAIN_WINDOW_W);
+	auto height = GetSettingsInt("mainWindowHeight", dev::MAIN_WINDOW_H);
 
-void dev::ImGuiApp::ReqHandling()
-{
-	if (m_reqs.empty()) return;
-
-	auto result = m_reqs.pop();
-	auto req = result->first;
-	auto val = result->second;
-
-	switch (req)
+	if (width != m_width || height != m_height)
 	{
-	case Req::LOAD_FONT:
-		LoadFonts();
-		return;
-	case Req::CHECK_WINDOW_SIZE_POS:
-	{
-		auto width = GetSettingsInt("mainWindowWidth", dev::MAIN_WINDOW_W);
-		auto height = GetSettingsInt("mainWindowHeight", dev::MAIN_WINDOW_H);
+		SettingsUpdate("mainWindowWidth", m_width);
+		SettingsUpdate("mainWindowHeight", m_height);
 
-		if (width != m_width || height != m_height)
-		{
-			SettingsUpdate("mainWindowWidth", m_width);
-			SettingsUpdate("mainWindowHeight", m_height);
-
-			SettingsSave(m_settingsPath);
-		}
-
-		auto posX = GetSettingsInt("mainWindowX", dev::MAIN_WINDOW_X);
-		auto posY = GetSettingsInt("mainWindowY", dev::MAIN_WINDOW_Y);
-
-		if (posX != m_posX || posY != m_posY)
-		{
-			SettingsUpdate("mainWindowX", m_posX);
-			SettingsUpdate("mainWindowY", m_posY);
-
-			SettingsSave(m_settingsPath);
-		}
-		return;
+		SettingsSave(m_settingsPath);
 	}
-	};
+
+	auto posX = GetSettingsInt("mainWindowX", dev::MAIN_WINDOW_X);
+	auto posY = GetSettingsInt("mainWindowY", dev::MAIN_WINDOW_Y);
+
+	if (posX != m_posX || posY != m_posY)
+	{
+		SettingsUpdate("mainWindowX", m_posX);
+		SettingsUpdate("mainWindowY", m_posY);
+
+		SettingsSave(m_settingsPath);
+	}
 }
 
 void dev::ImGuiApp::LoadFonts()
 {
-
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Clear();
 
-	auto fontCodePath = dev::GetExecutableDir() + dev::GetJsonString(m_settingsJ, "fontPath", false, DEFAULT_FONT_PATH);
+	auto fontCodePath = dev::GetExecutableDir() +
+		dev::GetJsonString(m_settingsJ, "fontPath", false, DEFAULT_FONT_PATH);
+
 	if (!fontCodePath.empty() && dev::IsFileExist(fontCodePath))
 	{
 		m_font = io.Fonts->AddFontFromFileTTF(fontCodePath.c_str(), 0);
@@ -331,7 +334,11 @@ void dev::ImGuiApp::LoadFonts()
         m_font = io.Fonts->AddFontDefault();
     }
 
-	auto fontCommentPath = dev::GetExecutableDir() + dev::GetJsonString(m_settingsJ, "fontItalicPath", false, DEFAULT_FONT_ITALIC_PATH);
+	auto fontCommentPath = dev::GetExecutableDir() +
+							dev::GetJsonString(m_settingsJ,
+								"fontItalicPath", false,
+								DEFAULT_FONT_ITALIC_PATH);
+
 	if (!fontCommentPath.empty() && dev::IsFileExist(fontCommentPath))
 	{
 		m_fontItalic = io.Fonts->AddFontFromFileTTF(fontCommentPath.c_str(), 0);
@@ -343,15 +350,17 @@ void dev::ImGuiApp::LoadFonts()
 	// Build the font atlas
 	io.Fonts->Build();
 
-	m_dpiScale = GetDpiScale();
-	auto fontScale = (float)dev::GetJsonDouble(m_settingsJ, "fontScale", false, DEFAULT_FONT_SCALE);;
-	io.FontGlobalScale = fontScale;
+	auto fontScale = (float)dev::GetJsonDouble(
+					m_settingsJ, "fontScale", false, DEFAULT_FONT_SCALE);
+
+	io.FontGlobalScale = fontScale * GetDpiScale();
 
 	// Create font texture and other device objects (GPU resources)
     ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
 
-void dev::ImGuiApp::SettingsUpdate(const std::string& _fieldName, nlohmann::json _json)
+void dev::ImGuiApp::SettingsUpdate(
+	const std::string& _fieldName, nlohmann::json _json)
 {
 	std::lock_guard<std::mutex> mlock(m_settingsMutex);
 	m_settingsJ[_fieldName] = _json;
@@ -363,7 +372,8 @@ void dev::ImGuiApp::SettingsSave(const std::string& _path)
 	SaveJson(_path, m_settingsJ);
 }
 
-auto dev::ImGuiApp::GetSettingsString(const std::string& _fieldName, const std::string& _defaultValue)
+auto dev::ImGuiApp::GetSettingsString(
+	const std::string& _fieldName, const std::string& _defaultValue)
 -> std::string
 {
 	std::lock_guard<std::mutex> mlock(m_settingsMutex);
@@ -377,13 +387,15 @@ auto dev::ImGuiApp::GetSettingsObject(const std::string& _fieldName)
 	return dev::GetJsonObject(m_settingsJ, _fieldName, false);
 }
 
-int dev::ImGuiApp::GetSettingsInt(const std::string& _fieldName, int _defaultValue)
+int dev::ImGuiApp::GetSettingsInt(
+	const std::string& _fieldName, int _defaultValue)
 {
 	std::lock_guard<std::mutex> mlock(m_settingsMutex);
 	return dev::GetJsonInt(m_settingsJ, _fieldName, false, _defaultValue);
 }
 
-bool dev::ImGuiApp::GetSettingsBool(const std::string& _fieldName, bool _defaultValue)
+bool dev::ImGuiApp::GetSettingsBool(
+	const std::string& _fieldName, bool _defaultValue)
 {
 	std::lock_guard<std::mutex> mlock(m_settingsMutex);
 	return dev::GetJsonBool(m_settingsJ, _fieldName, false, _defaultValue);

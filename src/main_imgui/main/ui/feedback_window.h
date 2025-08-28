@@ -30,8 +30,7 @@ namespace dev
 
 	public:
 		FeedbackWindow(
-			dev::Scheduler& _scheduler, bool* _visibleP,
-			const float* const _dpiScaleP);
+			dev::Scheduler& _scheduler, bool* _visibleP);
 		void Draw(
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data) override;

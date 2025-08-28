@@ -15,8 +15,7 @@ namespace dev
 
 	public:
 		AboutWindow(dev::Scheduler& _scheduler,
-			bool* _visibleP,
-			const float* const _dpiScaleP);
+			bool* _visibleP);
 		void Draw(
 			const dev::Signals _signals,
 			dev::Scheduler::SignalData _data) override;
