@@ -30,7 +30,7 @@ namespace dev
 		using FilteredElements = std::vector<std::tuple<std::string, GlobalAddr, std::string>>; // name, addr, addrS
 
 		// injects the value into the memory while loading
-		
+
 		using MemoryEdits = std::unordered_map<GlobalAddr, MemoryEdit>;
 		using CodePerfs = std::unordered_map<Addr, CodePerf>;
 
@@ -87,6 +87,7 @@ namespace dev
 
 		void LoadDebugData(const std::string& _path);
 		void SaveDebugData();
+		auto GetPath() const -> const std::string& { return m_debugPath; };
 
 		void Reset();
 

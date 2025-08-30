@@ -45,10 +45,12 @@ namespace dev
 			const size_t _lines, const uint8_t _filter) -> const Lines*;
 		auto GetDisasmLen() -> const size_t { return m_disasmLinesLen; };
 		void Reset();
-		void SetSaveLog(bool _saveLog);
+		void SetSaveLog(bool _saveLog, const std::string& _path = {});
+		static auto GetLogFilename() -> std::string;
+		auto GetPath() const -> const std::string& { return m_saveLogPath; };
 
 	private:
-		auto GetLogPath() -> std::string;
+		static auto GetDefaultLogPath() -> std::string;
 		void SaveLog(
 			const CpuI8080::State& _cpuState, const Memory::State& _memState);
 		void UpdateLogBuffer(

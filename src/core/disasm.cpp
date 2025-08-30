@@ -848,7 +848,6 @@ auto dev::GetCmdLen(const uint8_t _opcode) -> const uint8_t { return cmdLens[_op
 #define CMD_S_LEN_MAX 11
 #define DISASM_LINE_MAX 127
 static char disasm_line_s[DISASM_LINE_MAX];
-static char disasm_line_end[1] = { '\0' };
 static char disasm_cmd_s[CMD_S_LEN_MAX+1];
 
 // IS NOT THREAD SAFE!
@@ -858,8 +857,6 @@ auto dev::GetDisasmLogLine(
 	const CpuI8080::State& _cpuState, const Memory::State& _memState)
 -> const char*
 {
-	auto buff = disasm_line_s;
-
 	auto globalAddr = _memState.debug.instrGlobalAddr;
 	auto opcode = _memState.debug.instr[0];
 	auto cmd_byte1 = _memState.debug.instr[1];
@@ -894,7 +891,7 @@ auto dev::GetDisasmLogLine(
 
 	// Print the full disasm line
 	std::snprintf(
-		buff, disasm_line_end - buff,
+		disasm_line_s, sizeof(disasm_line_s),
 		"%06X	%s %s %s	%-11s	psw=%04X bc=%04X de=%04X hl=%04X sp=%04X\n",
 		globalAddr,
 		byte_s1,

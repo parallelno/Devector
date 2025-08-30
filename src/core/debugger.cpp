@@ -401,7 +401,7 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	/////////////////
 
 	case Hardware::Req::DEBUG_TRACE_LOG_ENABLE:
-		m_traceLog.SetSaveLog(true);
+		m_traceLog.SetSaveLog(true, _reqDataJ["path"]);
 		break;
 
 	case Hardware::Req::DEBUG_TRACE_LOG_DISABLE:

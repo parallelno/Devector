@@ -117,17 +117,18 @@ void dev::TraceLog::Reset()
 }
 
 
-void dev::TraceLog::SetSaveLog(bool _saveLog)
+void dev::TraceLog::SetSaveLog(bool _saveLog, const std::string& _path)
 {
 	if (_saveLog)
 	{
 		if (!m_saveLogInited)
 		{
-			m_saveLogPath = GetLogPath();
+			m_saveLogPath = !_path.empty() ? _path :
+				!m_saveLogPath.empty() ? m_saveLogPath :
+				GetDefaultLogPath();
 
 			// create the log file
 			m_logFile.open(m_saveLogPath, std::ios::out | std::ios::trunc);
-			m_logFile.close();
 
 			// handle error
 			if (!m_logFile)
@@ -155,25 +156,27 @@ void dev::TraceLog::SetSaveLog(bool _saveLog)
 void dev::TraceLog::SaveLog(
 	const CpuI8080::State& _cpuState, const Memory::State& _memState)
 {
-	if (m_saveLog)
+	if (m_saveLog && m_logFile.is_open())
 	{
-		m_logFile.open(m_saveLogPath, std::ios::out | std::ios::app);
 		m_logFile << dev::GetDisasmLogLine(_cpuState, _memState);
-		m_logFile.close();
 	}
 }
 
 
-auto dev::TraceLog::GetLogPath()
+auto dev::TraceLog::GetDefaultLogPath()
 -> std::string
 {
-	auto executableDir = dev::GetExecutableDir();
+	return dev::GetExecutableDir() + GetLogFilename();
+}
 
+auto dev::TraceLog::GetLogFilename()
+-> std::string
+{
 	auto now = std::chrono::system_clock::now();
-    auto local_time = std::chrono::current_zone()->to_local(now);
+	auto local_time = std::chrono::current_zone()->to_local(now);
 
 	auto saveLogFilename = std::format("{}_{:%Y-%m-%d_%H-%M}.txt",
 		TRACE_LOG_NAME, local_time);
 
-	return executableDir + saveLogFilename;
+	return saveLogFilename;
 }

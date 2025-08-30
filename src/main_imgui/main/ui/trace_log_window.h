@@ -60,6 +60,7 @@ namespace dev
 			AddrHighlight& _addrHighlight);
 		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
 			AddrHighlight& _addrHighlight);
+		auto GetLogPath() -> std::string;
 
 	public:
 		TraceLogWindow(Hardware& _hardware, Debugger& _debugger,

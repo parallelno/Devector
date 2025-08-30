@@ -29,7 +29,7 @@ void dev::TraceLogWindow::Draw(
 {
 	bool isRunning = dev::Signals::HW_RUNNING & _signals;
 
-	if (isRunning) ImGui::TextUnformatted("Break execution");
+	if (isRunning) ImGui::TextUnformatted("Break execution to see the log.");
 
 	DrawLogSave(isRunning);
 	DrawFilter(isRunning);
@@ -45,19 +45,42 @@ void dev::TraceLogWindow::DrawLogSave(const bool _isRunning)
 	{
 		if (m_saveLog)
 		{
-			Addr regPC = m_hardware.Request(Hardware::Req::DEBUG_TRACE_LOG_ENABLE);
+			m_hardware.Request(
+				Hardware::Req::DEBUG_TRACE_LOG_ENABLE,
+				{ {  "path", GetLogPath() }});
 		}
 		else{
-			Addr regPC = m_hardware.Request(Hardware::Req::DEBUG_TRACE_LOG_DISABLE);
+			m_hardware.Request(Hardware::Req::DEBUG_TRACE_LOG_DISABLE);
 		}
 	}
+
 	if (_isRunning) ImGui::EndDisabled();
 
 	ImGui::SameLine();
+	const std::string& path = m_saveLog ?
+						m_debugger.GetTraceLog().GetPath().c_str() : "";
+
+	ImGui::InputText("##LogPath", const_cast<char*>(path.c_str()),
+		path.size() + 1,
+		ImGuiInputTextFlags_ReadOnly);
+
+	ImGui::SameLine();
+	if (ImGui::BeginItemTooltip())
+	{
+		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+		ImGui::TextUnformatted(path.c_str());
+		ImGui::PopTextWrapPos();
+		ImGui::EndTooltip();
+	}
+
+	ImGui::SameLine();
 	dev::DrawHelpMarker(
-		"Saves a trace log to a file in the Devector folder when \n"
-		"the emulation is running. This option is very IO intensive\n"
-		"and might slow down the emulation.");
+		"Saves a trace log to a Rom/Fdd/Record folder and names after them.\n"
+		"If there is no Rom/Fdd/Record file open, the log will not be saved\n"
+		"to the Devector folder. Disable the 'Save Log' settings to flush \n"
+		"the log to a file. This option is very IO intensive and might slow\n"
+		"down the emulation."
+	);
 }
 
 const char* filterNames[] = {
@@ -256,4 +279,20 @@ void dev::TraceLogWindow::CallbackUpdateData(
 		TraceLog::TRACE_LOG_SIZE, m_disasmFilter);
 
 	m_disasmLinesLen = m_debugger.GetTraceLog().GetDisasmLen();
+}
+
+
+auto dev::TraceLogWindow::GetLogPath()
+ -> std::string
+{
+	// check if the file exists
+	auto debugDataPath = m_debugger.GetDebugData().GetPath();
+	auto logDir = dev::GetDir(debugDataPath);
+	auto logPath = logDir + "/" +
+					dev::GetFilename(debugDataPath) +
+					"_" +
+					m_debugger.GetTraceLog().GetLogFilename() +
+					".txt";
+
+	return logPath;
 }
