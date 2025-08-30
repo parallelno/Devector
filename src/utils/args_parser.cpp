@@ -1,5 +1,3 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #include <format>
 #include <iostream>
 
@@ -10,7 +8,7 @@ dev::ArgsParser::ArgsParser(int& _argc, char** _argv,
 	const std::string& _description)
 {
 	AddDescriptionToHelp(_description);
-	
+
 	auto argc = static_cast<size_t>(_argc);
 
 	for (size_t i = 1; i < argc; i++)
@@ -34,17 +32,18 @@ dev::ArgsParser::ArgsParser(int& _argc, char** _argv,
 
 void dev::ArgsParser::RequirementMsg(const std::string& _arg)
 {
-	std::cout << std::format("Required parameter \"{}\" or its value was not provided.\n", _arg);
+	std::cout << std::format(
+		"Required parameter \"{}\" or its value was not provided.\n", _arg);
 	m_requirementSatisfied = false;
 }
 
-auto dev::ArgsParser::GetString(const std::string& _arg, 
+auto dev::ArgsParser::GetString(const std::string& _arg,
 	const ArgHelp& _help, const bool _required, const std::string& _defaultV)
 ->const std::string
 {
 	AddParamToHelp(_arg, ArgType::STRING, _required, _defaultV, _help );
 
-	if (!m_args.contains(_arg) || m_args[_arg].empty()) 
+	if (!m_args.contains(_arg) || m_args[_arg].empty())
 	{
 		if (_required) ArgsParser::RequirementMsg(_arg);
 		return _defaultV;
@@ -53,7 +52,7 @@ auto dev::ArgsParser::GetString(const std::string& _arg,
 	return m_args[_arg];
 }
 
-double dev::ArgsParser::GetDouble(const std::string& _arg, 
+double dev::ArgsParser::GetDouble(const std::string& _arg,
 	const ArgHelp& _help, const bool _required, const double _defaultV)
 {
 	AddParamToHelp(_arg, ArgType::DOUBLE, _required, _defaultV, _help );
@@ -67,7 +66,7 @@ double dev::ArgsParser::GetDouble(const std::string& _arg,
 	return strtod(m_args[_arg].c_str(), nullptr);
 }
 
-int dev::ArgsParser::GetInt(const std::string& _arg, 
+int dev::ArgsParser::GetInt(const std::string& _arg,
 	const ArgHelp& _help, const bool _required, const int _defaultV)
 {
 	AddParamToHelp(_arg, ArgType::INT, _required, _defaultV, _help );
@@ -88,7 +87,7 @@ void dev::ArgsParser::AddDescriptionToHelp(const std::string& _description)
 	m_help += "Parameters:\n";
 }
 
-void dev::ArgsParser::AddParamToHelp(const std::string& _arg, 
+void dev::ArgsParser::AddParamToHelp(const std::string& _arg,
 	ArgType _type, Required _required, std::any _default, const ArgHelp& _help)
 {
 	std::string defaultStr;
@@ -106,8 +105,8 @@ void dev::ArgsParser::AddParamToHelp(const std::string& _arg,
 
 void dev::ArgsParser::PrintHelp() const
 {
-	if (!m_args.contains("help") && 
-		!m_args.contains("h") && 
+	if (!m_args.contains("help") &&
+		!m_args.contains("h") &&
 		!m_args.empty() &&
 		m_requirementSatisfied) return;
 

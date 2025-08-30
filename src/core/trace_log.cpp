@@ -127,6 +127,7 @@ void dev::TraceLog::SetSaveLog(bool _saveLog)
 
 			// create the log file
 			m_logFile.open(m_saveLogPath, std::ios::out | std::ios::trunc);
+			m_logFile.close();
 
 			// handle error
 			if (!m_logFile)
@@ -154,9 +155,11 @@ void dev::TraceLog::SetSaveLog(bool _saveLog)
 void dev::TraceLog::SaveLog(
 	const CpuI8080::State& _cpuState, const Memory::State& _memState)
 {
-	if (m_saveLog && m_logFile.is_open())
+	if (m_saveLog)
 	{
+		m_logFile.open(m_saveLogPath, std::ios::out | std::ios::app);
 		m_logFile << dev::GetDisasmLogLine(_cpuState, _memState);
+		m_logFile.close();
 	}
 }
 

@@ -1,5 +1,3 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #pragma once
 
 #include <map>
@@ -53,7 +51,7 @@ namespace dev
 		void RequirementMsg(const std::string& _arg);
 
 		void AddParamToHelp(const std::string& _arg,
-			ArgType _type, Required _required, std::any _default, 
+			ArgType _type, Required _required, std::any _default,
 			const ArgHelp& _help);
 
 		void AddDescriptionToHelp(const std::string& _description);
