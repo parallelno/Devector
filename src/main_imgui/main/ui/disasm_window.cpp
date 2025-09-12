@@ -453,64 +453,62 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 	DrawContextMenu(regPC, m_contextMenu);
 
 	ImGui::PopStyleVar(2);
+	if (_isRunning) ImGui::EndDisabled();
 
-	/////////////////////////////////////////////////////////
-	// check the keys and the mouse
-	/////////////////////////////////////////////////////////
-	if (!_isRunning && hoveredLineIdx >= 0)
+	if (!_isRunning && hoveredLineIdx >= 0){
+		CheckControls(disasm);
+	}
+}
+
+
+void dev::DisasmWindow::CheckControls(const dev::Disasm::Lines& disasm)
+{
+	// Up/Down scrolling
+	if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
 	{
-		// Up/Down scrolling
-		if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
-		{
-			UpdateDisasm(disasm[0].addr, 2, false);
-		}
-		else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
-		{
-			UpdateDisasm(disasm[0].addr, -2, false);
-		}
-		if (ImGui::GetIO().MouseWheel > 0.0f)
-		{
-			UpdateDisasm(disasm[0].addr, 2, false);
-		}
-		else if (ImGui::GetIO().MouseWheel < 0.0f)
-		{
-			UpdateDisasm(disasm[0].addr, -2, false);
-		}
-
-
-		// Alt + Left navigation
-		if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
-			ImGui::IsKeyPressed(ImGuiKey_LeftArrow) &&
-			m_navigateAddrsIdx - 1 >= 0)
-		{
-			auto addr = m_navigateAddrs[--m_navigateAddrsIdx];
-			UpdateDisasm(addr);
-		}
-		// Alt + Right navigation
-		else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
-			ImGui::IsKeyPressed(ImGuiKey_RightArrow) &&
-			m_navigateAddrsIdx + 1 < m_navigateAddrsSize)
-		{
-			auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
-			UpdateDisasm(addr);
-		}
-		// Left side navigation mouse button to navigate back
-		else if (ImGui::IsKeyPressed(ImGuiKey_MouseX1) &&
-			m_navigateAddrsIdx - 1 >= 0)
-		{
-			auto addr = m_navigateAddrs[--m_navigateAddrsIdx];
-			UpdateDisasm(addr);
-		}
-		// Right side navigation mouse button to navigate forward
-		else if (ImGui::IsKeyPressed(ImGuiKey_MouseX2) &&
-			m_navigateAddrsIdx + 1 < m_navigateAddrsSize)
-		{
-			auto addr = m_navigateAddrs[++m_navigateAddrsIdx];
-			UpdateDisasm(addr);
-		}
+		UpdateDisasm(disasm[0].addr, 2, false);
+	}
+	else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
+	{
+		UpdateDisasm(disasm[0].addr, -2, false);
+	}
+	// Mouse wheel scrolling
+	if (ImGui::GetIO().MouseWheel > 0.0f)
+	{
+		UpdateDisasm(disasm[0].addr, 2, false);
+	}
+	else if (ImGui::GetIO().MouseWheel < 0.0f)
+	{
+		UpdateDisasm(disasm[0].addr, -2, false);
 	}
 
-	if (_isRunning) ImGui::EndDisabled();
+
+	// Alt + Left navigation
+	if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
+		ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
+	{
+		auto addrR = m_navigateHistory.GetPrev();
+		if (addrR) UpdateDisasm(*addrR);
+	}
+	// Alt + Right navigation
+	else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
+		ImGui::IsKeyPressed(ImGuiKey_RightArrow))
+	{
+		auto addrR = m_navigateHistory.GetNext();
+		if (addrR) UpdateDisasm(*addrR);
+	}
+	// Left side navigation mouse button to navigate back
+	else if (ImGui::IsKeyPressed(ImGuiKey_MouseX1))
+	{
+		auto addrR = m_navigateHistory.GetPrev();
+		if (addrR) UpdateDisasm(*addrR);
+	}
+	// Right side navigation mouse button to navigate forward
+	else if (ImGui::IsKeyPressed(ImGuiKey_MouseX2))
+	{
+		auto addrR = m_navigateHistory.GetNext();
+		if (addrR) UpdateDisasm(*addrR);
+	}
 }
 
 void dev::DisasmWindow::UpdateDisasm(
@@ -702,6 +700,7 @@ void dev::DisasmWindow::DrawAddrLinks(
 	bool minorLink = (link.lineIdx == Disasm::IMM_LINK_UP ||
 					link.lineIdx == Disasm::IMM_LINK_DOWN ||
 					link.lineIdx == Disasm::IMM_NO_LINK);
+
 	ImU32 linkColor = _selected ? DIS_CLR_LINK_HIGHLIGHT : DIS_CLR_LINK;
 
 	if (minorLink)
@@ -750,6 +749,7 @@ void dev::DisasmWindow::CallbackUpdateAtCC(
 	// update
 	Addr addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
 	UpdateDisasm(addr);
+	m_navigateHistory.Add(addr);
 }
 
 
@@ -761,22 +761,10 @@ void dev::DisasmWindow::CallbackUpdateAtAddr(
         auto addr = Addr(std::get<GlobalAddr>(*_data));
 
 		UpdateDisasm(addr);
-
-		if (m_navigateAddrsIdx == 0)
-		{
-			auto disasmPP = m_debugger.GetDisasm().GetLines();
-			if (!disasmPP || !*disasmPP) return;
-			m_navigateAddrs[m_navigateAddrsIdx] =
-				(*disasmPP)->at(DISASM_INSTRUCTION_OFFSET).addr;
-			m_navigateAddrsSize++;
-		}
-		if (m_navigateAddrsIdx < NAVIGATE_ADDRS_LEN)
-		{
-			m_navigateAddrs[++m_navigateAddrsIdx] = addr;
-			m_navigateAddrsSize = m_navigateAddrsIdx + 1;
-		}
+		m_navigateHistory.Add(addr);
 	}
 	else{
 		UpdateDisasm(m_disasmAddr, DISASM_INSTRUCTION_OFFSET, false);
+		m_navigateHistory.Add(m_disasmAddr);
 	}
 }

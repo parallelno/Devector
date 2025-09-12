@@ -5,6 +5,7 @@
 
 #include "utils/consts.h"
 #include "utils/imgui_utils.h"
+#include "utils/history.h"
 #include "ui/base_window.h"
 #include "core/hardware.h"
 #include "core/debugger.h"
@@ -99,15 +100,10 @@ namespace dev
 		const Disasm::ImmAddrLinks* m_immLinksP = nullptr;
 		size_t m_immLinksNum = 0;
 		int m_selectedLineAddr = 0;
-		static constexpr int NAVIGATE_ADDRS_LEN = 256;
-		// contains addr where the user navigated to
-		std::array<Addr, NAVIGATE_ADDRS_LEN> m_navigateAddrs;
-		// points to the current addr in m_navigateAddrs
-		int m_navigateAddrsIdx = 0;
-		// the length of the stored addrs.
-		// it's how many times the user navigated through links
-		// without moving back.
-		int m_navigateAddrsSize = 0;
+
+		static constexpr int NAVIGATE_HISTORY_MAX = 5;
+		dev::History<Addr> m_navigateHistory =
+								dev::History<Addr>(NAVIGATE_HISTORY_MAX);
 
 		void CallbackUpdateAtCC(
 			const dev::Signals _signals,
@@ -145,6 +141,7 @@ namespace dev
 
 		bool IsDisasmTableOutOfWindow() const;
 		auto GetVisibleLines() const -> int;
+		void CheckControls(const dev::Disasm::Lines& disasm);
 
 	public:
 
