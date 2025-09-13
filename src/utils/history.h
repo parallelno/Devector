@@ -47,8 +47,6 @@ namespace dev
 			} else {
 				m_len = (m_currentIdx + m_maxLen - m_startIdx) % m_maxLen + 1;
 			}
-
-			Print("Add", _data);
 		}
 
 		auto GetPrev()
@@ -60,11 +58,8 @@ namespace dev
 			}
 
 			m_currentIdx = (m_currentIdx - 1 + m_maxLen) % m_maxLen;
-			auto data = m_history[m_currentIdx];
 
-			Print("Add", *data);
-
-			return data;
+			return m_history[m_currentIdx];
 		}
 
 		auto GetNext()
@@ -74,11 +69,8 @@ namespace dev
 			if (m_len == 0 || m_currentIdx == endIdx) return std::nullopt;
 
 			m_currentIdx = (m_currentIdx + 1) % m_maxLen;
-			auto data = m_history[m_currentIdx];
 
-			Print("Add", *data);
-
-			return data;
+			return m_history[m_currentIdx];
 		}
 
 		void Init(T _data){
@@ -86,14 +78,6 @@ namespace dev
 			m_currentIdx = 0;
 			m_history[0] = _data;
 			m_len = 1;
-
-			Print("Init", _data);
-		}
-
-		void Print(const char* _func_name, Addr value){
-			dev::Log("Func: {}, Addr: {:04X}, "
-				"m_currentIdx: {}, m_startIdx: {}, m_len: {}",
-				_func_name, value, m_currentIdx, m_startIdx, m_len);
 		}
 
 	private:
