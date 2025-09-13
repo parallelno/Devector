@@ -3,7 +3,9 @@
 #include "debug_data.h"
 
 dev::DebugData::DebugData(Hardware& _hardware)
-	: m_hardware(_hardware)
+	:
+	m_hardware(_hardware),
+	m_scripts(std::bind(&DebugData::GetLabelAddr, this, std::placeholders::_1))
 {}
 
 /*
@@ -13,7 +15,7 @@ void dev::DebugData::Reset()
 	m_labels.clear();
 	m_consts.clear();
 	m_comments.clear();
-	
+
 	m_breakpoints.Clear();
 	m_watchpoints.Clear();
 	m_scripts.Clear();
@@ -36,7 +38,7 @@ bool IsConstLabel(const char* _s)
 // returns a list of labels for the given address
 // local labels are put at the end of the list
 // if no labels are found, returns std::nullopt
-auto dev::DebugData::GetLabels(const Addr _addr) const 
+auto dev::DebugData::GetLabels(const Addr _addr) const
 -> std::optional<LabelList>
 {
 	auto labelsI = m_labels.find(_addr);
@@ -57,10 +59,26 @@ auto dev::DebugData::GetLabels(const Addr _addr) const
 
 	return labels;
 }
+
+auto dev::DebugData::GetLabelAddr(const std::string& _label)
+-> int
+{
+	for (const auto& [addr, labels] : m_labels)
+	{
+		for (const auto& label : labels)
+		{
+			if (label == _label) {
+				return addr;
+			}
+		}
+	}
+	return -1;
+}
+
 void dev::DebugData::GetFilteredLabels(FilteredElements& _out, const std::string& _filter) const
 {
 	_out.clear();
-	for (const auto& [globalAddr, labels] : m_labels) 
+	for (const auto& [globalAddr, labels] : m_labels)
 	{
 		for(const auto& label : labels)
 		{
@@ -104,10 +122,10 @@ void dev::DebugData::AddLabel(const Addr _addr, const std::string& _label)
 void dev::DebugData::DelLabel(const Addr _addr, const std::string& _label)
 {
 	auto labelsI = m_labels.find(_addr);
-	if (labelsI != m_labels.end()) 
+	if (labelsI != m_labels.end())
 	{
 		auto labelI = std::find(labelsI->second.begin(), labelsI->second.end(), _label);
-		if (labelI != labelsI->second.end()) 
+		if (labelI != labelsI->second.end())
 		{
 			labelsI->second.erase(labelI);
 			if (labelsI->second.empty()) {
@@ -136,10 +154,10 @@ void dev::DebugData::DelAllLabels()
 void dev::DebugData::RenameLabel(const Addr _addr, const std::string& _oldLabel, const std::string& _newLabel)
 {
 	auto labelsI = m_labels.find(_addr);
-	if (labelsI != m_labels.end()) 
+	if (labelsI != m_labels.end())
 	{
 		auto labelI = std::find(labelsI->second.begin(), labelsI->second.end(), _oldLabel);
-		if (labelI != labelsI->second.end()) 
+		if (labelI != labelsI->second.end())
 		{
 			*labelI = _newLabel;
 			m_labelsUpdates++;
@@ -156,7 +174,7 @@ auto dev::DebugData::GetConsts(const Addr _addr) const -> const LabelList*
 void dev::DebugData::GetFilteredConsts(FilteredElements& _out, const std::string& _filter) const
 {
 	_out.clear();
-	for (const auto& [globalAddr, consts] : m_consts) 
+	for (const auto& [globalAddr, consts] : m_consts)
 	{
 		for(const auto& const_ : consts)
 		{
@@ -203,7 +221,7 @@ void dev::DebugData::DelConst(const Addr _addr, const std::string& _const)
 	auto constsI = m_consts.find(_addr);
 	if (constsI != m_consts.end()) {
 		auto constI = std::find(constsI->second.begin(), constsI->second.end(), _const);
-		if (constI != constsI->second.end()) 
+		if (constI != constsI->second.end())
 		{
 			constsI->second.erase(constI);
 			if (constsI->second.empty()) {
@@ -250,16 +268,16 @@ auto dev::DebugData::GetComment(const Addr _addr) const
 }
 
 void dev::DebugData::GetFilteredComments(FilteredElements& _out, const std::string& _filter) const
-{	
+{
 	_out.clear();
-	for (const auto& [globalAddr, comment] : m_comments) 
+	for (const auto& [globalAddr, comment] : m_comments)
 	{
 		if (comment.find(_filter) == std::string::npos) continue;
 
 		_out.push_back({ comment, globalAddr, std::format("0x{:06x}", globalAddr) });
 	}
 
-	// sort by addr	
+	// sort by addr
 	std::sort(_out.begin(), _out.end(), [](const auto& lhs, const auto& rhs) {
 		return std::get<1>(lhs) < std::get<1>(rhs);
 	});
@@ -285,7 +303,7 @@ void dev::DebugData::DelAllComments()
 	m_commentsUpdates++;
 }
 
-auto dev::DebugData::GetMemoryEdit(const Addr _addr) const 
+auto dev::DebugData::GetMemoryEdit(const Addr _addr) const
 -> const MemoryEdit*
 {
 	auto editsI = m_memoryEdits.find(_addr);
@@ -324,7 +342,7 @@ void dev::DebugData::GetFilteredMemoryEdits(FilteredElements& _out, const std::s
 
 ////////////////////
 
-auto dev::DebugData::GetCodePerf(const Addr _addr) const 
+auto dev::DebugData::GetCodePerf(const Addr _addr) const
 -> const CodePerf*
 {
 	auto codePerfI = m_codePerfs.find(_addr);
@@ -391,29 +409,29 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 	auto debugDir = dev::GetDir(_path);
 	m_debugPath = debugDir + "/" + dev::GetFilename(_path) + ".json";
 
-	
+
 	m_labelsUpdates++;
 	m_labels.clear();
 	m_constsUpdates++;
 	m_consts.clear();
 	m_commentsUpdates++;
-	m_comments.clear();	
+	m_comments.clear();
 	m_editsUpdates++;
 	m_memoryEdits.clear();
 	m_codePerfs.clear();
 	m_codePerfsUpdates++;
-	
+
 	m_breakpoints.Clear();
 	m_watchpoints.Clear();
 	m_scripts.Clear();
 
 	// init empty dictionaries when there is no file found
 	if (!dev::IsFileExist(m_debugPath)) return;
-	
+
 	auto debugDataJ = nlohmann::json::object();
 	try
 	{
-		debugDataJ = LoadJson(m_debugPath);	
+		debugDataJ = LoadJson(m_debugPath);
 	}
 	catch (const std::exception& e)
 	{
@@ -429,7 +447,7 @@ void dev::DebugData::LoadDebugData(const std::string& _path)
 			m_labels.emplace(addr, LabelList{}).first->second.emplace_back(str);
 		}
 	}
-	
+
 	// add consts
 	if (debugDataJ.contains("consts")) {
 		for (auto& [str, addrS] : debugDataJ["consts"].items())
@@ -505,7 +523,7 @@ void dev::DebugData::SaveDebugData()
 	nlohmann::json debugDataJ = {};
 
 	bool empty = true;
-	
+
 	// update labels
 	empty &= m_labels.empty();
 	debugDataJ["labels"] = {};
@@ -581,7 +599,7 @@ void dev::DebugData::SaveDebugData()
 	{
 		debugScripts.push_back(script.ToJson());
 	}
-	
+
 	// save if the debug data is not empty or the file exists
 	if (!empty || dev::IsFileExist(m_debugPath)) dev::SaveJson(m_debugPath, debugDataJ);
 }

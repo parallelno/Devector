@@ -37,6 +37,7 @@ namespace dev
 		DebugData(Hardware& _hardware);
 
 		auto GetLabels(const Addr _addr) const -> std::optional<LabelList>;
+		auto GetLabelAddr(const std::string& _label) -> int;
 		void SetLabels(const Addr _addr, const LabelList& _labels);
 		void AddLabel(const Addr _addr, const std::string& _label);
 		void DelLabel(const Addr _addr, const std::string& _label);

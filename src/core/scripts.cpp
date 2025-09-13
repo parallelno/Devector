@@ -6,7 +6,8 @@
 #include "utils/str_utils.h"
 #include "utils/utils.h"
 
-dev::Scripts::Scripts()
+dev::Scripts::Scripts(LabelAddrFunc _getLabelAddrFunc)
+	: GetLabelAddrFunc(_getLabelAddrFunc)
 {
 	m_luaState = luaL_newstate();
 	if (!m_luaState) {
@@ -37,31 +38,45 @@ struct LuaGetter {
 };
 
 // Specializations for supported types
-template<> inline int LuaGetter::pushValue<bool>(lua_State* state, bool value) {
+template<> inline int LuaGetter::pushValue<bool>(
+		lua_State* state, bool value)
+{
 	lua_pushboolean(state, value);
 	return 1;
 }
-template<> inline int LuaGetter::pushValue<uint8_t>(lua_State* state, uint8_t value) {
+template<> inline int LuaGetter::pushValue<uint8_t>(
+		lua_State* state, uint8_t value)
+{
 	lua_pushinteger(state, static_cast<lua_Integer>(value));
 	return 1;
 }
-template<> inline int LuaGetter::pushValue<uint16_t>(lua_State* state, uint16_t value) {
+template<> inline int LuaGetter::pushValue<uint16_t>(
+		lua_State* state, uint16_t value)
+{
 	lua_pushinteger(state, static_cast<lua_Integer>(value));
 	return 1;
 }
-template<> inline int LuaGetter::pushValue<int>(lua_State* state, int value) {
+template<> inline int LuaGetter::pushValue<int>(
+		lua_State* state, int value)
+{
 	lua_pushinteger(state, static_cast<lua_Integer>(value));
 	return 1;
 }
-template<> inline int LuaGetter::pushValue<uint64_t>(lua_State* state, uint64_t value) {
+template<> inline int LuaGetter::pushValue<uint64_t>(
+		lua_State* state, uint64_t value)
+{
 	lua_pushinteger(state, static_cast<lua_Integer>(value));
 	return 1;
 }
-template<> inline int LuaGetter::pushValue<double>(lua_State* state, double value) {
+template<> inline int LuaGetter::pushValue<double>(
+		lua_State* state, double value)
+{
 	lua_pushnumber(state, value);
 	return 1;
 }
-template<> inline int LuaGetter::pushValue<const char*>(lua_State* state, const char* value) {
+template<> inline int LuaGetter::pushValue<const char*>(
+	lua_State* state, const char* value)
+{
 	lua_pushstring(state, value);
 	return 1;
 }
@@ -121,10 +136,12 @@ void dev::Scripts::RegisterCppFunctions()
 
 	// Register Memory state getters
 	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_memStateP, debug.instr[0], GetOpcode);
-	
+
 	lua_CFunction getterByteGlobal = [](lua_State* state) -> int {
 		using StructType = std::remove_pointer_t<decltype(m_memStateP)>;
-		auto* structPtr = static_cast<StructType**>(lua_touserdata(state, lua_upvalueindex(1)));
+		auto* structPtr = static_cast<StructType**>(
+			lua_touserdata(state, lua_upvalueindex(1)));
+
 		int globalAddr = luaL_checkinteger(state, 1);
 		int val = (*structPtr)->ramP->at(globalAddr);
 		lua_pushinteger(state, val);
@@ -134,8 +151,32 @@ void dev::Scripts::RegisterCppFunctions()
 	lua_pushcclosure(m_luaState, getterByteGlobal, 1);
 	lua_setglobal(m_luaState, "GetByteGlobal");
 
+	// Get label addr
+	lua_CFunction getterLabelAddr = [](lua_State* state) -> int {
+		using StructType = std::remove_pointer_t<decltype(m_memStateP)>;
+
+		auto* scriptsP = static_cast<Scripts*>(
+			lua_touserdata(state, lua_upvalueindex(1)));
+
+		const char* label = luaL_checkstring(state, 1);
+		if (!label) {
+			luaL_error(state, "GetLabelAddr: label argument must be a string");
+			return 0;
+		}
+
+		if (scriptsP) {
+			int addr = scriptsP->GetLabelAddrFunc(label);
+			lua_pushinteger(state, addr);
+		}
+
+		return 1;
+	};
+	lua_pushlightuserdata(m_luaState, (void*)(this));
+	lua_pushcclosure(m_luaState, getterLabelAddr, 1);
+	lua_setglobal(m_luaState, "GetLabelAddr");
+
 	// DrawText
-	lua_CFunction drawTextFunc = [](lua_State* state) -> int 
+	lua_CFunction drawTextFunc = [](lua_State* state) -> int
 	{
 		auto paramNum = lua_gettop(state);
 		uint32_t color = 0xFFFFFFFF;
@@ -160,12 +201,13 @@ void dev::Scripts::RegisterCppFunctions()
 		if (!textCStr) {
 			luaL_error(state, "DrawText: text argument must be a string");
 		}
-		
-		auto* scriptsP = static_cast<Scripts*>(lua_touserdata(state, lua_upvalueindex(1)));		
+
+		auto* scriptsP = static_cast<Scripts*>(
+			lua_touserdata(state, lua_upvalueindex(1)));
 		if (scriptsP) {
 			auto& uiReqs = scriptsP->m_uiReqs;
 			auto& lock = scriptsP->m_uiReqsMutex;
-			
+
 			std::lock_guard<std::mutex> lockGuard(lock);
 			uiReqs[id] = UIItem{Scripts::UIType::TEXT, x, y, 0, 0, textCStr, color, vectorScreenCoords};
 		}
@@ -176,7 +218,7 @@ void dev::Scripts::RegisterCppFunctions()
 	lua_setglobal(m_luaState, "DrawText");
 
 	// DrawRect
-	lua_CFunction drawRectFunc = [](lua_State* state) -> int 
+	lua_CFunction drawRectFunc = [](lua_State* state) -> int
 	{
 		auto paramNum = lua_gettop(state);
 		uint32_t color = 0xFFFFFFFF;
@@ -199,11 +241,11 @@ void dev::Scripts::RegisterCppFunctions()
 			vectorScreenCoords = lua_toboolean(state, 7);
 		}
 
-		auto* scriptsP = static_cast<Scripts*>(lua_touserdata(state, lua_upvalueindex(1)));		
+		auto* scriptsP = static_cast<Scripts*>(lua_touserdata(state, lua_upvalueindex(1)));
 		if (scriptsP) {
 			auto& uiReqs = scriptsP->m_uiReqs;
 			auto& lock = scriptsP->m_uiReqsMutex;
-			
+
 			std::lock_guard<std::mutex> lockGuard(lock);
 			uiReqs[id] = UIItem{Scripts::UIType::RECT, x, y, width, height, "", color, vectorScreenCoords};
 		}
@@ -214,7 +256,7 @@ void dev::Scripts::RegisterCppFunctions()
 	lua_setglobal(m_luaState, "DrawRect");
 
 	// DrawRectFilled
-	lua_CFunction drawRectFilledFunc = [](lua_State* state) -> int 
+	lua_CFunction drawRectFilledFunc = [](lua_State* state) -> int
 	{
 		auto paramNum = lua_gettop(state);
 		uint32_t color = 0xFFFFFFFF;
@@ -237,11 +279,11 @@ void dev::Scripts::RegisterCppFunctions()
 			vectorScreenCoords = lua_toboolean(state, 7);
 		}
 
-		auto* scriptsP = static_cast<Scripts*>(lua_touserdata(state, lua_upvalueindex(1)));		
+		auto* scriptsP = static_cast<Scripts*>(lua_touserdata(state, lua_upvalueindex(1)));
 		if (scriptsP) {
 			auto& uiReqs = scriptsP->m_uiReqs;
 			auto& lock = scriptsP->m_uiReqsMutex;
-			
+
 			std::lock_guard<std::mutex> lockGuard(lock);
 			uiReqs[id] = UIItem{Scripts::UIType::RECT_FILLED, x, y, width, height, "", color, vectorScreenCoords};
 		}
@@ -295,7 +337,7 @@ void dev::Scripts::Add(const nlohmann::json& _scriptJ)
 	scriptI->second.CompileScript(m_luaState);
 }
 
-auto dev::Scripts::Find(const dev::Id _id) 
+auto dev::Scripts::Find(const dev::Id _id)
 -> const Script*
 {
 	auto scriptI = m_scripts.find(_id);

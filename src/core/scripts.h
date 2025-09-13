@@ -36,17 +36,22 @@ namespace dev
 			uint32_t color = 0xFFFFFFFF;
 			bool vectorScreenCoords = true;
 		};
-		using UIReqs = std::unordered_map<dev::Id, UIItem>; // for UI rendering, this is used by Lua to request a render UI items in the UI thread
+		// Used by Lua to request UI items rendering in the UI thread
+		using UIReqs = std::unordered_map<dev::Id, UIItem>;
 		using ScriptMap = std::unordered_map<dev::Id, Script>;
 
-		Scripts();
+		using LabelAddrFunc = std::function<int(const std::string&)>;
+
+		Scripts(LabelAddrFunc _getLabelAddrFunc);
 		~Scripts();
 		void Add(Script&& _script);
 		void Add(const nlohmann::json& _scriptJ);
 		auto Find(const dev::Id _id) -> const Script*;
 		void Del(const dev::Id _id);
-		bool Check(const CpuI8080::State* _cpuStateP, const Memory::State* _memStateP,
-			const IO::State* _ioStateP, const Display::State* _displayStateP);
+		bool Check(const CpuI8080::State* _cpuStateP,
+					const Memory::State* _memStateP,
+					const IO::State* _ioStateP,
+					const Display::State* _displayStateP);
 		auto GetAll() -> const ScriptMap&;
 		auto GetUpdates() -> const uint32_t;
 		void Clear();
@@ -80,5 +85,7 @@ namespace dev
 
 		UIReqs m_uiReqs;
 		std::mutex m_uiReqsMutex;
+
+		LabelAddrFunc GetLabelAddrFunc;
 	};
 }

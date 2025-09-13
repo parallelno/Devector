@@ -212,6 +212,12 @@ DrawRect(id, x, y, width, height, <color=0xFFFFFFFF>, <vectorScreenCoords=true>)
 DrawRectFilled(id, x, y, width, height, <color=0xFFFFFFFF>, <vectorScreenCoords=true>)
 ```
 
+- **GetLabelAddr**
+
+```lua
+addr = GetLabelAddr(labelName) -- Get Label's addr (addr<0 - fail, addr=>0 - success)
+```
+
 ---
 
 ### Script Examples
