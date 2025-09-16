@@ -222,6 +222,9 @@ void dev::DevectorApp::WindowsInit()
 
 	m_disasmPopupP = std::make_unique<dev::DisasmPopup>(
 		*m_hardwareP, *m_debuggerP, m_scheduler);
+
+	m_debugDataPopupP = std::make_unique<dev::DebugDataPopup>(
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 }
 
 

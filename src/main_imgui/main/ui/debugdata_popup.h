@@ -6,8 +6,13 @@
 
 namespace dev
 {
-	class DisasmPopup : public BaseWindow
+	class DebugDataPopup : public BaseWindow
 	{
+	public:
+		enum class ElementType {
+			LABEL = 0, CONST, COMMENT, MEMORY_EDIT, CODE_PERFS, SCRIPTS
+		};
+	private:
 		static constexpr int DEFAULT_WINDOW_W = 420;
 		static constexpr int DEFAULT_WINDOW_H = 320;
 
@@ -17,8 +22,9 @@ namespace dev
 		dev::Signals m_signal = dev::Signals::NONE;
 		bool m_isActive = true;
 		GlobalAddr m_globalAddr = 0;
-		bool m_immHovered = false;
-		bool m_editMemoryExists = false;
+		std::string m_elementName = "";
+		bool m_elementHovered = false;
+		ElementType m_elementType = ElementType::LABEL;
 
 		void Draw(
 			const dev::Signals _signals,
@@ -26,13 +32,9 @@ namespace dev
 
 		void CallbackOpen(
 			const dev::Signals _signals, dev::Scheduler::SignalData _data);
-		void CallbackOpenImmHovered(
-			const dev::Signals _signals, dev::Scheduler::SignalData _data);
-
-		void Init(const dev::Signals _signals, dev::Scheduler::SignalData _data);
 
 	public:
-		DisasmPopup(
+		DebugDataPopup(
 			dev::Hardware& _hardware, dev::Debugger& _debugger,
 			dev::Scheduler& _scheduler,
 			bool* _visibleP = nullptr);

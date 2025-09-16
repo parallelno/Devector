@@ -223,6 +223,8 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/ui/watchpoints_popup.cpp
 	${DEVECTOR_DIR}/main/ui/disasm_popup.h
 	${DEVECTOR_DIR}/main/ui/disasm_popup.cpp
+	${DEVECTOR_DIR}/main/ui/debugdata_popup.h
+	${DEVECTOR_DIR}/main/ui/debugdata_popup.cpp
 
 	${DEVECTOR_DIR}/utils/imgui_utils.h
 	${DEVECTOR_DIR}/utils/imgui_utils.cpp

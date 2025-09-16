@@ -50,7 +50,9 @@ namespace dev
 		TRACE_LOG_DATA_UPDATE		= 1ull << 31,
 
 		DISASM_POPUP_OPEN			= 1ull << 32,
-		DISASM_POPUP_OPEN_IMM		= 1ull << 33,
+		DISASM_POPUP_OPEN_IMM		= 1ull << 33, // immidiate operand is hovered
+		DEBUG_DATA_POPUP_OPEN		= 1ull << 34,
+		DEBUG_DATA_POPUP_OPEN_HOVER	= 1ull << 35, // item is hovered
 	};
 
 	// Conversion operator (as free function)

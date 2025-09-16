@@ -35,11 +35,17 @@ namespace dev
 			GlobalAddr globalAddr;
 			uint16_t len;
 		};
+		struct StrGlobalAddrId {
+			std::string str;
+			GlobalAddr globalAddr;
+			dev::Id id;
+		};
 		using SignalData = std::optional<std::variant<
 			dev::GlobalAddr,
 			GlobalAddrLen,
 			dev::Id,
-			bool>>;
+			bool,
+			StrGlobalAddrId>>;
 
 		using Clk = std::chrono::time_point<std::chrono::steady_clock>;
 		using CallFunc = std::function<void(const Signals, SignalData)>;

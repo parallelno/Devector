@@ -31,6 +31,7 @@
 #include "ui/breakpoints_popup.h"
 #include "ui/watchpoints_popup.h"
 #include "ui/disasm_popup.h"
+#include "ui/debugdata_popup.h"
 
 
 #include "core/hardware.h"
@@ -134,6 +135,7 @@ namespace dev
 		std::unique_ptr <dev::BreakpointsPopup> m_breakpoints_popupP;
 		std::unique_ptr <dev::WatchpointsPopup> m_watchpoints_popupP;
 		std::unique_ptr <dev::DisasmPopup> m_disasmPopupP;
+		std::unique_ptr <dev::DebugDataPopup> m_debugDataPopupP;
 
 		// windows
 		bool m_displayWindowVisible = false;

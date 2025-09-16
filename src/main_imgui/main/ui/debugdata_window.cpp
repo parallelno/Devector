@@ -31,7 +31,7 @@ void dev::DebugDataWindow::Draw(
 			auto updateId = m_debugger.GetDebugData().GetLabelsUpdates();
 			UpdateAndDrawFilteredElements(
 				m_filteredLabels, m_labelsUpdates, updateId,
-				m_labelFilter, ElementType::LABEL);
+				m_labelFilter, DebugDataPopup::ElementType::LABEL);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Consts"))
@@ -39,7 +39,7 @@ void dev::DebugDataWindow::Draw(
 			auto updateId = m_debugger.GetDebugData().GetConstsUpdates();
 			UpdateAndDrawFilteredElements(
 				m_filteredConsts, m_constsUpdates, updateId,
-				m_constFilter, ElementType::CONST);
+				m_constFilter, DebugDataPopup::ElementType::CONST);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Comments"))
@@ -47,7 +47,7 @@ void dev::DebugDataWindow::Draw(
 			auto updateId = m_debugger.GetDebugData().GetCommentsUpdates();
 			UpdateAndDrawFilteredElements(
 				m_filteredComments, m_commentsUpdates, updateId,
-				m_commentFilter, ElementType::COMMENT);
+				m_commentFilter, DebugDataPopup::ElementType::COMMENT);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Memory Edits"))
@@ -55,7 +55,7 @@ void dev::DebugDataWindow::Draw(
 			auto updateId = m_debugger.GetDebugData().GetEditsUpdates();
 			UpdateAndDrawFilteredElements(
 				m_filteredEdits, m_editsUpdates, updateId,
-				m_editFilter, ElementType::MEMORY_EDIT);
+				m_editFilter, DebugDataPopup::ElementType::MEMORY_EDIT);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Code Perfs"))
@@ -63,7 +63,7 @@ void dev::DebugDataWindow::Draw(
 			auto updateId = m_debugger.GetDebugData().GetCodePerfsUpdates();
 			UpdateAndDrawFilteredElements(
 				m_filteredCodePerfs, m_codePerfsUpdates, updateId,
-				m_codePerfFilter, ElementType::CODE_PERFS);
+				m_codePerfFilter, DebugDataPopup::ElementType::CODE_PERFS);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Scripts"))
@@ -71,7 +71,7 @@ void dev::DebugDataWindow::Draw(
 			auto updateId = m_debugger.GetDebugData().GetScripts().GetUpdates();
 			UpdateAndDrawFilteredElements(
 				m_filteredScripts, m_scriptsUpdates, updateId,
-				m_scriptFilter, ElementType::SCRIPTS);
+				m_scriptFilter, DebugDataPopup::ElementType::SCRIPTS);
 			ImGui::EndTabItem();
 		}
 
@@ -88,7 +88,7 @@ void dev::DebugDataWindow::CallbackUpdateData(
 void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 	DebugData::FilteredElements& _filteredElements,
 	DebugData::UpdateId& _filteredUpdateId, const DebugData::UpdateId& _updateId,
-	std::string& _filter, ElementType _elementType)
+	std::string& _filter, DebugDataPopup::ElementType _elementType)
 {
 	// update the data and draw a filter
 	ImGui::Text("Filter"); ImGui::SameLine();
@@ -106,22 +106,22 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 
 		switch (_elementType)
 		{
-		case ElementType::LABEL:
+		case DebugDataPopup::ElementType::LABEL:
 			m_debugger.GetDebugData().GetFilteredLabels(_filteredElements, _filter);
 			break;
 
-		case ElementType::CONST:
+		case DebugDataPopup::ElementType::CONST:
 			m_debugger.GetDebugData().GetFilteredConsts(_filteredElements, _filter);
 			break;
 
-		case ElementType::COMMENT:
+		case DebugDataPopup::ElementType::COMMENT:
 			m_debugger.GetDebugData().GetFilteredComments(_filteredElements, _filter);
 			break;
 
-		case ElementType::MEMORY_EDIT:
+		case DebugDataPopup::ElementType::MEMORY_EDIT:
 			m_debugger.GetDebugData().GetFilteredMemoryEdits(_filteredElements, _filter);
 			break;
-		case ElementType::SCRIPTS:
+		case DebugDataPopup::ElementType::SCRIPTS:
 			m_debugger.GetDebugData().GetFilteredScripts(_filteredElements, _filter);
 			break;
 		default:
@@ -134,7 +134,7 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 	auto now = std::chrono::steady_clock::now();
 	auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - lastTime).count();
 	bool timeout = diff > 0;
-	if (_elementType == ElementType::CODE_PERFS && timeout ){
+	if (_elementType == DebugDataPopup::ElementType::CODE_PERFS && timeout ){
 		lastTime = now;
 		m_debugger.GetDebugData().GetFilteredCodePerfs(_filteredElements, _filter);
 	}
@@ -219,7 +219,10 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 					{
 						const auto& [element, selectedAddr, selectedAddrS] =
 							_filteredElements.at(hoveredLineIdx);
-						m_contextMenu.Init(selectedAddr, element, _elementType);
+						m_scheduler.AddSignal({
+							dev::Signals::DEBUG_DATA_POPUP_OPEN_HOVER,
+							dev::Scheduler::StrGlobalAddrId{element, selectedAddr, (Id)_elementType}});
+
 					}
 				}
 
@@ -233,185 +236,9 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 			hoveredLineIdx < 0 &&
 			ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 		{
-			m_contextMenu.Init(0, "", _elementType, false);
+			m_scheduler.AddSignal({
+				dev::Signals::DEBUG_DATA_POPUP_OPEN,
+				dev::Scheduler::StrGlobalAddrId{"", 0, (Id)_elementType}});
 		}
-	}
-
-	DrawContextMenu(m_contextMenu);
-}
-
-void dev::DebugDataWindow::DrawContextMenu(ContextMenu& _contextMenu)
-{
-	if (_contextMenu.BeginPopup())
-	{
-		if (_contextMenu.itemHovered)
-		{
-			if (ImGui::MenuItem("Copy Name")) {
-				dev::CopyToClipboard(_contextMenu.elementName);
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (ImGui::MenuItem("Copy Addr")) {
-				dev::CopyToClipboard(std::format("0x{:X}", (_contextMenu.addr)));
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::SeparatorText("");
-
-			if (ImGui::MenuItem("Locate in the Disasm Window"))
-			{
-				m_scheduler.AddSignal(
-					{dev::Signals::DISASM_UPDATE, (GlobalAddr)_contextMenu.addr});
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (ImGui::MenuItem("Locate in the Hex WIndow"))
-			{
-				m_scheduler.AddSignal(
-					{dev::Signals::HEX_HIGHLIGHT_ON,
-					dev::Scheduler::GlobalAddrLen(_contextMenu.addr, 1)});
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::SeparatorText("");
-		}
-
-		if (ImGui::MenuItem("Add"))
-		{
-			ImGui::CloseCurrentPopup();
-
-			dev::Signals signals = dev::Signals::NONE;
-
-			switch (_contextMenu.elementType)
-			{
-			case ElementType::LABEL:
-				signals = dev::Signals::LABEL_EDIT_WINDOW_ADD;
-				break;
-			case ElementType::CONST:
-				signals = dev::Signals::CONST_EDIT_WINDOW_ADD;
-				break;
-			case ElementType::COMMENT:
-				signals = dev::Signals::COMMENT_EDIT_WINDOW_ADD;
-				break;
-			case ElementType::MEMORY_EDIT:
-				signals = dev::Signals::MEMORY_EDIT_WINDOW_ADD;
-				break;
-			case ElementType::CODE_PERFS:
-				signals = dev::Signals::CODE_PERF_EDIT_WINDOW_ADD;
-				break;
-			case ElementType::SCRIPTS:
-				signals = dev::Signals::SCRIPT_EDIT_WINDOW_ADD;
-				break;
-			}
-			m_scheduler.AddSignal({signals, (GlobalAddr)0});
-		}
-
-		if (_contextMenu.itemHovered)
-		{
-			if (ImGui::MenuItem("Edit"))
-			{
-				ImGui::CloseCurrentPopup();
-
-				dev::Signals signals = dev::Signals::NONE;
-
-				switch (_contextMenu.elementType)
-				{
-				case ElementType::LABEL:
-					signals = dev::Signals::LABEL_EDIT_WINDOW_EDIT;
-					break;
-				case ElementType::CONST:
-					signals = dev::Signals::CONST_EDIT_WINDOW_EDIT;
-					break;
-				case ElementType::COMMENT:
-					signals = dev::Signals::COMMENT_EDIT_WINDOW_EDIT;
-					break;
-				case ElementType::MEMORY_EDIT:
-					signals = dev::Signals::MEMORY_EDIT_WINDOW_EDIT;
-					break;
-				case ElementType::CODE_PERFS:
-					signals = dev::Signals::CODE_PERF_EDIT_WINDOW_EDIT;
-					break;
-				case ElementType::SCRIPTS:
-					signals = dev::Signals::SCRIPT_EDIT_WINDOW_EDIT;
-					break;
-				}
-				m_scheduler.AddSignal({signals, (GlobalAddr)_contextMenu.addr});
-			}
-
-			if (ImGui::MenuItem("Delete"))
-			{
-				switch (_contextMenu.elementType)
-				{
-				case ElementType::LABEL:
-					m_debugger.GetDebugData().DelLabel(
-						_contextMenu.addr, _contextMenu.elementName);
-					break;
-
-				case ElementType::CONST:
-					m_debugger.GetDebugData().DelConst(
-						_contextMenu.addr, _contextMenu.elementName);
-					break;
-
-				case ElementType::COMMENT:
-					m_debugger.GetDebugData().DelComment(_contextMenu.addr);
-					break;
-
-				case ElementType::MEMORY_EDIT:
-					m_debugger.GetDebugData().DelMemoryEdit(_contextMenu.addr);
-					break;
-
-				case ElementType::CODE_PERFS:
-					m_debugger.GetDebugData().DelCodePerf(_contextMenu.addr);
-					break;
-				case ElementType::SCRIPTS:
-					m_debugger.GetDebugData().GetScripts().Del(_contextMenu.addr);
-					break;
-
-				default:
-					break;
-				}
-				m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::SeparatorText("");
-		}
-
-		if (ImGui::MenuItem("Delete All"))
-		{
-			switch (_contextMenu.elementType)
-			{
-			case ElementType::LABEL:
-				m_debugger.GetDebugData().DelAllLabels();
-				break;
-
-			case ElementType::CONST:
-				m_debugger.GetDebugData().DelAllConsts();
-				break;
-
-			case ElementType::COMMENT:
-				m_debugger.GetDebugData().DelAllComments();
-				break;
-
-			case ElementType::MEMORY_EDIT:
-				m_hardware.Request(Hardware::Req::DEBUG_MEMORY_EDIT_DEL_ALL);
-				break;
-
-			case ElementType::CODE_PERFS:
-				m_hardware.Request(Hardware::Req::DEBUG_CODE_PERF_DEL_ALL);
-				break;
-			case ElementType::SCRIPTS:
-				m_hardware.Request(Hardware::Req::DEBUG_SCRIPT_DEL_ALL);
-				break;
-
-			default:
-				break;
-			}
-
-			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::EndPopup();
 	}
 }
