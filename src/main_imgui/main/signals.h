@@ -48,29 +48,32 @@ namespace dev
 
 		HEX_VIEWER_DATA_UPDATE		= 1 << 30,
 		TRACE_LOG_DATA_UPDATE		= 1ull << 31,
+
+		DISASM_POPUP_OPEN			= 1ull << 32,
+		DISASM_POPUP_OPEN_IMM		= 1ull << 33,
 	};
 
 	// Conversion operator (as free function)
-	inline uint32_t operator+(Signals sig) noexcept {
-		return static_cast<uint32_t>(sig);
+	inline uint64_t operator+(Signals sig) noexcept {
+		return static_cast<uint64_t>(sig);
 	}
 
 	// Bitwise OR operator
 	inline Signals operator|(Signals lhs, Signals rhs) noexcept {
-		return static_cast<Signals>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+		return static_cast<Signals>(static_cast<uint64_t>(lhs) | static_cast<uint64_t>(rhs));
 	}
 
 	// Additional useful operators for bitwise operations
 	inline Signals operator&(Signals lhs, Signals rhs) noexcept {
-		return static_cast<Signals>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
+		return static_cast<Signals>(static_cast<uint64_t>(lhs) & static_cast<uint64_t>(rhs));
 	}
 
 	inline Signals operator^(Signals lhs, Signals rhs) noexcept {
-		return static_cast<Signals>(static_cast<uint32_t>(lhs) ^ static_cast<uint32_t>(rhs));
+		return static_cast<Signals>(static_cast<uint64_t>(lhs) ^ static_cast<uint64_t>(rhs));
 	}
 
 	inline Signals operator~(Signals sig) noexcept {
-		return static_cast<Signals>(~static_cast<uint32_t>(sig));
+		return static_cast<Signals>(~static_cast<uint64_t>(sig));
 	}
 
 	// Compound assignment operators

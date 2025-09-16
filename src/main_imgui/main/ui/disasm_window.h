@@ -37,43 +37,6 @@ namespace dev
 		static constexpr ImU32 DIS_CLR_LINK_MINOR = dev::IM_U32(0xD0C443FF);
 		static constexpr ImU32 DIS_CLR_LINK_HIGHLIGHT = dev::IM_U32(0xD010FFFF);
 
-		struct ContextMenu {
-			bool openPopup = false;
-			Addr addr = 0;
-			std::string str;
-			bool immHovered = false; // the context menu was opened on the immediate operand
-			const char* contextMenuName = "DisasmItemMenu";
-			bool labelExists = false;
-			bool constExists = false;
-			bool commentExists = false;
-			bool editMemoryExists = false;
-			bool codePerfExists = false;
-
-			void Init(Addr _addr, const std::string& _lineS,
-				const DebugData& _debugData, const bool _immHovered = false)
-			{
-				openPopup = true;
-				immHovered = _immHovered;
-				addr = _addr;
-				str = _lineS;
-
-				labelExists = _debugData.GetLabels(addr) != std::nullopt;
-				constExists = _debugData.GetConsts(addr);
-				commentExists = _debugData.GetComment(addr);
-				editMemoryExists = _debugData.GetMemoryEdit(addr);
-				codePerfExists = _debugData.GetCodePerf(addr);
-			}
-
-			bool BeginPopup(){
-				if (openPopup) {
-					ImGui::OpenPopup(contextMenuName);
-					openPopup = false;
-				}
-
-				return ImGui::BeginPopup(contextMenuName);
-			}
-		};
-		ContextMenu m_contextMenu;
 
 		struct AddrHighlight
 		{
@@ -125,13 +88,12 @@ namespace dev
 			const bool _isRunning, const Disasm::Line& _line,
 			const int _lineIdx, const Addr _regPC);
 		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
-			ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
+			AddrHighlight& _addrHighlight);
 		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
-			ContextMenu& _contextMenu, AddrHighlight& _addrHighlight);
+			AddrHighlight& _addrHighlight);
 		void DrawDisasmComment(const Disasm::Line& _line);
 		void DrawDisasmLabels(const Disasm::Line& _line);
 		void DrawDisasmStats(const Disasm::Line& _line);
-		void DrawContextMenu(const Addr _regPC, ContextMenu& _contextMenu);
 		void DrawAddrLinks(const bool _isRunning, const int _lineIdx,
 			const bool _selected);
 		void DrawNextExecutedLineHighlight(

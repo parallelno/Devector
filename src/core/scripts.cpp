@@ -183,7 +183,10 @@ void dev::Scripts::RegisterCppFunctions()
 		bool vectorScreenCoords = true;
 
 		if (paramNum < 4 || paramNum > 6) {
-			luaL_error(state, "DrawText: wrong number of parameters: (id, text, x, y, <color=0xFFFFFFFF>, <vectorScreenCoords=true>)");
+			luaL_error(state,
+				"DrawText: wrong number of parameters: "
+				"(id, text, x, y, <color=0xFFFFFFFF>, "
+				"<vectorScreenCoords=true>)");
 			return 0;
 		}
 
@@ -209,7 +212,10 @@ void dev::Scripts::RegisterCppFunctions()
 			auto& lock = scriptsP->m_uiReqsMutex;
 
 			std::lock_guard<std::mutex> lockGuard(lock);
-			uiReqs[id] = UIItem{Scripts::UIType::TEXT, x, y, 0, 0, textCStr, color, vectorScreenCoords};
+			uiReqs[id] = UIItem{
+				Scripts::UIType::TEXT,
+				x, y, 0, 0,
+				textCStr, color, vectorScreenCoords};
 		}
 		return 0;
 	};
@@ -225,7 +231,10 @@ void dev::Scripts::RegisterCppFunctions()
 		bool vectorScreenCoords = true;
 
 		if (paramNum < 5 || paramNum > 7) {
-			luaL_error(state, "DrawRect: wrong number of parameters: (id, x, y, width, height, <color=0xFFFFFFFF>, <vectorScreenCoords=true>)");
+			luaL_error(state,
+				"DrawRect: wrong number of parameters: "
+				"(id, x, y, width, height, "
+				"<color=0xFFFFFFFF>, <vectorScreenCoords=true>)");
 			return 0;
 		}
 
@@ -241,13 +250,18 @@ void dev::Scripts::RegisterCppFunctions()
 			vectorScreenCoords = lua_toboolean(state, 7);
 		}
 
-		auto* scriptsP = static_cast<Scripts*>(lua_touserdata(state, lua_upvalueindex(1)));
+		auto* scriptsP = static_cast<Scripts*>(
+			lua_touserdata(state, lua_upvalueindex(1)));
+
 		if (scriptsP) {
 			auto& uiReqs = scriptsP->m_uiReqs;
 			auto& lock = scriptsP->m_uiReqsMutex;
 
 			std::lock_guard<std::mutex> lockGuard(lock);
-			uiReqs[id] = UIItem{Scripts::UIType::RECT, x, y, width, height, "", color, vectorScreenCoords};
+			uiReqs[id] = UIItem{
+				Scripts::UIType::RECT,
+				x, y, width, height,
+				"", color, vectorScreenCoords};
 		}
 		return 0;
 	};
@@ -263,7 +277,10 @@ void dev::Scripts::RegisterCppFunctions()
 		bool vectorScreenCoords = true;
 
 		if (paramNum < 5 || paramNum > 7) {
-			luaL_error(state, "DrawRectFilled: wrong number of parameters: (id, x, y, width, height, <color=0xFFFFFFFF>, <vectorScreenCoords=true>)");
+			luaL_error(state,
+				"DrawRectFilled: wrong number of parameters: "
+				"(id, x, y, width, height, "
+				"<color=0xFFFFFFFF>, <vectorScreenCoords=true>)");
 			return 0;
 		}
 
@@ -285,7 +302,9 @@ void dev::Scripts::RegisterCppFunctions()
 			auto& lock = scriptsP->m_uiReqsMutex;
 
 			std::lock_guard<std::mutex> lockGuard(lock);
-			uiReqs[id] = UIItem{Scripts::UIType::RECT_FILLED, x, y, width, height, "", color, vectorScreenCoords};
+			uiReqs[id] = UIItem{
+				Scripts::UIType::RECT_FILLED,
+				x, y, width, height, "", color, vectorScreenCoords};
 		}
 		return 0;
 	};
@@ -359,8 +378,11 @@ void dev::Scripts::Del(const dev::Id _id)
 }
 
 // Hardware thread
-bool dev::Scripts::Check(const CpuI8080::State* _cpuStateP, const Memory::State* _memStateP,
-	const IO::State* _ioStateP, const Display::State* _displayStateP)
+bool dev::Scripts::Check(
+	const CpuI8080::State* _cpuStateP,
+	const Memory::State* _memStateP,
+	const IO::State* _ioStateP,
+	const Display::State* _displayStateP)
 {
 	if (!m_enabled) return false;
 

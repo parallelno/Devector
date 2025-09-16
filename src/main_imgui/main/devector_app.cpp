@@ -219,6 +219,9 @@ void dev::DevectorApp::WindowsInit()
 
 	m_watchpoints_popupP = std::make_unique<dev::WatchpointsPopup>(
 		*m_hardwareP, *m_debuggerP, m_scheduler);
+
+	m_disasmPopupP = std::make_unique<dev::DisasmPopup>(
+		*m_hardwareP, *m_debuggerP, m_scheduler);
 }
 
 

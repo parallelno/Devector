@@ -47,6 +47,12 @@ namespace dev
 		const CpuI8080::State& _cpuState,
 		const Memory::State& _memState) -> const char*;
 
+	auto GetDisasmSimpleLine(
+		const Addr _addr,
+		const uint8_t _opcode,
+		const uint8_t _cmd_byte1,
+		const uint8_t _cmd_byte2) -> const char*;
+
 	class Disasm
 	{
 	public:

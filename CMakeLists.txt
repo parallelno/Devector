@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
 
-project(devector VERSION 9.3.1)
+project(devector VERSION 9.3.2)
 
 # Prevent in-source build
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
@@ -221,6 +221,8 @@ set(SOURCES
 	${DEVECTOR_DIR}/main/ui/breakpoints_popup.cpp
 	${DEVECTOR_DIR}/main/ui/watchpoints_popup.h
 	${DEVECTOR_DIR}/main/ui/watchpoints_popup.cpp
+	${DEVECTOR_DIR}/main/ui/disasm_popup.h
+	${DEVECTOR_DIR}/main/ui/disasm_popup.cpp
 
 	${DEVECTOR_DIR}/utils/imgui_utils.h
 	${DEVECTOR_DIR}/utils/imgui_utils.cpp

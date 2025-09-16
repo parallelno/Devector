@@ -232,8 +232,9 @@ void dev::DisasmWindow::DrawDisasmIcons(
 }
 
 void dev::DisasmWindow::DrawDisasmAddr(
-	const bool _isRunning, const Disasm::Line& _line,
-	ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	const bool _isRunning,
+	const Disasm::Line& _line,
+	AddrHighlight& _addrHighlight)
 {
 	// the addr column
 	ImGui::TableNextColumn();
@@ -248,15 +249,14 @@ void dev::DisasmWindow::DrawDisasmAddr(
 		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE, (GlobalAddr)_line.addr});
 		break;
 	case UIItemMouseAction::RIGHT:
-		_contextMenu.Init(
-			_line.addr, _line.GetAddrS(), m_debugger.GetDebugData());
+		m_scheduler.AddSignal({
+			dev::Signals::DISASM_POPUP_OPEN, (GlobalAddr)_line.addr});
 		break;
 	}
 }
 
 void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning,
-	const Disasm::Line& _line,
-	ContextMenu& _contextMenu, AddrHighlight& _addrHighlight)
+	const Disasm::Line& _line, AddrHighlight& _addrHighlight)
 {
 	// draw code
 	ImGui::TableNextColumn();
@@ -271,8 +271,8 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning,
 
 	// init the immediate value as an addr to let the context menu copy it
 	case UIItemMouseAction::RIGHT:
-		_contextMenu.Init(
-			_line.imm, _line.GetImmediateS(), m_debugger.GetDebugData(), true);
+		m_scheduler.AddSignal({
+			dev::Signals::DISASM_POPUP_OPEN_IMM, (GlobalAddr)_line.imm});
 		break;
 	}
 
@@ -424,10 +424,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 					DrawAddrLinks(_isRunning, lineIdx, hoveredLineIdx == lineIdx);
 					DrawNextExecutedLineHighlight(_isRunning, line, regPC);
 					DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
-					DrawDisasmAddr(_isRunning, line, m_contextMenu,
-						m_addrHighlight);
-					DrawDisasmCode(_isRunning, line, m_contextMenu,
-						m_addrHighlight);
+					DrawDisasmAddr(_isRunning, line, m_addrHighlight);
+					DrawDisasmCode(_isRunning, line, m_addrHighlight);
 
 					DrawDisasmStats(line);
 					DrawDisasmConsts(line, MAX_DISASM_LABELS);
@@ -441,8 +439,8 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 				if (hoveredLineIdx == lineIdx &&
 					ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 				{
-					m_contextMenu.Init(
-						addr, line.GetStr(), m_debugger.GetDebugData());
+					m_scheduler.AddSignal({
+						dev::Signals::DISASM_POPUP_OPEN, (GlobalAddr)addr});
 				}
 			}
 		}
@@ -450,7 +448,6 @@ void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
 		ImGui::EndTable();
 	}
 
-	DrawContextMenu(regPC, m_contextMenu);
 
 	ImGui::PopStyleVar(2);
 	if (_isRunning) ImGui::EndDisabled();
@@ -523,161 +520,6 @@ void dev::DisasmWindow::UpdateDisasm(
 	if (_updateSelection) m_selectedLineAddr = _addr;
 }
 
-void dev::DisasmWindow::DrawContextMenu(
-	const Addr _regPC, ContextMenu& _contextMenu)
-{
-	// draw a context menu
-	if (_contextMenu.BeginPopup())
-	{
-		if (ImGui::MenuItem("Copy")) {
-			dev::CopyToClipboard(_contextMenu.str);
-		}
-		ImGui::SeparatorText("");
-		if (ImGui::MenuItem("Show Current Break")) {
-			UpdateDisasm(_regPC);
-		}
-		ImGui::SeparatorText("");
-		if (ImGui::MenuItem("Run To") | (
-			ImGui::IsKeyPressed(ImGuiKey_F7) &&
-			ImGui::IsKeyDown(ImGuiKey_LeftCtrl)))
-		{
-			Breakpoint::Data bpData{
-				_contextMenu.addr, Breakpoint::MAPPING_PAGES_ALL,
-				Breakpoint::Status::ACTIVE, true };
-			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
-				{"data0", bpData.data0 },
-				{"data1", bpData.data1 },
-				{"data2", bpData.data2 },
-				{"comment", ""}
-			});
-
-			m_hardware.Request(Hardware::Req::RUN);
-		}
-		ImGui::SeparatorText("");
-		if (ImGui::MenuItem("Add/Remove Beakpoint"))
-		{
-			Breakpoint::Status bpStatus = static_cast<Breakpoint::Status>(
-				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_GET_STATUS,
-					{ {"addr", m_contextMenu.addr} })->at("status"));
-
-			if (bpStatus == Breakpoint::Status::DELETED) {
-				Breakpoint::Data bpData { m_contextMenu.addr };
-				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_ADD, {
-					{"data0", bpData.data0 },
-					{"data1", bpData.data1 },
-					{"data2", bpData.data2 },
-					{"comment", ""}
-					});
-			}
-			else {
-				m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL,
-					{ {"addr", m_contextMenu.addr} });
-			}
-			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
-		}
-		if (ImGui::MenuItem("Remove All Beakpoints")) {
-			m_hardware.Request(Hardware::Req::DEBUG_BREAKPOINT_DEL_ALL);
-			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
-		};
-
-		ImGui::SeparatorText("");
-
-		if (ImGui::MenuItem("Add/Edit Label"))
-		{
-			if (_contextMenu.labelExists)
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::LABEL_EDIT_WINDOW_EDIT,
-					(GlobalAddr)_contextMenu.addr});
-			}
-			else
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::LABEL_EDIT_WINDOW_ADD,
-					(GlobalAddr)_contextMenu.addr});
-			}
-
-		};
-
-		if (_contextMenu.immHovered && ImGui::MenuItem("Add/Edit Const"))
-		{
-			if (_contextMenu.constExists)
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::CONST_EDIT_WINDOW_EDIT,
-					(GlobalAddr)_contextMenu.addr});
-			}
-			else
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::CONST_EDIT_WINDOW_ADD,
-					(GlobalAddr)_contextMenu.addr});
-			}
-		};
-
-		if (ImGui::MenuItem("Add/Edit Comment"))
-		{
-			if (_contextMenu.commentExists)
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::COMMENT_EDIT_WINDOW_EDIT,
-					(GlobalAddr)_contextMenu.addr});
-			}
-			else
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::COMMENT_EDIT_WINDOW_ADD,
-					(GlobalAddr)_contextMenu.addr});
-			}
-		};
-
-		ImGui::SeparatorText("");
-
-		if (ImGui::MenuItem("Edit Memory"))
-		{
-			if (_contextMenu.editMemoryExists)
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::MEMORY_EDIT_WINDOW_EDIT,
-					(GlobalAddr)_contextMenu.addr});
-			}
-			else
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::MEMORY_EDIT_WINDOW_ADD,
-					(GlobalAddr)_contextMenu.addr});
-			}
-		}
-
-		if (_contextMenu.editMemoryExists && ImGui::MenuItem(
-			"Cancel Edit Memory at This Addr"))
-		{
-			m_hardware.Request(
-				Hardware::Req::DEBUG_MEMORY_EDIT_DEL,
-				{ {"addr", _contextMenu.addr} });
-
-			m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
-		}
-
-		if (ImGui::MenuItem("Code Perf"))
-		{
-			if (_contextMenu.codePerfExists)
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::CODE_PERF_EDIT_WINDOW_EDIT,
-					(GlobalAddr)_contextMenu.addr});
-			}
-			else
-			{
-				m_scheduler.AddSignal({
-					dev::Signals::CODE_PERF_EDIT_WINDOW_ADD,
-					(GlobalAddr)_contextMenu.addr});
-			}
-		}
-
-		ImGui::EndPopup();
-	}
-}
 
 void dev::DisasmWindow::DrawAddrLinks(
 	const bool _isRunning, const int _lineIdx,

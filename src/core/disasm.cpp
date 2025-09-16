@@ -850,7 +850,7 @@ auto dev::GetCmdLen(const uint8_t _opcode) -> const uint8_t { return cmdLens[_op
 static char disasm_line_s[DISASM_LINE_MAX];
 static char disasm_cmd_s[CMD_S_LEN_MAX+1];
 
-// IS NOT THREAD SAFE!
+// NOT THREAD SAFE!
 // Disasm one command in a format:
 // 1234\t12 34 56\tlxi sp,5634\tpsw=1234 bc=2345 de=3456 hl=4567 sp=5678
 auto dev::GetDisasmLogLine(
@@ -907,6 +907,57 @@ auto dev::GetDisasmLogLine(
     return disasm_line_s;
 }
 
+#define DISASM_LINE_MAX 127
+static char disasm_simple_line_s[DISASM_LINE_MAX];
+static char disasm_simple_cmd_s[CMD_S_LEN_MAX+1];
+
+// NOT THREAD SAFE!
+// Disasm one command in a format:
+// 1234\t12 34 56\tlxi sp,5634
+auto dev::GetDisasmSimpleLine(
+	const Addr _addr, const uint8_t _opcode,
+	const uint8_t _cmd_byte1, const uint8_t _cmd_byte2)
+-> const char*
+{
+	auto mnemonic = mnenomics[_opcode];
+	auto mnemonicLen = mnenomicLens[_opcode];
+	auto mnemonicType = mnenomicTypes[_opcode];
+	auto immType = cmdImms[_opcode];
+
+	auto cml_len = cmdLens[_opcode];
+
+	// Bytes
+	const char* byte_s1 = dev::Uint8ToStrC(_opcode);
+	const char* byte_s2 = cml_len > 1 ? dev::Uint8ToStrC(_cmd_byte1) : "  ";
+	const char* byte_s3 = cml_len > 2 ? dev::Uint8ToStrC(_cmd_byte2) : "  ";
+
+	// Mnemonic
+	const char* param1 = mnemonicLen >= 2 ? mnemonic[1] : "";
+	const char* param2 = mnemonicLen == 3 ? mnemonic[2] : "";
+	const char* imm = immType == CMD_IB_OFF1 || immType == CMD_IB_OFF1 ?
+		dev::Uint8ToStrC(_cmd_byte1) :
+		immType == CMD_IW_OFF1 ?
+		dev::Uint16ToStrC((_cmd_byte2 << 8) | _cmd_byte1) : "";
+	const char* comma = cmdComma[_opcode];
+
+	// Print the command
+	std::snprintf(
+		disasm_simple_cmd_s, sizeof(disasm_simple_cmd_s),
+		"%s %s%s%s%s",
+		mnemonic[0], param1, comma, param2, imm);
+
+	// Print the full disasm line
+	std::snprintf(
+		disasm_simple_line_s, sizeof(disasm_simple_line_s),
+		"%04X %s %s %s %-11s\n",
+		_addr,
+		byte_s1,
+		byte_s2,
+		byte_s3,
+		disasm_simple_cmd_s);
+
+    return disasm_simple_line_s;
+}
 
 void dev::Disasm::Line::Init()
 {
