@@ -22,25 +22,20 @@ void dev::TraceLog::Update(
 void dev::TraceLog::UpdateLogBuffer(
 	const CpuI8080::State& _cpuState, const Memory::State& _memState)
 {
-	uint8_t opcode = _memState.debug.instr[0];
-	uint8_t dataL = _memState.debug.instr[1];
-	uint8_t dataH = _memState.debug.instr[2];
+	uint8_t opcode = _memState.debug.instr.opcode;
 
 	// skip repeataive HLT
 	if (opcode == CpuI8080::OPCODE_HLT &&
-		m_log[m_logIdx].opcode == CpuI8080::OPCODE_HLT) {
+		m_log[m_logIdx].instr.opcode == CpuI8080::OPCODE_HLT) {
 		return;
 	}
 
 	m_logIdx = --m_logIdx % TRACE_LOG_SIZE;
+
 	m_log[m_logIdx].globalAddr = _memState.debug.instrGlobalAddr;
-	m_log[m_logIdx].opcode = opcode;
-	m_log[m_logIdx].imm.l = opcode != CpuI8080::OPCODE_PCHL ?
-		dataL :
-		_cpuState.regs.hl.l;
-	m_log[m_logIdx].imm.h = opcode != CpuI8080::OPCODE_PCHL ?
-		dataH :
-		_cpuState.regs.hl.h;
+	m_log[m_logIdx].instr.opcode = _memState.debug.instr.opcode;
+	m_log[m_logIdx].instr.dataW = opcode == CpuI8080::OPCODE_PCHL ?
+		_cpuState.regs.pc.word : _memState.debug.instr.dataW;
 }
 
 // UI thread
@@ -59,9 +54,10 @@ auto dev::TraceLog::GetDisasm(const size_t _lines, const uint8_t _filter)
 
 		if (globalAddr == EMPTY_ITEM) { break; }
 
-		if (GetOpcodeType(item.opcode) <= _filter)
+		if (CpuI8080::GetInstrType(item.instr.opcode) <= _filter)
 		{
-			AddCode(item, m_disasmLines[m_disasmLinesLen++]);
+			m_disasmLines[m_disasmLinesLen].InitInstr(globalAddr, item.instr, m_debugData, false);
+			m_disasmLinesLen++;
 			line++;
 		}
 	}
@@ -69,38 +65,6 @@ auto dev::TraceLog::GetDisasm(const size_t _lines, const uint8_t _filter)
 	return &m_disasmLines;
 }
 
-
-void dev::TraceLog::AddCode(const Item& _item, Disasm::Line& _line)
-{
-	auto immType = GetImmediateType(_item.opcode);
-
-	_line.Init();
-
-	_line.opcode = _item.opcode;
-	switch (GetCmdLen(_item.opcode))
-	{
-	case 1:
-		_line.imm = immType == CMD_IB_OFF0 ? _item.opcode : 0;
-		break;
-	case 2:
-		_line.imm = _item.imm.l;
-		break;
-	case 3:
-		_line.imm = _item.imm.word;
-		break;
-	};
-
-	if (immType != CMD_IM_NONE)
-	{
-		auto labelsP = m_debugData.GetLabels(_line.imm);
-		_line.labels = labelsP ? std::move(*labelsP) : Disasm::LabelList();
-		auto constsP = m_debugData.GetConsts(_line.imm);
-		_line.consts = constsP ? *constsP : Disasm::LabelList();
-	}
-
-	_line.type = Disasm::Line::Type::CODE;
-	_line.addr = (Addr)_item.globalAddr;
-}
 
 
 void dev::TraceLog::Reset()
@@ -152,13 +116,17 @@ void dev::TraceLog::SetSaveLog(bool _saveLog, const std::string& _path)
 	}
 }
 
+std::array<char, dev::DisasmLine::LINE_BUFF_LEN> _traceLogBuffer = {};
 
 void dev::TraceLog::SaveLog(
 	const CpuI8080::State& _cpuState, const Memory::State& _memState)
 {
 	if (m_saveLog && m_logFile.is_open())
 	{
-		m_logFile << dev::GetDisasmLogLine(_cpuState, _memState);
+		m_logFile << DisasmLine::PrintToBuffer(_traceLogBuffer,
+											   _memState.debug.instrGlobalAddr,
+											   _memState.debug.instr,
+											   &_cpuState.regs );
 	}
 }
 

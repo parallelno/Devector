@@ -222,14 +222,14 @@ void dev::TraceLogWindow::DrawTable(const bool _isRunning)
 
 
 void dev::TraceLogWindow::DrawDisasmAddr(
-	const bool _isRunning, const Disasm::Line& _line,
+	const bool _isRunning, const DisasmLine& _line,
 	AddrHighlight& _addrHighlight)
 {
 	// the addr column
 	ImGui::TableNextColumn();
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 
-	auto mouseAction = DrawAddr(_isRunning, _line.GetAddrS(),
+	auto mouseAction = DrawAddr(_isRunning, Uint8ToStrC0x(_line.addr),
 		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF),
 		_addrHighlight.IsEnabled(_line.addr));
 
@@ -248,7 +248,7 @@ void dev::TraceLogWindow::DrawDisasmAddr(
 
 
 void dev::TraceLogWindow::DrawDisasmCode(
-	const bool _isRunning, const Disasm::Line& _line,
+	const bool _isRunning, const DisasmLine& _line,
 	AddrHighlight& _addrHighlight)
 {
 	// draw code

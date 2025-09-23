@@ -9,6 +9,7 @@
 
 #include "utils/types.h"
 #include "core/hardware.h"
+//#include "core/disasm.h"
 #include "core/disasm.h"
 #include "core/debug_data.h"
 #include "core/display.h"
@@ -54,6 +55,7 @@ namespace dev
 
 		Hardware& m_hardware;
 		DebugData m_debugData;
+		//Disasm m_disasm;
 		Disasm m_disasm;
 		TraceLog m_traceLog;
 		Recorder m_recorder;

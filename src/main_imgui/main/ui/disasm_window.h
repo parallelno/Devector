@@ -9,6 +9,7 @@
 #include "ui/base_window.h"
 #include "core/hardware.h"
 #include "core/debugger.h"
+#include "core/disasm.h"
 #include "scheduler.h"
 
 namespace dev
@@ -35,7 +36,7 @@ namespace dev
 
 		static constexpr ImU32 DIS_CLR_LINK		= dev::IM_U32(0x808010FF);
 		static constexpr ImU32 DIS_CLR_LINK_MINOR = dev::IM_U32(0xD0C443FF);
-		static constexpr ImU32 DIS_CLR_LINK_HIGHLIGHT = dev::IM_U32(0xD010FFFF);
+		static constexpr ImU32 DIS_CLR_LINK_HIGHLIGHT = dev::IM_U32(0xD005F0FF);
 
 
 		struct AddrHighlight
@@ -59,9 +60,8 @@ namespace dev
 		ImFont* m_fontCommentP = nullptr;
 		char m_searchText[255] = "";
 		Addr m_disasmAddr = 0;
-		int m_disasmLines = Disasm::DISASM_LINES_MAX;
+		int m_disasmLines = 0;
 		const Disasm::ImmAddrLinks* m_immLinksP = nullptr;
-		size_t m_immLinksNum = 0;
 		int m_selectedLineAddr = 0;
 
 		static constexpr int NAVIGATE_HISTORY_MAX = 5;
@@ -85,25 +85,27 @@ namespace dev
 		void DrawSearch(const bool _isRunning);
 		void DrawDisasm(const bool _isRunning);
 		void DrawDisasmIcons(
-			const bool _isRunning, const Disasm::Line& _line,
+			const bool _isRunning, const DisasmLine& _line,
 			const int _lineIdx, const Addr _regPC);
-		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
+		void DrawDisasmAddr(const bool _isRunning, const DisasmLine& _line,
 			AddrHighlight& _addrHighlight);
-		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
+		void DrawDisasmCode(const bool _isRunning, const DisasmLine& _line,
 			AddrHighlight& _addrHighlight);
-		void DrawDisasmComment(const Disasm::Line& _line);
-		void DrawDisasmLabels(const Disasm::Line& _line);
-		void DrawDisasmStats(const Disasm::Line& _line);
-		void DrawAddrLinks(const bool _isRunning, const int _lineIdx,
+		void DrawDisasmComment(const DisasmLine& _line);
+		void DrawDisasmLabels(const DisasmLine& _line);
+		void DrawDisasmStats(const DisasmLine& _line);
+		void DrawAddrLinks(const bool _isRunning,
+			const int _lineIdx,
 			const bool _selected);
+		void DrawAddrLink(ImVec2 _pos0, ImVec2 _pos1, int _lineIdx,
+			ImU32 _linkColor, int _endLineIdx, float _linkWidth);
 		void DrawNextExecutedLineHighlight(
 			const bool _isRunning,
-			const Disasm::Line& _line,
+			const DisasmLine& _line,
 			const Addr _regPC);
 
-		bool IsDisasmTableOutOfWindow() const;
 		auto GetVisibleLines() const -> int;
-		void CheckControls(const dev::Disasm::Lines& disasm);
+		void CheckControls(const Addr _addr);
 
 	public:
 

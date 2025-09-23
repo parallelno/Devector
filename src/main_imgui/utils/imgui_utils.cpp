@@ -699,40 +699,37 @@ void dev::DrawTooltipTimer(const char* _text, const float _timer)
 }
 
 auto dev::DrawCodeLine(
-	const bool _isRunning, const Disasm::Line& _line, const bool _tab)
+	const bool _isRunning, const DisasmLine& _line, const bool _tab)
 -> UIItemMouseAction
 {
 	auto uiItemMouseAction = UIItemMouseAction::NONE;
 	auto opcode = _line.opcode;
-	auto mnemonic = dev::GetMnemonic(opcode);
-	auto mnemonicLen = dev::GetMnemonicLen(opcode);
-	auto mnemonicType = dev::GetMnemonicType(opcode);
-	auto immType = GetImmediateType(opcode);
 
-	for (int i = 0; i < mnemonicLen; i++)
+	if (_tab) {
+		ImGui::SameLine();
+		ImGui::Dummy(ImVec2(20, 0));
+	}
+
+	auto token_typesI = _line.cmdP->token_types.begin();
+
+	for (int i = 0; i < _line.cmdP->token_types.size(); i++)
 	{
-		const char* str = nullptr;
 		const ImVec4* colorP;
+		auto token_type = *token_typesI;
+		token_typesI++;
 
-		switch (mnemonicType[i])
+		// init toiken color
+		switch (token_type)
 		{
-		case MNT_CMD:
-		{
-			// draw a mnenonic
-			str = _tab ? "\t%s" : "%s";
-
-			switch (GetOpcodeType(opcode))
+		case CMD_TT_CMD:{
+			switch (CpuI8080::GetInstrType(opcode))
 			{
-			case OPTYPE_C__:
-			case OPTYPE_CAL:
-				colorP = &DASM_CLR_MNEMONIC_BRANCH;
-				break;
-			case OPTYPE_J__:
-			case OPTYPE_JMP:
-				colorP = &DASM_CLR_MNEMONIC_BRANCH;
-				break;
-			case OPTYPE_R__:
-			case OPTYPE_RET:
+			case CpuI8080::OPTYPE_C__:
+			case CpuI8080::OPTYPE_CAL:
+			case CpuI8080::OPTYPE_J__:
+			case CpuI8080::OPTYPE_JMP:
+			case CpuI8080::OPTYPE_R__:
+			case CpuI8080::OPTYPE_RET:
 				colorP = &DASM_CLR_MNEMONIC_BRANCH;
 				break;
 			default:
@@ -740,88 +737,59 @@ auto dev::DrawCodeLine(
 				break;
 			}
 			break;
+
 		}
-		case MNT_IMM:
-			ImGui::SameLine();
-			colorP = &DASM_CLR_CONST;
-			str = " %s";
+		case CMD_TT_IMM:
+			colorP = _line.imm_sub_type == DisasmLine::ImmSubType::NONE ? &DASM_CLR_NUMBER :
+					_line.imm_sub_type == DisasmLine::ImmSubType::CONST ? &DASM_CLR_CONST :
+					_line.imm_str.size() >= 1 && _line.imm_str[0] == '@' ?
+							&DASM_CLR_LABEL_LOCAL_IMM  :
+							&DASM_CLR_LABEL_GLOBAL_IMM;
 			break;
 
-		case MNT_REG:
-			ImGui::SameLine();
+		case CMD_TT_REG:
 			colorP = &DASM_CLR_REG;
-			str = " %s";
 			break;
 
 		default:
 			colorP = &DASM_CLR_COMMENT;
-			str = " %s";
 			break;
 		}
-		ImGui::TextColored(*colorP, str, mnemonic[i]);
 
-		// draw an operand separator
-		if (i == 1 &&
-			(mnemonicLen == 3 ||
-			immType == CMD_IB_OFF1 || immType == CMD_IW_OFF1))
-		{
-			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_NUMBER, ",");
-		}
-	}
-	// print an immediate operand
-	if (immType != CMD_IM_NONE)
-	{
 		ImGui::SameLine();
-		ImGui::Text(" "); ImGui::SameLine();
-
-		auto operand = _line.GetFirstConst();
-		const ImVec4* color = &DASM_CLR_CONST;
-
-		if (immType == CMD_IW_OFF1 && !_line.labels.empty())
+		// draw token
+		if ( token_type == CMD_TT_IMM)
 		{
-				operand = _line.GetFirstLabel();
-				color = operand.size() >= 1 && operand[0] == '@' ?
-					&DASM_CLR_LABEL_LOCAL_IMM  :
-					&DASM_CLR_LABEL_GLOBAL_IMM;
+			uiItemMouseAction = DrawAddr(_isRunning,
+										_line.imm_str.c_str(),
+										*colorP,
+										DASM_CLR_NUMBER_HIGHLIGHT, 0);
+
+			if (_line.imm_sub_type != DisasmLine::ImmSubType::NONE &&
+				uiItemMouseAction != UIItemMouseAction::NONE)
+			{
+				ImGui::BeginTooltip();
+				ImGui::Text("Address: 0x%04X\n", _line.imm);
+				ImGui::EndTooltip();
+			}
 		}
-		bool immLabel = !operand.empty();
-
-		color = immLabel ? color : &DASM_CLR_NUMBER;
-		operand = immLabel ? operand : _line.GetImmediateS();
-		uiItemMouseAction = DrawAddr(
-			_isRunning, operand.c_str(), *color, DASM_CLR_NUMBER_HIGHLIGHT, 0);
-
-		if (immLabel && uiItemMouseAction != UIItemMouseAction::NONE) {
-			ImGui::BeginTooltip();
-			ImGui::Text("Address: 0x%04X\n", _line.imm);
-			ImGui::EndTooltip();
+		else
+		{
+			ImGui::TextColored(
+				*colorP,
+				_line.cmdP->tokens[i]);
 		}
 	}
 
 	return uiItemMouseAction;
 }
 
-void dev::DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels)
+void dev::DrawDisasmConsts(const DisasmLine& _line, const int _maxDisasmLabels)
 {
 	ImGui::TableNextColumn();
 
-	int i = 0;
-	for (const auto& const_ : _line.consts)
-	{
-		if (i) {
-			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_COMMENT, ", ");
-			ImGui::SameLine();
-		}
-		ImGui::TextColored(DASM_CLR_ADDR, const_.c_str());
-
-		if (i++ == _maxDisasmLabels) {
-			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_COMMENT, "...");
-			break;
-		}
-	}
+	ImGui::SameLine();
+	ImGui::TextColored(DASM_CLR_COMMENT, _line.post_comment.c_str());
 }
 
 auto dev::DrawTransparentButtonWithBorder(
@@ -876,7 +844,7 @@ auto dev::DrawTransparentButtonWithBorder(
 }
 
 
-void dev::DeleteByIndex(dev::Disasm::LabelList& _labels, int& _idx)
+void dev::DeleteByIndex(DebugData::LabelList& _labels, int& _idx)
 {
 	// delete by index or clear if only one
 	if (_labels.size() > 1) {

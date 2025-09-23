@@ -159,13 +159,214 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 	ImGui::PopItemWidth();
 }
 
-bool dev::DisasmWindow::IsDisasmTableOutOfWindow() const
-{
-	ImVec2 cursorPos = ImGui::GetCursorPos();
-	float remainingSpace = ImGui::GetWindowSize().y -
-		cursorPos.y - ImGui::GetFontSize();
 
-	return remainingSpace < 0;
+
+void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
+{
+	auto& lines = m_debugger.GetDisasm().GetLines();
+	if (lines.empty()) return;
+
+	Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
+	int hoveredLineIdx = -1;
+	ImVec2 selectionMin = ImGui::GetCursorScreenPos();
+	ImVec2 selectionMax = ImVec2(selectionMin.x + ImGui::GetWindowWidth(),
+								selectionMin.y);
+
+	if (_isRunning) ImGui::BeginDisabled();
+
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+
+	if (ImGui::BeginTable("##disassembly", 5,
+		ImGuiTableFlags_NoPadOuterX |
+		ImGuiTableFlags_ScrollY |
+		ImGuiTableFlags_NoClip |
+		ImGuiTableFlags_NoBordersInBodyUntilResize |
+		ImGuiTableFlags_Resizable
+	))
+	{
+		auto scale = ImGui::GetWindowDpiScale();
+
+		ImGui::TableSetupColumn("Brk",
+			ImGuiTableColumnFlags_WidthFixed |
+			ImGuiTableColumnFlags_NoResize, BRK_W * scale);
+		ImGui::TableSetupColumn("Addr",
+			ImGuiTableColumnFlags_WidthFixed |
+			ImGuiTableColumnFlags_NoResize, ADDR_W * scale);
+		ImGui::TableSetupColumn("command",
+			ImGuiTableColumnFlags_WidthFixed, CODE_W * scale);
+		ImGui::TableSetupColumn("stats",
+			ImGuiTableColumnFlags_WidthFixed, STATS_W * scale);
+		ImGui::TableSetupColumn("consts");
+
+		m_disasmLines = dev::Min((int)lines.size(), GetVisibleLines());
+
+		auto line_iter = lines.begin();
+
+		for (int lineIdx = 0; lineIdx < m_disasmLines; lineIdx++)
+		{
+			const auto& line = *line_iter;
+			line_iter++;
+			int addr = line.addr;
+
+			ImGui::TableNextRow();
+
+			// the line selection/highlight
+			ImGui::TableNextColumn();
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
+			const bool isSelected = m_selectedLineAddr == addr;
+			if (ImGui::Selectable(
+				std::format("##disasm{}", lineIdx).c_str(),
+				isSelected, ImGuiSelectableFlags_SpanAllColumns))
+			{
+				m_selectedLineAddr = addr;
+			}
+			if (!_isRunning)
+			{
+				selectionMin.y = ImGui::GetItemRectMin().y;
+				selectionMax.y = ImGui::GetItemRectMax().y;
+				hoveredLineIdx =
+					ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ?
+					lineIdx : hoveredLineIdx;
+			}
+
+			switch (line.type)
+			{
+				case DisasmLine::Type::COMMENT:
+				{
+					DrawDisasmComment(line);
+					break;
+				}
+				case DisasmLine::Type::LABELS:
+				{
+					DrawDisasmLabels(line);
+					break;
+				}
+				case DisasmLine::Type::CODE:
+				{
+					DrawAddrLinks(_isRunning, lineIdx, hoveredLineIdx == lineIdx);
+					DrawNextExecutedLineHighlight(_isRunning, line, regPC);
+					DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
+					DrawDisasmAddr(_isRunning, line, m_addrHighlight);
+					DrawDisasmCode(_isRunning, line, m_addrHighlight);
+
+					DrawDisasmStats(line);
+					DrawDisasmConsts(line, MAX_DISASM_LABELS);
+					break;
+				}
+			}
+
+			if (!_isRunning)
+			{
+				// line is hovered. check if right-clicked to open the Context menu
+				if (hoveredLineIdx == lineIdx &&
+					ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+				{
+					m_scheduler.AddSignal({
+						dev::Signals::DISASM_POPUP_OPEN, (GlobalAddr)addr});
+				}
+			}
+		}
+
+		ImGui::EndTable();
+	}
+
+
+	ImGui::PopStyleVar(2);
+	if (_isRunning) ImGui::EndDisabled();
+
+	if (!_isRunning && hoveredLineIdx >= 0){
+		CheckControls(lines.begin()->addr);
+	}
+}
+
+
+void dev::DisasmWindow::CheckControls(const Addr _addr)
+{
+	// Up/Down scrolling
+	if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
+	{
+		UpdateDisasm(_addr, 2, false);
+	}
+	else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
+	{
+		UpdateDisasm(_addr, -2, false);
+	}
+	// Mouse wheel scrolling
+	if (ImGui::GetIO().MouseWheel > 0.0f)
+	{
+		UpdateDisasm(_addr, 2, false);
+	}
+	else if (ImGui::GetIO().MouseWheel < 0.0f)
+	{
+		UpdateDisasm(_addr, -2, false);
+	}
+
+	// Alt + Left navigation
+	if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
+		ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
+	{
+		auto addrR = m_navigateHistory.GetPrev();
+		if (addrR) UpdateDisasm(*addrR);
+	}
+	// Alt + Right navigation
+	else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
+		ImGui::IsKeyPressed(ImGuiKey_RightArrow))
+	{
+		auto addrR = m_navigateHistory.GetNext();
+		if (addrR) UpdateDisasm(*addrR);
+	}
+	// Left side navigation mouse button to navigate back
+	else if (ImGui::IsKeyPressed(ImGuiKey_MouseX1))
+	{
+		auto addrR = m_navigateHistory.GetPrev();
+		if (addrR) UpdateDisasm(*addrR);
+	}
+	// Right side navigation mouse button to navigate forward
+	else if (ImGui::IsKeyPressed(ImGuiKey_MouseX2))
+	{
+		auto addrR = m_navigateHistory.GetNext();
+		if (addrR) UpdateDisasm(*addrR);
+	}
+}
+
+
+void dev::DisasmWindow::UpdateDisasm(
+	const Addr _addr, const int _instructionsOffset,
+	const bool _updateSelection)
+{
+	m_disasmAddr = _addr;
+	m_debugger.UpdateDisasm(_addr, m_disasmLines, -_instructionsOffset);
+	m_immLinksP = m_debugger.GetDisasm().GetImmLinks();
+
+	if (_updateSelection) m_selectedLineAddr = _addr;
+}
+
+
+void dev::DisasmWindow::CallbackUpdateAtCC(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
+{
+	// update
+	Addr addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
+	UpdateDisasm(addr);
+	m_navigateHistory.Add(addr);
+}
+
+
+void dev::DisasmWindow::CallbackUpdateAtAddr(
+	const dev::Signals _signals, dev::Scheduler::SignalData _data)
+{
+    if (_data.has_value() && std::holds_alternative<GlobalAddr>(*_data))
+	{
+        auto addr = Addr(std::get<GlobalAddr>(*_data));
+
+		UpdateDisasm(addr);
+		m_navigateHistory.Add(addr);
+	}
+	else{
+		UpdateDisasm(m_disasmAddr, DISASM_INSTRUCTION_OFFSET, false);
+		m_navigateHistory.Add(m_disasmAddr);
+	}
 }
 
 int dev::DisasmWindow::GetVisibleLines() const
@@ -175,8 +376,90 @@ int dev::DisasmWindow::GetVisibleLines() const
 	return static_cast<int>(lines);
 }
 
+void dev::DisasmWindow::DrawAddrLink(
+	ImVec2 _pos0,
+	ImVec2 _pos1,
+	int _lineIdx,
+	ImU32 _linkColor,
+	int _endLineIdx,
+	float _linkWidth)
+{
+	// horizontal line from the command
+	ImGui::GetForegroundDrawList()->AddLine(
+		_pos0, _pos1, _linkColor, _linkWidth);
+
+	// vertical line
+	auto pos2 = ImVec2(
+		_pos1.x,
+		_pos1.y + (_endLineIdx - _lineIdx) * ImGui::GetFontSize());
+	ImGui::GetForegroundDrawList()->AddLine(
+		_pos1, pos2, _linkColor, _linkWidth);
+	// horizontal line to the addr
+	_pos0.y = pos2.y;
+	ImGui::GetForegroundDrawList()->AddLine(
+		pos2, _pos0, _linkColor, _linkWidth);
+	// arrow
+	float r = 5.0f;
+	ImVec2 center = _pos0;
+	auto a = ImVec2(center.x + 0.750f * r, center.y);
+	auto b = ImVec2(center.x - 0.750f * r, center.y + 0.866f * r);
+	auto c = ImVec2(center.x - 0.750f * r, center.y - 0.866f * r);
+	ImGui::GetForegroundDrawList()->AddTriangleFilled(a, b, c, _linkColor);
+}
+
+void dev::DisasmWindow::DrawAddrLinks(
+	const bool _isRunning,
+	const int _lineIdx,
+	const bool _selected)
+{
+	if (_isRunning || !m_immLinksP) return;
+
+	auto link_iter = m_immLinksP->find(_lineIdx);
+	if (link_iter == m_immLinksP->end()) return;
+	const auto& link = link_iter->second;
+
+	float linkWidth = _selected ? 2.0f : 0.8f;
+
+	float linkHorizLen = IMM_ADDR_LINK_AREA_W * link.linkIdx / m_immLinksP->size();
+
+	auto pos0 = ImGui::GetCursorScreenPos();
+	pos0.x += IMM_ADDR_LINK_POS_X;
+	pos0.y -= ImGui::GetFontSize() * 0.5f;
+	auto pos1 = ImVec2(pos0.x - linkHorizLen - 5.0f, pos0.y);
+
+	ImU32 linkColor = _selected ? DIS_CLR_LINK_HIGHLIGHT : DIS_CLR_LINK;
+
+	if (link.endLineIdx == Disasm::IMM_LINK_UP ||
+		link.endLineIdx == Disasm::IMM_LINK_DOWN)
+	{
+		// TODO: check if it's needed
+		// links to the addrs outside the disasm view
+
+		// horizontal line from the command
+		// ImGui::GetForegroundDrawList()->AddLine(pos0, pos1, linkColor);
+		// vertical link
+		// if (link.m_lineIdx == Disasm::IMM_LINK_UP) {
+		// 	ImGui::GetForegroundDrawList()->AddLine(pos1, ImVec2(pos0.x - linkHorizLen - 5.0f, _posMin), linkColor);
+		// }
+		// else if (link.m_lineIdx == Disasm::IMM_LINK_DOWN) {
+		//	ImGui::GetForegroundDrawList()->AddLine(pos1, ImVec2(pos0.x - linkHorizLen - 5.0f, _posMax), linkColor);
+		// }
+	}
+	else {
+		// draw shadow
+		ImVec2 pos0_shadow = ImVec2(pos0.x + linkWidth, pos0.y + linkWidth);
+		ImVec2 pos1_shadow = ImVec2(pos1.x + linkWidth, pos1.y + linkWidth);
+		DrawAddrLink(
+			pos0, pos1, _lineIdx, dev::IM_U32(0x00000070), link.endLineIdx, linkWidth* 2.0f);
+		// draw link
+		DrawAddrLink(
+			pos0, pos1, _lineIdx, linkColor, link.endLineIdx, linkWidth);
+	}
+}
+
+
 void dev::DisasmWindow::DrawNextExecutedLineHighlight(
-	const bool _isRunning, const Disasm::Line& _line, const Addr _regPC)
+	const bool _isRunning, const DisasmLine& _line, const Addr _regPC)
 {
 	if (_isRunning) return;
 	if (_line.addr != _regPC) return;
@@ -188,11 +471,11 @@ void dev::DisasmWindow::DrawNextExecutedLineHighlight(
 
 	ImGui::GetWindowDrawList()->AddRectFilled(
 		highlightMin, highlightMax, DASM_CLR_PC_LINE_HIGHLIGHT);
-
 }
 
+
 void dev::DisasmWindow::DrawDisasmIcons(
-	const bool _isRunning, const Disasm::Line& _line, const int _lineIdx,
+	const bool _isRunning, const DisasmLine& _line, const int _lineIdx,
 	const Addr _regPC)
 {
 	if (_isRunning) return;
@@ -231,16 +514,18 @@ void dev::DisasmWindow::DrawDisasmIcons(
 	}
 }
 
+
+
 void dev::DisasmWindow::DrawDisasmAddr(
 	const bool _isRunning,
-	const Disasm::Line& _line,
+	const DisasmLine& _line,
 	AddrHighlight& _addrHighlight)
 {
 	// the addr column
 	ImGui::TableNextColumn();
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 
-	auto mouseAction = DrawAddr(_isRunning, _line.GetAddrS(),
+	auto mouseAction = DrawAddr(_isRunning, Uint16ToStrC0x(_line.addr),
 		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF),
 		_addrHighlight.IsEnabled(_line.addr));
 	switch (mouseAction)
@@ -256,7 +541,7 @@ void dev::DisasmWindow::DrawDisasmAddr(
 }
 
 void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning,
-	const Disasm::Line& _line, AddrHighlight& _addrHighlight)
+	const DisasmLine& _line, AddrHighlight& _addrHighlight)
 {
 	// draw code
 	ImGui::TableNextColumn();
@@ -282,53 +567,40 @@ void dev::DisasmWindow::DrawDisasmCode(const bool _isRunning,
 	}
 }
 
-void dev::DisasmWindow::DrawDisasmComment(const Disasm::Line& _line)
+void dev::DisasmWindow::DrawDisasmComment(const DisasmLine& _line)
 {
 	ImGui::TableNextColumn();
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 	ImGui::TableNextColumn();
 
 	if (m_fontCommentP) ImGui::PushFont(m_fontCommentP);
-	ImGui::TextColored(DASM_CLR_COMMENT, "; %s", _line.comment->c_str());
+	ImGui::TextColored(DASM_CLR_COMMENT, "; %s", _line.comment.c_str());
 	if (m_fontCommentP) { ImGui::PopFont(); }
 }
 
-void dev::DisasmWindow::DrawDisasmLabels(const Disasm::Line& _line)
+void dev::DisasmWindow::DrawDisasmLabels(const DisasmLine& _line)
 {
 	ImGui::TableNextColumn();
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 	ImGui::TableNextColumn();
-	const ImVec4* mainLabelColorP = &DASM_CLR_LABEL_GLOBAL;
 
-	int i = 0;
-	for (const auto& label : _line.labels)
-	{
-		if (i == 1) {
-			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_COMMENT, "; ");
-		}
-		if (!i)
-		{
-			if (label[0] == '@') {
-				mainLabelColorP = &DASM_CLR_LABEL_LOCAL;
-			}
-			ImGui::TextColored(*mainLabelColorP, label.c_str());
-			ImGui::SameLine();
-			ImGui::TextColored(*mainLabelColorP, ": ");
-		}
-		else {
-			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_LABEL_MINOR, " %s", label.c_str());
-		}
-		if (i++ == MAX_DISASM_LABELS) {
-			ImGui::SameLine();
-			ImGui::TextColored(DASM_CLR_COMMENT, "...");
-			break;
-		}
-	}
+	const auto& label = _line.label;
+	if (label.empty()) return;
+
+	const ImVec4* mainLabelColorP = label[0] != '@' ?
+									&DASM_CLR_LABEL_GLOBAL :
+									&DASM_CLR_LABEL_LOCAL;
+
+	ImGui::TextColored(*mainLabelColorP, "%s", label.c_str());
+
+	ImGui::SameLine();
+	ImGui::TextColored(DASM_CLR_LABEL_MINOR, ":");
+
+	ImGui::SameLine();
+	ImGui::TextColored(DASM_CLR_COMMENT, _line.post_comment.c_str());
 }
 
-void dev::DisasmWindow::DrawDisasmStats(const Disasm::Line& _line)
+void dev::DisasmWindow::DrawDisasmStats(const DisasmLine& _line)
 {
 	ImGui::TableNextColumn();
 	ColumnClippingEnable(); // enable clipping
@@ -336,277 +608,6 @@ void dev::DisasmWindow::DrawDisasmStats(const Disasm::Line& _line)
 		ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(DASM_BG_CLR_ADDR));
 	const ImVec4& statsColor = _line.accessed ?
 							DASM_CLR_ADDR : DASM_CLR_ZERO_STATS;
-	ImGui::TextColored(statsColor, _line.statsS);
+	ImGui::TextColored(statsColor, _line.stats.c_str());
 	ColumnClippingDisable();
-}
-
-void dev::DisasmWindow::DrawDisasm(const bool _isRunning)
-{
-	auto disasmPP = m_debugger.GetDisasm().GetLines();
-	if (!disasmPP || !*disasmPP) return;
-	auto& disasm = **disasmPP;
-
-	Addr regPC = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-	int hoveredLineIdx = -1;
-	ImVec2 selectionMin = ImGui::GetCursorScreenPos();
-	ImVec2 selectionMax = ImVec2(selectionMin.x + ImGui::GetWindowWidth(),
-								selectionMin.y);
-
-	if (_isRunning) ImGui::BeginDisabled();
-
-	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 5, 0 });
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-
-	if (ImGui::BeginTable("##disassembly", 5,
-		ImGuiTableFlags_NoPadOuterX |
-		ImGuiTableFlags_ScrollY |
-		ImGuiTableFlags_NoClip |
-		ImGuiTableFlags_NoBordersInBodyUntilResize |
-		ImGuiTableFlags_Resizable
-	))
-	{
-		auto scale = ImGui::GetWindowDpiScale();
-
-		ImGui::TableSetupColumn("Brk",
-			ImGuiTableColumnFlags_WidthFixed |
-			ImGuiTableColumnFlags_NoResize, BRK_W * scale);
-		ImGui::TableSetupColumn("Addr",
-			ImGuiTableColumnFlags_WidthFixed |
-			ImGuiTableColumnFlags_NoResize, ADDR_W * scale);
-		ImGui::TableSetupColumn("command",
-			ImGuiTableColumnFlags_WidthFixed, CODE_W * scale);
-		ImGui::TableSetupColumn("stats",
-			ImGuiTableColumnFlags_WidthFixed, STATS_W * scale);
-		ImGui::TableSetupColumn("consts");
-
-		m_disasmLines = dev::Min((int)disasm.size(), GetVisibleLines());
-
-		for (int lineIdx = 0; lineIdx < m_disasmLines; lineIdx++)
-		{
-			auto& line = disasm.at(lineIdx);
-			int addr = line.addr;
-
-			ImGui::TableNextRow();
-
-			// the line selection/highlight
-			ImGui::TableNextColumn();
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
-			const bool isSelected = m_selectedLineAddr == addr;
-			if (ImGui::Selectable(
-				std::format("##disasm{}", lineIdx).c_str(),
-				isSelected, ImGuiSelectableFlags_SpanAllColumns))
-			{
-				m_selectedLineAddr = addr;
-			}
-			if (!_isRunning)
-			{
-				selectionMin.y = ImGui::GetItemRectMin().y;
-				selectionMax.y = ImGui::GetItemRectMax().y;
-				hoveredLineIdx =
-					ImGui::IsMouseHoveringRect(selectionMin, selectionMax) ?
-					lineIdx : hoveredLineIdx;
-			}
-
-			switch (line.type)
-			{
-				case Disasm::Line::Type::COMMENT:
-				{
-					DrawDisasmComment(line);
-					break;
-				}
-				case Disasm::Line::Type::LABELS:
-				{
-					DrawDisasmLabels(line);
-					break;
-				}
-				case Disasm::Line::Type::CODE:
-				{
-					DrawAddrLinks(_isRunning, lineIdx, hoveredLineIdx == lineIdx);
-					DrawNextExecutedLineHighlight(_isRunning, line, regPC);
-					DrawDisasmIcons(_isRunning, line, lineIdx, regPC);
-					DrawDisasmAddr(_isRunning, line, m_addrHighlight);
-					DrawDisasmCode(_isRunning, line, m_addrHighlight);
-
-					DrawDisasmStats(line);
-					DrawDisasmConsts(line, MAX_DISASM_LABELS);
-					break;
-				}
-			}
-
-			if (!_isRunning)
-			{
-				// line is hovered. check if right-clicked to open the Context menu
-				if (hoveredLineIdx == lineIdx &&
-					ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-				{
-					m_scheduler.AddSignal({
-						dev::Signals::DISASM_POPUP_OPEN, (GlobalAddr)addr});
-				}
-			}
-		}
-
-		ImGui::EndTable();
-	}
-
-
-	ImGui::PopStyleVar(2);
-	if (_isRunning) ImGui::EndDisabled();
-
-	if (!_isRunning && hoveredLineIdx >= 0){
-		CheckControls(disasm);
-	}
-}
-
-
-void dev::DisasmWindow::CheckControls(const dev::Disasm::Lines& disasm)
-{
-	// Up/Down scrolling
-	if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
-	{
-		UpdateDisasm(disasm[0].addr, 2, false);
-	}
-	else if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
-	{
-		UpdateDisasm(disasm[0].addr, -2, false);
-	}
-	// Mouse wheel scrolling
-	if (ImGui::GetIO().MouseWheel > 0.0f)
-	{
-		UpdateDisasm(disasm[0].addr, 2, false);
-	}
-	else if (ImGui::GetIO().MouseWheel < 0.0f)
-	{
-		UpdateDisasm(disasm[0].addr, -2, false);
-	}
-
-
-	// Alt + Left navigation
-	if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
-		ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
-	{
-		auto addrR = m_navigateHistory.GetPrev();
-		if (addrR) UpdateDisasm(*addrR);
-	}
-	// Alt + Right navigation
-	else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt) &&
-		ImGui::IsKeyPressed(ImGuiKey_RightArrow))
-	{
-		auto addrR = m_navigateHistory.GetNext();
-		if (addrR) UpdateDisasm(*addrR);
-	}
-	// Left side navigation mouse button to navigate back
-	else if (ImGui::IsKeyPressed(ImGuiKey_MouseX1))
-	{
-		auto addrR = m_navigateHistory.GetPrev();
-		if (addrR) UpdateDisasm(*addrR);
-	}
-	// Right side navigation mouse button to navigate forward
-	else if (ImGui::IsKeyPressed(ImGuiKey_MouseX2))
-	{
-		auto addrR = m_navigateHistory.GetNext();
-		if (addrR) UpdateDisasm(*addrR);
-	}
-}
-
-void dev::DisasmWindow::UpdateDisasm(
-	const Addr _addr, const int _instructionsOffset,
-	const bool _updateSelection)
-{
-	m_disasmAddr = _addr;
-	m_debugger.UpdateDisasm(_addr, m_disasmLines, -_instructionsOffset);
-	m_immLinksP = m_debugger.GetDisasm().GetImmLinks();
-	m_immLinksNum = m_debugger.GetDisasm().GetImmAddrlinkNum();
-
-	if (_updateSelection) m_selectedLineAddr = _addr;
-}
-
-
-void dev::DisasmWindow::DrawAddrLinks(
-	const bool _isRunning, const int _lineIdx,
-	const bool _selected)
-{
-	if (_isRunning) return;
-
-	auto& link = m_immLinksP->at(_lineIdx);
-	if (link.lineIdx == Disasm::IMM_NO_LINK) return;
-
-	float linkWidth = _selected ? 1.5f : 1.0f;
-
-	float linkHorizLen = IMM_ADDR_LINK_AREA_W * link.linkIdx / m_immLinksNum;
-
-	auto pos0 = ImGui::GetCursorScreenPos();
-	pos0.x += IMM_ADDR_LINK_POS_X;
-	pos0.y -= ImGui::GetFontSize() * 0.5f;
-	auto pos1 = ImVec2(pos0.x - linkHorizLen - 5.0f, pos0.y);
-
-	bool minorLink = (link.lineIdx == Disasm::IMM_LINK_UP ||
-					link.lineIdx == Disasm::IMM_LINK_DOWN ||
-					link.lineIdx == Disasm::IMM_NO_LINK);
-
-	ImU32 linkColor = _selected ? DIS_CLR_LINK_HIGHLIGHT : DIS_CLR_LINK;
-
-	if (minorLink)
-	{
-		// TODO: check if it's needed
-		// links to the addrs outside the disasm view
-		/*
-		// horizontal line from the command
-		ImGui::GetForegroundDrawList()->AddLine(pos0, pos1, linkColor);
-		// vertical link
-		if (link.m_lineIdx == Disasm::IMM_LINK_UP) {
-			ImGui::GetForegroundDrawList()->AddLine(pos1, ImVec2(pos0.x - linkHorizLen - 5.0f, _posMin), linkColor);
-		}
-		else if (link.m_lineIdx == Disasm::IMM_LINK_DOWN) {
-			ImGui::GetForegroundDrawList()->AddLine(pos1, ImVec2(pos0.x - linkHorizLen - 5.0f, _posMax), linkColor);
-		}
-		*/
-	}
-	else {
-		// horizontal line from the command
-		ImGui::GetForegroundDrawList()->AddLine(pos0, pos1, linkColor, linkWidth);
-		// vertical line
-		auto pos2 = ImVec2(
-			pos1.x,
-			pos1.y + (link.lineIdx - _lineIdx) * ImGui::GetFontSize());
-		ImGui::GetForegroundDrawList()->AddLine(
-			pos1, pos2, linkColor, linkWidth);
-		// horizontal line to the addr
-		pos0.y = pos2.y;
-		ImGui::GetForegroundDrawList()->AddLine(
-			pos2, pos0, linkColor, linkWidth);
-		// arrow
-		float r = 5.0f;
-		ImVec2 center = pos0;
-		auto a = ImVec2(center.x + 0.750f * r, center.y);
-		auto b = ImVec2(center.x - 0.750f * r, center.y + 0.866f * r);
-		auto c = ImVec2(center.x - 0.750f * r, center.y - 0.866f * r);
-		ImGui::GetForegroundDrawList()->AddTriangleFilled(a, b, c, linkColor);
-	}
-}
-
-
-void dev::DisasmWindow::CallbackUpdateAtCC(
-	const dev::Signals _signals, dev::Scheduler::SignalData _data)
-{
-	// update
-	Addr addr = m_hardware.Request(Hardware::Req::GET_REG_PC)->at("pc");
-	UpdateDisasm(addr);
-	m_navigateHistory.Add(addr);
-}
-
-
-void dev::DisasmWindow::CallbackUpdateAtAddr(
-	const dev::Signals _signals, dev::Scheduler::SignalData _data)
-{
-    if (_data.has_value() && std::holds_alternative<GlobalAddr>(*_data))
-	{
-        auto addr = Addr(std::get<GlobalAddr>(*_data));
-
-		UpdateDisasm(addr);
-		m_navigateHistory.Add(addr);
-	}
-	else{
-		UpdateDisasm(m_disasmAddr, DISASM_INSTRUCTION_OFFSET, false);
-		m_navigateHistory.Add(m_disasmAddr);
-	}
 }

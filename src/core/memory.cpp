@@ -91,14 +91,14 @@ auto dev::Memory::CpuReadInstr(const Addr _addr, const AddrSpace _addrSpace,
 		m_rom[globalAddr] : m_ram[globalAddr];
 
 	m_state.debug.instrGlobalAddr = _byteNum == 0 ? globalAddr : m_state.debug.instrGlobalAddr;
-	m_state.debug.instr[_byteNum] = val;
+	m_state.debug.instr.array[_byteNum] = val;
 
 	return val;
 }
 
 void dev::Memory::CpuInvokesRst7()
 {
-	m_state.debug.instr[0] = 0xFF; // OPCODE_RST7
+	m_state.debug.instr.array[0] = 0xFF; // OPCODE_RST7
 }
 
 auto dev::Memory::CpuRead(const Addr _addr, const AddrSpace _addrSpace,

@@ -5,22 +5,16 @@
 dev::DebugData::DebugData(Hardware& _hardware)
 	:
 	m_hardware(_hardware),
-	m_scripts(std::bind(&DebugData::GetLabelAddr, this, std::placeholders::_1))
+	m_scripts(std::bind(&DebugData::GetLabelAddr, this, std::placeholders::_1)),
+	m_memRuns(), m_memReads(), m_memWrites()
 {}
 
-/*
 void dev::DebugData::Reset()
 {
-	m_debugPath.clear();
-	m_labels.clear();
-	m_consts.clear();
-	m_comments.clear();
-
-	m_breakpoints.Clear();
-	m_watchpoints.Clear();
-	m_scripts.Clear();
+	m_memRuns.fill(0);
+	m_memReads.fill(0);
+	m_memWrites.fill(0);
 }
-*/
 
 bool IsConstLabel(const char* _s)
 {
@@ -35,9 +29,9 @@ bool IsConstLabel(const char* _s)
 	return true; // All characters are capital letters or underscores
 }
 
-// returns a list of labels for the given address
-// local labels are put at the end of the list
-// if no labels are found, returns std::nullopt
+// returns a copies of labels for the given addr.
+// local labels are put at the end of the list.
+// if no labels are found, returns std::nullopt.
 auto dev::DebugData::GetLabels(const Addr _addr) const
 -> std::optional<LabelList>
 {
@@ -58,6 +52,13 @@ auto dev::DebugData::GetLabels(const Addr _addr) const
 	}
 
 	return labels;
+}
+
+auto dev::DebugData::HasLabels(const Addr _addr) const
+-> bool
+{
+	auto labelsI = m_labels.find(_addr);
+	return labelsI != m_labels.end();
 }
 
 auto dev::DebugData::GetLabelAddr(const std::string& _label)

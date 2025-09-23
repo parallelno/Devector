@@ -10,8 +10,8 @@
 #include "core/hardware.h"
 #include "core/breakpoint.h"
 #include "core/debugger.h"
-#include "core/disasm.h"
 #include "core/debug_data.h"
+#include "core/disasm.h"
 
 namespace dev
 {
@@ -87,7 +87,7 @@ namespace dev
 	void ColumnClippingEnable();
 	void ColumnClippingDisable();
 
-	void DeleteByIndex(dev::Disasm::LabelList& _labels, int& _idx);
+	void DeleteByIndex(DebugData::LabelList& _labels, int& _idx);
 
 
 	void DrawTextSelectable(const char* _label, const std::string& _text);
@@ -152,8 +152,8 @@ namespace dev
 	auto DrawPropertyMemoryMapping(Breakpoint::MemPages _memPages) -> Breakpoint::MemPages;
 
 	void TextAligned(const char* _text, const ImVec2& aligment = { 1.0f, 0.5f });
-	auto DrawCodeLine(const bool _isRunning, const Disasm::Line& _line, const bool _tab) -> UIItemMouseAction;
-	void DrawDisasmConsts(const Disasm::Line& _line, const int _maxDisasmLabels = 20);
+	auto DrawCodeLine(const bool _isRunning, const DisasmLine& _line, const bool _tab) -> UIItemMouseAction;
+	void DrawDisasmConsts(const DisasmLine& _line, const int _maxDisasmLabels = 20);
 	auto DrawAddr(const bool _isRunning, const char* _operandS, const ImVec4& _color,
 		const ImVec4& _highlightColor, bool _forceHighlight = false) -> UIItemMouseAction;
 	void DrawTooltipTimer(const char* _text = nullptr, const float _timer = 0.7f);
@@ -164,7 +164,10 @@ namespace dev
 	-> ImVec2
 	{
 		auto winPos = ImGui::GetWindowPos();
-		ImVec2 screenPos = {_cursorPos.x + winPos.x - ImGui::GetScrollX(), _cursorPos.y + winPos.y - ImGui::GetScrollY()};
+		ImVec2 screenPos = {
+			_cursorPos.x + winPos.x - ImGui::GetScrollX(),
+			_cursorPos.y + winPos.y - ImGui::GetScrollY()
+		};
 		return screenPos;
 	}
 }

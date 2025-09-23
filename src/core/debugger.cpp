@@ -14,7 +14,8 @@ dev::Debugger::Debugger(Hardware& _hardware, const int _recordFrames)
 	m_lastReadsAddrs(), m_lastWritesAddrs(),
 	m_memLastRW(),
 	m_lastReadsAddrsOld(), m_lastWritesAddrsOld(),
-	m_debugData(_hardware), m_disasm(_hardware, m_debugData),
+	m_debugData(_hardware),
+	m_disasm(_hardware, m_debugData),
 	m_traceLog(m_debugData),
 	m_lastRWAddrsOut(),
 	m_recorder(_recordFrames)
@@ -53,7 +54,9 @@ void dev::Debugger::Reset(bool _resetRecorder,
 	CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {
+	//m_disasm.Reset();
 	m_disasm.Reset();
+	m_debugData.Reset();
 
 	m_lastWritesAddrs.fill(uint32_t(LAST_RW_NO_DATA));
 	m_lastReadsAddrs.fill(uint32_t(LAST_RW_NO_DATA));
@@ -77,7 +80,8 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {
 	// instruction check
-	m_disasm.MemRunsUpdate(_memStateP->debug.instrGlobalAddr);
+	//m_disasm.MemRunsUpdate(_memStateP->debug.instrGlobalAddr);
+	m_debugData.MemRunsUpdate(_memStateP->debug.instrGlobalAddr);
 
 	// reads check
 	{
@@ -88,7 +92,8 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 			GlobalAddr globalAddr = _memStateP->debug.readGlobalAddr[i];
 			uint8_t val = _memStateP->debug.read[i];
 
-			m_disasm.MemReadsUpdate(globalAddr);
+			//m_disasm.MemReadsUpdate(globalAddr);
+			m_debugData.MemReadsUpdate(globalAddr);
 
 			m_debugData.GetWatchpoints().Check(Watchpoint::Access::R, globalAddr, val);
 
@@ -114,7 +119,8 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 				continue;
 			};
 
-			m_disasm.MemWritesUpdate(globalAddr);
+			//m_disasm.MemWritesUpdate(globalAddr);
+			m_debugData.MemWritesUpdate(globalAddr);
 
 			m_debugData.GetWatchpoints().Check(Watchpoint::Access::W, globalAddr, val);
 
@@ -426,10 +432,11 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 // _instructionOffset = -5 means the start address is 5 instructions
 // 						prior the _addr, and vise versa.
 // UI thread
-void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const int _instructionOffset)
+void dev::Debugger::UpdateDisasm(
+	const Addr _addr, const size_t _linesNum, const int _instructionOffset)
 {
-	if (_linesNum <= 0) return;
-	size_t lines = dev::Max(_linesNum, Disasm::DISASM_LINES_MAX);
+	m_disasm.UpdateDisasm(_addr, _linesNum, _instructionOffset);
+/*
 	m_disasm.Init(_linesNum);
 
 	// calculate a new address that precedes the specified 'addr' by the instructionOffset
@@ -471,6 +478,7 @@ void dev::Debugger::UpdateDisasm(const Addr _addr, const size_t _linesNum, const
 	}
 
 	m_disasm.SetUpdated();
+*/
 }
 
 // UI thread

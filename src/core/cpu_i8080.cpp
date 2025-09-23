@@ -2,9 +2,9 @@
 #include "utils/utils.h"
 
 // a number of clock cycles one machine cycle takes
-static constexpr uint64_t MACHINE_CC = 4; 
+static constexpr uint64_t MACHINE_CC = 4;
 // machine_cycle index indicating the instruction executon is over
-static constexpr uint8_t FIRST_MACHINE_CICLE_IDX = 0; 
+static constexpr uint8_t FIRST_MACHINE_CICLE_IDX = 0;
 static constexpr uint16_t PSW_INIT = 0b00000010;
 static constexpr uint16_t PSW_NUL_FLAGS = ~0b00101000;
 
@@ -56,7 +56,7 @@ static constexpr uint16_t PSW_NUL_FLAGS = ~0b00101000;
 
 dev::CpuI8080::CpuI8080(
 	Memory& _memory,
-	InputFunc _input, 
+	InputFunc _input,
 	OutputFunc _output)
 	:
 	m_memory(_memory),
@@ -141,6 +141,73 @@ auto dev::CpuI8080::GetInstrCC(const uint8_t _opcode)
 -> uint8_t
 {
 	return M_CYCLES[_opcode] * 4;
+}
+
+
+// instruction lengths in bytes
+static constexpr uint8_t INSTR_LENS[] =
+{
+	1,3,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
+	1,3,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
+	1,3,3,1,1,1,2,1,1,1,3,1,1,1,2,1,
+	1,3,3,1,1,1,2,1,1,1,3,1,1,1,2,1,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,3,3,3,1,2,1,1,1,3,1,3,3,2,1,
+	1,1,3,2,3,1,2,1,1,1,3,2,3,1,2,1,
+	1,1,3,1,3,1,2,1,1,1,3,1,3,1,2,1,
+	1,1,3,1,3,1,2,1,1,1,3,1,3,1,2,1
+};
+
+auto dev::CpuI8080::GetInstrLen(const uint8_t _opcode)
+-> uint8_t
+{
+	return INSTR_LENS[_opcode];
+}
+
+// order: branch instructions first then subroutines instruction first.
+// 0 - c*
+// 1 - call
+// 2 - j*
+// 3 - jmp
+// 4 - r*
+// 5 - ret
+// 6 - pchl
+// 7 - rst
+// 8 - other
+static constexpr uint8_t INSTR_TYPES[] =
+{
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+
+	4, 8, 2, 3, 0, 8, 8, 7, 4, 5, 2, 8, 0, 1, 8, 7,
+	4, 8, 2, 8, 0, 8, 8, 7, 4, 8, 2, 8, 0, 8, 8, 7,
+	4, 8, 2, 8, 0, 8, 8, 7, 4, 6, 2, 8, 0, 8, 8, 7,
+	4, 8, 2, 8, 0, 8, 8, 7, 4, 8, 2, 8, 0, 8, 8, 7,
+};
+
+auto dev::CpuI8080::GetInstrType(const uint8_t _opcode)
+-> uint8_t
+{
+	return INSTR_TYPES[_opcode];
 }
 
 void dev::CpuI8080::Decode()
@@ -447,7 +514,7 @@ void dev::CpuI8080::Decode()
 		dev::Exit("Exit", ErrCode::UNRECOGNIZED_CPU_INSTR);
 		break;
 	}
-	
+
 	MC++;
 	MC %= M_CYCLES[IR];
 }
@@ -468,13 +535,13 @@ uint8_t dev::CpuI8080::ReadInstrMovePC(uint8_t _byteNum)
 	return opcode;
 }
 
-uint8_t dev::CpuI8080::ReadByte(const Addr _addr, 
+uint8_t dev::CpuI8080::ReadByte(const Addr _addr,
 	Memory::AddrSpace _addrSpace, const uint8_t _byteNum)
 {
 	return m_memory.CpuRead(_addr, _addrSpace, _byteNum);
 }
 
-void dev::CpuI8080::WriteByte(const Addr _addr, uint8_t _value, 
+void dev::CpuI8080::WriteByte(const Addr _addr, uint8_t _value,
 	Memory::AddrSpace _addrSpace, const uint8_t _byteNum)
 {
 	m_memory.CpuWrite(_addr, _value, _addrSpace, _byteNum);

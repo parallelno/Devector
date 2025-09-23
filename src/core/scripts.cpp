@@ -91,7 +91,7 @@ template<> inline int LuaGetter::pushValue<const char*>(
 		}; \
 		lua_pushlightuserdata(LUA_STATE, (void*)(&STRUCT_PTR)); \
 		lua_pushcclosure(LUA_STATE, getterFunc, 1); \
-		lua_setglobal(LUA_STATE, #FUNC_NAME); \
+		lua_setglobal(LUA_STATE, FUNC_NAME); \
 	} while(0)
 
 void dev::Scripts::RegisterCppFunctions()
@@ -108,34 +108,34 @@ void dev::Scripts::RegisterCppFunctions()
 	lua_setglobal(m_luaState, "Break");
 
 	// Register CPU state getters
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, cc, GetCC);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.pc.word, GetPC);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.sp.word, GetSP);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.af.word, GetPSW);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.bc.word, GetBC);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.de.word, GetDE);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.hl.word, GetHL);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.a, GetA);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.af.l, GetF);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.bc.h, GetB);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.bc.l, GetC);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.de.h, GetD);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.de.l, GetE);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.hl.h, GetH);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.hl.l, GetL);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, cc, "GetCC");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.pc.word, "GetPC");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.sp.word, "GetSP");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.af.word, "GetPSW");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.bc.word, "GetBC");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.de.word, "GetDE");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.hl.word, "GetHL");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.a, "GetA");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.af.l, "GetF");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.bc.h, "GetB");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.bc.l, "GetC");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.de.h, "GetD");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.de.l, "GetE");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.hl.h, "GetH");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.hl.l, "GetL");
 
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.s, GetFlagS);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.z, GetFlagZ);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.ac, GetFlagAC);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.p, GetFlagP);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.c, GetFlagC);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.inte, GetINTE);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.iff, GetIFF);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.hlta, GetHLTA);
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.mc, GetMachineCycles);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.s, "GetFlagS");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.z, "GetFlagZ");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.ac, "GetFlagAC");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.p, "GetFlagP");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, regs.psw.c, "GetFlagC");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.inte, "GetINTE");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.iff, "GetIFF");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.hlta, "GetHLTA");
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_cpuStateP, ints.mc, "GetMachineCycles");
 
 	// Register Memory state getters
-	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_memStateP, debug.instr[0], GetOpcode);
+	REGISTER_STRUCT_FIELD_GETTER(m_luaState, m_memStateP, debug.instr.opcode, "GetOpcode");
 
 	lua_CFunction getterByteGlobal = [](lua_State* state) -> int {
 		using StructType = std::remove_pointer_t<decltype(m_memStateP)>;

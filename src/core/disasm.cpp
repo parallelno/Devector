@@ -1,1198 +1,53 @@
-#include <string>
-#include <format>
-#include <inttypes.h>
-
 #include "core/disasm.h"
+#include "core/disasm_i8080_cmds.h"
 #include "utils/str_utils.h"
-#include "utils/utils.h"
-#include "utils/json_utils.h"
 
-#define DISASM_CMDS			0x100
-
-static const char* MN_MOV	= "mov";
-static const char* MN_MVI	= "mvi";
-static const char* MN_LDAX	= "ldax";
-static const char* MN_STAX	= "stax";
-static const char* MN_LDA	= "lda";
-static const char* MN_STA	= "sta";
-static const char* MN_LXI	= "lxi";
-static const char* MN_LHLD	= "lhld";
-static const char* MN_SHLD	= "shld";
-static const char* MN_POP	= "pop";
-static const char* MN_PUSH	= "push";
-static const char* MN_SPHL	= "sphl";
-static const char* MN_XCHG	= "xchg";
-static const char* MN_XTHL	= "xthl";
-
-static const char* MN_CMC	= "cmc";
-static const char* MN_STC	= "stc";
-static const char* MN_CMA	= "cma";
-static const char* MN_DAA	= "daa";
-
-static const char* MN_RRC	= "rrc";
-static const char* MN_RLC	= "rlc";
-static const char* MN_RAL	= "ral";
-static const char* MN_RAR	= "rar";
-
-static const char* MN_INR	= "inr";
-static const char* MN_INX	= "inx";
-static const char* MN_DCR	= "dcr";
-static const char* MN_DCX	= "dcx";
-
-static const char* MN_ADD	= "add";
-static const char* MN_SUB	= "sub";
-static const char* MN_ADC	= "adc";
-static const char* MN_SBB	= "sbb";
-static const char* MN_ANA	= "ana";
-static const char* MN_ORA	= "ora";
-static const char* MN_XRA	= "xra";
-static const char* MN_CMP	= "cmp";
-
-static const char* MN_ADI	= "adi";
-static const char* MN_SUI	= "sui";
-static const char* MN_ACI	= "aci";
-static const char* MN_SBI	= "sbi";
-static const char* MN_ANI	= "ani";
-static const char* MN_ORI	= "ori";
-static const char* MN_XRI	= "xri";
-static const char* MN_CPI	= "cpi";
-static const char* MN_DAD	= "dad";
-
-static const char* MN_NOP	= "nop";
-
-static const char* MN_EI	= "ei";
-static const char* MN_DI	= "di";
-static const char* MN_HLT	= "hlt";
-
-static const char* MN_IN	= "in";
-static const char* MN_OUT	= "out";
-
-static const char* MN_RST	= "rst";
-static const char* MN_PCHL	= "pchl";
-static const char* MN_JMP	= "jmp";
-static const char* MN_CALL	= "call";
-static const char* MN_RET	= "ret";
-static const char* MN_RNZ	= "rnz";
-static const char* MN_JNZ	= "jnz";
-static const char* MN_CNZ	= "cnz";
-static const char* MN_RZ	= "rz";
-static const char* MN_JZ	= "jz";
-static const char* MN_CZ	= "cz";
-static const char* MN_RNC	= "rnc";
-static const char* MN_JNC	= "jnc";
-static const char* MN_CNC	= "cnc";
-static const char* MN_RC	= "rc";
-static const char* MN_JC	= "jc";
-static const char* MN_CC	= "cc";
-static const char* MN_RPO	= "rpo";
-static const char* MN_JPO	= "jpo";
-static const char* MN_CPO	= "cpo";
-static const char* MN_RPE	= "rpe";
-static const char* MN_JPE	= "jpe";
-static const char* MN_CPE	= "cpe";
-static const char* MN_RP	= "rp";
-static const char* MN_JP	= "jp";
-static const char* MN_CP	= "cp";
-static const char* MN_RM	= "rm";
-static const char* MN_JM	= "jm";
-static const char* MN_CM	= "cm";
-
-static const char* MN_DB	= "db";
-
-static const char* MN_A	= "a";
-static const char* MN_B	= "b";
-static const char* MN_C	= "c";
-static const char* MN_D	= "d";
-static const char* MN_E	= "e";
-static const char* MN_H	= "h";
-static const char* MN_L	= "l";
-static const char* MN_M	= "m";
-static const char* MN_PSW	= "psw";
-static const char* MN_BC	= "bc";
-static const char* MN_DE	= "de";
-static const char* MN_HL	= "hl";
-static const char* MN_SP	= "sp";
-static const char* MN_10	= "0x10";
-static const char* MN_20	= "0x20";
-static const char* MN_30	= "0x30";
-static const char* MN_08	= "0x08";
-static const char* MN_18	= "0x18";
-static const char* MN_28	= "0x28";
-static const char* MN_38	= "0x38";
-static const char* MN_CB	= "0xCB";
-static const char* MN_D9	= "0xD9";
-static const char* MN_DD	= "0xDD";
-static const char* MN_ED	= "0xED";
-static const char* MN_FD	= "0xFD";
-static const char* MN_0	= "0";
-static const char* MN_1	= "1";
-static const char* MN_2	= "2";
-static const char* MN_3	= "3";
-static const char* MN_4	= "4";
-static const char* MN_5	= "5";
-static const char* MN_6	= "6";
-static const char* MN_7	= "7";
-
-static const char* DB_[1] = { MN_DB };
-
-static const char* NOP[1]		= {MN_NOP};
-static const char* LXI_B[2]		= {MN_LXI, MN_B};
-static const char* STAX_B[2]	= {MN_STAX, MN_B};
-static const char* INX_B[2]		= {MN_INX, MN_B};
-static const char* INR_B[2]		= {MN_INR, MN_B};
-static const char* DCR_B[2]		= {MN_DCR, MN_B};
-static const char* MVI_B[2]		= {MN_MVI, MN_B};
-static const char* RLC[1]		= {MN_RLC};
-static const char* DB_8[2]		= {MN_DB, MN_08};
-static const char* DAD_B[2]		= {MN_DAD, MN_B};
-static const char* LDAX_B[2]	= {MN_LDAX, MN_B};
-static const char* DCX_B[2]		= {MN_DCX, MN_B};
-static const char* INR_C[2]		= {MN_INR, MN_C};
-static const char* DCR_C[2]		= {MN_DCR, MN_C};
-static const char* MVI_C[2]		= {MN_MVI, MN_C};
-static const char* RRC[1]		= {MN_RRC};
-static const char* DB_10[2]		= {MN_DB, MN_10};
-static const char* LXI_D[2]		= {MN_LXI, MN_D};
-static const char* STAX_D[2]	= {MN_STAX, MN_D};
-static const char* INX_D[2]		= {MN_INX, MN_D};
-static const char* INR_D[2]		= {MN_INR, MN_D};
-static const char* DCR_D[2]		= {MN_DCR, MN_D};
-static const char* MVI_D[2]		= {MN_MVI, MN_D};
-static const char* RAL[1]		= {MN_RAL};
-static const char* DB_18[2]		= {MN_DB, MN_18};
-static const char* DAD_D[2]		= {MN_DAD, MN_D};
-static const char* LDAX_D[2]	= {MN_LDAX, MN_D};
-static const char* DCX_D[2]		= {MN_DCX, MN_D};
-static const char* INR_E[2]		= {MN_INR, MN_E};
-static const char* DCR_E[2]		= {MN_DCR, MN_E};
-static const char* MVI_E[2]		= {MN_MVI, MN_E};
-static const char* RAR[1]		= {MN_RAR};
-static const char* DB_20[2]		= {MN_DB, MN_20};
-static const char* LXI_H[2]		= {MN_LXI, MN_H};
-static const char* SHLD[1]		= {MN_SHLD};
-static const char* INX_H[2]		= {MN_INX, MN_H};
-static const char* INR_H[2]		= {MN_INR, MN_H};
-static const char* DCR_H[2]		= {MN_DCR, MN_H};
-static const char* MVI_H[2]		= {MN_MVI, MN_H};
-static const char* DAA[1]		= {MN_DAA};
-static const char* DB_28[2]		= {MN_DB, MN_28};
-static const char* DAD_H[2]		= {MN_DAD, MN_H};
-static const char* LHLD[1]		= {MN_LHLD};
-static const char* DCX_H[2]		= {MN_DCX, MN_H};
-static const char* INR_L[2]		= {MN_INR, MN_L};
-static const char* DCR_L[2]		= {MN_DCR, MN_L};
-static const char* MVI_L[2]		= {MN_MVI, MN_L};
-static const char* CMA[1]		= {MN_CMA};
-static const char* DB_30[2]		= {MN_DB, MN_30};
-static const char* LXI_SP[2]	= {MN_LXI, MN_SP};
-static const char* STA[1]		= {MN_STA};
-static const char* INX_SP[2]	= {MN_INX, MN_SP};
-static const char* INR_M[2]		= {MN_INR, MN_M};
-static const char* DCR_M[2]		= {MN_DCR, MN_M};
-static const char* MVI_M[2]		= {MN_MVI, MN_M};
-static const char* STC[1]		= {MN_STC};
-static const char* DB_38[2]		= {MN_DB, MN_38};
-static const char* DAD_SP[2]	= {MN_DAD, MN_SP};
-static const char* LDA[1]		= {MN_LDA};
-static const char* DCX_SP[2]	= {MN_DCX, MN_SP};
-static const char* INR_A[2]		= {MN_INR, MN_A};
-static const char* DCR_A[2]		= {MN_DCR, MN_A};
-static const char* MVI_A[2]		= {MN_MVI, MN_A};
-static const char* CMC[1]		= {MN_CMC};
-static const char* MOV_BB[3]	= {MN_MOV, MN_B, MN_B};
-static const char* MOV_BC[3]	= {MN_MOV, MN_B, MN_C};
-static const char* MOV_BD[3]	= {MN_MOV, MN_B, MN_D};
-static const char* MOV_BE[3]	= {MN_MOV, MN_B, MN_E};
-static const char* MOV_BH[3]	= {MN_MOV, MN_B, MN_H};
-static const char* MOV_BL[3]	= {MN_MOV, MN_B, MN_L};
-static const char* MOV_BM[3]	= {MN_MOV, MN_B, MN_M};
-static const char* MOV_BA[3]	= {MN_MOV, MN_B, MN_A};
-static const char* MOV_CB[3]	= {MN_MOV, MN_C, MN_B};
-static const char* MOV_CC[3]	= {MN_MOV, MN_C, MN_C};
-static const char* MOV_CD[3]	= {MN_MOV, MN_C, MN_D};
-static const char* MOV_CE[3]	= {MN_MOV, MN_C, MN_E};
-static const char* MOV_CH[3]	= {MN_MOV, MN_C, MN_H};
-static const char* MOV_CL[3]	= {MN_MOV, MN_C, MN_L};
-static const char* MOV_CM[3]	= {MN_MOV, MN_C, MN_M};
-static const char* MOV_CA[3]	= {MN_MOV, MN_C, MN_A};
-static const char* MOV_DB[3]	= {MN_MOV, MN_D, MN_B};
-static const char* MOV_DC[3]	= {MN_MOV, MN_D, MN_C};
-static const char* MOV_DD[3]	= {MN_MOV, MN_D, MN_D};
-static const char* MOV_DE[3]	= {MN_MOV, MN_D, MN_E};
-static const char* MOV_DH[3]	= {MN_MOV, MN_D, MN_H};
-static const char* MOV_DL[3]	= {MN_MOV, MN_D, MN_L};
-static const char* MOV_DM[3]	= {MN_MOV, MN_D, MN_M};
-static const char* MOV_DA[3]	= {MN_MOV, MN_D, MN_A};
-static const char* MOV_EB[3]	= {MN_MOV, MN_E, MN_B};
-static const char* MOV_EC[3]	= {MN_MOV, MN_E, MN_C};
-static const char* MOV_ED[3]	= {MN_MOV, MN_E, MN_D};
-static const char* MOV_EE[3]	= {MN_MOV, MN_E, MN_E};
-static const char* MOV_EH[3]	= {MN_MOV, MN_E, MN_H};
-static const char* MOV_EL[3]	= {MN_MOV, MN_E, MN_L};
-static const char* MOV_EM[3]	= {MN_MOV, MN_E, MN_M};
-static const char* MOV_EA[3]	= {MN_MOV, MN_E, MN_A};
-static const char* MOV_HB[3]	= {MN_MOV, MN_H, MN_B};
-static const char* MOV_HC[3]	= {MN_MOV, MN_H, MN_C};
-static const char* MOV_HD[3]	= {MN_MOV, MN_H, MN_D};
-static const char* MOV_HE[3]	= {MN_MOV, MN_H, MN_E};
-static const char* MOV_HH[3]	= {MN_MOV, MN_H, MN_H};
-static const char* MOV_HL[3]	= {MN_MOV, MN_H, MN_L};
-static const char* MOV_HM[3]	= {MN_MOV, MN_H, MN_M};
-static const char* MOV_HA[3]	= {MN_MOV, MN_H, MN_A};
-static const char* MOV_LB[3]	= {MN_MOV, MN_L, MN_B};
-static const char* MOV_LC[3]	= {MN_MOV, MN_L, MN_C};
-static const char* MOV_LD[3]	= {MN_MOV, MN_L, MN_D};
-static const char* MOV_LE[3]	= {MN_MOV, MN_L, MN_E};
-static const char* MOV_LH[3]	= {MN_MOV, MN_L, MN_H};
-static const char* MOV_LL[3]	= {MN_MOV, MN_L, MN_L};
-static const char* MOV_LM[3]	= {MN_MOV, MN_L, MN_M};
-static const char* MOV_LA[3]	= {MN_MOV, MN_L, MN_A};
-static const char* MOV_MB[3]	= {MN_MOV, MN_M, MN_B};
-static const char* MOV_MC[3]	= {MN_MOV, MN_M, MN_C};
-static const char* MOV_MD[3]	= {MN_MOV, MN_M, MN_D};
-static const char* MOV_ME[3]	= {MN_MOV, MN_M, MN_E};
-static const char* MOV_MH[3]	= {MN_MOV, MN_M, MN_H};
-static const char* MOV_ML[3]	= {MN_MOV, MN_M, MN_L};
-static const char* HLT[1]		= {MN_HLT};
-static const char* MOV_MA[3]	= {MN_MOV, MN_M, MN_A};
-static const char* MOV_AB[3]	= {MN_MOV, MN_A, MN_B};
-static const char* MOV_AC[3]	= {MN_MOV, MN_A, MN_C};
-static const char* MOV_AD[3]	= {MN_MOV, MN_A, MN_D};
-static const char* MOV_AE[3]	= {MN_MOV, MN_A, MN_E};
-static const char* MOV_AH[3]	= {MN_MOV, MN_A, MN_H};
-static const char* MOV_AL[3]	= {MN_MOV, MN_A, MN_L};
-static const char* MOV_AM[3]	= {MN_MOV, MN_A, MN_M};
-static const char* MOV_AA[3]	= {MN_MOV, MN_A, MN_A};
-static const char* ADD_B[2]		= {MN_ADD, MN_B};
-static const char* ADD_C[2]		= {MN_ADD, MN_C};
-static const char* ADD_D[2]		= {MN_ADD, MN_D};
-static const char* ADD_E[2]		= {MN_ADD, MN_E};
-static const char* ADD_H[2]		= {MN_ADD, MN_H};
-static const char* ADD_L[2]		= {MN_ADD, MN_L};
-static const char* ADD_M[2]		= {MN_ADD, MN_M};
-static const char* ADD_A[2]		= {MN_ADD, MN_A};
-static const char* ADC_B[2]		= {MN_ADC, MN_B};
-static const char* ADC_C[2]		= {MN_ADC, MN_C};
-static const char* ADC_D[2]		= {MN_ADC, MN_D};
-static const char* ADC_E[2]		= {MN_ADC, MN_E};
-static const char* ADC_H[2]		= {MN_ADC, MN_H};
-static const char* ADC_L[2]		= {MN_ADC, MN_L};
-static const char* ADC_M[2]		= {MN_ADC, MN_M};
-static const char* ADC_A[2]		= {MN_ADC, MN_A};
-static const char* SUB_B[2]		= {MN_SUB, MN_B};
-static const char* SUB_C[2]		= {MN_SUB, MN_C};
-static const char* SUB_D[2]		= {MN_SUB, MN_D};
-static const char* SUB_E[2]		= {MN_SUB, MN_E};
-static const char* SUB_H[2]		= {MN_SUB, MN_H};
-static const char* SUB_L[2]		= {MN_SUB, MN_L};
-static const char* SUB_M[2]		= {MN_SUB, MN_M};
-static const char* SUB_A[2]		= {MN_SUB, MN_A};
-static const char* SBB_B[2]		= {MN_SBB, MN_B};
-static const char* SBB_C[2]		= {MN_SBB, MN_C};
-static const char* SBB_D[2]		= {MN_SBB, MN_D};
-static const char* SBB_E[2]		= {MN_SBB, MN_E};
-static const char* SBB_H[2]		= {MN_SBB, MN_H};
-static const char* SBB_L[2]		= {MN_SBB, MN_L};
-static const char* SBB_M[2]		= {MN_SBB, MN_M};
-static const char* SBB_A[2]		= {MN_SBB, MN_A};
-static const char* ANA_B[2]		= {MN_ANA, MN_B};
-static const char* ANA_C[2]		= {MN_ANA, MN_C};
-static const char* ANA_D[2]		= {MN_ANA, MN_D};
-static const char* ANA_E[2]		= {MN_ANA, MN_E};
-static const char* ANA_H[2]		= {MN_ANA, MN_H};
-static const char* ANA_L[2]		= {MN_ANA, MN_L};
-static const char* ANA_M[2]		= {MN_ANA, MN_M};
-static const char* ANA_A[2]		= {MN_ANA, MN_A};
-static const char* XRA_B[2]		= {MN_XRA, MN_B};
-static const char* XRA_C[2]		= {MN_XRA, MN_C};
-static const char* XRA_D[2]		= {MN_XRA, MN_D};
-static const char* XRA_E[2]		= {MN_XRA, MN_E};
-static const char* XRA_H[2]		= {MN_XRA, MN_H};
-static const char* XRA_L[2]		= {MN_XRA, MN_L};
-static const char* XRA_M[2]		= {MN_XRA, MN_M};
-static const char* XRA_A[2]		= {MN_XRA, MN_A};
-static const char* ORA_B[2]		= {MN_ORA, MN_B};
-static const char* ORA_C[2]		= {MN_ORA, MN_C};
-static const char* ORA_D[2]		= {MN_ORA, MN_D};
-static const char* ORA_E[2]		= {MN_ORA, MN_E};
-static const char* ORA_H[2]		= {MN_ORA, MN_H};
-static const char* ORA_L[2]		= {MN_ORA, MN_L};
-static const char* ORA_M[2]		= {MN_ORA, MN_M};
-static const char* ORA_A[2]		= {MN_ORA, MN_A};
-static const char* CMP_B[2]		= {MN_CMP, MN_B};
-static const char* CMP_C[2]		= {MN_CMP, MN_C};
-static const char* CMP_D[2]		= {MN_CMP, MN_D};
-static const char* CMP_E[2]		= {MN_CMP, MN_E};
-static const char* CMP_H[2]		= {MN_CMP, MN_H};
-static const char* CMP_L[2]		= {MN_CMP, MN_L};
-static const char* CMP_M[2]		= {MN_CMP, MN_M};
-static const char* CMP_A[2]		= {MN_CMP, MN_A};
-static const char* RNZ[1]		= {MN_RNZ};
-static const char* POP_B[2]		= {MN_POP, MN_B};
-static const char* JNZ[1]		= {MN_JNZ};
-static const char* JMP[1]		= {MN_JMP};
-static const char* CNZ[1]		= {MN_CNZ};
-static const char* PUSH_B[2]	= {MN_PUSH, MN_B};
-static const char* PUSH_D[2]	= {MN_PUSH, MN_D};
-static const char* ADI[1]		= {MN_ADI};
-static const char* RST_0[2]		= {MN_RST, MN_0};
-static const char* RZ[1]		= {MN_RZ};
-static const char* RET[1]		= {MN_RET};
-static const char* JZ[1]		= {MN_JZ};
-static const char* DB_CB[2]		= {MN_DB, MN_CB};
-static const char* CZ[1]		= {MN_CZ};
-static const char* CALL[1]		= {MN_CALL};
-static const char* ACI[1]		= {MN_ACI};
-static const char* RST_1[2]		= {MN_RST, MN_1};
-static const char* RNC[1]		= {MN_RNC};
-static const char* POP_D[2]		= {MN_POP, MN_D};
-static const char* JNC[1]		= {MN_JNC};
-static const char* OUT1[1]		= {MN_OUT};
-static const char* CNC[1]		= {MN_CNC};
-static const char* PUSH[2]		= {MN_PUSH, MN_D};
-static const char* SUI[1]		= {MN_SUI};
-static const char* RST_2[2]		= {MN_RST, MN_2};
-static const char* RC[1]		= {MN_RC};
-static const char* DB_D9[2]		= {MN_DB, MN_D9};
-static const char* JC[1]		= {MN_JC};
-static const char* IN1[1]		= {MN_IN};
-static const char* CC[1]		= {MN_CC};
-static const char* DB_DD[2]		= {MN_DB, MN_DD};
-static const char* SBI[1]		= {MN_SBI};
-static const char* RST_3[2]		= {MN_RST, MN_3};
-static const char* RPO[1]		= {MN_RPO};
-static const char* POP_H[2]		= {MN_POP, MN_H};
-static const char* JPO[1]		= {MN_JPO};
-static const char* XTHL[1]		= {MN_XTHL};
-static const char* CPO[1]		= {MN_CPO};
-static const char* PUSH_H[2]	= {MN_PUSH, MN_H};
-static const char* ANI[1]		= {MN_ANI};
-static const char* RST_4[2]		= {MN_RST, MN_4};
-static const char* RPE[1]		= {MN_RPE};
-static const char* PCHL[1]		= {MN_PCHL};
-static const char* JPE[1]		= {MN_JPE};
-static const char* XCHG[1]		= {MN_XCHG};
-static const char* CPE[1]		= {MN_CPE};
-static const char* DB_ED[2]		= {MN_DB, MN_ED};
-static const char* XRI[1]		= {MN_XRI};
-static const char* RST_5[2]		= {MN_RST, MN_5};
-static const char* RP[1]		= {MN_RP};
-static const char* POP_PSW[2]	= {MN_POP, MN_PSW};
-static const char* JP[1]		= {MN_JP};
-static const char* DI[1]		= {MN_DI};
-static const char* CP[1]		= {MN_CP};
-static const char* PUSH_PSW[2]	= {MN_PUSH, MN_PSW};
-static const char* ORI[1]		= {MN_ORI};
-static const char* RST_6[2]		= {MN_RST, MN_6};
-static const char* RM[1]		= {MN_RM};
-static const char* SPHL[1]		= {MN_SPHL};
-static const char* JM[1]		= {MN_JM};
-static const char* EI[1]		= {MN_EI};
-static const char* CM[1]		= {MN_CM};
-static const char* DB_FD[2]		= {MN_DB, MN_FD};
-static const char* CPI[1]		= {MN_CPI};
-static const char* RST_7[2]		= {MN_RST, MN_7};
-
-// mnemonics names
-static const char** mnenomics[DISASM_CMDS] =
-{
-	NOP, LXI_B,	STAX_B,	INX_B,	INR_B,	DCR_B,	MVI_B,	RLC, DB_,	DAD_B,	LDAX_B,	DCX_B,	INR_C,	DCR_C,	MVI_C,	RRC,
-	DB_, LXI_D,	STAX_D,	INX_D,	INR_D,	DCR_D,	MVI_D,	RAL, DB_,	DAD_D,	LDAX_D,	DCX_D,	INR_E,	DCR_E,	MVI_E,	RAR,
-	DB_, LXI_H,	SHLD,	INX_H,	INR_H,	DCR_H,	MVI_H,	DAA, DB_,	DAD_H,	LHLD,	DCX_H,	INR_L,	DCR_L,	MVI_L,	CMA,
-	DB_, LXI_SP,STA,	INX_SP,	INR_M,	DCR_M,	MVI_M,	STC, DB_,	DAD_SP,	LDA,	DCX_SP,	INR_A,	DCR_A,	MVI_A,	CMC,
-
-	MOV_BB, MOV_BC, MOV_BD, MOV_BE, MOV_BH, MOV_BL, MOV_BM, MOV_BA, MOV_CB, MOV_CC, MOV_CD, MOV_CE, MOV_CH, MOV_CL, MOV_CM, MOV_CA,
-	MOV_DB, MOV_DC, MOV_DD, MOV_DE, MOV_DH, MOV_DL, MOV_DM, MOV_DA, MOV_EB, MOV_EC, MOV_ED, MOV_EE, MOV_EH, MOV_EL, MOV_EM, MOV_EA,
-	MOV_HB, MOV_HC, MOV_HD, MOV_HE, MOV_HH, MOV_HL, MOV_HM, MOV_HA, MOV_LB, MOV_LC, MOV_LD, MOV_LE, MOV_LH, MOV_LL, MOV_LM, MOV_LA,
-	MOV_MB, MOV_MC, MOV_MD, MOV_ME, MOV_MH, MOV_ML, HLT,	MOV_MA, MOV_AB, MOV_AC, MOV_AD, MOV_AE, MOV_AH, MOV_AL, MOV_AM, MOV_AA,
-
-	ADD_B, ADD_C, ADD_D, ADD_E, ADD_H, ADD_L, ADD_M, ADD_A, ADC_B, ADC_C, ADC_D, ADC_E, ADC_H, ADC_L, ADC_M, ADC_A,
-	SUB_B, SUB_C, SUB_D, SUB_E, SUB_H, SUB_L, SUB_M, SUB_A, SBB_B, SBB_C, SBB_D, SBB_E, SBB_H, SBB_L, SBB_M, SBB_A,
-	ANA_B, ANA_C, ANA_D, ANA_E, ANA_H, ANA_L, ANA_M, ANA_A, XRA_B, XRA_C, XRA_D, XRA_E, XRA_H, XRA_L, XRA_M, XRA_A,
-	ORA_B, ORA_C, ORA_D, ORA_E, ORA_H, ORA_L, ORA_M, ORA_A, CMP_B, CMP_C, CMP_D, CMP_E, CMP_H, CMP_L, CMP_M, CMP_A,
-
-	RNZ, POP_B,	  JNZ,	JMP,  CNZ, PUSH_B,	 ADI, RST_0, RZ,  RET,  JZ,  DB_,	CZ,  CALL,	 ACI, RST_1,
-	RNC, POP_D,	  JNC,	OUT1, CNC, PUSH_D,	 SUI, RST_2, RC,  DB_,	JC,  IN1,	CC,  DB_, SBI, RST_3,
-	RPO, POP_H,	  JPO,	XTHL, CPO, PUSH_H,	 ANI, RST_4, RPE, PCHL, JPE, XCHG,	CPE, DB_, XRI, RST_5,
-	RP,  POP_PSW, JP,	DI,   CP,  PUSH_PSW, ORI, RST_6, RM,  SPHL, JM,  EI,	CM,  DB_, CPI, RST_7,
-};
-
-const uint8_t T_CMD[1]		= {MNT_CMD};
-const uint8_t T_CMD_R[2]	= {MNT_CMD, MNT_REG};
-const uint8_t T_CMD_RR[3]	= {MNT_CMD, MNT_REG, MNT_REG};
-const uint8_t T_CMD_IM[2]	= {MNT_CMD, MNT_IMM};
-
-#define T_DB		T_CMD
-
-#define T_NOP		T_CMD
-#define T_LXI_B		T_CMD_R
-#define T_STAX_B	T_CMD_R
-#define T_INX_B		T_CMD_R
-#define T_INR_B		T_CMD_R
-#define T_DCR_B		T_CMD_R
-#define T_MVI_B		T_CMD_R
-#define T_RLC		T_CMD
-#define T_DB_8		T_CMD_IM
-#define T_DAD_B		T_CMD_R
-#define T_LDAX_B	T_CMD_R
-#define T_DCX_B		T_CMD_R
-#define T_INR_C		T_CMD_R
-#define T_DCR_C		T_CMD_R
-#define T_MVI_C		T_CMD_R
-#define T_RRC		T_CMD
-#define T_DB_10		T_CMD_IM
-#define T_LXI_D		T_CMD_R
-#define T_STAX_D	T_CMD_R
-#define T_INX_D		T_CMD_R
-#define T_INR_D		T_CMD_R
-#define T_DCR_D		T_CMD_R
-#define T_MVI_D		T_CMD_R
-#define T_RAL		T_CMD
-#define T_DB_18		T_CMD_IM
-#define T_DAD_D		T_CMD_R
-#define T_LDAX_D	T_CMD_R
-#define T_DCX_D		T_CMD_R
-#define T_INR_E		T_CMD_R
-#define T_DCR_E		T_CMD_R
-#define T_MVI_E		T_CMD_R
-#define T_RAR		T_CMD
-#define T_DB_20		T_CMD_IM
-#define T_LXI_H		T_CMD_R
-#define T_SHLD		T_CMD
-#define T_INX_H		T_CMD_R
-#define T_INR_H		T_CMD_R
-#define T_DCR_H		T_CMD_R
-#define T_MVI_H		T_CMD_R
-#define T_DAA		T_CMD
-#define T_DB_28		T_CMD_IM
-#define T_DAD_H		T_CMD_R
-#define T_LHLD		T_CMD
-#define T_DCX_H		T_CMD_R
-#define T_INR_L		T_CMD_R
-#define T_DCR_L		T_CMD_R
-#define T_MVI_L		T_CMD_R
-#define T_CMA		T_CMD
-#define T_DB_30		T_CMD_IM
-#define T_LXI_SP	T_CMD_R
-#define T_STA		T_CMD
-#define T_INX_SP	T_CMD_R
-#define T_INR_M		T_CMD_R
-#define T_DCR_M		T_CMD_R
-#define T_MVI_M		T_CMD_R
-#define T_STC		T_CMD
-#define T_DB_38		T_CMD_IM
-#define T_DAD_SP	T_CMD_R
-#define T_LDA		T_CMD
-#define T_DCX_SP	T_CMD_R
-#define T_INR_A		T_CMD_R
-#define T_DCR_A		T_CMD_R
-#define T_MVI_A		T_CMD_R
-#define T_CMC		T_CMD
-#define T_MOV_BB	T_CMD_RR
-#define T_MOV_BC	T_CMD_RR
-#define T_MOV_BD	T_CMD_RR
-#define T_MOV_BE	T_CMD_RR
-#define T_MOV_BH	T_CMD_RR
-#define T_MOV_BL	T_CMD_RR
-#define T_MOV_BM	T_CMD_RR
-#define T_MOV_BA	T_CMD_RR
-#define T_MOV_CB	T_CMD_RR
-#define T_MOV_CC	T_CMD_RR
-#define T_MOV_CD	T_CMD_RR
-#define T_MOV_CE	T_CMD_RR
-#define T_MOV_CH	T_CMD_RR
-#define T_MOV_CL	T_CMD_RR
-#define T_MOV_CM	T_CMD_RR
-#define T_MOV_CA	T_CMD_RR
-#define T_MOV_DB	T_CMD_RR
-#define T_MOV_DC	T_CMD_RR
-#define T_MOV_DD	T_CMD_RR
-#define T_MOV_DE	T_CMD_RR
-#define T_MOV_DH	T_CMD_RR
-#define T_MOV_DL	T_CMD_RR
-#define T_MOV_DM	T_CMD_RR
-#define T_MOV_DA	T_CMD_RR
-#define T_MOV_EB	T_CMD_RR
-#define T_MOV_EC	T_CMD_RR
-#define T_MOV_ED	T_CMD_RR
-#define T_MOV_EE	T_CMD_RR
-#define T_MOV_EH	T_CMD_RR
-#define T_MOV_EL	T_CMD_RR
-#define T_MOV_EM	T_CMD_RR
-#define T_MOV_EA	T_CMD_RR
-#define T_MOV_HB	T_CMD_RR
-#define T_MOV_HC	T_CMD_RR
-#define T_MOV_HD	T_CMD_RR
-#define T_MOV_HE	T_CMD_RR
-#define T_MOV_HH	T_CMD_RR
-#define T_MOV_HL	T_CMD_RR
-#define T_MOV_HM	T_CMD_RR
-#define T_MOV_HA	T_CMD_RR
-#define T_MOV_LB	T_CMD_RR
-#define T_MOV_LC	T_CMD_RR
-#define T_MOV_LD	T_CMD_RR
-#define T_MOV_LE	T_CMD_RR
-#define T_MOV_LH	T_CMD_RR
-#define T_MOV_LL	T_CMD_RR
-#define T_MOV_LM	T_CMD_RR
-#define T_MOV_LA	T_CMD_RR
-#define T_MOV_MB	T_CMD_RR
-#define T_MOV_MC	T_CMD_RR
-#define T_MOV_MD	T_CMD_RR
-#define T_MOV_ME	T_CMD_RR
-#define T_MOV_MH	T_CMD_RR
-#define T_MOV_ML	T_CMD_RR
-#define T_HLT		T_CMD
-#define T_MOV_MA	T_CMD_RR
-#define T_MOV_AB	T_CMD_RR
-#define T_MOV_AC	T_CMD_RR
-#define T_MOV_AD	T_CMD_RR
-#define T_MOV_AE	T_CMD_RR
-#define T_MOV_AH	T_CMD_RR
-#define T_MOV_AL	T_CMD_RR
-#define T_MOV_AM	T_CMD_RR
-#define T_MOV_AA	T_CMD_RR
-#define T_ADD_B		T_CMD_R
-#define T_ADD_C		T_CMD_R
-#define T_ADD_D		T_CMD_R
-#define T_ADD_E		T_CMD_R
-#define T_ADD_H		T_CMD_R
-#define T_ADD_L		T_CMD_R
-#define T_ADD_M		T_CMD_R
-#define T_ADD_A		T_CMD_R
-#define T_ADC_B		T_CMD_R
-#define T_ADC_C		T_CMD_R
-#define T_ADC_D		T_CMD_R
-#define T_ADC_E		T_CMD_R
-#define T_ADC_H		T_CMD_R
-#define T_ADC_L		T_CMD_R
-#define T_ADC_M		T_CMD_R
-#define T_ADC_A		T_CMD_R
-#define T_SUB_B		T_CMD_R
-#define T_SUB_C		T_CMD_R
-#define T_SUB_D		T_CMD_R
-#define T_SUB_E		T_CMD_R
-#define T_SUB_H		T_CMD_R
-#define T_SUB_L		T_CMD_R
-#define T_SUB_M		T_CMD_R
-#define T_SUB_A		T_CMD_R
-#define T_SBB_B		T_CMD_R
-#define T_SBB_C		T_CMD_R
-#define T_SBB_D		T_CMD_R
-#define T_SBB_E		T_CMD_R
-#define T_SBB_H		T_CMD_R
-#define T_SBB_L		T_CMD_R
-#define T_SBB_M		T_CMD_R
-#define T_SBB_A		T_CMD_R
-#define T_ANA_B		T_CMD_R
-#define T_ANA_C		T_CMD_R
-#define T_ANA_D		T_CMD_R
-#define T_ANA_E		T_CMD_R
-#define T_ANA_H		T_CMD_R
-#define T_ANA_L		T_CMD_R
-#define T_ANA_M		T_CMD_R
-#define T_ANA_A		T_CMD_R
-#define T_XRA_B		T_CMD_R
-#define T_XRA_C		T_CMD_R
-#define T_XRA_D		T_CMD_R
-#define T_XRA_E		T_CMD_R
-#define T_XRA_H		T_CMD_R
-#define T_XRA_L		T_CMD_R
-#define T_XRA_M		T_CMD_R
-#define T_XRA_A		T_CMD_R
-#define T_ORA_B		T_CMD_R
-#define T_ORA_C		T_CMD_R
-#define T_ORA_D		T_CMD_R
-#define T_ORA_E		T_CMD_R
-#define T_ORA_H		T_CMD_R
-#define T_ORA_L		T_CMD_R
-#define T_ORA_M		T_CMD_R
-#define T_ORA_A		T_CMD_R
-#define T_CMP_B		T_CMD_R
-#define T_CMP_C		T_CMD_R
-#define T_CMP_D		T_CMD_R
-#define T_CMP_E		T_CMD_R
-#define T_CMP_H		T_CMD_R
-#define T_CMP_L		T_CMD_R
-#define T_CMP_M		T_CMD_R
-#define T_CMP_A		T_CMD_R
-#define T_RNZ		T_CMD
-#define T_POP_B		T_CMD_R
-#define T_JNZ		T_CMD
-#define T_JMP		T_CMD
-#define T_CNZ		T_CMD
-#define T_PUSH_B	T_CMD_R
-#define T_PUSH_D	T_CMD_R
-#define T_ADI		T_CMD_R
-#define T_RST_0		T_CMD_IM
-#define T_RZ		T_CMD
-#define T_RET		T_CMD
-#define T_JZ		T_CMD
-#define T_DB_CB		T_CMD_IM
-#define T_CZ		T_CMD
-#define T_CALL		T_CMD
-#define T_ACI		T_CMD
-#define T_RST_1		T_CMD_IM
-#define T_RNC		T_CMD
-#define T_POP_D		T_CMD_R
-#define T_JNC		T_CMD
-#define T_OUT1		T_CMD
-#define T_CNC		T_CMD
-#define T_PUSH		T_CMD_R
-#define T_SUI		T_CMD
-#define T_RST_2		T_CMD_IM
-#define T_RC		T_CMD
-#define T_DB_D9		T_CMD_IM
-#define T_JC		T_CMD
-#define T_IN1		T_CMD
-#define T_CC		T_CMD
-#define T_DB_DD		T_CMD_IM
-#define T_SBI		T_CMD
-#define T_RST_3		T_CMD_IM
-#define T_RPO		T_CMD
-#define T_POP_H		T_CMD_R
-#define T_JPO		T_CMD
-#define T_XTHL		T_CMD
-#define T_CPO		T_CMD
-#define T_PUSH_H	T_CMD_R
-#define T_ANI		T_CMD
-#define T_RST_4		T_CMD_IM
-#define T_RPE		T_CMD
-#define T_PCHL		T_CMD
-#define T_JPE		T_CMD
-#define T_XCHG		T_CMD
-#define T_CPE		T_CMD
-#define T_DB_ED		T_CMD_IM
-#define T_XRI		T_CMD
-#define T_RST_5		T_CMD_IM
-#define T_RP		T_CMD
-#define T_POP_PSW	T_CMD_R
-#define T_JP		T_CMD
-#define T_DI		T_CMD
-#define T_CP		T_CMD
-#define T_PUSH_PSW	T_CMD_R
-#define T_ORI		T_CMD
-#define T_RST_6		T_CMD_IM
-#define T_RM		T_CMD
-#define T_SPHL		T_CMD
-#define T_JM		T_CMD
-#define T_EI		T_CMD
-#define T_CM		T_CMD
-#define T_DB_FD		T_CMD_IM
-#define T_CPI		T_CMD
-#define T_RST_7		T_CMD_IM
-
-// types of a mnemonic parts
-static const uint8_t* mnenomicTypes [DISASM_CMDS] =
-{
-	T_NOP,T_LXI_B,	T_STAX_B,	T_INX_B,	T_INR_B,	T_DCR_B,	T_MVI_B,	T_RLC, T_DB,	T_DAD_B,	T_LDAX_B,	T_DCX_B,	T_INR_C,	T_DCR_C,	T_MVI_C,	T_RRC,
-	T_DB, T_LXI_D,	T_STAX_D,	T_INX_D,	T_INR_D,	T_DCR_D,	T_MVI_D,	T_RAL, T_DB,	T_DAD_D,	T_LDAX_D,	T_DCX_D,	T_INR_E,	T_DCR_E,	T_MVI_E,	T_RAR,
-	T_DB, T_LXI_H,	T_SHLD,		T_INX_H,	T_INR_H,	T_DCR_H,	T_MVI_H,	T_DAA, T_DB,	T_DAD_H,	T_LHLD,		T_DCX_H,	T_INR_L,	T_DCR_L,	T_MVI_L,	T_CMA,
-	T_DB, T_LXI_SP,	T_STA,		T_INX_SP,	T_INR_M,	T_DCR_M,	T_MVI_M,	T_STC, T_DB,	T_DAD_SP,	T_LDA,		T_DCX_SP,	T_INR_A,	T_DCR_A,	T_MVI_A,	T_CMC,
-
-	T_MOV_BB, T_MOV_BC, T_MOV_BD, T_MOV_BE, T_MOV_BH, T_MOV_BL, T_MOV_BM, T_MOV_BA, T_MOV_CB, T_MOV_CC, T_MOV_CD, T_MOV_CE, T_MOV_CH, T_MOV_CL, T_MOV_CM, T_MOV_CA,
-	T_MOV_DB, T_MOV_DC, T_MOV_DD, T_MOV_DE, T_MOV_DH, T_MOV_DL, T_MOV_DM, T_MOV_DA, T_MOV_EB, T_MOV_EC, T_MOV_ED, T_MOV_EE, T_MOV_EH, T_MOV_EL, T_MOV_EM, T_MOV_EA,
-	T_MOV_HB, T_MOV_HC, T_MOV_HD, T_MOV_HE, T_MOV_HH, T_MOV_HL, T_MOV_HM, T_MOV_HA, T_MOV_LB, T_MOV_LC, T_MOV_LD, T_MOV_LE, T_MOV_LH, T_MOV_LL, T_MOV_LM, T_MOV_LA,
-	T_MOV_MB, T_MOV_MC, T_MOV_MD, T_MOV_ME, T_MOV_MH, T_MOV_ML, T_HLT,	T_MOV_MA, T_MOV_AB, T_MOV_AC, T_MOV_AD, T_MOV_AE, T_MOV_AH, T_MOV_AL, T_MOV_AM, T_MOV_AA,
-
-	T_ADD_B, T_ADD_C, T_ADD_D, T_ADD_E, T_ADD_H, T_ADD_L, T_ADD_M, T_ADD_A, T_ADC_B, T_ADC_C, T_ADC_D, T_ADC_E, T_ADC_H, T_ADC_L, T_ADC_M, T_ADC_A,
-	T_SUB_B, T_SUB_C, T_SUB_D, T_SUB_E, T_SUB_H, T_SUB_L, T_SUB_M, T_SUB_A, T_SBB_B, T_SBB_C, T_SBB_D, T_SBB_E, T_SBB_H, T_SBB_L, T_SBB_M, T_SBB_A,
-	T_ANA_B, T_ANA_C, T_ANA_D, T_ANA_E, T_ANA_H, T_ANA_L, T_ANA_M, T_ANA_A, T_XRA_B, T_XRA_C, T_XRA_D, T_XRA_E, T_XRA_H, T_XRA_L, T_XRA_M, T_XRA_A,
-	T_ORA_B, T_ORA_C, T_ORA_D, T_ORA_E, T_ORA_H, T_ORA_L, T_ORA_M, T_ORA_A, T_CMP_B, T_CMP_C, T_CMP_D, T_CMP_E, T_CMP_H, T_CMP_L, T_CMP_M, T_CMP_A,
-
-	T_RNZ, T_POP_B,	  T_JNZ,	T_JMP,  T_CNZ, T_PUSH_B,	T_ADI, T_RST_0, T_RZ,  T_RET,   T_JZ,  T_DB,	T_CZ,  T_CALL,	T_ACI, T_RST_1,
-	T_RNC, T_POP_D,	  T_JNC,	T_OUT1, T_CNC, T_PUSH_D,	T_SUI, T_RST_2, T_RC,  T_DB,	T_JC,  T_IN1,	T_CC,  T_DB, T_SBI, T_RST_3,
-	T_RPO, T_POP_H,	  T_JPO,	T_XTHL, T_CPO, T_PUSH_H,	T_ANI, T_RST_4, T_RPE, T_PCHL,  T_JPE, T_XCHG,	T_CPE, T_DB, T_XRI, T_RST_5,
-	T_RP,  T_POP_PSW, T_JP,		T_DI,   T_CP,  T_PUSH_PSW,	T_ORI, T_RST_6, T_RM,  T_SPHL,  T_JM,  T_EI,	T_CM,  T_DB, T_CPI, T_RST_7,
-};
-
-// instruction lengths in bytes
-static const uint8_t cmdLens[DISASM_CMDS] =
-{
-	1,3,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
-	1,3,1,1,1,1,2,1,1,1,1,1,1,1,2,1,
-	1,3,3,1,1,1,2,1,1,1,3,1,1,1,2,1,
-	1,3,3,1,1,1,2,1,1,1,3,1,1,1,2,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,3,3,3,1,2,1,1,1,3,1,3,3,2,1,
-	1,1,3,2,3,1,2,1,1,1,3,2,3,1,2,1,
-	1,1,3,1,3,1,2,1,1,1,3,1,3,1,2,1,
-	1,1,3,1,3,1,2,1,1,1,3,1,3,1,2,1
-};
-
-#define CMD_IMM_OFFSET_MASK	0x1
-#define CMD_IMM_LEN_MASK	0x2
-
-// instruction immediate operand.
-static const uint8_t cmdImms[DISASM_CMDS] =
-{
-	CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IB_OFF0, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE,
-	CMD_IB_OFF0, CMD_IW_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IB_OFF0, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE,
-	CMD_IB_OFF0, CMD_IW_OFF1, CMD_IW_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IB_OFF0, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE,
-	CMD_IB_OFF0, CMD_IW_OFF1, CMD_IW_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IB_OFF0, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE,
-
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE,
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE,
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE,
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE,
-
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE,
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE,
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE,
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE,
-
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IW_OFF1, CMD_IW_OFF1, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IB_OFF0, CMD_IW_OFF1, CMD_IW_OFF1, CMD_IB_OFF1, CMD_IM_NONE,
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IB_OFF1, CMD_IW_OFF1, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IB_OFF1, CMD_IW_OFF1, CMD_IB_OFF0, CMD_IB_OFF1, CMD_IM_NONE,
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IW_OFF1, CMD_IB_OFF0, CMD_IB_OFF1, CMD_IM_NONE,
-	CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IB_OFF1, CMD_IM_NONE, CMD_IM_NONE, CMD_IM_NONE, CMD_IW_OFF1, CMD_IM_NONE, CMD_IW_OFF1, CMD_IB_OFF0, CMD_IB_OFF1, CMD_IM_NONE,
-};
-
-#define CM_ ","
-#define N_C ""
-// defines if a mnemonic has an immediate comma
-static const char* cmdComma[DISASM_CMDS] =
-{
-	N_C, CM_, N_C, N_C, N_C, N_C, CM_, N_C, N_C, N_C, N_C, N_C, N_C, N_C, CM_, N_C,
-	N_C, CM_, N_C, N_C, N_C, N_C, CM_, N_C, N_C, N_C, N_C, N_C, N_C, N_C, CM_, N_C,
-	N_C, CM_, N_C, N_C, N_C, N_C, CM_, N_C, N_C, N_C, N_C, N_C, N_C, N_C, CM_, N_C,
-	N_C, CM_, N_C, N_C, N_C, N_C, CM_, N_C, N_C, N_C, N_C, N_C, N_C, N_C, CM_, N_C,
-
-	CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_,
-	CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_,
-	CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_,
-	CM_, CM_, CM_, CM_, CM_, CM_, N_C, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_, CM_,
-
-	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
-	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
-	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
-	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
-
-	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
-	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
-	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
-	N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C, N_C,
-
-};
-
-// mnemonics names lens. it defines how many element each mnemonic consists of
-static const uint8_t mnenomicLens[DISASM_CMDS] =
-{
-	1, 2, 2, 2,	2, 2, 2, 1, 1, 2, 2, 2,	2, 2, 2, 1,
-	1, 2, 2, 2,	2, 2, 2, 1, 1, 2, 2, 2,	2, 2, 2, 1,
-	1, 2, 1, 2,	2, 2, 2, 1, 1, 2, 1, 2,	2, 2, 2, 1,
-	1, 2, 1, 2,	2, 2, 2, 1, 1, 2, 1, 2,	2, 2, 2, 1,
-
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-
-	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2,
-	1, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 1,	1, 1, 1, 2,
-	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1,	1, 1, 1, 2,
-	1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1,	1, 1, 1, 2,
-};
-
-// 0 - c*
-// 1 - call
-// 2 - j*
-// 3 - jmp
-// 4 - r*
-// 5 - ret
-// 6 - pchl
-// 7 - rst
-// 8 - other
-static const uint8_t opcodeTypes[DISASM_CMDS] =
-{
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-
-	4, 8, 2, 3, 0, 8, 8, 7, 4, 5, 2, 8, 0, 1, 8, 7,
-	4, 8, 2, 8, 0, 8, 8, 7, 4, 8, 2, 8, 0, 8, 8, 7,
-	4, 8, 2, 8, 0, 8, 8, 7, 4, 6, 2, 8, 0, 8, 8, 7,
-	4, 8, 2, 8, 0, 8, 8, 7, 4, 8, 2, 8, 0, 8, 8, 7,
-};
-
-auto dev::GetMnemonic(const uint8_t _opcode) -> const char** { return mnenomics[_opcode]; }
-auto dev::GetMnemonicLen(const uint8_t _opcode) -> uint8_t { return mnenomicLens[_opcode]; }
-auto dev::GetMnemonicType(const uint8_t _opcode) -> const uint8_t* { return mnenomicTypes[_opcode]; }
-auto dev::GetImmediateType(const uint8_t _opcode) -> uint8_t { return cmdImms[_opcode]; }
-auto dev::GetOpcodeType(const uint8_t _opcode) -> const uint8_t { return opcodeTypes[_opcode]; }
-auto dev::GetCmdLen(const uint8_t _opcode) -> const uint8_t { return cmdLens[_opcode]; }
-
-
-#define CMD_S_LEN_MAX 11
-#define DISASM_LINE_MAX 127
-static char disasm_line_s[DISASM_LINE_MAX];
-static char disasm_cmd_s[CMD_S_LEN_MAX+1];
-
-// NOT THREAD SAFE!
-// Disasm one command in a format:
-// 1234\t12 34 56\tlxi sp,5634\tpsw=1234 bc=2345 de=3456 hl=4567 sp=5678
-auto dev::GetDisasmLogLine(
-	const CpuI8080::State& _cpuState, const Memory::State& _memState)
--> const char*
-{
-	auto globalAddr = _memState.debug.instrGlobalAddr;
-	auto opcode = _memState.debug.instr[0];
-	auto cmd_byte1 = _memState.debug.instr[1];
-	auto cmd_byte2 = _memState.debug.instr[2];
-
-	auto mnemonic = mnenomics[opcode];
-	auto mnemonicLen = mnenomicLens[opcode];
-	auto mnemonicType = mnenomicTypes[opcode];
-	auto immType = cmdImms[opcode];
-
-	auto cml_len = cmdLens[opcode];
-
-	// Bytes
-	const char* byte_s1 = dev::Uint8ToStrC(opcode);
-	const char* byte_s2 = cml_len > 1 ? dev::Uint8ToStrC(cmd_byte1) : "  ";
-	const char* byte_s3 = cml_len > 2 ? dev::Uint8ToStrC(cmd_byte2) : "  ";
-
-	// Mnemonic
-	const char* param1 = mnemonicLen >= 2 ? mnemonic[1] : "";
-	const char* param2 = mnemonicLen == 3 ? mnemonic[2] : "";
-	const char* imm = immType == CMD_IB_OFF1 || immType == CMD_IB_OFF1 ?
-		dev::Uint8ToStrC(cmd_byte1) :
-		immType == CMD_IW_OFF1 ?
-		dev::Uint16ToStrC((cmd_byte2 << 8) | cmd_byte1) : "";
-	const char* comma = cmdComma[opcode];
-
-	// Print the command
-	std::snprintf(
-		disasm_cmd_s, sizeof(disasm_cmd_s),
-		"%s %s%s%s%s",
-		mnemonic[0], param1, comma, param2, imm);
-
-	// Print the full disasm line
-	std::snprintf(
-		disasm_line_s, sizeof(disasm_line_s),
-		"%06X	%s %s %s	%-11s	psw=%04X bc=%04X de=%04X hl=%04X sp=%04X\n",
-		globalAddr,
-		byte_s1,
-		byte_s2,
-		byte_s3,
-		disasm_cmd_s,
-		_cpuState.regs.psw.af.word,
-		_cpuState.regs.bc.word,
-		_cpuState.regs.de.word,
-		_cpuState.regs.hl.word,
-		_cpuState.regs.sp.word);
-
-    return disasm_line_s;
-}
-
-#define DISASM_LINE_MAX 127
-static char disasm_simple_line_s[DISASM_LINE_MAX];
-static char disasm_simple_cmd_s[CMD_S_LEN_MAX+1];
-
-// NOT THREAD SAFE!
-// Disasm one command in a format:
-// 1234\t12 34 56\tlxi sp,5634
-auto dev::GetDisasmSimpleLine(
-	const Addr _addr, const uint8_t _opcode,
-	const uint8_t _cmd_byte1, const uint8_t _cmd_byte2)
--> const char*
-{
-	auto mnemonic = mnenomics[_opcode];
-	auto mnemonicLen = mnenomicLens[_opcode];
-	auto mnemonicType = mnenomicTypes[_opcode];
-	auto immType = cmdImms[_opcode];
-
-	auto cml_len = cmdLens[_opcode];
-
-	// Bytes
-	const char* byte_s1 = dev::Uint8ToStrC(_opcode);
-	const char* byte_s2 = cml_len > 1 ? dev::Uint8ToStrC(_cmd_byte1) : "  ";
-	const char* byte_s3 = cml_len > 2 ? dev::Uint8ToStrC(_cmd_byte2) : "  ";
-
-	// Mnemonic
-	const char* param1 = mnemonicLen >= 2 ? mnemonic[1] : "";
-	const char* param2 = mnemonicLen == 3 ? mnemonic[2] : "";
-	const char* imm = immType == CMD_IB_OFF1 || immType == CMD_IB_OFF1 ?
-		dev::Uint8ToStrC(_cmd_byte1) :
-		immType == CMD_IW_OFF1 ?
-		dev::Uint16ToStrC((_cmd_byte2 << 8) | _cmd_byte1) : "";
-	const char* comma = cmdComma[_opcode];
-
-	// Print the command
-	std::snprintf(
-		disasm_simple_cmd_s, sizeof(disasm_simple_cmd_s),
-		"%s %s%s%s%s",
-		mnemonic[0], param1, comma, param2, imm);
-
-	// Print the full disasm line
-	std::snprintf(
-		disasm_simple_line_s, sizeof(disasm_simple_line_s),
-		"%04X %s %s %s %-11s\n",
-		_addr,
-		byte_s1,
-		byte_s2,
-		byte_s3,
-		disasm_simple_cmd_s);
-
-    return disasm_simple_line_s;
-}
-
-void dev::Disasm::Line::Init()
-{
-	type = Type::CODE;
-	addr = 0;
-	opcode = 0;
-	imm = 0; // immediate operand
-	statsS[0] = '\0'; // contains: runs, reads, writes
-	labels.clear();
-	consts.clear(); // labels used as constants only
-	comment = nullptr;
-	accessed = false; // no runs, reads, writes yet
-	breakpointStatus = Breakpoint::Status::DISABLED;
-}
-
-auto dev::Disasm::Line::GetImmediateS() const
--> const char*
-{
-	return cmdImms[opcode] == CMD_IW_OFF1 ?
-		Uint16ToStrC0x(imm) : Uint8ToStrC0x(static_cast<uint8_t>(imm));
-};
-
-void dev::Disasm::AddLabes(const Addr _addr)
-{
-	if (m_lineIdx >= DISASM_LINES_MAX) return;
-
-	auto labelsP = m_debugData.GetLabels(_addr);
-	if (!labelsP) return;
-
-	auto& line = m_lines.at(m_lineIdx);
-	line.Init();
-
-	line.type = Line::Type::LABELS;
-	line.addr = _addr;
-
-	line.labels = std::move(*labelsP);
-
-	m_lineIdx++;
-}
-
-void dev::Disasm::AddComment(const Addr _addr)
-{
-	if (m_lineIdx >= DISASM_LINES_MAX) return;
-
-	auto commentP = m_debugData.GetComment(_addr);
-	if (!commentP) return;
-
-	auto& line = m_lines.at(m_lineIdx);
-	line.Init();
-
-	line.type = Line::Type::COMMENT;
-	line.addr = _addr;
-	line.comment = commentP;
-
-	m_lineIdx++;
-}
-
-auto dev::Disasm::AddCode(const Addr _addr, const uint32_t _cmd,
-	const Breakpoint::Status _breakpointStatus)
--> Addr
-{
-	if (m_lineIdx >= DISASM_LINES_MAX) return 0;
-
-	GlobalAddr globalAddr = m_hardware.Request(Hardware::Req::GET_GLOBAL_ADDR_RAM, { { "addr", _addr } })->at("data");
-	auto runs = m_memRuns[globalAddr];
-	auto reads = m_memReads[globalAddr];
-	auto writes = m_memWrites[globalAddr];
-
-	uint8_t opcode = _cmd & 0xFF;
-	auto immType = cmdImms[opcode];
-
-	auto& line = m_lines.at(m_lineIdx);
-	line.Init();
-
-	auto cmdLen = cmdLens[opcode];
-
-	switch (cmdLen)
-	{
-	case 1:
-		// if immType != CMD_IB_OFF0 means the instruction is single byte instruction.
-		// if immType == CMD_IB_OFF0 means the instruction is DB NN, where NN is the opcode that represent the data byte.
-		// if immType == CMD_IB_OFF0 and _cmd > 0xFF means the instruction is DB NN, where NN is the data byte.
-		// 		This is for the special case there are no valid instructions found to fit into the addr range addr - instructionOffset to addr.
-		line.imm = immType != CMD_IB_OFF0 ? 0 : _cmd > 0xFF ? (_cmd >> 8) & 0xFF : opcode;
-		break;
-	case 2:
-		line.imm = (_cmd >> 8) & 0xFF;
-		break;
-	case 3:
-		line.imm = (_cmd >> 8) & 0xFFFF;
-		break;
-	};
-
-	line.type = Line::Type::CODE;
-	line.addr = _addr;
-	line.opcode = opcode;
-	line.accessed = runs != UINT64_MAX && reads != UINT64_MAX && writes != UINT64_MAX;
-	line.breakpointStatus = _breakpointStatus;
-
-	if (immType != CMD_IM_NONE && immType != CMD_IB_OFF0)
-	{
-		auto labelsP = m_debugData.GetLabels(line.imm);
-		line.labels = labelsP ? *labelsP : LabelList();
-		auto constsP = m_debugData.GetConsts(line.imm);
-		line.consts = constsP ? *constsP : LabelList();
-	}
-
-	snprintf(line.statsS, sizeof(line.statsS), "%" PRIu64 ",%" PRIu64 ",%" PRIu64, runs, reads, writes);
-
-	m_lineIdx++;
-	return cmdLen;
-}
-
-auto dev::Disasm::Line::GetStr() const
--> std::string
-{
-	// print an addr
-	std::string out {std::format("{}: ", GetAddrS())};
-
-	switch (type)
-	{
-	case Type::CODE:
-	{
-		auto mnemonic = mnenomics[opcode];
-		auto mnemonicLen = mnenomicLens[opcode];
-		auto mnemonicType = mnenomicTypes[opcode];
-		auto immType = cmdImms[opcode];
-		// print a mnemonic
-		for (int i = 0; i < mnemonicLen; i++)
-		{
-			switch (mnemonicType[i])
-			{
-			case MNT_CMD:
-				out += mnemonic[i];
-				break;
-
-			case MNT_IMM:
-				out += std::format(" 0x{}", mnemonic[i]);
-				break;
-
-			case MNT_REG:
-				out += std::format(" {}", mnemonic[i]);
-				break;
-			}
-			// draw an operand separator
-			if (i == 1 && (mnemonicLen == 3 || immType == CMD_IB_OFF1 || immType == CMD_IW_OFF1)) out += ",";
-		}
-		// print an immediate operand
-		if (immType != CMD_IM_NONE)
-		{
-			out += std::format(" {}", GetImmediateS());
-		}
-		return out;
-	}
-	case Type::LABELS:
-		for (auto& label : labels)
-		{
-			out += std::format("{} ", label);
-		}
-		return out;
-
-	case Type::COMMENT:
-		out += std::format("; {}", *comment);
-		return out;
-	}
-
-	return "";
-}
 
 dev::Disasm::Disasm(Hardware& _hardware, DebugData& _debugData)
-	: m_hardware(_hardware), m_debugData(_debugData),
-	m_memRuns(), m_memReads(), m_memWrites()
+	:
+	m_hardware(_hardware), m_debugData(_debugData)
 {}
 
-void dev::Disasm::Init(const LineIdx _linesNum)
+
+auto dev::Disasm::UpdateDisasm(
+	const Addr _addr, size_t _linesNum, const int _instructionOffset)
+-> void
 {
-	m_linesNum = dev::Min(_linesNum, DISASM_LINES_MAX);
-	m_lineIdx = 0;
-	m_immAddrlinkNum = 0;
-}
+	m_lines.clear();
 
-void dev::Disasm::Reset()
-{
-	m_linesP = nullptr;
+	_linesNum = _linesNum == 0 ? DISASM_LINES_MAX :
+		dev::Min(_linesNum, DISASM_LINES_MAX);
 
-	m_memRuns.fill(0);
-	m_memReads.fill(0);
-	m_memWrites.fill(0);
+	// Find a new address that precedes the specified "addr" by the instructionOffset
+	Addr addr = GetAddr(_addr, _instructionOffset);
 
-	std::fill(m_lines.begin(), m_lines.end(), Line());
-}
-
-auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks*
-{
-	Addr addrMin = m_lines.at(0).addr;
-	Addr addrMax = m_lines.at(m_linesNum - 1).addr;
-	uint8_t linkIdx = 0;
-
-	std::map<Addr, int> immAddrPairs;
-	// aggregate <Addr, LineIdx> pairs
-	for (int i = 0; i < m_linesNum; i++){
-		immAddrPairs.emplace(m_lines.at(i).addr, i);
-	}
-	// generate links
-	for (int i = 0; i < m_linesNum; i++)
+	while (m_lines.size() < _linesNum)
 	{
-		const auto& line = m_lines.at(i);
-		if (line.type != Line::Type::CODE || opcodeTypes[line.opcode] > OPTYPE_JMP ||
-			line.imm < addrMin || line.imm > addrMax)
+		// Add Comment
+		auto commentP = m_debugData.GetComment(addr);
+		if (commentP)
 		{
-			m_immAddrLinks[i].lineIdx = IMM_NO_LINK;
-			continue;
-		}/*
-		// adds the links that goes out of the visible scope of addrs
-		if (line.imm < addrMin) {
-			m_immAddrLinks[i].m_lineIdx = IMM_LINK_UP;
-			m_immAddrLinks[i].linkIdx = linkIdx++;
-			continue;
+			m_lines.emplace_back(DisasmLine{addr, *commentP});
+			if (m_lines.size() >= DISASM_LINES_MAX) break;
 		}
-		if (line.imm > addrMax) {
-			m_immAddrLinks[i].m_lineIdx = IMM_LINK_DOWN;
-			m_immAddrLinks[i].linkIdx = linkIdx++;
-			continue;
-		}
-		*/
-		auto linkIdxI = immAddrPairs.find(m_lines[i].imm);
-		if (linkIdxI == immAddrPairs.end()) continue;
 
-		m_immAddrLinks[i].lineIdx = immAddrPairs[m_lines[i].imm];
-		m_immAddrLinks[i].linkIdx = linkIdx++;
-		m_immAddrlinkNum++;
+		// Add Labels
+		auto labelsP = m_debugData.GetLabels(addr);
+		if (labelsP)
+		{
+			m_lines.emplace_back(DisasmLine{addr, *labelsP});
+			if (m_lines.size() >= DISASM_LINES_MAX) break;
+		}
+
+		// Add Code
+		const auto& line = m_lines.emplace_back(DisasmLine{addr, m_hardware, m_debugData});
+		if (m_lines.size() >= DISASM_LINES_MAX) break;
+
+		addr += CpuI8080::GetInstrLen(line.opcode);
+		addr &= 0xFFFF; // to loop back to the beginning of the page if addr > 0xFFFF
 	}
-
-	return &m_immAddrLinks;
 }
+
 
 // shifts the addr by _instructionsOffset instruction counter
 // if _instructionsOffset=3, it returns the addr of a third instruction after _addr, and vice versa
@@ -1208,10 +63,12 @@ auto dev::Disasm::GetAddr(const Addr _addr, const int _instructionOffset) const
 		Addr addr = _addr;
 		for (int i = 0; i < instructions; i++)
 		{
-			auto resOpcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
+			auto resOpcode = m_hardware.Request(
+				Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
+
 			uint8_t opcode = resOpcode->at("data");
 
-			auto cmdLen = GetCmdLen(opcode);
+			auto cmdLen = CpuI8080::GetInstrLen(opcode);
 			addr = addr + cmdLen;
 		}
 		return addr;
@@ -1220,7 +77,7 @@ auto dev::Disasm::GetAddr(const Addr _addr, const int _instructionOffset) const
 	{
 		std::vector<Addr> possibleDisasmStartAddrs;
 
-		int disasmStartAddr = _addr - instructions * CMD_LEN_MAX;
+		int disasmStartAddr = _addr - instructions * CMD_BYTES_MAX;
 
 		for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++)
 		{
@@ -1229,10 +86,11 @@ auto dev::Disasm::GetAddr(const Addr _addr, const int _instructionOffset) const
 
 			while (addr < _addr && currentInstruction < instructions)
 			{
-				auto resOpcode = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
+				auto resOpcode = m_hardware.Request(
+					Hardware::Req::GET_BYTE_RAM, { { "addr", addr } });
 				uint8_t opcode = resOpcode->at("data");
 
-				auto cmdLen = GetCmdLen(opcode);
+				auto cmdLen = CpuI8080::GetInstrLen(opcode);
 				addr = addr + cmdLen;
 				currentInstruction++;
 			}
@@ -1255,10 +113,258 @@ auto dev::Disasm::GetAddr(const Addr _addr, const int _instructionOffset) const
 		// get the best result basing on the execution counter
 		for (const auto possibleDisasmStartAddr : possibleDisasmStartAddrs)
 		{
-			if (m_memRuns[possibleDisasmStartAddr] > 0) return possibleDisasmStartAddr;
+			auto runs = m_debugData.GetMemRuns(possibleDisasmStartAddr);
+			if (runs > 0) return possibleDisasmStartAddr;
 		}
 		return possibleDisasmStartAddrs[0];
 	}
 
 	return _addr;
+}
+
+dev::DisasmLine::DisasmLine(
+	const Addr _addr, const std::vector<std::string>& _labels)
+	: type(Type::LABELS), addr(_addr), cmdP(nullptr), opcode(0), imm(0)
+{
+	// use the first label as the main label
+	label = _labels.at(0);
+
+	// copy the rest of the labels to post_comment
+	if (_labels.size() > 1)
+	{
+		post_comment = " ; ";
+		post_comment += LabelsToComment(_labels, 1);
+	}
+};
+
+
+auto dev::DisasmLine::LabelsToComment(
+	const std::vector<std::string>& _labels, const size_t _start_idx) const
+->std::string
+{
+	std::string comment;
+	if (_labels.size() - _start_idx <= 0 ) return comment;
+
+	for (int i = _start_idx;
+		i < _labels.size() && i < MAX_LABELS_IN_LINE;
+		i++)
+	{
+		comment += _labels.at(i);
+
+		if (i != _labels.size() - 1) {
+			comment += ", ";
+		}
+	}
+	if (_labels.size() > MAX_LABELS_IN_LINE) {
+		comment += " ...";
+	}
+
+	return comment;
+};
+
+dev::DisasmLine::DisasmLine(const Addr _addr,
+	Hardware& _hardware, DebugData& _debugData)
+	: type(Type::CODE), addr(_addr), opcode(0), imm(0)
+{
+	auto instr = Memory::Instr(_hardware.Request(
+			Hardware::Req::GET_THREE_BYTES_RAM, {{"addr", _addr}}
+			)->at("data"));
+
+	InitInstr(addr, instr, _debugData, true);
+
+	// init stats
+	GlobalAddr globalAddr = _hardware.Request(
+		Hardware::Req::GET_GLOBAL_ADDR_RAM, {{ "addr", addr}}
+	)->at("data");
+
+	auto runs = _debugData.GetMemRuns(globalAddr);
+	auto reads = _debugData.GetMemReads(globalAddr);
+	auto writes = _debugData.GetMemWrites(globalAddr);
+	accessed = runs > 0 || reads > 0 || writes > 0;
+	stats = std::format("{}, {}, {}", runs, reads, writes);
+	// init breakpoint status
+	breakpointStatus = _debugData.GetBreakpoints().GetStatus(globalAddr);
+}
+
+
+void dev::DisasmLine::InitInstr(
+	const Addr _addr,
+	const Memory::Instr _instr,
+	const DebugData& _debugData,
+	const bool _init_post_comment)
+{
+	type = Type::CODE;
+	addr = _addr;
+	opcode = _instr.opcode;
+	cmdP = cmds_i8080[_instr.opcode];
+	imm = InstrToImm(_instr, cmdP->imm_type);
+
+	// Add consts
+	if (cmdP->imm_type != CmdImmType::CMD_IT_NONE)
+	{
+		auto labelsP = _debugData.GetLabels(imm);
+		auto constsP = _debugData.GetConsts(imm);
+
+		imm_str = constsP ? constsP->at(0) :
+			labelsP ? labelsP->at(0) :
+			cmdP->imm_type == CmdImmType::CMD_IT_B0 ||
+			cmdP->imm_type == CmdImmType::CMD_IT_B1 ? dev::Uint8ToStrC0x(imm) :
+			dev::Uint16ToStrC0x(imm);
+
+		imm_sub_type = constsP ? ImmSubType::CONST :
+						labelsP ? ImmSubType::LABEL :
+						ImmSubType::NONE;
+
+		if (_init_post_comment && (labelsP || constsP)) {
+			post_comment = constsP ? "; " : "";
+			if (constsP) post_comment += LabelsToComment(*constsP, 1);
+
+			if (labelsP) {
+				post_comment += labelsP ? " (" : "";
+				post_comment += LabelsToComment(*labelsP, 1);
+				post_comment += labelsP ? ")" : "";
+			}
+		}
+	}
+}
+
+auto dev::DisasmLine::InstrToImm(
+	const Memory::Instr _instr, const CmdImmType _imm_type) const
+-> Addr
+{
+	if (_imm_type == CMD_IT_B0)
+		return _instr.opcode;
+	else if (_imm_type == CMD_IT_B1)
+		return _instr.dataL;
+
+	return _instr.dataW;
+}
+
+
+// Disasm one command in a format:
+// 1234\t12 34 56\tlxi sp,5634\tpsw=1234 bc=2345 de=3456 hl=4567 sp=5678
+// Returns a pointer to the formatted string or nullptr if an error
+auto dev::DisasmLine::PrintToBuffer(
+	std::array<char, LINE_BUFF_LEN>& _buffer,
+	const GlobalAddr _globalAddr,
+	const Memory::Instr _instr,
+	const CpuI8080::Regs* _regsP)
+-> const char*
+{
+	auto instr_len = CpuI8080::GetInstrLen(_instr.opcode);
+
+	// Instruction bytes as strings
+	const char* byte_s1 = dev::Uint8ToStrC(_instr.opcode);
+	const char* byte_s2 = instr_len > 1 ? dev::Uint8ToStrC(instr_len) : "  ";
+	const char* byte_s3 = instr_len > 2 ? dev::Uint8ToStrC(instr_len) : "  ";
+
+
+	int i = 0;
+	auto printed_chars = 0;
+	_buffer[0] = '\0';
+	_buffer[_buffer.size() - 1] = '\0';
+
+	// Print the Addr, intruction bytes
+	printed_chars = std::snprintf(
+		_buffer.data(), _buffer.size(),
+		"%06X	%s %s %s	",
+		_globalAddr,
+		byte_s1,
+		byte_s2,
+		byte_s3);
+
+	if (printed_chars < 0){
+		return nullptr;
+	}
+
+	i += printed_chars;
+
+	// Print intruction
+	auto cmdP = cmds_i8080[_instr.opcode];
+	// Iterate over the tokens of the command and concatenate them into buffer
+	for (int i = 0; i < cmdP->token_types.size(); i++)
+	{
+		if (cmdP->token_types[i] == CMD_TT_IMM)
+		{
+			auto imm_str = instr_len == 1 ?
+				dev::Uint8ToStrC0x(_instr.dataL) :
+				dev::Uint16ToStrC0x(_instr.dataW);
+
+			printed_chars = std::snprintf(&_buffer[i], sizeof(LINE_BUFF_LEN - i), imm_str);
+		}
+		else {
+			printed_chars = std::snprintf(&_buffer[i], sizeof(LINE_BUFF_LEN - i), cmdP->tokens[i]);
+		}
+
+		if (printed_chars < 0) {
+			return nullptr;
+		}
+		i += printed_chars;
+	}
+
+	// Print regs
+	if (_regsP)
+	{
+		std::snprintf(
+			&_buffer[i], sizeof(LINE_BUFF_LEN - i),
+			"	psw=%04X bc=%04X de=%04X hl=%04X sp=%04X\n",
+			_regsP->psw.af.word,
+			_regsP->bc.word,
+			_regsP->de.word,
+			_regsP->hl.word,
+			_regsP->sp.word);
+	}
+
+    return _buffer.data();
+}
+
+
+auto dev::Disasm::GetImmLinks() -> const ImmAddrLinks*
+{
+	m_immAddrLinks.clear();
+	if (m_lines.size() == 0) return nullptr;
+
+
+	Addr addrMin = m_lines.front().addr;
+	Addr addrMax = m_lines.back().addr;
+
+	// aggregate <Addr, LineIdx> pairs
+	std::map<Addr, dev::Idx> immAddrPairs;
+	dev::Idx lineIdx = 0;
+	for (const auto& line : m_lines){
+		immAddrPairs.emplace(line.addr, lineIdx++);
+	}
+
+	// generate links
+	dev::Idx linkIdx = 0;
+	lineIdx = -1;
+	for (const auto& line : m_lines)
+	{
+		lineIdx++;
+
+		if (line.type != DisasmLine::Type::CODE ||
+			CpuI8080::GetInstrType(line.opcode) > CpuI8080::OPTYPE_JMP)
+		{
+			continue;
+		}
+		else if (line.imm < addrMin)
+		{
+			// adds links aiming to the address that is out of the visible range
+			// m_immAddrLinks.emplace(lineIdx, IMM_LINK_UP, linkIdx++});
+			continue;
+		}
+		else if (line.imm > addrMax)
+		{
+			// adds links aiming to the address that is out of the visible range
+			// m_immAddrLinks.emplace(lineIdx, IMM_LINK_DOWN, linkIdx++});
+			continue;
+		}
+
+		auto linkIdxIt = immAddrPairs.find(line.imm);
+		if (linkIdxIt == immAddrPairs.end()) continue;
+
+		m_immAddrLinks.emplace(lineIdx, Link{linkIdxIt->second, linkIdx++});
+	}
+
+	return &m_immAddrLinks;
 }

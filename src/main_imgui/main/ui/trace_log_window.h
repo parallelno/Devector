@@ -10,6 +10,7 @@
 #include "core/hardware.h"
 #include "core/debugger.h"
 #include "scheduler.h"
+#include "core/disasm.h"
 
 namespace dev
 {
@@ -56,9 +57,9 @@ namespace dev
 		void DrawLogSave(const bool _isRunning);
 		void DrawFilter(const bool _isRunning);
 		void DrawTable(const bool _isRunning);
-		void DrawDisasmCode(const bool _isRunning, const Disasm::Line& _line,
+		void DrawDisasmCode(const bool _isRunning, const DisasmLine& _line,
 			AddrHighlight& _addrHighlight);
-		void DrawDisasmAddr(const bool _isRunning, const Disasm::Line& _line,
+		void DrawDisasmAddr(const bool _isRunning, const DisasmLine& _line,
 			AddrHighlight& _addrHighlight);
 		auto GetLogPath() -> std::string;
 

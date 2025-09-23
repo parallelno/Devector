@@ -19,7 +19,7 @@
 #include "utils/types.h"
 #include "core/memory.h"
 
-namespace dev 
+namespace dev
 {
 	class CpuI8080
 	{
@@ -38,6 +38,19 @@ namespace dev
 		static const constexpr uint8_t OPCODE_JP = 0xF2;
 		static const constexpr uint8_t OPCODE_JM = 0xFA;
 		static const constexpr uint8_t OPCODE_DB = 0x10;
+
+
+		// opcode type
+		// order: branch instructions first then subroutines instruction first.
+		static const constexpr uint8_t OPTYPE_C__ = 0;
+		static const constexpr uint8_t OPTYPE_CAL = 1;
+		static const constexpr uint8_t OPTYPE_J__ = 2;
+		static const constexpr uint8_t OPTYPE_JMP = 3;
+		static const constexpr uint8_t OPTYPE_R__ = 4;
+		static const constexpr uint8_t OPTYPE_RET = 5;
+		static const constexpr uint8_t OPTYPE_PCH = 6;
+		static const constexpr uint8_t OPTYPE_RST = 7;
+		static const constexpr uint8_t OPTYPE_ALL = 8;
 
 		static const constexpr int CLOCK = 3000000;
 
@@ -162,6 +175,8 @@ namespace dev
 		bool IsInstructionExecuted() const;
 
 		static auto GetInstrCC(const uint8_t _opcode) -> uint8_t;
+		static auto GetInstrLen(const uint8_t _opcode) -> uint8_t;
+		static auto GetInstrType(const uint8_t _opcode) -> uint8_t;
 
 	private:
 
@@ -178,7 +193,7 @@ namespace dev
 		////////////////////////////////////////////////////////////////////////////
 
 		inline uint8_t ReadInstrMovePC(uint8_t _byteNum);
-		inline uint8_t ReadByte(const Addr _addr, 
+		inline uint8_t ReadByte(const Addr _addr,
 			Memory::AddrSpace _addrSpace = Memory::AddrSpace::RAM, const uint8_t _byteNum = 0);
 		inline void WriteByte(const Addr _addr, uint8_t _value,
 			Memory::AddrSpace _addrSpace, const uint8_t _byteNum);

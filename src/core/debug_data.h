@@ -37,6 +37,7 @@ namespace dev
 		DebugData(Hardware& _hardware);
 
 		auto GetLabels(const Addr _addr) const -> std::optional<LabelList>;
+		auto HasLabels(const Addr _addr) const -> bool;
 		auto GetLabelAddr(const std::string& _label) -> int;
 		void SetLabels(const Addr _addr, const LabelList& _labels);
 		void AddLabel(const Addr _addr, const std::string& _label);
@@ -90,6 +91,23 @@ namespace dev
 		void SaveDebugData();
 		auto GetPath() const -> const std::string& { return m_debugPath; };
 
+		inline void MemRunsUpdate(const GlobalAddr _globalAddr) { m_memRuns[_globalAddr]++; };
+		inline void MemReadsUpdate(const GlobalAddr _globalAddr) { m_memReads[_globalAddr]++; };
+		inline void MemWritesUpdate(const GlobalAddr _globalAddr) { m_memWrites[_globalAddr]++; };
+
+		inline auto GetMemRuns(const GlobalAddr _globalAddr) const
+			-> uint64_t {
+				return m_memRuns[_globalAddr];
+			};
+		inline auto GetMemReads(const GlobalAddr _globalAddr) const
+			-> uint64_t {
+				return m_memReads[_globalAddr];
+			};
+		inline auto GetMemWrites(const GlobalAddr _globalAddr) const
+			-> uint64_t {
+				return m_memWrites[_globalAddr];
+			};
+
 		void Reset();
 
 	private:
@@ -112,5 +130,10 @@ namespace dev
 		UpdateId m_commentsUpdates = 0;
 		UpdateId m_editsUpdates = 0;
 		UpdateId m_codePerfsUpdates = 0;
+
+		using MemStats = std::array<uint64_t, Memory::MEMORY_GLOBAL_LEN>;
+		MemStats m_memRuns;
+		MemStats m_memReads;
+		MemStats m_memWrites;
 	};
 }

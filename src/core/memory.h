@@ -110,10 +110,29 @@ namespace dev
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+		union Instr
+		{
+			struct {
+				uint8_t opcode;
+				uint8_t dataL;
+				uint8_t dataH;
+			};
+			struct {
+				uint8_t _;
+				uint16_t dataW;
+			};
+			uint32_t pack: 24 = 0;
+			uint8_t array[3];
+			Instr(uint32_t _pack) : pack(_pack) {}
+			Instr() : pack(0) {}
+		};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 		struct Debug
 		{
 			GlobalAddr instrGlobalAddr;
-			uint8_t instr[3];
+			Instr instr;
 			uint8_t instrLen = 0;
 			GlobalAddr readGlobalAddr[2];
 			uint8_t read[2];

@@ -24,11 +24,10 @@ namespace dev
 		struct Item
 		{
 			int32_t globalAddr = EMPTY_ITEM;
-			uint8_t opcode = 0;
-			CpuI8080::RegPair imm = 0; // immediate operand
+			Memory::Instr instr; // immediate operand
 		};
 
-		using Lines = std::array<Disasm::Line, TRACE_LOG_SIZE>;
+		using Lines = std::array<DisasmLine, TRACE_LOG_SIZE>;
 
 		// circular buffer. HW thread updates it
 		std::array <Item, TRACE_LOG_SIZE> m_log;
@@ -38,7 +37,7 @@ namespace dev
 		size_t m_disasmLinesLen = 0;
 
 		TraceLog(const DebugData& _debugData);
-		void AddCode(const Item& _item, Disasm::Line& _line);
+		void AddCode(const Item& _item, DisasmLine& _line);
 		void Update(
 			const CpuI8080::State& _cpuState, const Memory::State& _memState);
 		auto GetDisasm(

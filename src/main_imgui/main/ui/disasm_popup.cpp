@@ -35,21 +35,20 @@ void dev::DisasmPopup::CallbackOpen(
 	ImGui::OpenPopup(m_name.c_str());
 }
 
+std::array<char, dev::DisasmLine::LINE_BUFF_LEN> _disasmLineBuffer = {};
+
 void dev::DisasmPopup::Draw(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
 	if (ImGui::MenuItem("Copy"))
 	{
-		uint32_t cmd = m_hardware.Request(
-			Hardware::Req::GET_THREE_BYTES_RAM,
-			{ { "addr", m_globalAddr } })->at("data");
+		auto instr = Memory::Instr(m_hardware.Request(
+			Hardware::Req::GET_THREE_BYTES_RAM, {{"addr", m_globalAddr}}
+			)->at("data"));
 
-		uint8_t opcode = cmd & 0xFF;
-		uint8_t cmd_byte1 = (cmd >> 8) & 0xFF;
-		uint8_t cmd_byte2 = (cmd >> 16) & 0xFF;
+		auto line = dev::DisasmLine::PrintToBuffer(
+			_disasmLineBuffer, m_globalAddr, instr, nullptr);
 
-		auto line = dev::GetDisasmSimpleLine(
-			m_globalAddr, opcode, cmd_byte1, cmd_byte2);
 		dev::CopyToClipboard(line);
 	}
 
@@ -111,7 +110,7 @@ void dev::DisasmPopup::Draw(
 	if (ImGui::MenuItem("Add/Edit Label"))
 	{
 		auto labelExists =
-			m_debugger.GetDebugData().GetLabels(m_globalAddr) != std::nullopt;
+			m_debugger.GetDebugData().HasLabels(m_globalAddr);
 
 		if (labelExists)
 		{

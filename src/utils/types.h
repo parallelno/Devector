@@ -9,6 +9,7 @@ namespace dev
 	using Addr = uint16_t;
 	using ColorI = uint32_t;
 	using Id = int;
+	using Idx = int;
 
 	enum class UIItemMouseAction { NONE = 0, HOVERED, LEFT, RIGHT, MIDDLE };
 	enum class Condition : uint8_t { ANY = 0, EQU, LESS, GREATER, LESS_EQU, GREATER_EQU, NOT_EQU, INVALID, COUNT };

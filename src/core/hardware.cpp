@@ -1,6 +1,5 @@
 #include "core/hardware.h"
 #include "utils/str_utils.h"
-#include "core/disasm.h"
 
 dev::Hardware::Hardware(const std::string& _pathBootData,
 		const std::string& _pathRamDiskData, const bool _ramDiskClearAfterRestart)
@@ -726,17 +725,17 @@ auto dev::Hardware::GetStepOverAddr()
 	auto opcode = m_memory.GetByte(pc);
 
 	auto im_addr = m_memory.GetByte(pc + 2) << 8 | m_memory.GetByte(pc + 1);
-	auto next_pc = pc + dev::GetCmdLen(opcode);
+	auto next_pc = pc + CpuI8080::GetInstrLen(opcode);
 
-	switch (dev::GetOpcodeType(opcode))
+	switch (CpuI8080::GetInstrType(opcode))
 	{
-	case OPTYPE_JMP:
+	case CpuI8080::OPTYPE_JMP:
 		return im_addr;
-	case OPTYPE_RET:
+	case CpuI8080::OPTYPE_RET:
 		return m_memory.GetByte(sp + 1, Memory::AddrSpace::STACK) << 8 | m_memory.GetByte(sp, Memory::AddrSpace::STACK);
-	case OPTYPE_PCH:
+	case CpuI8080::OPTYPE_PCH:
 		return m_cpu.GetHL();
-	case OPTYPE_RST:
+	case CpuI8080::OPTYPE_RST:
 		return opcode - CpuI8080::OPCODE_RST0;
 	default:
 		switch (opcode)

@@ -1,153 +1,168 @@
 #pragma once
 
-#include <unordered_map>
-#include <array>
-#include <limits.h>
+#include <list>
+#include <string>
 
 #include "utils/types.h"
-#include "utils/str_utils.h"
-#include "core/breakpoint.h"
 #include "core/hardware.h"
 #include "core/debug_data.h"
+#include "core/breakpoint.h"
 
 namespace dev
 {
-	// types of a mnemonic parts
-	#define MNT_CMD		0 // command
-	#define MNT_REG		1 // register
-	#define MNT_IMM		2 // immediate operand
+	enum CmdImmType {
+		CMD_IT_NONE = 0, // no immediate operand
+		CMD_IT_B0 = 1, // immediate byte, command offset = 0. Used to represent the data blobs such as DB 0x00, DB 0x01, DB 0x02, etc
+		CMD_IT_B1 = 2, // immediate byte, command offset = 1
+		CMD_IT_W1 = 3, // immediate word, command offset = 1
+	};
 
-	// instruction immediate operand.
-	#define CMD_IM_NONE 0 // no immediate operand
-	#define CMD_IB_OFF0 1 // immediate byte, offset = 0. Used to represent the data blobs such as DB 0x00, DB 0x01, DB 0x02, etc
-	#define CMD_IB_OFF1 2 // immediate byte, offset = 1
-	#define CMD_IW_OFF1 3 // immediate word, offset = 1
+	enum CmdTokenType {
+		CMD_TT_NONE = 0,
+		CMD_TT_CMD,      // command
+		CMD_TT_REG,      // register
+		CMD_TT_IMM,      // immediate operand
+		CMD_TT_BIMM, // build-in immediate operand
+		CMD_TT_COMMA, 	// comma between operands
+		CMD_TT_COMMA_SPACE, // comma & spacebetween operands
+		CMD_TT_SPACE,    // space
+		CMD_TT_BRACKET_L, // left bracket
+		CMD_TT_BRACKET_R, // right bracket
+		CMD_TT_LABEL,    // label
+		CMD_TT_CONST,    // constant
+		CMD_TT_COMMENT   // comment
+	};
 
-	// opcode type
-	#define OPTYPE_C__	0
-	#define OPTYPE_CAL	1
-	#define OPTYPE_J__	2
-	#define OPTYPE_JMP	3
-	#define OPTYPE_R__	4
-	#define OPTYPE_RET	5
-	#define OPTYPE_PCH	6
-	#define OPTYPE_RST	7
-	#define OPTYPE_ALL	8
+	// max number of sub-strings in a command including mnemonic parts and immediate operand, labels, comments, consts, etc
+	static constexpr int CMD_TOKENS_MAX = 7;
 
-	#define CMD_LEN_MAX 3
+	struct Cmd{
+		const char* tokens[CMD_TOKENS_MAX];
+		const std::vector<CmdTokenType> token_types;
+		const CmdImmType imm_type = CMD_IT_NONE;
+	};
 
-	auto GetMnemonic(const uint8_t _opcode) -> const char**;
-	auto GetMnemonicLen(const uint8_t _opcode) -> uint8_t;
-	auto GetMnemonicType(const uint8_t _opcode) -> const uint8_t*;
-	auto GetImmediateType(const uint8_t _opcode) -> uint8_t;
-	auto GetOpcodeType(const uint8_t _opcode) -> const uint8_t;
-	auto GetCmdLen(const uint8_t _opcode) -> const uint8_t;
-
-	auto GetDisasmLogLine(
-		const CpuI8080::State& _cpuState,
-		const Memory::State& _memState) -> const char*;
-
-	auto GetDisasmSimpleLine(
-		const Addr _addr,
-		const uint8_t _opcode,
-		const uint8_t _cmd_byte1,
-		const uint8_t _cmd_byte2) -> const char*;
-
-	class Disasm
+	struct DisasmLine
 	{
-	public:
-		static constexpr int IMM_NO_LINK = -1; // means no link from the immediate to the Addr
-		static constexpr int IMM_LINK_UP = INT_MIN; // means the link goes from the immediate above the first visible line
-		static constexpr int IMM_LINK_DOWN = INT_MAX; // means the link goes from the immediate below the last visible line
-		static constexpr size_t DISASM_LINES_MAX = 80;
+		static constexpr size_t MAX_LABELS_IN_LINE = 10;
+		static constexpr size_t LINE_BUFF_LEN = 127;
 
-		using LabelList = std::vector<std::string>;
-		using Labels = std::unordered_map<GlobalAddr, LabelList>;
-		using Comments = std::unordered_map<GlobalAddr, std::string>;
-		using LineIdx = size_t;
-
-		void ResetConstsLabelsComments();
-
-		struct Line
-		{
-			static constexpr size_t STATS_LEN = 128;
-
-			enum class Type {
+		enum class Type {
 				COMMENT,
 				LABELS,
 				CODE,
 			};
+		// define what type of label is used for the immediate operand
+		enum class ImmSubType {
+				NONE = 0,
+				CONST,
+				LABEL
+			};
 
-			Type type = Type::CODE;
-			Addr addr = 0;
-			uint8_t opcode = 0;
-			uint16_t imm = 0; // immediate operand
-			char statsS[STATS_LEN] = { 0 }; // contains: runs, reads, writes
-			LabelList labels;
-			LabelList consts; // labels used as constants or they point to data
-			const std::string* comment = nullptr;
-			bool accessed = false; // no runs, reads, writes yet
-			Breakpoint::Status breakpointStatus = Breakpoint::Status::DISABLED;
+		Type type = Type::CODE;
+		Addr addr;
+		const Cmd* cmdP;
+		uint8_t opcode;
+		Addr imm; // immediate operand
+		std::string stats; // the addr stats: runs, reads, writes
+		bool accessed = false; // no runs, reads, writes yet
+		Breakpoint::Status breakpointStatus = Breakpoint::Status::DISABLED;
 
-			void Init();
-			auto GetStr() const->std::string;
+		std::string label; // the main label shown before ':'
+		std::string imm_str; // used as a immediate operand substitution
+		ImmSubType imm_sub_type = ImmSubType::NONE;
+		std::string comment;
+		std::string post_comment; // other labels and other consts associated with the addr or imm
 
-			inline auto GetAddrS() const -> const char* { return Uint16ToStrC0x(addr); };
-			auto GetImmediateS() const -> const char*;
-			inline auto GetFirstLabel() const -> const std::string { return labels.empty() ? "" : labels.at(0); };
-			inline auto GetLabelConst() const -> const std::string { return labels.empty() ? "" : consts.empty() ? "" : consts.at(0); };
-			inline auto GetFirstConst() const -> const std::string { return consts.empty() ? "" : consts.at(0); };
-		};
+		DisasmLine(Addr _addr = 0)
+			: addr(_addr), cmdP(nullptr), opcode(0), imm(0)
+		{};
+		// for comments
+		DisasmLine(const Addr _addr, const std::string& _comment)
+			: type(Type::COMMENT), addr(_addr), comment(_comment),
+			cmdP(nullptr), opcode(0), imm(0)
+		{};
+		// for labels
+		DisasmLine(const Addr _addr, const std::vector<std::string>& _labels);
+		// for code
+		DisasmLine(const Addr _addr, Hardware& _hardware, DebugData& _debugData);
 
-		using Lines = std::array<Line, DISASM_LINES_MAX>;
+		void InitComment(const std::string& _comment);
+		void InitLabels(const std::vector<std::string>& _labels);
+		void InitCode(const Addr _addr,
+					Hardware& _hardware, DebugData& _debugData);
+		void InitInstr(const Addr _addr,
+					   const Memory::Instr _instr,
+					   const DebugData& _debugData,
+					   const bool _init_post_comment);
+
+		auto LabelsToComment(
+			const std::vector<std::string>& _labels,
+			const size_t _start_idx) const -> std::string;
+
+		auto InstrToImm(const Memory::Instr _instr,
+					    const CmdImmType _type) const -> Addr;
+
+		static auto PrintToBuffer(
+			std::array<char, LINE_BUFF_LEN>& _buffer,
+			const GlobalAddr _globalAddr,
+			const Memory::Instr _instr,
+			const CpuI8080::Regs* _regsP = nullptr) -> const char*;
+	};
+
+	class Disasm
+	{
+	public:
+		static constexpr size_t CMDS_MAX = 256;
+		static constexpr size_t CMD_BYTES_MAX = 3;
+		static constexpr size_t DISASM_LINES_MAX = 80;
+
+		// indicates the link goes from the immediate above the first visible line
+		static constexpr int IMM_LINK_UP = INT_MIN;
+		// indicates the link goes from the immediate below the last visible line
+		static constexpr int IMM_LINK_DOWN = INT_MAX;
+
+		using Lines = std::list<DisasmLine>;
 
 		// each element is associated with the disasm lines.
 		// it represents a link between the immediate operand in this line
 		// and the another line with corresponding addr
 		struct Link {
-			int lineIdx = 0; // contains the index of the disasm line where the link goes. check IMM_NO_LINK, IMM_LINK_UP, IMM_LINK_DOWN
-			uint8_t linkIdx = 0; // contains the index of the link
+			// contains the index of the disasm line where the link goes or
+			// IMM_LINK_UP, IMM_LINK_DOWN
+			dev::Idx endLineIdx = 0;
+			// contains the index of the link
+			dev::Idx linkIdx = 0;
 		};
-		using ImmAddrLinks = std::array<Link, DISASM_LINES_MAX>;
+		using ImmAddrLinks = std::map<dev::Idx, Link>;
+
+
+		void Init();
+		auto GetLines() const -> const Lines& { return m_lines; }
+		void AddCode(
+			const Addr _addr,
+			const uint8_t _opcode,
+			const uint8_t _cmd_byte1,
+			const uint8_t _cmd_byte2);
+		void UpdateDisasm(
+			const Addr _addr, size_t _linesNum, const int _instructionOffset);
+		void Reset() { m_lines.clear(); };
+
+		auto GetImmLinks() -> const ImmAddrLinks*;
 
 		Disasm(Hardware& _hardware, DebugData& _debugData);
-		void Init(LineIdx _linesNum);
-
-		void AddLabes(const Addr _addr);
-		void AddComment(const Addr _addr);
-		auto AddCode(const Addr _addr, const uint32_t _cmd,
-			const Breakpoint::Status _breakpointStatus) -> Addr;
-
-		auto GetLines() -> const Lines** { return &m_linesP; };
-		auto GetLineNum() const -> LineIdx { return m_linesNum; }
-		auto GetLineIdx() const -> LineIdx { return m_lineIdx; }
-		auto GetImmLinks() -> const ImmAddrLinks*;
-		bool IsDone() const { return m_lineIdx >= m_linesNum; }
-		auto GetImmAddrlinkNum() const -> size_t { return m_immAddrlinkNum; }
-
-		auto GetAddr(const Addr _endAddr, const int _instructionOffset) const->Addr;
-		void Reset();
-		void SetUpdated() { m_linesP = &m_lines; };
-
-		inline void MemRunsUpdate(const GlobalAddr _globalAddr) { m_memRuns[_globalAddr]++; };
-		inline void MemReadsUpdate(const GlobalAddr _globalAddr) { m_memReads[_globalAddr]++; };
-		inline void MemWritesUpdate(const GlobalAddr _globalAddr) { m_memWrites[_globalAddr]++; };
 
 	private:
+		auto GetAddr(const Addr _addr, const int _instructionOffset) const
+			-> Addr;
 
 		Lines m_lines;
-		const Lines* m_linesP = nullptr; // exposed pointer. it invalidates every time labels/commets/consts are updated
-		LineIdx m_lineIdx = 0; // the next avalable line
-		LineIdx m_linesNum = 0; // the total number of lines
 
+		// The addr link is a UI element in the disasm window that represents a
+		// line between the immediate operand and the corresponding address.
 		ImmAddrLinks m_immAddrLinks;
-		size_t m_immAddrlinkNum = 0; // the total number of links between the immediate operand and the corresponding address
+
 		Hardware& m_hardware;
 		DebugData& m_debugData;
-
-		using MemStats = std::array<uint64_t, Memory::MEMORY_GLOBAL_LEN>;
-		MemStats m_memRuns;
-		MemStats m_memReads;
-		MemStats m_memWrites;
 	};
 }
