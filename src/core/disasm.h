@@ -26,8 +26,8 @@ namespace dev
 		CMD_TT_COMMA, 	// comma between operands
 		CMD_TT_COMMA_SPACE, // comma & spacebetween operands
 		CMD_TT_SPACE,    // space
-		CMD_TT_BRACKET_L, // left bracket
-		CMD_TT_BRACKET_R, // right bracket
+		CMD_TT_LPAREN, // left bracket
+		CMD_TT_RPAREN, // right bracket
 		CMD_TT_LABEL,    // label
 		CMD_TT_CONST,    // constant
 		CMD_TT_COMMENT   // comment
@@ -35,12 +35,25 @@ namespace dev
 
 	// max number of sub-strings in a command including mnemonic parts and immediate operand, labels, comments, consts, etc
 	static constexpr int CMD_TOKENS_MAX = 7;
+	static constexpr size_t CMDS_MAX = 256;
+	static constexpr size_t CMD_BYTES_MAX = 3;
 
 	struct Cmd{
 		const char* tokens[CMD_TOKENS_MAX];
 		const std::vector<CmdTokenType> token_types;
 		const CmdImmType imm_type = CMD_IT_NONE;
 	};
+
+	using Cmds = std::array<const dev::Cmd*, dev::CMDS_MAX>;
+
+	enum DisasmLang
+	{
+		DISASM_LANG_I8080 = 0,
+		DISASM_LANG_Z80
+	};
+
+	void SetDisasmLang(const DisasmLang _lang);
+	bool IsDisasmLangZ80();
 
 	struct DisasmLine
 	{
@@ -113,8 +126,6 @@ namespace dev
 	class Disasm
 	{
 	public:
-		static constexpr size_t CMDS_MAX = 256;
-		static constexpr size_t CMD_BYTES_MAX = 3;
 		static constexpr size_t DISASM_LINES_MAX = 80;
 
 		// indicates the link goes from the immediate above the first visible line

@@ -336,7 +336,7 @@ void dev::DisasmWindow::UpdateDisasm(
 	const bool _updateSelection)
 {
 	m_disasmAddr = _addr;
-	m_debugger.UpdateDisasm(_addr, m_disasmLines, -_instructionsOffset);
+	m_debugger.GetDisasm().UpdateDisasm(_addr, m_disasmLines, -_instructionsOffset);
 	m_immLinksP = m_debugger.GetDisasm().GetImmLinks();
 
 	if (_updateSelection) m_selectedLineAddr = _addr;

@@ -37,9 +37,32 @@ void dev::DisasmPopup::CallbackOpen(
 
 std::array<char, dev::DisasmLine::LINE_BUFF_LEN> _disasmLineBuffer = {};
 
+const char* disasmLangs[] = { "i8080", "z80" };
+
 void dev::DisasmPopup::Draw(
 	const dev::Signals _signals, dev::Scheduler::SignalData _data)
 {
+	auto disasmLangIdx = IsDisasmLangZ80() ? 1 : 0;
+
+	if (ImGui::BeginCombo("##disasm_langs", disasmLangs[disasmLangIdx]))
+	{
+		for (int n = 0; n < IM_ARRAYSIZE(disasmLangs); n++)
+		{
+			const bool is_selected = (disasmLangIdx == n);
+			if (ImGui::Selectable(disasmLangs[n], is_selected))
+			{
+				dev::SetDisasmLang(static_cast<DisasmLang>(n));
+				m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
+			}
+
+			// Set the initial focus when opening the combo
+			// (scrolling + keyboard navigation focus)
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+
 	if (ImGui::MenuItem("Copy"))
 	{
 		auto instr = Memory::Instr(m_hardware.Request(

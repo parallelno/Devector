@@ -45,7 +45,6 @@ namespace dev
 
 		void UpdateLastRW();
 		auto GetLastRW() -> const MemLastRW* { return &m_memLastRW; }
-		void UpdateDisasm(const Addr _addr, const size_t _lines, const int _instructionOffset);
 		auto GetTraceLog() -> TraceLog& { return m_traceLog; };
 		auto GetDebugData() -> DebugData& { return m_debugData; };
 		auto GetDisasm() -> Disasm& { return m_disasm; };
@@ -55,7 +54,6 @@ namespace dev
 
 		Hardware& m_hardware;
 		DebugData m_debugData;
-		//Disasm m_disasm;
 		Disasm m_disasm;
 		TraceLog m_traceLog;
 		Recorder m_recorder;

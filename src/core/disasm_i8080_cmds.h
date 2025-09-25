@@ -7,7 +7,7 @@ static const dev::Cmd CMD_NOP = {
 };
 
 static const dev::Cmd CMD_LXI_B_NN = {
-		{ "lxi", " ", "b", ", "},
+		{ "lxi", " ", "b", ", ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -37,7 +37,7 @@ static const dev::Cmd CMD_DCR_B = {
 };
 
 static const dev::Cmd CMD_MVI_B_N = {
-		{ "mvi", " ", "b", ", "},
+		{ "mvi", " ", "b", ", ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -79,7 +79,7 @@ static const dev::Cmd CMD_DCR_C = {
 };
 
 static const dev::Cmd CMD_MVI_C_N = {
-		{ "mvi", " ", "c", ", "},
+		{ "mvi", " ", "c", ", ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -91,7 +91,7 @@ static const dev::Cmd CMD_RRC = {
 };
 
 static const dev::Cmd CMD_LXI_D = {
-		{ "lxi", " ", "d", ", "},
+		{ "lxi", " ", "d", ", ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -121,7 +121,7 @@ static const dev::Cmd CMD_DCR_D = {
 };
 
 static const dev::Cmd CMD_MVI_D_N = {
-		{ "mvi", " ", "d", ", "},
+		{ "mvi", " ", "d", ", ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -163,7 +163,7 @@ static const dev::Cmd CMD_DCR_E = {
 };
 
 static const dev::Cmd CMD_MVI_E_N = {
-		{ "mvi", " ", "e", ", "},
+		{ "mvi", " ", "e", ", ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -175,13 +175,13 @@ static const dev::Cmd CMD_RAR = {
 };
 
 static const dev::Cmd CMD_LXI_H = {
-		{ "lxi", " ", "h", ", "},
+		{ "lxi", " ", "h", ", ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_SHLD_NN = {
-		{ "shld", " " },
+		{ "shld", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -205,7 +205,7 @@ static const dev::Cmd CMD_DCR_H = {
 };
 
 static const dev::Cmd CMD_MVI_H_N = {
-		{ "mvi", " ", "h", ", "},
+		{ "mvi", " ", "h", ", ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -223,7 +223,7 @@ static const dev::Cmd CMD_DAD_H = {
 };
 
 static const dev::Cmd CMD_LHLD_NN = {
-		{ "lhld", " " },
+		{ "lhld", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -247,7 +247,7 @@ static const dev::Cmd CMD_DCR_L = {
 };
 
 static const dev::Cmd CMD_MVI_L_N = {
-		{ "mvi", " ", "l", ", "},
+		{ "mvi", " ", "l", ", ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -259,13 +259,13 @@ static const dev::Cmd CMD_CMA = {
 };
 
 static const dev::Cmd CMD_LXI_SP = {
-		{ "lxi", " ", "sp" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG },
-		dev::CMD_IT_NONE
+		{ "lxi", " ", "sp", ", ", "NN" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
+		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_STA_NN = {
-		{ "sta", " "},
+		{ "sta", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -289,7 +289,7 @@ static const dev::Cmd CMD_DCR_M = {
 };
 
 static const dev::Cmd CMD_MVI_M_N = {
-		{ "mvi", " ", "m", ", "},
+		{ "mvi", " ", "m", ", ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -307,7 +307,7 @@ static const dev::Cmd CMD_DAD_SP = {
 };
 
 static const dev::Cmd CMD_LDA_NN = {
-		{ "lda", " "},
+		{ "lda", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -331,7 +331,7 @@ static const dev::Cmd CMD_DCR_A = {
 };
 
 static const dev::Cmd CMD_MVI_A_N = {
-		{ "mvi", " ", "a", ", "},
+		{ "mvi", " ", "a", ", ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -343,326 +343,326 @@ static const dev::Cmd CMD_CMC = {
 };
 
 static const dev::Cmd CMD_MOV_B_B = {
-		{ "mov", " ", "b", " ", "b" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "b", ", ", "b" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_B_C = {
-		{ "mov", " ", "b", " ", "c" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "b", ", ", "c" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_B_D = {
-		{ "mov", " ", "b", " ", "d" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "b", ", ", "d" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_B_E = {
-		{ "mov", " ", "b", " ", "e" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "b", ", ", "e" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_B_H = {
-		{ "mov", " ", "b", " ", "h" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "b", ", ", "h" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_B_L = {
-		{ "mov", " ", "b", " ", "l" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "b", ", ", "l" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_B_M = {
-		{ "mov", " ", "b", " ", "m" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "b", ", ", "m" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_B_A = {
-		{ "mov", " ", "b", " ", "a" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "b", ", ", "a" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_C_B = {
-		{ "mov", " ", "c", " ", "b" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "c", ", ", "b" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_C_C = {
-		{ "mov", " ", "c", " ", "c" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "c", ", ", "c" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_C_D = {
-		{ "mov", " ", "c", " ", "d" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "c", ", ", "d" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_C_E = {
-		{ "mov", " ", "c", " ", "e" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "c", ", ", "e" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_C_H = {
-		{ "mov", " ", "c", " ", "h" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "c", ", ", "h" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_C_L = {
-		{ "mov", " ", "c", " ", "l" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "c", ", ", "l" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_C_M = {
-		{ "mov", " ", "c", " ", "m" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "c", ", ", "m" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_C_A = {
-		{ "mov", " ", "c", " ", "a" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "c", ", ", "a" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_D_B = {
-		{ "mov", " ", "d", " ", "b" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "d", ", ", "b" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_D_C = {
-		{ "mov", " ", "d", " ", "c" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "d", ", ", "c" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_D_D = {
-		{ "mov", " ", "d", " ", "d" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "d", ", ", "d" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_D_E = {
-		{ "mov", " ", "d", " ", "e" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "d", ", ", "e" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_D_H = {
-		{ "mov", " ", "d", " ", "h" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "d", ", ", "h" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_D_L = {
-		{ "mov", " ", "d", " ", "l" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "d", ", ", "l" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_D_M = {
-		{ "mov", " ", "d", " ", "m" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "d", ", ", "m" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_D_A = {
-		{ "mov", " ", "d", " ", "a" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "d", ", ", "a" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_E_B = {
-		{ "mov", " ", "e", " ", "b" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "e", ", ", "b" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_E_C = {
-		{ "mov", " ", "e", " ", "c" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "e", ", ", "c" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_E_D = {
-		{ "mov", " ", "e", " ", "d" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "e", ", ", "d" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_E_E = {
-		{ "mov", " ", "e", " ", "e" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "e", ", ", "e" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_E_H = {
-		{ "mov", " ", "e", " ", "h" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "e", ", ", "h" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_E_L = {
-		{ "mov", " ", "e", " ", "l" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "e", ", ", "l" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_E_M = {
-		{ "mov", " ", "e", " ", "m" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "e", ", ", "m" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_E_A = {
-		{ "mov", " ", "e", " ", "a" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "e", ", ", "a" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_H_B = {
-		{ "mov", " ", "h", " ", "b" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "h", ", ", "b" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_H_C = {
-		{ "mov", " ", "h", " ", "c" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "h", ", ", "c" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_H_D = {
-		{ "mov", " ", "h", " ", "d" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "h", ", ", "d" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_H_E = {
-		{ "mov", " ", "h", " ", "e" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "h", ", ", "e" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_H_H = {
-		{ "mov", " ", "h", " ", "h" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "h", ", ", "h" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_H_L = {
-		{ "mov", " ", "h", " ", "l" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "h", ", ", "l" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_H_M = {
-		{ "mov", " ", "h", " ", "m" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "h", ", ", "m" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_H_A = {
-		{ "mov", " ", "h", " ", "a" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "h", ", ", "a" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_L_B = {
-		{ "mov", " ", "l", " ", "b" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "l", ", ", "b" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_L_C = {
-		{ "mov", " ", "l", " ", "c" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "l", ", ", "c" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_L_D = {
-		{ "mov", " ", "l", " ", "d" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "l", ", ", "d" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_L_E = {
-		{ "mov", " ", "l", " ", "e" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "l", ", ", "e" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_L_H = {
-		{ "mov", " ", "l", " ", "h" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "l", ", ", "h" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_L_L = {
-		{ "mov", " ", "l", " ", "l" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "l", ", ", "l" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_L_M = {
-		{ "mov", " ", "l", " ", "m" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "l", ", ", "m" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_L_A = {
-		{ "mov", " ", "l", " ", "a" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "l", ", ", "a" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_M_B = {
-		{ "mov", " ", "m", " ", "b" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "m", ", ", "b" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_M_C = {
-		{ "mov", " ", "m", " ", "c" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "m", ", ", "c" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_M_D = {
-		{ "mov", " ", "m", " ", "d" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "m", ", ", "d" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_M_E = {
-		{ "mov", " ", "m", " ", "e" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "m", ", ", "e" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_M_H = {
-		{ "mov", " ", "m", " ", "h" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "m", ", ", "h" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_M_L = {
-		{ "mov", " ", "m", " ", "l" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "m", ", ", "l" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
@@ -673,56 +673,56 @@ static const dev::Cmd CMD_HLT = {
 };
 
 static const dev::Cmd CMD_MOV_M_A = {
-		{ "mov", " ", "m", " ", "a" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "m", ", ", "a" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_A_B = {
-		{ "mov", " ", "a", " ", "b" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "a", ", ", "b" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_A_C = {
-		{ "mov", " ", "a", " ", "c" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "a", ", ", "c" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_A_D = {
-		{ "mov", " ", "a", " ", "d" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "a", ", ", "d" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_A_E = {
-		{ "mov", " ", "a", " ", "e" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "a", ", ", "e" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_A_H = {
-		{ "mov", " ", "a", " ", "h" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "a", ", ", "h" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_A_L = {
-		{ "mov", " ", "a", " ", "l" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "a", ", ", "l" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_A_M = {
-		{ "mov", " ", "a", " ", "m" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "a", ", ", "m" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
 static const dev::Cmd CMD_MOV_A_A = {
-		{ "mov", " ", "a", " ", "a" },
-		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_REG },
+		{ "mov", " ", "a", ", ", "a" },
+		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_REG, dev::CMD_TT_COMMA_SPACE, dev::CMD_TT_REG },
 		dev::CMD_IT_NONE
 };
 
@@ -1123,18 +1123,18 @@ static const dev::Cmd CMD_POP_B = {
 };
 
 static const dev::Cmd CMD_JNZ_NN = {
-		{ "jnz", " " },
+		{ "jnz", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_JMP_NN = {
-		{ "jmp", " " },
+		{ "jmp", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 static const dev::Cmd CMD_CNZ_NN = {
-		{ "cnz", " "},
+		{ "cnz", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -1146,9 +1146,9 @@ static const dev::Cmd CMD_PUSH_B = {
 };
 
 static const dev::Cmd CMD_ADI_N = {
-		{ "adi", " "},
+		{ "adi", " ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
-		dev::CMD_IT_W1
+		dev::CMD_IT_B1
 };
 
 static const dev::Cmd CMD_RST_0 = {
@@ -1169,27 +1169,27 @@ static const dev::Cmd CMD_RET = {
 		dev::CMD_IT_NONE
 };
 static const dev::Cmd CMD_JZ_NN = {
-		{ "jz", " "},
+		{ "jz", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_CZ_NN = {
-		{ "cz", " " },
+		{ "cz", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_CALL_NN = {
-		{ "call", " " },
+		{ "call", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_ACI_N = {
-		{ "aci", " "},
+		{ "aci", " ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
-		dev::CMD_IT_W1
+		dev::CMD_IT_B1
 };
 
 static const dev::Cmd CMD_RST_1 = {
@@ -1210,19 +1210,19 @@ static const dev::Cmd CMD_POP_D = {
 		dev::CMD_IT_NONE
 };
 static const dev::Cmd CMD_JNC_NN = {
-		{ "jnc", " " },
+		{ "jnc", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_OUT_N = {
-		{ "out", " "},
+		{ "out", " ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
 
 static const dev::Cmd CMD_CNC_NN = {
-		{ "cnc", " " },
+		{ "cnc", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -1234,7 +1234,7 @@ static const dev::Cmd CMD_PUSH_D = {
 };
 
 static const dev::Cmd CMD_SUI_N = {
-		{ "sui", " " },
+		{ "sui", " ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -1251,25 +1251,25 @@ static const dev::Cmd CMD_RC = {
 		dev::CMD_IT_NONE
 };
 static const dev::Cmd CMD_JC_NN = {
-		{ "jc", " " },
+		{ "jc", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_IN_N = {
-		{ "in", " " },
+		{ "in", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
 
 static const dev::Cmd CMD_CC_NN = {
-		{ "cc", " " },
+		{ "cc", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_SBI_N = {
-		{ "sbi", " " },
+		{ "sbi", " ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -1293,7 +1293,7 @@ static const dev::Cmd CMD_POP_H = {
 };
 
 static const dev::Cmd CMD_JPO_NN = {
-		{ "jpo", " " },
+		{ "jpo", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -1305,7 +1305,7 @@ static const dev::Cmd CMD_XTHL = {
 };
 
 static const dev::Cmd CMD_CPO_NN = {
-		{ "cpo", " " },
+		{ "cpo", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -1317,7 +1317,7 @@ static const dev::Cmd CMD_PUSH_H = {
 };
 
 static const dev::Cmd CMD_ANI_N = {
-		{ "ani", " " },
+		{ "ani", " ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -1340,7 +1340,7 @@ static const dev::Cmd CMD_PCHL = {
 };
 
 static const dev::Cmd CMD_JPE_NN = {
-		{ "jpe", " " },
+		{ "jpe", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -1352,13 +1352,13 @@ static const dev::Cmd CMD_XCHG = {
 };
 
 static const dev::Cmd CMD_CPE_NN = {
-		{ "cpe", " " },
+		{ "cpe", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_XRI_N = {
-		{ "xri", " " },
+		{ "xri", " ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -1382,7 +1382,7 @@ static const dev::Cmd CMD_POP_PSW = {
 };
 
 static const dev::Cmd CMD_JP_NN = {
-		{ "jp", " " },
+		{ "jp", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -1393,7 +1393,7 @@ static const dev::Cmd CMD_DI = {
 		dev::CMD_IT_NONE
 };
 static const dev::Cmd CMD_CP_NN = {
-		{ "cp", " " },
+		{ "cp", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -1405,7 +1405,7 @@ static const dev::Cmd CMD_PUSH_PSW = {
 };
 
 static const dev::Cmd CMD_ORI_N = {
-		{ "ori", " " },
+		{ "ori", " ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -1429,7 +1429,7 @@ static const dev::Cmd CMD_SPHL = {
 };
 
 static const dev::Cmd CMD_JM_NN = {
-		{ "jm", " " },
+		{ "jm", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
@@ -1441,13 +1441,13 @@ static const dev::Cmd CMD_EI = {
 };
 
 static const dev::Cmd CMD_CM_NN = {
-		{ "cm", " " },
+		{ "cm", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_W1
 };
 
 static const dev::Cmd CMD_CPI_N = {
-		{ "cpi", " " },
+		{ "cpi", " ", "NN" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B1
 };
@@ -1459,12 +1459,12 @@ static const dev::Cmd CMD_RST_7 = {
 };
 
 static const dev::Cmd CMD_DB_N = {
-		{ "db", " "},
+		{ "db", " ", "N" },
 		{ dev::CMD_TT_CMD, dev::CMD_TT_SPACE, dev::CMD_TT_IMM },
 		dev::CMD_IT_B0
 };
 
-static const dev::Cmd* cmds_i8080[dev::Disasm::CMDS_MAX] = {
+static dev::Cmds cmds_i8080 = {
 		&CMD_NOP, /* 0x00 */
 		&CMD_LXI_B_NN, /* 0x01 */
 		&CMD_STAX_B, /* 0x02 */

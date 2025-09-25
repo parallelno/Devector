@@ -16,6 +16,7 @@
 #include "utils/str_utils.h"
 #include "utils/shaders.h"
 #include "core/fdd_consts.h"
+#include "core/disasm.h"
 
 dev::DevectorApp::DevectorApp(
 	const std::string& _settingsPath, nlohmann::json _settingsJ,
@@ -64,6 +65,7 @@ dev::DevectorApp::~DevectorApp()
 			m_displayWindowP->GetExecutionSpeed()
 		));
 	}
+	SettingsUpdate("disasmLangZ80", dev::IsDisasmLangZ80());
 }
 
 void dev::DevectorApp::HardwareInit()
@@ -106,7 +108,7 @@ void dev::DevectorApp::SettingsInit()
 
 	RecentFilesInit();
 
-	m_mountRecentFddImg = GetSettingsBool("m_mountRecentFddImg", true);
+	m_mountRecentFddImg = GetSettingsBool("mountRecentFddImg", true);
 	if (m_mountRecentFddImg)
 	{
 		m_scheduler.AddSignal({dev::Signals::LOAD_RECENT_FDD_IMG});
@@ -114,6 +116,11 @@ void dev::DevectorApp::SettingsInit()
 
 	SettingsInitDisplayShaders();
 	SettingsInitMemDisplayShaders();
+
+	bool disasmLangZ80 = GetSettingsBool("disasmLangZ80", false);
+	SetDisasmLang(disasmLangZ80 ?
+		DisasmLang::DISASM_LANG_Z80 : DisasmLang::DISASM_LANG_I8080);
+	m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 }
 
 

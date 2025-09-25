@@ -1,14 +1,35 @@
 #include "core/disasm.h"
 #include "core/disasm_i8080_cmds.h"
+#include "core/disasm_z80_cmds.h"
 #include "utils/str_utils.h"
 
+// current ASM command syntax (i8080/z80/etc)
+static const dev::Cmds* cmdsP = &cmds_i8080;
+
+void dev::SetDisasmLang(const DisasmLang _lang)
+{
+	switch (_lang)
+	{
+	case DISASM_LANG_I8080:
+		cmdsP = &cmds_i8080;
+		break;
+	case DISASM_LANG_Z80:
+		cmdsP = &cmds_z80;
+		break;
+	}
+}
+
+bool dev::IsDisasmLangZ80()
+{
+	return cmdsP == &cmds_z80;
+}
 
 dev::Disasm::Disasm(Hardware& _hardware, DebugData& _debugData)
 	:
 	m_hardware(_hardware), m_debugData(_debugData)
 {}
 
-
+// UI thread
 auto dev::Disasm::UpdateDisasm(
 	const Addr _addr, size_t _linesNum, const int _instructionOffset)
 -> void
@@ -196,7 +217,7 @@ void dev::DisasmLine::InitInstr(
 	type = Type::CODE;
 	addr = _addr;
 	opcode = _instr.opcode;
-	cmdP = cmds_i8080[_instr.opcode];
+	cmdP = cmdsP->at(_instr.opcode);
 	imm = InstrToImm(_instr, cmdP->imm_type);
 
 	// Add consts
@@ -280,7 +301,7 @@ auto dev::DisasmLine::PrintToBuffer(
 	i += printed_chars;
 
 	// Print intruction
-	auto cmdP = cmds_i8080[_instr.opcode];
+	auto cmdP = cmdsP->at(_instr.opcode);
 	// Iterate over the tokens of the command and concatenate them into buffer
 	for (int i = 0; i < cmdP->token_types.size(); i++)
 	{

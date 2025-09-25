@@ -421,66 +421,6 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 	return out;
 }
 
-//////////////////////////////////////////////////////////////
-//
-// Disasm
-//
-//////////////////////////////////////////////////////////////
-
-// _instructionOffset defines the start address of the m_disasm.
-// _instructionOffset = 0 means the start address is the _addr,
-// _instructionOffset = -5 means the start address is 5 instructions
-// 						prior the _addr, and vise versa.
-// UI thread
-void dev::Debugger::UpdateDisasm(
-	const Addr _addr, const size_t _linesNum, const int _instructionOffset)
-{
-	m_disasm.UpdateDisasm(_addr, _linesNum, _instructionOffset);
-/*
-	m_disasm.Init(_linesNum);
-
-	// calculate a new address that precedes the specified 'addr' by the instructionOffset
-	Addr addr = m_disasm.GetAddr(_addr, _instructionOffset);
-
-	if (_instructionOffset < 0 && addr == _addr)
-	{
-		// _instructionOffset < 0 means we want to disasm several intructions prior the _addr.
-		// if the GetAddr() outputs the addr equal to input _addr, that means
-		// there are no valid instructions fit into the range (_addr+_instructionOffset, _addr)
-		// and that means a data blob is ahead
-		addr += (Addr)_instructionOffset;
-
-		for (int i=0; i < -_instructionOffset; i++)
-		{
-			m_disasm.AddComment(addr);
-			m_disasm.AddLabes(addr);
-
-			uint8_t db = m_hardware.Request(Hardware::Req::GET_BYTE_RAM, { { "addr", addr } })->at("data");
-			uint32_t cmd = db<<8 | CpuI8080::OPCODE_DB;
-			auto breakpointStatus = m_debugData.GetBreakpoints().GetStatus(addr);
-			addr += m_disasm.AddCode(addr, cmd, breakpointStatus);
-		}
-	}
-
-	while (!m_disasm.IsDone())
-	{
-		m_disasm.AddComment(addr);
-		m_disasm.AddLabes(addr);
-
-		uint32_t cmd = m_hardware.Request(Hardware::Req::GET_THREE_BYTES_RAM, { { "addr", addr } })->at("data");
-		GlobalAddr globalAddr = m_hardware.Request(
-			Hardware::Req::GET_GLOBAL_ADDR_RAM,
-			{ { "addr", addr } })->at("data");
-
-		auto breakpointStatus = m_debugData.GetBreakpoints().GetStatus(globalAddr);
-
-		addr += m_disasm.AddCode(addr, cmd, breakpointStatus);
-	}
-
-	m_disasm.SetUpdated();
-*/
-}
-
 // UI thread
 void dev::Debugger::UpdateLastRW()
 {
