@@ -282,6 +282,22 @@ DrawRect(1, 0, 0, 16, 16, 0xFFFFFF80)
 local sp = GetSP()
 ```
 
+
+## Tagging & publishing
+
+To create an annotated Git tag locally and publish it to the remote (this will commonly trigger CI workflows set to run on tags):
+
+```bash
+# create an annotated tag with a message
+git tag -a v9.4.2 -m "Release v9.4.2"
+
+# push the single tag to origin
+git push origin v9.4.2
+
+# alternatively push all tags
+git push --tags
+```
+
 ## Contributing
 
 Contributions are welcome! If you find a bug or have an idea for a feature, please create an issue or submit a pull request.
