@@ -667,13 +667,21 @@ bool dev::DevectorApp::EventFilter(void* _userdata, SDL_Event* _event)
 
 			if (displayFocused || keyboardFocused)
 			{
+				// If the key is Reset/Restart on key-up, persist debug data
+				// before forwarding the key to Hardware so the reset path
+				// doesn't clear unsaved debug state.
+				if ((scancode == SDL_SCANCODE_F11 || scancode == SDL_SCANCODE_F12) &&
+					action == SDL_EVENT_KEY_UP)
+				{
+					if (appP->m_debuggerP) appP->m_debuggerP->GetDebugData().SaveDebugData();
+				}
+
 				appP->m_hardwareP->Request(Hardware::Req::KEY_HANDLING,
 					{ { "scancode", scancode }, { "action", action} });
 
-				// Reset/Restart handling
-				if (scancode == SDL_SCANCODE_F11 ||
-					scancode == SDL_SCANCODE_F12
-				){
+				// Reset/Restart handling: swallow these events from SDL
+				if (scancode == SDL_SCANCODE_F11 || scancode == SDL_SCANCODE_F12)
+				{
 					return false; // do not pass the event to SDL
 				}
 

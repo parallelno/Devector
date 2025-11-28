@@ -104,6 +104,8 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 	ImGui::SameLine();
 	if (ImGui::Button("Reset"))
 	{
+		// Persist current debug data before reloading the ROM/FDD
+		m_debugger.GetDebugData().SaveDebugData();
 		m_scheduler.AddSignal({dev::Signals::RELOAD});
 	}
 
