@@ -76,8 +76,9 @@ bool dev::Hardware::ExecuteInstruction()
 }
 
 // TODO:
-// 1. reload, reset, update the palette, and other non-hardware-initiated operations have to reset the playback history
-// 2. navigation. show data as data in the disasm. take the list from the watchpoints
+// 1. reload, reset, update the palette, and other non-hardware-initiated
+//    operations have to reset the playback history
+// 2. navigation. show data as data blocks in the disasm. take the list from the watchpoints
 // 3. aggregation of consts, labels, funcs with default names
 
 void dev::Hardware::Execution()
@@ -588,20 +589,6 @@ static constexpr int LINES_MAX = 16;
 static const int LINE_LEN_MAX = HEX_CHARS_IN_LINE + 1 + CHARS_IN_LINE + NEWLINE_LEN;
 
 static char hex_data[LINE_LEN_MAX * LINES_MAX + EOF_LEN] = { 0 };
-
-static bool init_hex_data() {
-	for (int i = 0; i < sizeof(hex_data)-1; i++)
-	{
-		int x = i % LINE_LEN_MAX;
-		int y = i / LINE_LEN_MAX;
-
-		// end of line
-		hex_data[i] = x == LINE_LEN_MAX - 1 ? '\n' : ' ';
-	}
-	return true;
-}
-
-static bool hex_data_initialized = init_hex_data();
 
 auto dev::Hardware::GetMemString(const nlohmann::json _dataJ)
 -> nlohmann::json

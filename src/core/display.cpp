@@ -8,8 +8,8 @@ dev::Display::Display(Memory& _memory, IO& _io)
 	m_memory(_memory), m_io(_io)
 {
 	// init the full palette
-	for (int i = 0; i < FULL_PALLETE_LEN; i++) {
-		m_state.update.fullPallete[i] = VectorColorToArgb(i);
+	for (int i = 0; i < FULL_PALETTE_LEN; i++) {
+		m_fullPalette[i] = VectorColorToArgb(i);
 	}
 	m_state.frameBufferP = &m_frameBuffer;
 
@@ -64,7 +64,7 @@ void dev::Display::Rasterize()
 
 	int rasterLine = GetRasterLine();
 	int rasterPixel = GetRasterPixel();
-	
+
 	bool isActiveScan = rasterLine >= SCAN_ACTIVE_AREA_TOP && rasterLine < SCAN_ACTIVE_AREA_TOP + ACTIVE_AREA_H;
 	bool isActiveArea = isActiveScan &&
 					rasterPixel >= m_borderLeft && rasterPixel < BORDER_RIGHT;
@@ -99,7 +99,7 @@ void dev::Display::Rasterize()
 
 void dev::Display::FillBorder(const int _rasterizedPixels)
 {
-	auto borderColor = m_state.update.fullPallete[m_io.GetBorderColor()];
+	auto borderColor = m_fullPalette[m_io.GetBorderColor()];
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
 		m_frameBuffer[m_state.update.framebufferIdx++] = borderColor;
@@ -111,7 +111,7 @@ void dev::Display::FillBorderPortHandling(const int _rasterizedPixels)
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
 		m_io.TryToCommit(m_io.GetBorderColorIdx());
-		auto color = m_state.update.fullPallete[m_io.GetBorderColor()];
+		auto color = m_fullPalette[m_io.GetBorderColor()];
 
 		m_frameBuffer[m_state.update.framebufferIdx++] = color;
 		int isNewFrame = m_state.update.framebufferIdx / FRAME_LEN;
@@ -144,8 +144,8 @@ void dev::Display::FillActiveArea256(const int _rasterizedPixels)
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
 		auto colorIdx = BytesToColorIdx256(screenBytes, bitIdx);
-		auto color = m_state.update.fullPallete[m_io.GetColor(colorIdx)];		
-		
+		auto color = m_fullPalette[m_io.GetColor(colorIdx)];
+
 		m_frameBuffer[m_state.update.framebufferIdx++] = color;
 
 		bitIdx -= i % 2;
@@ -177,7 +177,7 @@ void dev::Display::FillActiveArea256PortHandling(const int _rasterizedPixels)
 
 		auto colorIdx = BytesToColorIdx256(screenBytes, bitIdx);
 		m_io.TryToCommit(colorIdx);
-		auto color = m_state.update.fullPallete[m_io.GetColor(colorIdx)];
+		auto color = m_fullPalette[m_io.GetColor(colorIdx)];
 
 		m_frameBuffer[m_state.update.framebufferIdx++] = color;
 
@@ -190,7 +190,7 @@ void dev::Display::FillActiveArea256PortHandling(const int _rasterizedPixels)
 }
 
 void dev::Display::FillActiveArea512PortHandling(const int _rasterizedPixels)
-{	
+{
 	// scrolling
 	int rasterLine = GetRasterLine();
 	int rasterPixel = GetRasterPixel();
@@ -210,7 +210,7 @@ void dev::Display::FillActiveArea512PortHandling(const int _rasterizedPixels)
 
 		auto colorIdx = BytesToColorIdx512(screenBytes, pxlIdx);
 		m_io.TryToCommit(colorIdx);
-		auto color = m_state.update.fullPallete[m_io.GetColor(colorIdx)];
+		auto color = m_fullPalette[m_io.GetColor(colorIdx)];
 
 		m_frameBuffer[m_state.update.framebufferIdx++] = color;
 
@@ -218,7 +218,7 @@ void dev::Display::FillActiveArea512PortHandling(const int _rasterizedPixels)
 		if (pxlIdx < 0){
 			pxlIdx = 15;
 			screenBytes = GetScreenBytes(rasterLineScrolled, rasterPixel);
-		}		
+		}
 	}
 }
 
@@ -228,7 +228,7 @@ void dev::Display::FillActiveArea512(const int _rasterizedPixels)
 	int rasterLine = GetRasterLine();
 	int rasterPixel = GetRasterPixel();
 	int rasterLineScrolled = (rasterLine - SCAN_ACTIVE_AREA_TOP + (255 - m_state.update.scrollIdx) + ACTIVE_AREA_H) % ACTIVE_AREA_H + SCAN_ACTIVE_AREA_TOP;
-	
+
 	// rasterization
 	auto screenBytes = GetScreenBytes(rasterLineScrolled, rasterPixel); // 4 bytes. One byte per screen buffer
 	int pxlIdx = 15 - ((m_state.update.framebufferIdx - m_borderLeft) % RASTERIZED_PXLS_MAX); // 0-15
@@ -236,10 +236,10 @@ void dev::Display::FillActiveArea512(const int _rasterizedPixels)
 	for (int i = 0; i < _rasterizedPixels; i++)
 	{
 		auto colorIdx = BytesToColorIdx512(screenBytes, pxlIdx);
-		auto color = m_state.update.fullPallete[m_io.GetColor(colorIdx)];
-		
+		auto color = m_fullPalette[m_io.GetColor(colorIdx)];
+
 		m_frameBuffer[m_state.update.framebufferIdx++] = color;
-		
+
 		pxlIdx--;
 		if (pxlIdx < 0){
 			pxlIdx = 15;
@@ -309,9 +309,9 @@ uint32_t dev::Display::BytesToColorIdx512(uint32_t _screenBytes, uint8_t _bitIdx
 {
 	bool even = _bitIdx & 1;
 	_bitIdx >>= 1;
-	
+
 	if (even) {
-		return 
+		return
 			(_screenBytes >> (_bitIdx - 0 + 0)) & 1 |
 			(_screenBytes >> (_bitIdx - 1 + 8)) & 2;
 	}
@@ -322,19 +322,19 @@ uint32_t dev::Display::BytesToColorIdx512(uint32_t _screenBytes, uint8_t _bitIdx
 }
 
 // rasterizes the memory into the frame buff
-void dev::Display::BuffUpdate(Buffer _buffer)
+void dev::Display::BuffUpdate(BufferType _bufferType)
 {
-	switch (_buffer)
+	switch (_bufferType)
 	{
-	case dev::Display::Buffer::FRAME_BUFFER:
+	case dev::Display::BufferType::FRAME_BUFFER:
 		FrameBuffUpdate();
 		break;
 
-	case dev::Display::Buffer::BACK_BUFFER:
+	case dev::Display::BufferType::BACK_BUFFER:
 		m_backBuffer = m_frameBuffer;
 		break;
 
-	case dev::Display::Buffer::GPU_BUFFER:
+	case dev::Display::BufferType::GPU_BUFFER:
 		m_gpuBuffer = m_frameBuffer;
 		break;
 
@@ -361,7 +361,7 @@ void dev::Display::FrameBuffUpdate()
 		if (isActiveArea)
 		{
 			int rasterizedPixels = dev::Min(BORDER_RIGHT - rasterPixel, RASTERIZED_PXLS_MAX);
-			
+
 			if (m_io.GetDisplayMode() == IO::MODE_256) FillActiveArea256(rasterizedPixels);
 			else FillActiveArea512(rasterizedPixels);
 

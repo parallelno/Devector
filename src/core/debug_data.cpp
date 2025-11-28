@@ -406,10 +406,8 @@ void dev::DebugData::GetFilteredScripts(FilteredElements& _out, const std::strin
 
 void dev::DebugData::LoadDebugData(const std::string& _path)
 {
-	// check if the file exists
-	auto debugDir = dev::GetDir(_path);
-	m_debugPath = debugDir + "/" + dev::GetFilename(_path) + ".json";
-
+	auto abs_path = std::filesystem::absolute(_path);
+	m_debugPath = std::filesystem::path(abs_path).replace_extension(".json").string();
 
 	m_labelsUpdates++;
 	m_labels.clear();

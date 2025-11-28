@@ -68,6 +68,7 @@ dev::CpuI8080::CpuI8080(
 
 void dev::CpuI8080::Init()
 {
+	// TODO: all regs must be random at init
 	PSW = PSW_INIT;
 	BC = DE = HL = 1;
 

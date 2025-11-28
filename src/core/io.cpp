@@ -216,7 +216,7 @@ void dev::IO::PortOutHandling(uint8_t _port, uint8_t _value)
 		m_timer.Write(~_port & 3, _value);
 		break;
 
-		// Color pallete
+		// Color palette
 	case PORT_OUT_BORDER_COLOR0: [[fallthrough]];
 	case PORT_OUT_BORDER_COLOR1: [[fallthrough]];
 	case PORT_OUT_BORDER_COLOR2: [[fallthrough]];

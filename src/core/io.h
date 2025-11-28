@@ -81,7 +81,7 @@ namespace dev
 			uint8_t joy1 : 8;
 
 			uint8_t hwColor		: 8; // a tmp store for a output color before it commited to the HW. Vector06C color format : uint8_t BBGGGRRR
-			uint8_t reqDisplayMode : 2; // a tmp store for a display mode before it commited to HW
+			bool reqDisplayMode : 1; // a tmp store for a display mode before it commited to HW
 			uint8_t brdColorIdx : 4; // border color idx
 			bool displayMode	: 1; // false - 256 mode, true - 512 mode
 			uint8_t ruslat		: 1;
@@ -114,7 +114,7 @@ namespace dev
 
 	private:
 		State m_state;
-		
+
 		PortsData m_portsInData;
 		PortsData m_portsOutData;
 

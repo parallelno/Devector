@@ -159,7 +159,7 @@ namespace dev
 		bool GetHLTA() const;
 		uint8_t GetMachineCycles() const;
 
-		// memory + io interface
+		// io interface
 		using InputFunc = std::function <uint8_t(const uint8_t _port)>;
 		using OutputFunc = std::function <void(const uint8_t _port, const uint8_t _value)>;
 

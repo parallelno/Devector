@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
 
-project(devector VERSION 9.4.1)
+project(devector VERSION 9.4.2)
 
 # Prevent in-source build
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)

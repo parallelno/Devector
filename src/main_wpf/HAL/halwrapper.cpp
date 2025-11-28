@@ -37,8 +37,8 @@ dev::HAL::!HAL()
 	delete m_winGlUtilsP; m_winGlUtilsP = nullptr;
 }
 
-auto dev::HAL::InitShader(System::IntPtr _hWnd, 
-		System::String^ _vtxShaderS, System::String^ _fragShaderS) 
+auto dev::HAL::InitShader(System::IntPtr _hWnd,
+		System::String^ _vtxShaderS, System::String^ _fragShaderS)
 -> Id
 {
 	auto hWnd = static_cast<HWND>(_hWnd.ToPointer());
@@ -48,11 +48,11 @@ auto dev::HAL::InitShader(System::IntPtr _hWnd,
 	return m_winGlUtilsP->InitShader(hWnd, vtxShaderS.c_str(), fragShaderS.c_str());
 }
 
-auto dev::HAL::InitMaterial(System::IntPtr _hWnd, 
-	Id _shaderId, 
-	cli::array<System::Int32>^ _textureIds, 
-	cli::array<System::String^>^ _shaderParamNames, 
-	cli::array<System::Numerics::Vector4>^ _shaderParamValues, 
+auto dev::HAL::InitMaterial(System::IntPtr _hWnd,
+	Id _shaderId,
+	cli::array<System::Int32>^ _textureIds,
+	cli::array<System::String^>^ _shaderParamNames,
+	cli::array<System::Numerics::Vector4>^ _shaderParamValues,
 	int _framebufferW, int _framebufferH)
 -> Id
 {
@@ -62,15 +62,15 @@ auto dev::HAL::InitMaterial(System::IntPtr _hWnd,
 	for (int i = 0; i < _textureIds->Length; i++) {
 		textureIds.push_back(static_cast<Id>(_textureIds[i]));
 	}
-	
-	for (int i = 0; i < _shaderParamNames->Length; i++) 
+
+	for (int i = 0; i < _shaderParamNames->Length; i++)
 	{
 		auto nameR = _shaderParamNames[i];
 		auto name = msclr::interop::marshal_as<std::string>(nameR);
 		auto value = _shaderParamValues[i];
 		shaderParams[name] = { value.X, value.Y, value.Z, value.W };
 	}
-	
+
 	return static_cast<System::Int32>(m_winGlUtilsP->InitMaterial(
 		static_cast<HWND>(_hWnd.ToPointer()),
 		static_cast<Id>(_shaderId),
@@ -80,7 +80,7 @@ auto dev::HAL::InitMaterial(System::IntPtr _hWnd,
 		_framebufferH));
 }
 
-auto dev::HAL::InitTexture(System::IntPtr _hWnd, GLsizei _w, GLsizei _h) 
+auto dev::HAL::InitTexture(System::IntPtr _hWnd, GLsizei _w, GLsizei _h)
 -> Id
 {
 	auto hWnd = static_cast<HWND>(_hWnd.ToPointer());
@@ -101,7 +101,7 @@ auto dev::HAL::Draw(System::IntPtr _hWnd, const Id _materialId,
 -> int
 {
 	return static_cast<int>(m_winGlUtilsP->Draw(
-		static_cast<HWND>(_hWnd.ToPointer()), 
+		static_cast<HWND>(_hWnd.ToPointer()),
 		_materialId, _viewportW, _viewportH));
 }
 
@@ -117,7 +117,7 @@ auto dev::HAL::GetMaterialParamId(System::IntPtr _hWnd,
 }
 
 auto dev::HAL::UpdateMaterialParam(System::IntPtr _hWnd,
-	const Id _materialId, const Id _paramId, 
+	const Id _materialId, const Id _paramId,
 	const System::Numerics::Vector4^ _paramVal)
 -> int
 {
@@ -222,7 +222,7 @@ int dev::HAL::LoadFdd(System::String^ _path, const int _driveIdx, const bool _au
 	int res = (int)ErrCode::NO_ERRORS;
 
 	// TODO: provide error string output
-	if (fddimg.size() > FDD_SIZE) 
+	if (fddimg.size() > FDD_SIZE)
 	{
 		res = (int)ErrCode::WARNING_FDD_IMAGE_TOO_BIG;
 		fddimg.resize(FDD_SIZE);

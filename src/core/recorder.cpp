@@ -28,7 +28,7 @@ void dev::Recorder::CleanMemUpdates(Display::State* _displayStateP)
 	state.memWrites.clear();
 	state.globalAddrs.clear();
 
-	_displayStateP->BuffUpdate(Display::Buffer::BACK_BUFFER);
+	_displayStateP->BuffUpdate(Display::BufferType::BACK_BUFFER);
 }
 
 void dev::Recorder::Update(CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
@@ -126,7 +126,7 @@ void dev::Recorder::PlayForward(const int _frames, CpuI8080::State* _cpuStateP, 
 		_displayStateP->update = stateNext.displayState;
 	}
 
-	_displayStateP->BuffUpdate(Display::Buffer::FRAME_BUFFER);
+	_displayStateP->BuffUpdate(Display::BufferType::FRAME_BUFFER);
 }
 
 void dev::Recorder::PlayReverse(const int _frames, CpuI8080::State* _cpuStateP,
@@ -163,7 +163,7 @@ void dev::Recorder::PlayReverse(const int _frames, CpuI8080::State* _cpuStateP,
 		}
 	}
 
-	_displayStateP->BuffUpdate(Display::Buffer::FRAME_BUFFER);
+	_displayStateP->BuffUpdate(Display::BufferType::FRAME_BUFFER);
 }
 
 void dev::Recorder::GetStatesSize()
@@ -248,8 +248,8 @@ void dev::Recorder::Deserialize(const std::vector<uint8_t>& _data,
 
 	RestoreState(_cpuStateP, _memStateP, _ioStateP, _displayStateP);
 
-	_displayStateP->BuffUpdate(Display::Buffer::FRAME_BUFFER);
-	//_displayStateP->BuffUpdate(Display::Buffer::BACK_BUFFER);
+	_displayStateP->BuffUpdate(Display::BufferType::FRAME_BUFFER);
+	//_displayStateP->BuffUpdate(Display::BufferType::BACK_BUFFER);
 }
 
 // on save

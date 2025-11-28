@@ -7,7 +7,6 @@
 #include <SDL3/SDL.h>
 
 #include "utils/types.h"
-#include "core/memory.h"
 
 namespace dev
 {
