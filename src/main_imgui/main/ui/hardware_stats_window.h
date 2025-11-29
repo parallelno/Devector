@@ -14,6 +14,7 @@ namespace dev
 		static constexpr int DEFAULT_WINDOW_W = 600;
 		static constexpr int DEFAULT_WINDOW_H = 400;
 
+		int64_t m_ccLast = 0;
 		int64_t m_ccLastRun = 0;
 		Hardware& m_hardware;
 		bool& m_ruslat;

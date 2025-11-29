@@ -93,6 +93,13 @@ void dev::HardwareStatsWindow::Draw(
 		ImGuiTableFlags_ContextMenuInBody;
 	if (ImGui::BeginTable("Hardware Stats", 4, flags))
 	{
+		uint64_t cc = m_hardware.Request(Hardware::Req::GET_CC)->at("cc");
+		if (!isRunning && m_ccLast != cc)
+		{
+			m_ccLastRun = cc - m_ccLast;
+			m_ccLast = cc;
+		}
+
 		auto scale = ImGui::GetWindowDpiScale();
 
 		ImGui::TableSetupColumn("Regs", ImGuiTableColumnFlags_WidthFixed, 80 * scale);
