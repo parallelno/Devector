@@ -126,14 +126,15 @@ namespace dev
 		struct State {
 			uint64_t cc; // clock cycles, debug related data
 			Regs regs;
+			Regs debug_regs; // regs before the current instruction execution
 			Int ints;
 		};
 #pragma pack(pop)
 
-		State state;
+		State m_state;
 
-		auto GetState() const -> const State& { return state; }
-		auto GetStateP() -> State* { return &state; }
+		auto GetState() const -> const State& { return m_state; }
+		auto GetStateP() -> State* { return &m_state; }
 		uint64_t GetCC() const;
 		uint16_t GetPC() const;
 		uint16_t GetSP() const;
@@ -172,6 +173,7 @@ namespace dev
 		void Init();
 		void Reset();
 		void ExecuteMachineCycle(bool _irq);
+		void SetDebugRegs();
 		bool IsInstructionExecuted() const;
 
 		static auto GetInstrCC(const uint8_t _opcode) -> uint8_t;

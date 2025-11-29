@@ -9,49 +9,49 @@ static constexpr uint16_t PSW_INIT = 0b00000010;
 static constexpr uint16_t PSW_NUL_FLAGS = ~0b00101000;
 
 
-#define CC			state.cc
-#define PC			state.regs.pc.word
-#define PCH         state.regs.pc.h
-#define PCL         state.regs.pc.l
-#define SP			state.regs.sp.word
-#define SPP         state.regs.sp
-#define SPH         state.regs.sp.h
-#define SPL         state.regs.sp.l
-#define IR			state.regs.ir
-#define TMP			state.regs.tmp
-#define ACT			state.regs.act
-#define W			state.regs.wz.h
-#define Z			state.regs.wz.l
-#define WZ          state.regs.wz.word
+#define CC			m_state.cc
+#define PC			m_state.regs.pc.word
+#define PCH         m_state.regs.pc.h
+#define PCL         m_state.regs.pc.l
+#define SP			m_state.regs.sp.word
+#define SPP         m_state.regs.sp
+#define SPH         m_state.regs.sp.h
+#define SPL         m_state.regs.sp.l
+#define IR			m_state.regs.ir
+#define TMP			m_state.regs.tmp
+#define ACT			m_state.regs.act
+#define W			m_state.regs.wz.h
+#define Z			m_state.regs.wz.l
+#define WZ          m_state.regs.wz.word
 
-#define A			state.regs.psw.af.h
-#define F			state.regs.psw.af.l
-#define PSW			state.regs.psw.af.word
-#define BC			state.regs.bc.word
-#define BCP         state.regs.bc
-#define DE			state.regs.de.word
-#define DEP         state.regs.de
-#define HL			state.regs.hl.word
-#define HLP         state.regs.hl
-#define B			state.regs.bc.h
-#define C			state.regs.bc.l
-#define D			state.regs.de.h
-#define E			state.regs.de.l
-#define H			state.regs.hl.h
-#define L			state.regs.hl.l
+#define A			m_state.regs.psw.af.h
+#define F			m_state.regs.psw.af.l
+#define PSW			m_state.regs.psw.af.word
+#define BC			m_state.regs.bc.word
+#define BCP         m_state.regs.bc
+#define DE			m_state.regs.de.word
+#define DEP         m_state.regs.de
+#define HL			m_state.regs.hl.word
+#define HLP         m_state.regs.hl
+#define B			m_state.regs.bc.h
+#define C			m_state.regs.bc.l
+#define D			m_state.regs.de.h
+#define E			m_state.regs.de.l
+#define H			m_state.regs.hl.h
+#define L			m_state.regs.hl.l
 
-#define FC			state.regs.psw.c
-#define FP			state.regs.psw.p
-#define FAC			state.regs.psw.ac
-#define FZ			state.regs.psw.z
-#define FS			state.regs.psw.s
+#define FC			m_state.regs.psw.c
+#define FP			m_state.regs.psw.p
+#define FAC			m_state.regs.psw.ac
+#define FZ			m_state.regs.psw.z
+#define FS			m_state.regs.psw.s
 
-#define INTS		state.ints.data
-#define INTE		state.ints.inte
-#define IFF			state.ints.iff
-#define HLTA		state.ints.hlta
-#define EI_PENDING	state.ints.eiPending
-#define MC			state.ints.mc
+#define INTS		m_state.ints.data
+#define INTE		m_state.ints.inte
+#define IFF			m_state.ints.iff
+#define HLTA		m_state.ints.hlta
+#define EI_PENDING	m_state.ints.eiPending
+#define MC			m_state.ints.mc
 
 
 dev::CpuI8080::CpuI8080(
@@ -70,7 +70,11 @@ void dev::CpuI8080::Init()
 {
 	// TODO: all regs must be random at init
 	PSW = PSW_INIT;
-	BC = DE = HL = 1;
+	BC = DE = HL = 0;
+	m_state.debug_regs.psw = PSW;
+	m_state.debug_regs.bc = BC;
+	m_state.debug_regs.de = DE;
+	m_state.debug_regs.hl = HL;
 
 	Reset();
 }
@@ -79,6 +83,30 @@ void dev::CpuI8080::Reset()
 {
 	CC = PC = SP = WZ = INTS = IR = ACT = TMP = 0;
 	F = PSW_INIT;
+
+	m_state.debug_regs.pc = PC;
+	m_state.debug_regs.sp = SP;
+	m_state.debug_regs.psw.af.l = F;
+
+
+	// TODO: all regs must be random at init
+	PSW = PSW_INIT;
+	BC = DE = HL = 0;
+	m_state.debug_regs.psw = PSW;
+	m_state.debug_regs.bc = BC;
+	m_state.debug_regs.de = DE;
+	m_state.debug_regs.hl = HL;
+}
+
+void dev::CpuI8080::SetDebugRegs()
+{
+	// copy regs to debug regs
+	m_state.debug_regs.pc.word = PC;
+	m_state.debug_regs.sp.word = SP;
+	m_state.debug_regs.psw.af.word = PSW;
+	m_state.debug_regs.bc.word = BC;
+	m_state.debug_regs.de.word = DE;
+	m_state.debug_regs.hl.word = HL;
 }
 
 void dev::CpuI8080::ExecuteMachineCycle(bool _irq)
