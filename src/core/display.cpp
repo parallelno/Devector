@@ -1,7 +1,7 @@
 #include "core/display.h"
 #include "utils/utils.h"
 
-#define BORDER_RIGHT	( m_borderLeft + ACTIVE_AREA_W )
+#define ACTIVE_AREA_RIGHT	( m_borderLeft + ACTIVE_AREA_W )
 
 dev::Display::Display(Memory& _memory, IO& _io)
 	:
@@ -67,12 +67,12 @@ void dev::Display::Rasterize()
 
 	bool isActiveScan = rasterLine >= SCAN_ACTIVE_AREA_TOP && rasterLine < SCAN_ACTIVE_AREA_TOP + ACTIVE_AREA_H;
 	bool isActiveArea = isActiveScan &&
-					rasterPixel >= m_borderLeft && rasterPixel < BORDER_RIGHT;
+					rasterPixel >= m_borderLeft && rasterPixel < ACTIVE_AREA_RIGHT;
 
 	// Rasterize the Active Area
 	if (isActiveArea)
 	{
-		int rasterizedPixels = dev::Min(BORDER_RIGHT - rasterPixel, RASTERIZED_PXLS_MAX);
+		int rasterizedPixels = dev::Min(ACTIVE_AREA_RIGHT - rasterPixel, RASTERIZED_PXLS_MAX);
 		RasterizeActiveArea(rasterizedPixels);
 		// Rasterize the border if there is a leftover
 		if (rasterizedPixels < RASTERIZED_PXLS_MAX)
@@ -83,7 +83,7 @@ void dev::Display::Rasterize()
 	}
 	// Rasterize the Border
 	else {
-		int rasterizedPixels = !isActiveScan || rasterPixel >= BORDER_RIGHT ? RASTERIZED_PXLS_MAX :
+		int rasterizedPixels = !isActiveScan || rasterPixel >= ACTIVE_AREA_RIGHT ? RASTERIZED_PXLS_MAX :
 						dev::Min(m_borderLeft - rasterPixel, RASTERIZED_PXLS_MAX);
 
 		RasterizeBorder(rasterizedPixels);
@@ -355,12 +355,12 @@ void dev::Display::FrameBuffUpdate()
 
 		bool isActiveScan = rasterLine >= SCAN_ACTIVE_AREA_TOP && rasterLine < SCAN_ACTIVE_AREA_TOP + ACTIVE_AREA_H;
 		bool isActiveArea = isActiveScan &&
-			rasterPixel >= m_borderLeft && rasterPixel < BORDER_RIGHT;
+			rasterPixel >= m_borderLeft && rasterPixel < ACTIVE_AREA_RIGHT;
 
 		// Rasterize the Active Area
 		if (isActiveArea)
 		{
-			int rasterizedPixels = dev::Min(BORDER_RIGHT - rasterPixel, RASTERIZED_PXLS_MAX);
+			int rasterizedPixels = dev::Min(ACTIVE_AREA_RIGHT - rasterPixel, RASTERIZED_PXLS_MAX);
 
 			if (m_io.GetDisplayMode() == IO::MODE_256) FillActiveArea256(rasterizedPixels);
 			else FillActiveArea512(rasterizedPixels);
@@ -374,7 +374,7 @@ void dev::Display::FrameBuffUpdate()
 		}
 		// Rasterize the Border
 		else {
-			int rasterizedPixels = !isActiveScan || rasterPixel >= BORDER_RIGHT ? RASTERIZED_PXLS_MAX :
+			int rasterizedPixels = !isActiveScan || rasterPixel >= ACTIVE_AREA_RIGHT ? RASTERIZED_PXLS_MAX :
 				dev::Min(m_borderLeft - rasterPixel, RASTERIZED_PXLS_MAX);
 
 			FillBorder(rasterizedPixels);

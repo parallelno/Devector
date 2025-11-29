@@ -59,6 +59,7 @@ namespace dev
 	{
 		static constexpr size_t MAX_LABELS_IN_LINE = 10;
 		static constexpr size_t LINE_BUFF_LEN = 127;
+		static constexpr size_t INSTR_LEN_MAX = 14;
 
 		enum class Type {
 				COMMENT,
@@ -120,7 +121,8 @@ namespace dev
 			std::array<char, LINE_BUFF_LEN>& _buffer,
 			const GlobalAddr _globalAddr,
 			const Memory::Instr _instr,
-			const CpuI8080::Regs* _regsP = nullptr) -> const char*;
+			const CpuI8080::Regs* _regsP = nullptr,
+			const bool _printDisasm = true) -> const char*;
 	};
 
 	class Disasm

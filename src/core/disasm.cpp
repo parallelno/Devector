@@ -271,72 +271,92 @@ auto dev::DisasmLine::PrintToBuffer(
 	std::array<char, LINE_BUFF_LEN>& _buffer,
 	const GlobalAddr _globalAddr,
 	const Memory::Instr _instr,
-	const CpuI8080::Regs* _regsP)
+	const CpuI8080::Regs* _regsP,
+	const bool _printDisasm)
 -> const char*
 {
-	auto instr_len = CpuI8080::GetInstrLen(_instr.opcode);
+	int current_char_idx = 0;
+	auto printed_chars = 0;
+	_buffer.fill(0);
 
 	// Instruction bytes as strings
-	const char* byte_s1 = dev::Uint8ToStrC(_instr.opcode);
-	const char* byte_s2 = instr_len > 1 ? dev::Uint8ToStrC(instr_len) : "  ";
-	const char* byte_s3 = instr_len > 2 ? dev::Uint8ToStrC(instr_len) : "  ";
-
-
-	int i = 0;
-	auto printed_chars = 0;
-	_buffer[0] = '\0';
-	_buffer[_buffer.size() - 1] = '\0';
+	auto instr_len = CpuI8080::GetInstrLen(_instr.opcode);
 
 	// Print the Addr, intruction bytes
 	printed_chars = std::snprintf(
 		_buffer.data(), _buffer.size(),
-		"%06X	%s %s %s	",
+		"%06X  %s %s %s  ",
 		_globalAddr,
-		byte_s1,
-		byte_s2,
-		byte_s3);
+		dev::Uint8ToStrC(_instr.opcode),
+		instr_len > 1 ? dev::Uint8ToStrC(_instr.dataL) : "  ",
+		instr_len > 2 ? dev::Uint8ToStrC(_instr.dataH) : "  ");
+	// check for errors
+	if (printed_chars < 0) { return nullptr; }
+	current_char_idx += printed_chars;
 
-	if (printed_chars < 0){
-		return nullptr;
-	}
-
-	i += printed_chars;
+	auto instr_pos = current_char_idx;
 
 	// Print intruction
-	auto cmdP = cmdsP->at(_instr.opcode);
-	// Iterate over the tokens of the command and concatenate them into buffer
-	for (int i = 0; i < cmdP->token_types.size(); i++)
+	if (_printDisasm)
 	{
-		if (cmdP->token_types[i] == CMD_TT_IMM)
+		auto cmdP = cmdsP->at(_instr.opcode);
+		// Iterate over the tokens of the command and concatenate them into buffer
+		for (int i = 0; i < cmdP->token_types.size(); i++)
 		{
-			auto imm_str = instr_len == 1 ?
-				dev::Uint8ToStrC0x(_instr.dataL) :
-				dev::Uint16ToStrC0x(_instr.dataW);
+			if (cmdP->token_types[i] == CMD_TT_IMM)
+			{
+				auto imm_str = instr_len == 1 ?
+					dev::Uint8ToStrC(_instr.dataL) :
+					dev::Uint16ToStrC(_instr.dataW);
 
-			printed_chars = std::snprintf(&_buffer[i], sizeof(LINE_BUFF_LEN - i), imm_str);
+				printed_chars = std::snprintf(&_buffer[current_char_idx], LINE_BUFF_LEN - current_char_idx, imm_str);
+			}
+			else {
+				printed_chars = std::snprintf(&_buffer[current_char_idx], LINE_BUFF_LEN - current_char_idx, cmdP->tokens[i]);
+			}
+			// check for errors
+			if (printed_chars < 0) { return nullptr; }
+			current_char_idx += printed_chars;
 		}
-		else {
-			printed_chars = std::snprintf(&_buffer[i], sizeof(LINE_BUFF_LEN - i), cmdP->tokens[i]);
-		}
-
-		if (printed_chars < 0) {
-			return nullptr;
-		}
-		i += printed_chars;
 	}
+
+	// print spaces to line up the regs position
+	auto spaces = current_char_idx == instr_pos ?
+		0 :
+		INSTR_LEN_MAX - (current_char_idx - instr_pos);
+	std::fill_n(&_buffer[current_char_idx], spaces, ' ');
+	current_char_idx += spaces;
 
 	// Print regs
 	if (_regsP)
 	{
-		std::snprintf(
-			&_buffer[i], sizeof(LINE_BUFF_LEN - i),
-			"	psw=%04X bc=%04X de=%04X hl=%04X sp=%04X\n",
-			_regsP->psw.af.word,
-			_regsP->bc.word,
-			_regsP->de.word,
-			_regsP->hl.word,
-			_regsP->sp.word);
+
+		// print regs
+		printed_chars = std::snprintf(
+			&_buffer[current_char_idx], LINE_BUFF_LEN - current_char_idx,
+			"A=%s BC=%s DE=%s HL=%s SP=%s S=%s Z=%s AC=%s P=%s CY=%s",
+			dev::Uint8ToStrC(_regsP->psw.af.h),
+			dev::Uint16ToStrC(_regsP->bc.word),
+			dev::Uint16ToStrC(_regsP->de.word),
+			dev::Uint16ToStrC(_regsP->hl.word),
+			dev::Uint16ToStrC(_regsP->sp.word),
+			_regsP->psw.s ? "1" : "0",
+			_regsP->psw.z ? "1" : "0",
+			_regsP->psw.ac ? "1" : "0",
+			_regsP->psw.p ? "1" : "0",
+			_regsP->psw.c ? "1" : "0");
+
+		// check for errors
+		if (printed_chars < 0) { return nullptr; }
+		current_char_idx += printed_chars;
 	}
+
+	// add a new line & terminator
+	current_char_idx = current_char_idx > LINE_BUFF_LEN - 2 ?
+					LINE_BUFF_LEN - 2 :
+					current_char_idx;
+	_buffer[current_char_idx++] = '\n';
+	_buffer[current_char_idx++] = '\0';
 
     return _buffer.data();
 }

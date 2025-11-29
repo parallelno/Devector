@@ -126,7 +126,7 @@ void dev::TraceLog::SaveLog(
 		m_logFile << DisasmLine::PrintToBuffer(_traceLogBuffer,
 											   _memState.debug.instrGlobalAddr,
 											   _memState.debug.instr,
-											   &_cpuState.regs );
+											   &_cpuState.debug_regs);
 	}
 }
 

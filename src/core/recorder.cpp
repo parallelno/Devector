@@ -59,6 +59,15 @@ void dev::Recorder::StoreMemoryDiff(const Memory::State& _memState)
 void dev::Recorder::StoreState(const CpuI8080::State& _cpuState, const Memory::State& _memState,
 	const IO::State& _ioState, const Display::State& _displayState)
 {
+	// TODO: bug!!!
+	// There is a possible flaw here:
+	// It stores the executed command, its addr, and regs.
+	// When it restores the state, it restores the stored last addr and last regs,
+	// but the regs are after executing the instruction, not before!
+	// If you decide to store regs before executing the instruction,
+	// you need to consider replacing regs with debug_regs
+
+
 	// prepare for the next state
 	m_stateIdx = (m_stateIdx + 1) % m_recordFrames;
 	m_stateCurrent = dev::Min(m_stateCurrent + 1, m_recordFrames);

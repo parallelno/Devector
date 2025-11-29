@@ -291,8 +291,7 @@ auto dev::TraceLogWindow::GetLogPath()
 	auto logPath = logDir + "/" +
 					dev::GetFilename(debugDataPath) +
 					"_" +
-					m_debugger.GetTraceLog().GetLogFilename() +
-					".txt";
+					m_debugger.GetTraceLog().GetLogFilename();
 
 	return logPath;
 }
