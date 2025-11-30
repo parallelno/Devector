@@ -36,12 +36,15 @@ void dev::DevectorApp::Init(const std::string& _rom_fdd_recPath)
 	HardwareInit();
 	WindowsInit();
 	SchedulingInit();
-	Load(_rom_fdd_recPath);
+	if (!_rom_fdd_recPath.empty()){
+		Load(_rom_fdd_recPath);
+	}
+	else { // run the bootrom if no filepath provided in the command line
+		m_hardwareP->Request(Hardware::Req::RUN);
+	}
 
 	// Set up the event callback function
 	SDL_SetEventFilter(DevectorApp::EventFilter, this);
-
-	m_hardwareP->Request(Hardware::Req::RUN);
 }
 
 dev::DevectorApp::~DevectorApp()
@@ -235,16 +238,10 @@ void dev::DevectorApp::WindowsInit()
 }
 
 
-void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
+void dev::DevectorApp::Load(const std::string& path)
 {
-	// load the rom/fdd/rec image if it was send via the console command
-	if (_rom_fdd_recPath.empty()) return;
+	if (path.empty()) return;
 
-	bool isRunning =
-		m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
-	if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
-
-	auto path = _rom_fdd_recPath;
 	auto ext = StrToUpper(dev::GetExt(path));
 
 	if (ext == EXT_ROM)
@@ -257,7 +254,7 @@ void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 	}
 	else if (ext == EXT_REC)
 	{
-		LoadRecording(path);
+		RecentFilesUpdate(FileType::REC, path);
 	}
 	else {
 		dev::Log("Unsupported file type: {}", path);
@@ -267,8 +264,6 @@ void dev::DevectorApp::Load(const std::string& _rom_fdd_recPath)
 
 	RecentFilesStore();
 	CallbackReload();
-
-	if (isRunning) m_hardwareP->Request(Hardware::Req::RUN);
 }
 
 // UI thread
@@ -324,6 +319,7 @@ void dev::DevectorApp::CallbackReload(
 	dev::Scheduler::SignalData _data)
 {
 	if (m_recentFilePaths.empty()) return;
+
 	// get latest recent path
 	const auto& [fileType, path, driveIdx, autoBoot] = m_recentFilePaths.front();
 
@@ -845,6 +841,7 @@ void dev::DevectorApp::SaveUpdatedFdd()
 // Open the file dialog
 void dev::DevectorApp::OpenFile()
 {
+	// pause emulation while open Load dialog
 	bool isRunning = m_hardwareP->Request(Hardware::Req::IS_RUNNING)->at("isRunning");
 	if (isRunning) m_hardwareP->Request(Hardware::Req::STOP);
 
@@ -889,7 +886,7 @@ void dev::DevectorApp::OpenFile()
 		m_loadingRes.state = LoadingRes::State::NONE;
 	}
 
-
+	// pause emulation while open Load dialog
 	if (isRunning) m_hardwareP->Request(Hardware::Req::RUN);
 }
 
@@ -1062,6 +1059,7 @@ void dev::DevectorApp::LoadRecording(const std::string& _path)
 		{ {"resetRecorder", false} });
 	m_debuggerP->GetDebugData().LoadDebugData(_path);
 	m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
+	m_hardwareP->Request(Hardware::Req::RUN);
 
 	Log("File loaded: {}", _path);
 }

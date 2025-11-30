@@ -70,7 +70,8 @@ void dev::DisasmPopup::Draw(
 			)->at("data"));
 
 		auto line = dev::DisasmLine::PrintToBuffer(
-			_disasmLineBuffer, m_globalAddr, instr, nullptr);
+			_disasmLineBuffer, m_hardware.GetCpuState(),
+			m_hardware.GetMemState(), m_hardware.GetDisplayState(), true);
 
 		dev::CopyToClipboard(line);
 	}
