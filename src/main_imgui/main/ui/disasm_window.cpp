@@ -126,16 +126,30 @@ void dev::DisasmWindow::DrawDebugControls(const bool _isRunning)
 void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 {
 	if (_isRunning) ImGui::BeginDisabled();
+
 	ImGui::PushItemWidth(-100);
-	if (ImGui::InputTextWithHint(
-		"##disasmSearch", "FF", m_searchText, IM_ARRAYSIZE(m_searchText)))
+
+	auto search_updated = ImGui::InputTextWithHint(
+		"##disasmSearch", "FF", m_searchText, IM_ARRAYSIZE(m_searchText));
+	if (ImGui::IsKeyPressed(ImGuiKey_Enter))
+		search_updated = true;
+
+	if (search_updated)
 	{
 		DebugData::FilteredElements _filteredElements;
 		m_debugger.GetDebugData().GetFilteredLabels(_filteredElements, m_searchText);
 		int32_t addr = 0;
 
 		if (_filteredElements.empty()){
-			addr = (Addr)dev::StrCHexToInt(m_searchText);
+			// trim spaces, then convert str to int
+			std::string trimmedStr = m_searchText;
+			trimmedStr.erase(0, trimmedStr.find_first_not_of(" \t\n\r\f\v"));
+			trimmedStr.erase(trimmedStr.find_last_not_of(" \t\n\r\f\v") + 1);
+			try {
+				addr = std::stol(trimmedStr, 0, 16);
+			} catch (const std::invalid_argument& ia) {
+				addr = 0;
+			}
 		}
 		else {
 			addr = std::get<1>(_filteredElements[0]);
