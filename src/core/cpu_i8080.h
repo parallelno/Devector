@@ -126,7 +126,6 @@ namespace dev
 		struct State {
 			uint64_t cc; // clock cycles, debug related data
 			Regs regs;
-			Regs debug_regs; // regs before the current instruction execution
 			Int ints;
 		};
 #pragma pack(pop)
@@ -173,7 +172,6 @@ namespace dev
 		void Init();
 		void Reset();
 		void ExecuteMachineCycle(bool _irq);
-		void SetDebugRegs();
 		bool IsInstructionExecuted() const;
 
 		static auto GetInstrCC(const uint8_t _opcode) -> uint8_t;

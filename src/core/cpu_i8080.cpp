@@ -71,10 +71,6 @@ void dev::CpuI8080::Init()
 	// TODO: all regs must be random at init
 	PSW = PSW_INIT;
 	BC = DE = HL = 0;
-	m_state.debug_regs.psw = PSW;
-	m_state.debug_regs.bc = BC;
-	m_state.debug_regs.de = DE;
-	m_state.debug_regs.hl = HL;
 
 	Reset();
 }
@@ -84,29 +80,9 @@ void dev::CpuI8080::Reset()
 	CC = PC = SP = WZ = INTS = IR = ACT = TMP = 0;
 	F = PSW_INIT;
 
-	m_state.debug_regs.pc = PC;
-	m_state.debug_regs.sp = SP;
-	m_state.debug_regs.psw.af.l = F;
-
-
 	// TODO: all regs must be random at init
 	PSW = PSW_INIT;
 	BC = DE = HL = 0;
-	m_state.debug_regs.psw = PSW;
-	m_state.debug_regs.bc = BC;
-	m_state.debug_regs.de = DE;
-	m_state.debug_regs.hl = HL;
-}
-
-void dev::CpuI8080::SetDebugRegs()
-{
-	// copy regs to debug regs
-	m_state.debug_regs.pc.word = PC;
-	m_state.debug_regs.sp.word = SP;
-	m_state.debug_regs.psw.af.word = PSW;
-	m_state.debug_regs.bc.word = BC;
-	m_state.debug_regs.de.word = DE;
-	m_state.debug_regs.hl.word = HL;
 }
 
 void dev::CpuI8080::ExecuteMachineCycle(bool _irq)
