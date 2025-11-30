@@ -4,7 +4,7 @@
 dev::Memory::Memory(const std::string& _pathBootData, const std::string& _pathRamDiskData,
 	const bool _ramDiskClearAfterRestart)
 	:
-	m_rom(), m_ram(),
+	m_rom(), m_ram(), m_state(std::bind(&Memory::GetGlobalAddr, this, std::placeholders::_1, std::placeholders::_2)),
 	m_pathRamDiskData(_pathRamDiskData),
 	m_ramDiskClearAfterRestart(_ramDiskClearAfterRestart)
 {

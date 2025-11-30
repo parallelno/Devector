@@ -39,7 +39,9 @@ namespace dev
 		TraceLog(const DebugData& _debugData);
 		void AddCode(const Item& _item, DisasmLine& _line);
 		void Update(
-			const CpuI8080::State& _cpuState, const Memory::State& _memState);
+			const CpuI8080::State& _cpuState,
+			const Memory::State& _memState,
+			const Display::State& _displayState);
 		auto GetDisasm(
 			const size_t _lines, const uint8_t _filter) -> const Lines*;
 		auto GetDisasmLen() -> const size_t { return m_disasmLinesLen; };
@@ -51,7 +53,9 @@ namespace dev
 	private:
 		static auto GetDefaultLogPath() -> std::string;
 		void SaveLog(
-			const CpuI8080::State& _cpuState, const Memory::State& _memState);
+			const CpuI8080::State& _cpuState,
+			const Memory::State& _memState,
+			const Display::State& _displayState);
 		void UpdateLogBuffer(
 			const CpuI8080::State& _cpuState, const Memory::State& _memState);
 

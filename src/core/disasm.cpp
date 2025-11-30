@@ -269,9 +269,9 @@ auto dev::DisasmLine::InstrToImm(
 // Returns a pointer to the formatted string or nullptr if an error
 auto dev::DisasmLine::PrintToBuffer(
 	std::array<char, LINE_BUFF_LEN>& _buffer,
-	const GlobalAddr _globalAddr,
-	const Memory::Instr _instr,
-	const CpuI8080::Regs* _regsP,
+	const CpuI8080::State& _cpuState,
+	const Memory::State& _memState,
+	const Display::State& _displayState,
 	const bool _printDisasm)
 -> const char*
 {
@@ -280,16 +280,23 @@ auto dev::DisasmLine::PrintToBuffer(
 	_buffer.fill(0);
 
 	// Instruction bytes as strings
-	auto instr_len = CpuI8080::GetInstrLen(_instr.opcode);
+	auto addr = _cpuState.regs.pc.word;
+	auto globalAddr = _memState.GetGlobalAddr(addr, Memory::AddrSpace::RAM);
+	auto opcode = _memState.ramP->at(globalAddr);
+	auto dataL = _memState.ramP->at(globalAddr + 1);
+	auto dataH = _memState.ramP->at(globalAddr + 2);
+	auto dataW = (uint16_t)(dataL | (dataH << 8));
+
+	auto instr_len = CpuI8080::GetInstrLen(opcode);
 
 	// Print the Addr, intruction bytes
 	printed_chars = std::snprintf(
 		_buffer.data(), _buffer.size(),
 		"%06X  %s %s %s  ",
-		_globalAddr,
-		dev::Uint8ToStrC(_instr.opcode),
-		instr_len > 1 ? dev::Uint8ToStrC(_instr.dataL) : "  ",
-		instr_len > 2 ? dev::Uint8ToStrC(_instr.dataH) : "  ");
+		globalAddr,
+		dev::Uint8ToStrC(opcode),
+		instr_len > 1 ? dev::Uint8ToStrC(dataL) : "  ",
+		instr_len > 2 ? dev::Uint8ToStrC(dataH) : "  ");
 	// check for errors
 	if (printed_chars < 0) { return nullptr; }
 	current_char_idx += printed_chars;
@@ -299,15 +306,15 @@ auto dev::DisasmLine::PrintToBuffer(
 	// Print intruction
 	if (_printDisasm)
 	{
-		auto cmdP = cmdsP->at(_instr.opcode);
+		auto cmdP = cmdsP->at(opcode);
 		// Iterate over the tokens of the command and concatenate them into buffer
 		for (int i = 0; i < cmdP->token_types.size(); i++)
 		{
 			if (cmdP->token_types[i] == CMD_TT_IMM)
 			{
 				auto imm_str = instr_len == 1 ?
-					dev::Uint8ToStrC(_instr.dataL) :
-					dev::Uint16ToStrC(_instr.dataW);
+					dev::Uint8ToStrC(dataL) :
+					dev::Uint16ToStrC(dataW);
 
 				printed_chars = std::snprintf(&_buffer[current_char_idx], LINE_BUFF_LEN - current_char_idx, imm_str);
 			}
@@ -327,29 +334,36 @@ auto dev::DisasmLine::PrintToBuffer(
 	std::fill_n(&_buffer[current_char_idx], spaces, ' ');
 	current_char_idx += spaces;
 
-	// Print regs
-	if (_regsP)
-	{
+	// print regs
+	printed_chars = std::snprintf(
+		&_buffer[current_char_idx], LINE_BUFF_LEN - current_char_idx,
+		"A=%s BC=%s DE=%s HL=%s SP=%s S%s Z%s AC%s P%s CY%s CC=%012llu",
+		dev::Uint8ToStrC(_cpuState.regs.psw.af.h),
+		dev::Uint16ToStrC(_cpuState.regs.bc.word),
+		dev::Uint16ToStrC(_cpuState.regs.de.word),
+		dev::Uint16ToStrC(_cpuState.regs.hl.word),
+		dev::Uint16ToStrC(_cpuState.regs.sp.word),
+		_cpuState.regs.psw.s ? "1" : "0",
+		_cpuState.regs.psw.z ? "1" : "0",
+		_cpuState.regs.psw.ac ? "1" : "0",
+		_cpuState.regs.psw.p ? "1" : "0",
+		_cpuState.regs.psw.c ? "1" : "0",
+		_cpuState.cc);
 
-		// print regs
-		printed_chars = std::snprintf(
-			&_buffer[current_char_idx], LINE_BUFF_LEN - current_char_idx,
-			"A=%s BC=%s DE=%s HL=%s SP=%s S=%s Z=%s AC=%s P=%s CY=%s",
-			dev::Uint8ToStrC(_regsP->psw.af.h),
-			dev::Uint16ToStrC(_regsP->bc.word),
-			dev::Uint16ToStrC(_regsP->de.word),
-			dev::Uint16ToStrC(_regsP->hl.word),
-			dev::Uint16ToStrC(_regsP->sp.word),
-			_regsP->psw.s ? "1" : "0",
-			_regsP->psw.z ? "1" : "0",
-			_regsP->psw.ac ? "1" : "0",
-			_regsP->psw.p ? "1" : "0",
-			_regsP->psw.c ? "1" : "0");
+	// check for errors
+	if (printed_chars < 0) { return nullptr; }
+	current_char_idx += printed_chars;
 
-		// check for errors
-		if (printed_chars < 0) { return nullptr; }
-		current_char_idx += printed_chars;
-	}
+	// print display state
+	auto x = _displayState.update.framebufferIdx % Display::FRAME_W;
+	auto y = _displayState.update.framebufferIdx / Display::FRAME_W;
+	printed_chars = std::snprintf(
+		&_buffer[current_char_idx], LINE_BUFF_LEN - current_char_idx,
+		" scr=%03d/%03d scrl=%02X",
+		x, y, _displayState.update.scrollIdx);
+	// check for errors
+	if (printed_chars < 0) { return nullptr; }
+	current_char_idx += printed_chars;
 
 	// add a new line & terminator
 	current_char_idx = current_char_idx > LINE_BUFF_LEN - 2 ?

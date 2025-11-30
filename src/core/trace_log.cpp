@@ -12,11 +12,13 @@ dev::TraceLog::TraceLog(const DebugData& _debugData)
 
 // Hardware thread
 void dev::TraceLog::Update(
-	const CpuI8080::State& _cpuState, const Memory::State& _memState)
+	const CpuI8080::State& _cpuState,
+	const Memory::State& _memState,
+	const Display::State& _displayState)
 {
 	UpdateLogBuffer(_cpuState, _memState);
 
-	SaveLog(_cpuState, _memState);
+	SaveLog(_cpuState, _memState, _displayState);
 }
 
 void dev::TraceLog::UpdateLogBuffer(
@@ -119,14 +121,17 @@ void dev::TraceLog::SetSaveLog(bool _saveLog, const std::string& _path)
 std::array<char, dev::DisasmLine::LINE_BUFF_LEN> _traceLogBuffer = {};
 
 void dev::TraceLog::SaveLog(
-	const CpuI8080::State& _cpuState, const Memory::State& _memState)
+	const CpuI8080::State& _cpuState,
+	const Memory::State& _memState,
+	const Display::State& _displayState)
 {
 	if (m_saveLog && m_logFile.is_open())
 	{
 		m_logFile << DisasmLine::PrintToBuffer(_traceLogBuffer,
-											   _memState.debug.instrGlobalAddr,
-											   _memState.debug.instr,
-											   &_cpuState.debug_regs);
+											   _cpuState,
+											   _memState,
+											   _displayState,
+											   false);
 	}
 }
 

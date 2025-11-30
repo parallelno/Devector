@@ -145,12 +145,17 @@ namespace dev
 		};
 #pragma pack(pop)
 
+		using GetGlobalAddrFunc = std::function<GlobalAddr(const Addr _addr, const AddrSpace _addrSpace)>;
 #pragma pack(push, 1)
 		struct State
 		{
 			Debug debug;
 			Update update;
 			Ram* ramP = nullptr;
+			GetGlobalAddrFunc GetGlobalAddr = nullptr;
+
+			State(const GetGlobalAddrFunc _GetGlobalAddr) : GetGlobalAddr(_GetGlobalAddr) {}
+			State() = delete;
 		};
 #pragma pack(pop)
 

@@ -147,7 +147,7 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	break_ |= m_debugData.GetBreakpoints().Check(*_cpuStateP, *_memStateP);
 
 	// tracelog
-	m_traceLog.Update(*_cpuStateP, *_memStateP);
+	m_traceLog.Update(*_cpuStateP, *_memStateP, *_displayStateP);
 
 	// recorder
 	m_recorder.Update(_cpuStateP, _memStateP, _ioStateP, _displayStateP);

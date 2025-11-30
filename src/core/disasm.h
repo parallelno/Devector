@@ -119,9 +119,9 @@ namespace dev
 
 		static auto PrintToBuffer(
 			std::array<char, LINE_BUFF_LEN>& _buffer,
-			const GlobalAddr _globalAddr,
-			const Memory::Instr _instr,
-			const CpuI8080::Regs* _regsP = nullptr,
+			const CpuI8080::State& _cpuState,
+			const Memory::State& _memState,
+			const Display::State& _displayState,
 			const bool _printDisasm = true) -> const char*;
 	};
 
