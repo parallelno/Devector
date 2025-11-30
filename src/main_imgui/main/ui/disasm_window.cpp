@@ -17,15 +17,15 @@ dev::DisasmWindow::DisasmWindow(
 {
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
-			dev::Signals::BREAK |
-			dev::Signals::BREAKPOINTS,
+			dev::Signals::BREAK,
 			std::bind(&dev::DisasmWindow::CallbackUpdateAtCC,
 				this, std::placeholders::_1, std::placeholders::_2),
 			m_visibleP, 1000ms));
 
 	_scheduler.AddCallback(
 		dev::Scheduler::Callback(
-			dev::Signals::DISASM_UPDATE,
+			dev::Signals::DISASM_UPDATE |
+			dev::Signals::BREAKPOINTS,
 			std::bind(&dev::DisasmWindow::CallbackUpdateAtAddr,
 				this, std::placeholders::_1, std::placeholders::_2),
 			m_visibleP));
@@ -351,9 +351,12 @@ void dev::DisasmWindow::UpdateDisasm(
 	const Addr _addr, const int _instructionsOffset,
 	const bool _updateSelection)
 {
-	m_disasmAddr = _addr;
 	m_debugger.GetDisasm().UpdateDisasm(_addr, m_disasmLines, -_instructionsOffset);
 	m_immLinksP = m_debugger.GetDisasm().GetImmLinks();
+
+	auto& lines = m_debugger.GetDisasm().GetLines();
+	if (lines.empty()) return;
+	m_disasmAddr = lines.front().addr;
 
 	if (_updateSelection) m_selectedLineAddr = _addr;
 }
@@ -376,11 +379,11 @@ void dev::DisasmWindow::CallbackUpdateAtAddr(
 	{
         auto addr = Addr(std::get<GlobalAddr>(*_data));
 
-		UpdateDisasm(addr);
+		UpdateDisasm(addr, 0);
 		m_navigateHistory.Add(addr);
 	}
 	else{
-		UpdateDisasm(m_disasmAddr, DISASM_INSTRUCTION_OFFSET, false);
+		UpdateDisasm(m_disasmAddr, 0, false);
 		m_navigateHistory.Add(m_disasmAddr);
 	}
 }
@@ -518,7 +521,6 @@ void dev::DisasmWindow::DrawDisasmIcons(
 				{ {"addr", _line.addr} });
 			break;
 		}
-		m_scheduler.AddSignal({dev::Signals::DISASM_UPDATE});
 	}
 
 	// draw program counter icon
