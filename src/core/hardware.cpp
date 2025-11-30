@@ -49,8 +49,6 @@ bool dev::Hardware::ExecuteInstruction()
 {
 	// mem debug init
 	m_memory.DebugInit();
-	// TODO: check Recorder::StoreState. perhaps using debug regs unnecessary
-	m_cpu.SetDebugRegs();
 	do
 	{
 		m_display.Rasterize();
@@ -503,12 +501,14 @@ void dev::Hardware::Reset()
 {
 	Init();
 	m_cpu.Reset();
+	m_display.Reset();
 	m_audio.Reset();
 }
 
 void dev::Hardware::Restart()
 {
 	m_cpu.Reset();
+	m_display.Reset();
 	m_audio.Reset();
 	m_memory.Restart();
 }

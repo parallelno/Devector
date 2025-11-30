@@ -79,6 +79,7 @@ namespace dev
 		auto GetCpuState() -> const CpuI8080::State& { return m_cpu.GetState(); }
 		auto GetMemState() -> const Memory::State& { return m_memory.GetState(); }
 		auto GetIoState() -> const IO::State& { return m_io.GetState(); }
+		auto GetDisplayState() -> const Display::State& { return m_display.GetState(); }
 
 		void AttachDebugFuncs(
 			DebugFunc _debugFunc, DebugReqHandlingFunc _debugReqHandlingFunc);

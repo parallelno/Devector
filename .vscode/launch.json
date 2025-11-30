@@ -2,7 +2,27 @@
     "version": "0.2.0",
     "configurations": [
       {
-        "name": "Debug from bin folder",
+        "name": "Debug",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/../devector/bin/devector.exe",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "gdb.exe",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+      },
+      {
+        "name": "Debug GJ.fdd",
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/../devector/bin/devector.exe",
@@ -25,4 +45,3 @@
       }
     ]
   }
-

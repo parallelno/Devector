@@ -123,6 +123,7 @@ namespace dev
 	public:
 		Display(Memory& _memory, IO& _io);
 		void Init();
+		void Reset();
 		void Rasterize();
 		bool IsIRQ();
 		auto GetFrame(const bool _vsync) ->const FrameBuffer*;

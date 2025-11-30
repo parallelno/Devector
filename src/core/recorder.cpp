@@ -64,8 +64,6 @@ void dev::Recorder::StoreState(const CpuI8080::State& _cpuState, const Memory::S
 	// It stores the executed command, its addr, and regs.
 	// When it restores the state, it restores the stored last addr and last regs,
 	// but the regs are after executing the instruction, not before!
-	// If you decide to store regs before executing the instruction,
-	// you need to consider replacing regs with debug_regs
 
 
 	// prepare for the next state

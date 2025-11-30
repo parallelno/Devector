@@ -20,7 +20,15 @@ dev::Display::Display(Memory& _memory, IO& _io)
 
 void dev::Display::Init()
 {
+	Reset();
+}
+
+void dev::Display::Reset()
+{
+	m_state.update.frameNum = 0;
+	m_state.update.irq = false;
 	m_state.update.framebufferIdx = 0;
+	m_state.update.scrollIdx = SCROLL_DEFAULT;
 	m_frameBuffer.fill(0xff000000);
 }
 
