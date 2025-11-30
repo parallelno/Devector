@@ -155,7 +155,7 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 			addr = std::get<1>(_filteredElements[0]);
 		};
 
-		UpdateDisasm(addr);
+		UpdateDisasm(addr, 0);
 		m_selectedLineAddr = addr;
 	}
 	if (_isRunning) ImGui::EndDisabled();

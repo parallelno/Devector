@@ -130,7 +130,7 @@ auto dev::Disasm::GetAddr(const Addr _addr, const int _instructionOffset) const
 			}
 		}
 		if (possibleDisasmStartAddrs.empty()) {
-			return _addr - _instructionOffset;
+			return Addr(_addr + _instructionOffset);
 		}
 
 		// get the best result basing on the execution counter
