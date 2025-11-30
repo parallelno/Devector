@@ -4,7 +4,8 @@
 dev::Memory::Memory(const std::string& _pathBootData, const std::string& _pathRamDiskData,
 	const bool _ramDiskClearAfterRestart)
 	:
-	m_rom(), m_ram(), m_state(std::bind(&Memory::GetGlobalAddr, this, std::placeholders::_1, std::placeholders::_2)),
+	m_rom(), m_ram(),
+	m_state(std::bind(&Memory::GetGlobalAddr, this, std::placeholders::_1, std::placeholders::_2), &m_ram),
 	m_pathRamDiskData(_pathRamDiskData),
 	m_ramDiskClearAfterRestart(_ramDiskClearAfterRestart)
 {
@@ -35,7 +36,6 @@ void dev::Memory::Init()
 	}
 
 	m_state.update.memType = MemType::ROM;
-	m_state.ramP = &m_ram;
 	InitRamDiskMapping();
 }
 

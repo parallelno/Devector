@@ -154,7 +154,8 @@ namespace dev
 			Ram* ramP = nullptr;
 			GetGlobalAddrFunc GetGlobalAddr = nullptr;
 
-			State(const GetGlobalAddrFunc _GetGlobalAddr) : GetGlobalAddr(_GetGlobalAddr) {}
+			State(const GetGlobalAddrFunc _GetGlobalAddr, Ram* _ramP)
+				: GetGlobalAddr(_GetGlobalAddr), ramP(_ramP) {}
 			State() = delete;
 		};
 #pragma pack(pop)
