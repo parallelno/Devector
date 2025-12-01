@@ -13,7 +13,6 @@ namespace dev
 	public:
 		using BpMap = std::unordered_map<GlobalAddr, Breakpoint>;
 
-		void SetStatus(const Addr _addr, const Breakpoint::Status _status);
 		void Add(Breakpoint&& _bp);
 		void Add(const nlohmann::json& _bpJ);
 		void Del(const Addr _addr);
@@ -21,6 +20,7 @@ namespace dev
 		auto GetAll() -> const BpMap&;
 		auto GetUpdates() -> const uint32_t;
 		auto GetStatus(const Addr _addr) -> const Breakpoint::Status;
+		void SetStatus(const Addr _addr, const Breakpoint::Status _status);
 		void Clear();
 
 	private:

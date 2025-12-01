@@ -22,19 +22,19 @@ void dev::Breakpoint::Update(Breakpoint&& _bp)
 	UpdateAddrMappingS();
 }
 
-auto dev::Breakpoint::GetOperandS() const 
--> const char* 
-{ 
-	return bpOperandsS[static_cast<uint8_t>(data.structured.operand)]; 
+auto dev::Breakpoint::GetOperandS() const
+-> const char*
+{
+	return bpOperandsS[static_cast<uint8_t>(data.structured.operand)];
 }
 
-auto dev::Breakpoint::GetConditionS() const 
+auto dev::Breakpoint::GetConditionS() const
 -> const std::string
-{	
+{
 	std::string condValS = ConditionsS[static_cast<uint8_t>(data.structured.cond)];
 	condValS += data.structured.cond == Condition::ANY ? "" : std::format(" 0x{:02X}", data.structured.value);
 
-	std::string out = std::format("{}{}{}", 
+	std::string out = std::format("{}{}{}",
 		GetOperandS(),
 		condValS,
 		data.structured.autoDel ? ":A" : ""
@@ -44,14 +44,19 @@ auto dev::Breakpoint::GetConditionS() const
 
 auto dev::Breakpoint::IsActiveS() const -> const char* { return data.structured.status == Status::ACTIVE ? "X" : "-"; }
 
-bool dev::Breakpoint::CheckStatus(const CpuI8080::State& _cpuState, const Memory::State& _memState) const
+bool dev::Breakpoint::CheckStatus(
+	const CpuI8080::State& _cpuState, const Memory::State& _memState) const
 {
-	auto mapping = _memState.update.mapping.data & Memory::MAPPING_RAM_MODE_MASK ? 1 << (_memState.update.mapping.pageRam + 1 + 4 * _memState.update.ramdiskIdx) : 1;
+	auto mapping = _memState.update.mapping.data & Memory::MAPPING_RAM_MODE_MASK ?
+		1 << (_memState.update.mapping.pageRam + 1 + 4 * _memState.update.ramdiskIdx):
+		1;
 
-	bool active = data.structured.status == Status::ACTIVE && mapping & data.structured.memPages.data;
+	bool active = data.structured.status == Status::ACTIVE &&
+				  mapping & data.structured.memPages.data;
+
 	if (!active) return false;
 	if (data.structured.cond == dev::Condition::ANY) return true;
-	
+
 	uint64_t op;
 	switch (data.structured.operand)
 	{
@@ -134,6 +139,6 @@ void dev::Breakpoint::UpdateAddrMappingS()
 
 auto dev::Breakpoint::GetAddrMappingS() const
 -> const char*
-{ 
+{
 	return addrMappingS.c_str();
 };

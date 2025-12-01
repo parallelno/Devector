@@ -54,7 +54,6 @@ void dev::Debugger::Reset(bool _resetRecorder,
 	CpuI8080::State* _cpuStateP, Memory::State* _memStateP,
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {
-	//m_disasm.Reset();
 	m_disasm.Reset();
 	m_debugData.Reset();
 
@@ -80,7 +79,6 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 	IO::State* _ioStateP, Display::State* _displayStateP)
 {
 	// instruction check
-	//m_disasm.MemRunsUpdate(_memStateP->debug.instrGlobalAddr);
 	m_debugData.MemRunsUpdate(_memStateP->debug.instrGlobalAddr);
 
 	// reads check
@@ -92,7 +90,6 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 			GlobalAddr globalAddr = _memStateP->debug.readGlobalAddr[i];
 			uint8_t val = _memStateP->debug.read[i];
 
-			//m_disasm.MemReadsUpdate(globalAddr);
 			m_debugData.MemReadsUpdate(globalAddr);
 
 			m_debugData.GetWatchpoints().Check(Watchpoint::Access::R, globalAddr, val);
@@ -119,7 +116,6 @@ bool dev::Debugger::Debug(CpuI8080::State* _cpuStateP, Memory::State* _memStateP
 				continue;
 			};
 
-			//m_disasm.MemWritesUpdate(globalAddr);
 			m_debugData.MemWritesUpdate(globalAddr);
 
 			m_debugData.GetWatchpoints().Check(Watchpoint::Access::W, globalAddr, val);
