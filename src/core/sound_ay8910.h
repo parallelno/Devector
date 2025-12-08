@@ -1,6 +1,6 @@
 // vector06sdl (c) 2018 Viacheslav Slavinsky
 // AY kernel
-// 
+//
 // Modified AY implementation from Emuscriptoria project
 // https://sourceforge.net/projects/emuscriptoria/
 #pragma once
@@ -39,7 +39,12 @@ public:
         this->ayreg = 0;
     }
 
-    float cstep(int ch)
+    /**
+     * Channel step - calculates the output for one channel
+     * @param ch Channel number (0, 1, or 2)
+     * @returns Channel output value (0.0 to 1.0)
+     */
+    float CStep(int ch)
     {
         static const float amp[] = {
             0.0f, 0.0137f, 0.0205f, 0.0291f,
@@ -65,7 +70,12 @@ public:
         return result;
     }
 
-    int estep()
+
+   /**
+    * Envelope step - advances the envelope generator
+    * @returns Current envelope value (0-15)
+    */
+    int EStep()
     {
         if (this->envx >> 4) {
             if (this->ay13 & 1) // ENV.HOLD
@@ -80,7 +90,7 @@ public:
     {
         if (++this->envc >= (this->ayr[11] << 1 | this->ayr[12] << 9)) {
             this->envc = 0;
-            this->envv = this->estep();
+            this->envv = this->EStep();
         }
 
         if (++this->noic >= this->ayr[6] << 1) {
@@ -88,11 +98,14 @@ public:
             this->noiv = this->noir & 1;
             this->noir = (this->noir ^ (this->noiv * 0x24000)) >> 1;
         }
-        return (this->cstep(0) + this->cstep(1) +
-            this->cstep(2) ) / 3.0f;
+        return (this->CStep(0) + this->CStep(1) +
+            this->CStep(2) ) / 3.0f;
     }
 
-    void aymute()
+   /**
+    * Mute operation - advances counters without producing output
+    */
+    void Mute()
     {
         if (++this->envc >= (this->ayr[11] << 1 | this->ayr[12] << 9)) {
             this->envc = 0;
@@ -158,7 +171,6 @@ private:
     SoundAY8910& ay;
     float last;
     int ayAccu;
-    int instr_accu;
 
 public:
     AYWrapper(SoundAY8910& _ay) : ay(_ay)
@@ -173,7 +185,7 @@ public:
 
     void Init()
     {
-        ayAccu = instr_accu = 0;
+        ayAccu = 0;
         last = 0.0;
     }
 
@@ -190,5 +202,3 @@ public:
         return this->last;
     }
 };
-
-

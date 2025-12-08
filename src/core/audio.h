@@ -20,7 +20,7 @@ namespace dev
         static constexpr int BUFFER_SIZE = SDL_BUFFER * SDL_BUFFERS;
         static constexpr int TARGET_BUFFERING = SDL_BUFFER * 4;
         static constexpr int LOW_BUFFERING = TARGET_BUFFERING - SDL_BUFFER * 2;
-        static constexpr int HIGH_BUFFERING = TARGET_BUFFERING + SDL_BUFFER * 2;        
+        static constexpr int HIGH_BUFFERING = TARGET_BUFFERING + SDL_BUFFER * 2;
 
         TimerI8253& m_timer;
         AYWrapper& m_aywrapper;
@@ -28,7 +28,7 @@ namespace dev
         SDL_AudioStream* m_stream = nullptr;
         float m_muteMul = 1.0f;
 
-        std::array<float, BUFFER_SIZE> m_buffer; // Audio system writes to it, SDL reads from it
+        std::array<float, BUFFER_SIZE> m_buffer; // This module writes to it, SDL reads from it
         std::atomic_uint64_t m_readBuffIdx = 0; // the last sample played by SDL
         std::atomic_uint64_t m_writeBuffIdx = 0; // the last sample stored by the Audio system
         std::atomic<float> m_lastSample = 0.0f;
