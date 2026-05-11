@@ -131,7 +131,7 @@ void dev::DisasmWindow::DrawSearch(const bool _isRunning)
 
 	auto search_updated = ImGui::InputTextWithHint(
 		"##disasmSearch", "FF", m_searchText, IM_ARRAYSIZE(m_searchText));
-	if (ImGui::IsKeyPressed(ImGuiKey_Enter))
+	if (ImGui::IsItemActivated() && ImGui::IsKeyPressed(ImGuiKey_Enter))
 		search_updated = true;
 
 	if (search_updated)

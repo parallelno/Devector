@@ -169,7 +169,7 @@ namespace dev
 			InputFunc _input,
 			OutputFunc _output);
 
-		void Init();
+		void Init(bool rnd_regs = false);
 		void Reset();
 		void ExecuteMachineCycle(bool _irq);
 		bool IsInstructionExecuted() const;

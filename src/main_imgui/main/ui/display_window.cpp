@@ -218,7 +218,13 @@ void dev::DisplayWindow::DrawDisplay()
 		}
 
 
-		auto pos = ImGui::GetCursorPos();
+		// center the image within the available content region
+		ImVec2 avail = ImGui::GetContentRegionAvail();
+		ImVec2 cursor = ImGui::GetCursorPos();
+		if (avail.x > displaySize.x) cursor.x += (avail.x - displaySize.x) * 0.5f;
+		if (avail.y > displaySize.y) cursor.y += (avail.y - displaySize.y) * 0.5f;
+		ImGui::SetCursorPos(cursor);
+		auto pos = cursor;
 
 		auto framebufferTex = m_glUtils.GetFramebufferTexture(m_vramMatId);
 		ImGui::Image(framebufferTex, displaySize, borderMin, borderMax);
