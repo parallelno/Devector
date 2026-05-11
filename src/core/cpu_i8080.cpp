@@ -1,5 +1,6 @@
 #include "cpu_i8080.h"
 #include "utils/utils.h"
+#include "utils/types.h"
 
 // a number of clock cycles one machine cycle takes
 static constexpr uint64_t MACHINE_CC = 4;
@@ -70,10 +71,10 @@ void dev::CpuI8080::Init(bool rnd_regs)
 {
 	if (rnd_regs)
 	{
-		PSW = rand() % Addr;
-		BC = rand() % Addr;
-		DE = rand() % Addr;
-		HL = rand() % Addr;
+		PSW = (Addr)rand();
+		BC = (Addr)rand();
+		DE = (Addr)rand();
+		HL = (Addr)rand();
 	}
 	else
 	{

@@ -197,7 +197,6 @@ namespace dev
 		void RecentFilesUpdate(const FileType _fileType,
 			const std::string& _path, const int _driveIdx = INVALID_ID,
 			const bool _autoBoot = false);
-		void AppStyleInit();
 		void MainMenuUpdate();
 		void Load(const std::string& _path);
 		void LoadRom(const std::string& _path);
