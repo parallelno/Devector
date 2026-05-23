@@ -93,7 +93,7 @@ void dev::BreakpointsPopup::Draw(
 		ImGui::TableSetupColumn(
 			"##BPContextMenuName", ImGuiTableColumnFlags_WidthFixed, 140 * scale);
 		ImGui::TableSetupColumn(
-			"##BPContextMenuVal", ImGuiTableColumnFlags_WidthStretch);
+			"##BPContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 300 * scale);
 
 		// status
 		DrawProperty2EditableCheckBox(

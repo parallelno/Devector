@@ -8,7 +8,7 @@ namespace dev
 {
 	class BreakpointsPopup : public BaseWindow
 	{
-		static constexpr int DEFAULT_WINDOW_W = 370;
+		static constexpr int DEFAULT_WINDOW_W = 500;
 		static constexpr int DEFAULT_WINDOW_H = 560;
 
 		dev::Hardware& m_hardware;

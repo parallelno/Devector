@@ -21,7 +21,7 @@ namespace dev
 	{
 		// Set column widths
 		static constexpr float BRK_W = 40;
-		static constexpr float ADDR_W = 50.0f;
+		static constexpr float ADDR_W = 70.0f;
 		static constexpr float CODE_W = 200.0f;
 		static constexpr float COMMAND_W = 120.0f;
 		static constexpr float STATS_W = 100.0f;

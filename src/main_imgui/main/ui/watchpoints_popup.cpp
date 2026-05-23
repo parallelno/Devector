@@ -91,7 +91,7 @@ void dev::WatchpointsPopup::Draw(
 		ImGui::TableSetupColumn(
 			"##WpContextMenuName", ImGuiTableColumnFlags_WidthFixed, 150 * scale);
 		ImGui::TableSetupColumn(
-			"##WpContextMenuVal", ImGuiTableColumnFlags_WidthStretch);
+			"##WpContextMenuVal", ImGuiTableColumnFlags_WidthFixed, 300 * scale);
 
 		// Status
 		DrawProperty2EditableCheckBox(

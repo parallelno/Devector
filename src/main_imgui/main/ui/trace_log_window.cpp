@@ -229,7 +229,7 @@ void dev::TraceLogWindow::DrawDisasmAddr(
 	ImGui::TableNextColumn();
 	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DASM_BG_CLR_ADDR);
 
-	auto mouseAction = DrawAddr(_isRunning, Uint8ToStrC0x(_line.addr),
+	auto mouseAction = DrawAddr(_isRunning, Uint16ToStrC0x(_line.addr),
 		DASM_CLR_LABEL_MINOR, dev::IM_VEC4(0xFFFFFFFF),
 		_addrHighlight.IsEnabled(_line.addr));
 

@@ -18,7 +18,7 @@ namespace dev
 	{
 		static constexpr int DEFAULT_WINDOW_W = 512;
 		static constexpr int DEFAULT_WINDOW_H = 300;
-		static constexpr float ADDR_W = 50.0f;
+		static constexpr float ADDR_W = 70.0f;
 		static constexpr float CODE_W = 200.0f;
 
 		static constexpr int MAX_DISASM_LABELS = 4;
