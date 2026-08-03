@@ -99,6 +99,21 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 		"Double click on the element to locate the addr in the Disasm Window.\n"
 		"Double click + Ctrl the element to locate the addr in the Hex Window.");
 
+	if (_elementType == DebugDataPopup::ElementType::SCRIPTS)
+	{
+		const bool hasSelection = m_selectedLineIdx >= 0 &&
+			m_selectedLineIdx < static_cast<int>(_filteredElements.size());
+		ImGui::BeginDisabled(!hasSelection);
+		if (ImGui::Button("Run Once"))
+		{
+			const auto& [comment, scriptId, status] =
+				_filteredElements.at(m_selectedLineIdx);
+			m_hardware.Request(Hardware::Req::DEBUG_SCRIPT_RUN,
+				{{"id", scriptId}});
+		}
+		ImGui::EndDisabled();
+	}
+
 	if (filterUpdated || _filteredUpdateId != _updateId)
 	{
 		// update filtered labels

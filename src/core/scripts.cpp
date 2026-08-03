@@ -364,6 +364,27 @@ auto dev::Scripts::Find(const dev::Id _id)
 }
 
 // Hardware thread
+bool dev::Scripts::Run(const dev::Id _id,
+	const CpuI8080::State* _cpuStateP,
+	const Memory::State* _memStateP,
+	const IO::State* _ioStateP,
+	const Display::State* _displayStateP)
+{
+	if (!m_enabled) return false;
+
+	auto scriptI = m_scripts.find(_id);
+	if (scriptI == m_scripts.end()) return false;
+
+	m_cpuStateP = _cpuStateP;
+	m_memStateP = _memStateP;
+	m_ioStateP = _ioStateP;
+	m_displayStateP = _displayStateP;
+	m_break = false;
+	scriptI->second.RunScript(m_luaState);
+	return m_break;
+}
+
+// Hardware thread
 void dev::Scripts::Del(const dev::Id _id)
 {
 	if (!m_enabled) return;

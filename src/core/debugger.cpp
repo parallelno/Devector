@@ -381,6 +381,11 @@ auto dev::Debugger::DebugReqHandling(Hardware::Req _req, nlohmann::json _reqData
 		m_debugData.GetScripts().Del(_reqDataJ["id"]);
 		break;
 
+	case Hardware::Req::DEBUG_SCRIPT_RUN:
+		m_debugData.GetScripts().Run(_reqDataJ["id"],
+			_cpuStateP, _memStateP, _ioStateP, _displayStateP);
+		break;
+
 	case Hardware::Req::DEBUG_SCRIPT_ADD: {
 		m_debugData.GetScripts().Add(_reqDataJ);
 		break;
