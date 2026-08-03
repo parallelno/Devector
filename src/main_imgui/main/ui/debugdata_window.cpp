@@ -155,7 +155,8 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 	}
 
 	// draw a table
-	const int COLUMNS_COUNT = 3;
+	const bool isScripts = _elementType == DebugDataPopup::ElementType::SCRIPTS;
+	const int columnsCount = 3;
 	const char* tableName = "Elements";
 	ImVec2 itemsMin = ImGui::GetCursorStartPos();
 	ImVec2 itemsMax;
@@ -165,15 +166,17 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 		ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_NoBordersInBodyUntilResize |
 		ImGuiTableFlags_Resizable;
-	if (ImGui::BeginTable(tableName, COLUMNS_COUNT, flags))
+	if (ImGui::BeginTable(tableName, columnsCount, flags))
 	{
 		auto scale = ImGui::GetWindowDpiScale();
 
 		ImGui::TableSetupColumn("",
 			ImGuiTableColumnFlags_WidthFixed |
 			ImGuiTableColumnFlags_NoResize, 0); // for the line selection/highlight
-		ImGui::TableSetupColumn("consts", ImGuiTableColumnFlags_WidthFixed, 100 * scale);
-		ImGui::TableSetupColumn("Addr");
+		ImGui::TableSetupColumn(
+			isScripts ? "Script" : "consts",
+			ImGuiTableColumnFlags_WidthFixed, 100 * scale);
+		ImGui::TableSetupColumn(isScripts ? "Active" : "Addr");
 
 		ImGuiListClipper clipper;
 		clipper.Begin(int(_filteredElements.size()));
@@ -183,31 +186,74 @@ void dev::DebugDataWindow::UpdateAndDrawFilteredElements(
 				lineIdx < clipper.DisplayEnd; lineIdx++)
 			{
 				ImGui::TableNextRow();
+				const bool isSelected = m_selectedLineIdx == lineIdx;
+				if (isScripts && isSelected)
+				{
+					ImGui::TableSetBgColor(
+						ImGuiTableBgTarget_RowBg0,
+						ImGui::GetColorU32(ImGuiCol_Header));
+				}
 
 				// the line selection/highlight
 				ImGui::TableNextColumn();
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, DIS_BG_CLR_BRK);
-				const bool isSelected = m_selectedLineIdx == lineIdx;
-				if (ImGui::Selectable(
+				if (!isScripts && ImGui::Selectable(
 					std::format("##ElementLineId{}",lineIdx).c_str(),
 					isSelected,
 					ImGuiSelectableFlags_SpanAllColumns))
 				{
 					m_selectedLineIdx = lineIdx;
 				}
-				hoveredLineIdx = ImGui::IsItemHovered() ? lineIdx : hoveredLineIdx;
+				if (!isScripts)
+				{
+					hoveredLineIdx = ImGui::IsItemHovered() ? lineIdx : hoveredLineIdx;
+				}
 
 				const auto& [label, addr, addrS] = _filteredElements.at(lineIdx);
 
 				// draw the element
 				ImGui::TableNextColumn();
-				ImGui::TextColored( label[0] == '@' ?
-					DASM_CLR_LABEL_LOCAL : DASM_CLR_LABEL_GLOBAL,
-					label.c_str());
+				const auto labelColor = label[0] == '@' ?
+					DASM_CLR_LABEL_LOCAL : DASM_CLR_LABEL_GLOBAL;
+				if (isScripts)
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, labelColor);
+					if (ImGui::Selectable(
+						std::format("{}##ElementLineId{}", label, lineIdx).c_str(),
+						isSelected))
+					{
+						m_selectedLineIdx = lineIdx;
+					}
+					ImGui::PopStyleColor();
+					hoveredLineIdx = ImGui::IsItemHovered() ? lineIdx : hoveredLineIdx;
+				}
+				else
+				{
+					ImGui::TextColored(labelColor, label.c_str());
+				}
 
 				// draw the addr
 				ImGui::TableNextColumn();
-				ImGui::TextColored( DASM_CLR_ADDR, addrS.c_str());
+				if (isScripts)
+				{
+					bool active = addrS == "On";
+					if (ImGui::Checkbox(
+						std::format("##ScriptActive{}", addr).c_str(), &active))
+					{
+						if (const auto* script =
+							m_debugger.GetDebugData().GetScripts().Find(addr))
+						{
+							auto scriptJ = script->ToJson();
+							scriptJ["active"] = active;
+							m_hardware.Request(
+								Hardware::Req::DEBUG_SCRIPT_ADD, scriptJ);
+						}
+					}
+				}
+				else
+				{
+					ImGui::TextColored(DASM_CLR_ADDR, addrS.c_str());
+				}
 
 				// double-click to locate the addr
 				if (hoveredLineIdx >= 0)

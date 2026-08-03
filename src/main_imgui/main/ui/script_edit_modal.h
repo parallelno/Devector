@@ -17,6 +17,7 @@ namespace dev
 
 		bool m_enterPressed = false;
 		bool m_setFocus = false;
+		float m_codeScrollY = 0.0f;
 		Script m_script;
 		char m_code[CODE_LEN_MAX];
 

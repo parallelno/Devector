@@ -1,9 +1,12 @@
 ﻿#include "ui/script_edit_modal.h"
 
+#include <algorithm>
+#include <cstdio>
 #include <format>
 
 #include "utils/str_utils.h"
 #include "utils/imgui_utils.h"
+#include "imgui_internal.h"
 
 dev::ScriptEditModal::ScriptEditModal(
 	Hardware& _hardware, Debugger& _debugger,
@@ -12,7 +15,7 @@ dev::ScriptEditModal::ScriptEditModal(
 	:
 	BaseWindow("Script Edit", DEFAULT_WINDOW_W, DEFAULT_WINDOW_H,
 		_scheduler, _visibleP,
-		ImGuiWindowFlags_AlwaysAutoResize,
+		ImGuiWindowFlags_NoCollapse,
 		BaseWindow::Type::Modal),
 	m_hardware(_hardware), m_debugger(_debugger)
 {
@@ -37,6 +40,7 @@ void dev::ScriptEditModal::CallbackAdd(
 
 	m_enterPressed = false;
 	m_setFocus = true;
+	m_codeScrollY = 0.0f;
 	m_script = Script();
 	m_code[0] = '\0'; // erase the m_code buffer
 
@@ -50,6 +54,7 @@ void dev::ScriptEditModal::CallbackEdit(
 
 	m_enterPressed = false;
 	m_setFocus = true;
+	m_codeScrollY = 0.0f;
 	auto currentScript = m_debugger.GetDebugData().GetScripts().Find(globalAddr);
 	if (!currentScript){
 		int err = 0;
@@ -100,16 +105,57 @@ void dev::ScriptEditModal::Draw(
 		ImGui::PopStyleColor();
 
 		ImGui::TableNextColumn();
-		ImVec2 codeSize = { 800 * scale, 400 };
+		const ImGuiStyle& style = ImGui::GetStyle();
+		const ImVec2 available = ImGui::GetContentRegionAvail();
+		const float codeHeight = std::max(
+			120.0f * scale,
+			available.y - m_buttonSize.y - style.ItemSpacing.y * 5.0f);
+		const int lineCount = 1 + static_cast<int>(
+			std::count(m_code, m_code + strlen(m_code), '\n'));
+		const float gutterWidth = ImGui::CalcTextSize(
+			std::to_string(lineCount).c_str()).x + style.FramePadding.x * 3.0f;
+		const ImVec2 gutterPos = ImGui::GetCursorScreenPos();
 
-		auto entered = ImGui::InputTextMultiline(
+		ImGui::Dummy({ gutterWidth, codeHeight });
+		ImGui::SameLine(0.0f, 0.0f);
+		const ImGuiID codeId = ImGui::GetID("##ContextCode");
+		ImGui::InputTextMultiline(
 			"##ContextCode",
 			m_code,
 			CODE_LEN_MAX,
-			codeSize,
+			{ std::max(120.0f * scale, available.x - gutterWidth), codeHeight },
 			ImGuiInputTextFlags_AllowTabInput |
 			ImGuiInputTextFlags_AutoSelectAll
 		);
+
+		if (const ImGuiInputTextState* state = ImGui::GetInputTextState(codeId))
+			m_codeScrollY = state->Scroll.y;
+
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		const ImVec2 gutterMax = { gutterPos.x + gutterWidth, gutterPos.y + codeHeight };
+		drawList->AddRectFilled(gutterPos, gutterMax,
+			ImGui::GetColorU32(ImGuiCol_FrameBg));
+		drawList->PushClipRect(gutterPos, gutterMax, true);
+		const float lineHeight = ImGui::GetTextLineHeight();
+		const float firstLineY = gutterPos.y + style.FramePadding.y - m_codeScrollY;
+		for (int line = 0; line < lineCount; ++line)
+		{
+			const float lineY = firstLineY + line * lineHeight;
+			if (lineY + lineHeight < gutterPos.y || lineY > gutterMax.y)
+				continue;
+
+			char lineNumber[16];
+			std::snprintf(lineNumber, sizeof(lineNumber), "%d", line + 1);
+			const float textWidth = ImGui::CalcTextSize(lineNumber).x;
+			drawList->AddText(
+				{ gutterMax.x - style.FramePadding.x - textWidth, lineY },
+				ImGui::GetColorU32(ImGuiCol_TextDisabled), lineNumber);
+		}
+		drawList->PopClipRect();
+		drawList->AddLine(
+			{ gutterMax.x - 1.0f, gutterPos.y },
+			{ gutterMax.x - 1.0f, gutterMax.y },
+			ImGui::GetColorU32(ImGuiCol_Border));
 		//==========================
 
 		ImGui::TableNextRow();
